@@ -48,7 +48,7 @@ const Benefits = () => {
           
           <div className="md:w-1/2 animate-fadeInUp animate-fadeInUp-delay-2">
             <div className="animate-floating">
-              <img src="/lovable-uploads/cc82d0d9-0cc3-4b47-9bbd-bbf05c39cbb9.png" alt="Agent Benefits" className="max-w-full rounded-lg shadow-xl" />
+              <img src="/agent.jpg" alt="Agent Benefits" className="max-w-full rounded-lg shadow-xl" />
             </div>
           </div>
         </div>

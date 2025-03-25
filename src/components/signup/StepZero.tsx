@@ -34,25 +34,32 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
   return (
     <div className="flex flex-col md:flex-row w-full max-w-6xl shadow-xl rounded-lg overflow-hidden">
       {/* Left Side - Form */}
-      <div className="w-full md:w-1/2 p-8 md:p-16 bg-white flex flex-col">
+      <div className="w-full md:w-1/2 p-8 md:p-16 bg-white flex flex-col relative">
+        {/* Back to Home Link */}
+        <div className="absolute top-4 left-4">
+          <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+            Back to Home
+          </Link>
+        </div>
+      
         <div className="mb-8">
           {/* Logo */}
-          <div className="mb-8">
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="20" height="20" fill="#4F46E5" />
-              <rect x="22" width="20" height="20" fill="#4F46E5" />
-              <rect y="22" width="20" height="20" fill="#4F46E5" />
-              <rect x="22" y="22" width="20" height="20" fill="#4F46E5" />
-            </svg>
+          <div className="mb-8 flex justify-center">
+            <h2 className="text-3xl font-bold inline">
+              <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+            </h2>
           </div>
 
-          <h1 className="text-3xl font-bold mb-2">Join Our Call Center Team</h1>
-          <p className="text-gray-600 mb-8">Create your profile and start earning commissions on credit sales</p>
+          <h1 className="text-3xl font-bold mb-2 text-center">Join Our Call Center Team</h1>
+          <p className="text-gray-600 mb-8 text-center">Create your profile and start earning commissions on sales</p>
           
-          {/* Social Login */}
+          {/* Google Login Only */}
           <div className="flex justify-center mb-8">
             <button 
-              className="flex items-center justify-center border border-gray-300 rounded-md py-2 px-4 hover:bg-gray-50 transition w-full max-w-xs"
+              className="flex items-center justify-center border border-gray-300 rounded-md py-3 px-4 hover:bg-gray-50 transition w-full"
               onClick={handleGoogleSignUp}
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -65,68 +72,11 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
             </button>
           </div>
           
-          <div className="relative flex items-center mb-8">
-            <div className="flex-grow border-t border-gray-300"></div>
-            <span className="flex-shrink mx-4 text-gray-600">or</span>
-            <div className="flex-grow border-t border-gray-300"></div>
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-600">We only support Gmail accounts at this time</p>
           </div>
           
-          {/* Form Fields */}
-          <form onSubmit={handleContinue} className="space-y-4 mb-6">
-            {errorMessage && (
-              <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md text-sm">
-                {errorMessage}
-              </div>
-            )}
-            
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <Input 
-                type="text" 
-                id="firstName" 
-                name="firstName"
-                value={userData.firstName}
-                onChange={(e) => updateUserData({ firstName: e.target.value })}
-                className="w-full" 
-                placeholder="Enter your name"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-              <Input 
-                type="email" 
-                id="email" 
-                name="email"
-                value={userData.email}
-                onChange={(e) => updateUserData({ email: e.target.value })}
-                className="w-full" 
-                placeholder="example@company.com"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <Input 
-                type="password" 
-                id="password" 
-                name="password"
-                value={userData.password}
-                onChange={(e) => updateUserData({ password: e.target.value })}
-                className="w-full" 
-                placeholder="Create a password (min. 6 characters)"
-              />
-            </div>
-            
-            <Button 
-              type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-            >
-              Continue
-            </Button>
-          </form>
-          
-          <p className="text-center text-gray-600">
+          <p className="text-center text-gray-600 mt-6">
             Already part of our team? <Link to="/login" className="text-indigo-600 hover:underline">Sign in</Link>
           </p>
         </div>
@@ -137,10 +87,10 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
       </div>
       
       {/* Right Side - Visual */}
-      <div className="hidden md:block w-1/2 bg-indigo-600 p-16 text-white relative">
+      <div className="hidden md:block w-1/2 bg-gradient-to-br from-indigo-600 to-purple-500 p-16 text-white relative">
         <div className="mb-8">
           <h2 className="text-3xl font-bold mb-2">Start Your Call Center Career Today</h2>
-          <p className="opacity-80">Earn competitive commissions on credit sales</p>
+          <p className="opacity-80 text-white">Earn competitive commissions on sales</p>
         </div>
         
         {/* Dashboard Mockup */}

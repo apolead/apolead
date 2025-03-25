@@ -203,7 +203,7 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-purple-500 flex items-center justify-center p-4">
       <div className="min-h-screen flex items-center justify-center p-4">
         {renderStep()}
       </div>

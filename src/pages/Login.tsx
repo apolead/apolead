@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -27,34 +27,37 @@ const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSignIn = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleResetPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address to reset your password.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      // Check if Supabase client is initialized
+      setLoading(true);
       if (!supabase) {
         throw new Error('Supabase client is not initialized. Please check your environment variables.');
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
 
-      // Success - redirect to dashboard or home
       toast({
-        title: "Welcome back!",
-        description: "You've been successfully logged in.",
+        title: "Password reset email sent",
+        description: "Check your email for a password reset link.",
       });
-      navigate('/');
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.error('Error resetting password:', error);
       toast({
-        title: "Login failed",
-        description: error.message || "Invalid email or password",
+        title: "Password reset failed",
+        description: error.message || "Could not send password reset email",
         variant: "destructive",
       });
     } finally {
@@ -88,23 +91,35 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-purple-500 flex items-center justify-center p-4">
       <div className="flex flex-col md:flex-row w-full max-w-6xl shadow-xl rounded-lg overflow-hidden">
         {/* Left Side - Form */}
-        <div className="w-full md:w-1/2 p-8 md:p-16 bg-white flex flex-col">
+        <div className="w-full md:w-1/2 p-8 md:p-16 bg-white flex flex-col relative">
+          {/* Back to Home Link */}
+          <div className="absolute top-4 left-4">
+            <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+              Back to Home
+            </Link>
+          </div>
+          
           <div className="mb-8">
             {/* Logo */}
-            <div className="mb-8">
-              <h2 className="text-2xl inline">Apo<span className="text-secondary">Lead</span></h2>
+            <div className="mb-8 flex justify-center">
+              <h2 className="text-3xl font-bold inline">
+                <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+              </h2>
             </div>
 
-            <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-            <p className="text-gray-600 mb-8">Sign in to your ApoLead account</p>
+            <h1 className="text-3xl font-bold mb-2 text-center">Welcome Back</h1>
+            <p className="text-gray-600 mb-8 text-center">Sign in to your ApoLead account</p>
             
-            {/* Social Login - Only showing Google */}
-            <div className="flex justify-center mb-8">
+            {/* Only Google Login */}
+            <div className="flex justify-center mb-4">
               <button 
-                className="flex items-center justify-center border border-gray-300 rounded-md py-2 px-4 hover:bg-gray-50 transition w-full max-w-xs"
+                className="flex items-center justify-center border border-gray-300 rounded-md py-3 px-4 hover:bg-gray-50 transition w-full"
                 onClick={handleGoogleSignIn}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -117,6 +132,26 @@ const Login = () => {
               </button>
             </div>
             
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-600">We only support Gmail accounts at this time</p>
+            </div>
+
+            <div className="mt-6 text-center">
+              <button 
+                onClick={handleResetPassword}
+                className="text-indigo-600 hover:text-indigo-800 text-sm"
+                disabled={loading}
+              >
+                Forgot your password?
+              </button>
+            </div>
+            
+            <div className="mt-6 text-center">
+              <p className="text-gray-600">
+                Don't have an account yet? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link>
+              </p>
+            </div>
+            
             <div className="mt-auto">
               <p className="text-center text-gray-500 text-sm">© 2025 Apolead, All rights Reserved</p>
             </div>
@@ -124,7 +159,7 @@ const Login = () => {
         </div>
         
         {/* Right Side - Visual */}
-        <div className="hidden md:block w-1/2 bg-primary p-16 text-white relative">
+        <div className="hidden md:block w-1/2 bg-indigo-600 p-16 text-white relative">
           <div className="mb-8">
             <h2 className="text-3xl font-bold mb-2">Start Your Call Center Career Today</h2>
             <p className="opacity-80 text-white">Earn competitive commissions on sales</p>
