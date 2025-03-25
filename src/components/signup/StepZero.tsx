@@ -62,7 +62,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           </Link>
 
           <h2 className="text-3xl font-bold mb-6 text-white">Let us help you run your call center career.</h2>
-          <p className="text-white">Our registration process is quick and easy, taking no more than 10 minutes to complete.</p>
+          <p className="text-white/80">Our registration process is quick and easy, taking no more than 10 minutes to complete.</p>
         </div>
         
         {/* Testimonial */}
@@ -103,14 +103,14 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           {/* Logo */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+              <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
             </h2>
           </div>
 
           <h1 className="text-2xl font-bold mb-2 text-center">Get started</h1>
           <p className="text-gray-600 mb-8 text-center">Create your account now</p>
           
-          {/* Progress dots - removed dot between signup and account creation */}
+          {/* Progress dots - fixed to remove the extra dot */}
           <div className="flex justify-center mb-6 space-x-2">
             <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
             <div className="w-2 h-2 rounded-full bg-gray-300"></div>
@@ -125,7 +125,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
             </div>
           )}
           
-          {/* Google Signup Button - Fixed to remove the dot issue */}
+          {/* Google Signup Button - using a proper button element */}
           <div className="mb-6">
             <button 
               type="button"

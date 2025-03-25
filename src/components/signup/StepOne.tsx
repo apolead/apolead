@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Link } from 'react-router-dom';
 
 const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
   const [errorMessage, setErrorMessage] = useState('');
@@ -27,21 +28,51 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
   };
   
   return (
-    <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl mx-auto overflow-hidden flex flex-col md:flex-row">
-      {/* Left side - Form */}
-      <div className="w-full md:w-3/5 p-8">
-        <div className="mb-6">
-          {/* Logo */}
-          <div className="mb-6 flex justify-center">
-            <h2 className="text-2xl font-bold inline">
-              <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
-            </h2>
-          </div>
+    <div className="flex flex-col md:flex-row w-full h-screen">
+      {/* Left Side - Visual */}
+      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+        {/* Geometric shapes */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
+        <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
+        
+        <div className="relative z-10">
+          <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+            Back to Home
+          </Link>
+
+          <h2 className="text-2xl font-bold mb-6">Step 1 of 4: Personal Details</h2>
+          <p className="text-white/80 mb-6">We need your basic personal information to get started with your application.</p>
           
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 h-2 rounded-full mb-8">
-            <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "33.3%" }}></div>
+          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm mb-6">
+            <h4 className="font-semibold mb-2">Why we need this information</h4>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>To verify your identity</li>
+              <li>To comply with work regulations</li>
+              <li>To ensure you receive appropriate compensation</li>
+              <li>To communicate with you about your application</li>
+            </ul>
           </div>
+        </div>
+        
+        <div className="mt-auto pt-4 text-sm opacity-75">
+          <p>All information is securely stored and protected in accordance with data protection regulations.</p>
+        </div>
+      </div>
+      
+      {/* Right Side - Form */}
+      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+        <div className="mb-8 text-center">
+          <h2 className="text-3xl font-bold inline">
+            <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+          </h2>
+        </div>
+        
+        <div className="w-full bg-indigo-100 h-2 rounded-full mb-8">
+          <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "33.3%" }}></div>
         </div>
         
         <h2 className="text-2xl font-bold mb-4">Personal Information</h2>
@@ -54,7 +85,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
         )}
         
         <form onSubmit={handleContinue} className="space-y-5">
-          {/* First row: Name fields */}
+          {/* Name fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="step1-firstName" className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
@@ -81,7 +112,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
             </div>
           </div>
           
-          {/* Second row: Email and Birth Day */}
+          {/* Email and Birth Day */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="step1-email" className="block text-sm font-medium text-gray-700 mb-1">Confirm Email Address</label>
@@ -107,7 +138,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
             </div>
           </div>
           
-          {/* Third row: Government ID Upload */}
+          {/* Government ID Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Picture of Government ID</label>
             <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-50">
@@ -133,7 +164,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
             </div>
           </div>
           
-          {/* Fourth row: Government ID Number */}
+          {/* Government ID Number */}
           <div>
             <label htmlFor="step1-govIdNumber" className="block text-sm font-medium text-gray-700 mb-1">Government ID Number</label>
             <Input
@@ -163,28 +194,6 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
             </Button>
           </div>
         </form>
-      </div>
-      
-      {/* Right side - Visual */}
-      <div className="hidden md:block w-2/5 bg-gradient-to-br from-indigo-600 to-purple-500 p-8 text-white">
-        <div className="h-full flex flex-col justify-center">
-          <h3 className="text-xl font-bold mb-4">Step 1 of 4: Personal Details</h3>
-          <p className="opacity-90 mb-6">We need your basic personal information to get started with your application.</p>
-          
-          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-            <h4 className="font-semibold mb-2">Why we need this information</h4>
-            <ul className="list-disc pl-5 space-y-1 text-sm">
-              <li>To verify your identity</li>
-              <li>To comply with work regulations</li>
-              <li>To ensure you receive appropriate compensation</li>
-              <li>To communicate with you about your application</li>
-            </ul>
-          </div>
-          
-          <div className="mt-auto pt-8">
-            <p className="text-xs opacity-75">All information is securely stored and protected in accordance with data protection regulations.</p>
-          </div>
-        </div>
       </div>
     </div>
   );
