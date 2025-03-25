@@ -40,8 +40,8 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between">
-        {/* Geometric shapes */}
+      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+        {/* Geometric shapes - adjusted to not overlap */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -118,7 +118,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
             </div>
           )}
           
-          {/* Google Signup */}
+          {/* Google Signup - removed the purple dot above by fixing spacing */}
           <button 
             className="w-full mb-4 border border-gray-300 rounded-md py-3 flex items-center justify-center hover:bg-gray-50 transition"
             onClick={handleGoogleSignUp}
