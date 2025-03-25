@@ -120,7 +120,7 @@ const SignUp = () => {
         systemSettingsUrl = systemSettingsData.path;
       }
 
-      // 3. Store user data in Supabase database - IMPORTANT: Use user_profiles table, not user_applications
+      // 3. Store user data in Supabase database
       const { error: userDataError } = await supabase
         .from('user_profiles')
         .insert([

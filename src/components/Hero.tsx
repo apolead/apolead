@@ -38,6 +38,16 @@ const Hero = () => {
           </div>
         )}
       </div>
+      
+      {/* Login button in top right */}
+      <div className="absolute top-4 right-8 z-10">
+        <Link 
+          to="/login" 
+          className="bg-white text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-md shadow-sm font-medium transition-colors"
+        >
+          Log In
+        </Link>
+      </div>
     </section>
   );
 };
