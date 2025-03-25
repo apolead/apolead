@@ -79,30 +79,30 @@ const Login = () => {
             Back to Home
           </Link>
 
-          <h2 className="text-3xl font-bold mb-6">Welcome Back!</h2>
-          <p className="text-xl font-semibold mb-3">Let's Keep Your Career Running</p>
-          <p className="opacity-80 text-white">Manage your call center work seamlessly - online, remote, and everywhere in between.</p>
+          <h2 className="text-3xl font-bold mb-6 text-white">Welcome Back!</h2>
+          <p className="text-xl font-semibold mb-3 text-white">Let's Keep Your Career Running</p>
+          <p className="text-white">Manage your call center work seamlessly - online, remote, and everywhere in between.</p>
         </div>
         
         {/* Testimonial */}
         <div className="mt-auto">
           <div className="bg-indigo-700 bg-opacity-50 rounded-lg p-5 mb-8">
-            <p className="text-sm italic mb-3">"I'm impressed with how quickly I've seen sales since starting to use this platform. I began receiving clients and projects in the first week."</p>
+            <p className="text-sm italic mb-3 text-white">"I'm impressed with how quickly I've seen sales since starting to use this platform. I began receiving clients and projects in the first week."</p>
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-2">
                 S
               </div>
               <div>
-                <p className="text-xs font-semibold">Sarah Johnson</p>
-                <p className="text-xs opacity-75">Remote Agent</p>
+                <p className="text-xs font-semibold text-white">Sarah Johnson</p>
+                <p className="text-xs opacity-75 text-white">Remote Agent</p>
               </div>
             </div>
           </div>
           
           {/* Bottom quote */}
           <div className="border-t border-indigo-500 pt-4 text-sm italic">
-            <p>"If you can build a great experience, customers will come back after their first call. Word of mouth is very powerful!"</p>
-            <p className="mt-2 font-semibold">— Alex W.</p>
+            <p className="text-white">"If you can build a great experience, customers will come back after their first call. Word of mouth is very powerful!"</p>
+            <p className="mt-2 font-semibold text-white">— Alex W.</p>
           </div>
         </div>
       </div>
