@@ -81,6 +81,10 @@ const SignUp = () => {
 
       if (authError) throw authError;
 
+      if (!authData.user) {
+        throw new Error('User creation failed. Please try again.');
+      }
+
       // 2. Upload images to Supabase Storage
       let govIdUrl = null;
       let speedTestUrl = null;
@@ -116,9 +120,9 @@ const SignUp = () => {
         systemSettingsUrl = systemSettingsData.path;
       }
 
-      // 3. Store user data in Supabase database
+      // 3. Store user data in Supabase database - IMPORTANT: Use user_profiles table, not user_applications
       const { error: userDataError } = await supabase
-        .from('user_applications')
+        .from('user_profiles')
         .insert([
           {
             user_id: authData.user.id,
@@ -157,9 +161,18 @@ const SignUp = () => {
           }
         ]);
 
-      if (userDataError) throw userDataError;
+      if (userDataError) {
+        console.error('Error submitting profile data:', userDataError);
+        throw userDataError;
+      }
 
       // Show success message and confirmation screen
+      toast({
+        title: "Application submitted successfully",
+        description: "Your application has been received. We'll be in touch soon!",
+        variant: "default",
+      });
+      
       nextStep();
     } catch (error) {
       console.error('Error submitting application:', error);
