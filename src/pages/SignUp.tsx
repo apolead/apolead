@@ -67,6 +67,12 @@ const SignUp = () => {
   // Function to handle form submission
   const handleSubmit = async () => {
     try {
+      // Check Supabase URL and Key are available
+      if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        console.error('Supabase environment variables are missing or invalid');
+        throw new Error('Configuration error. Please contact support.');
+      }
+
       // 1. Create user account with Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
