@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -9,7 +10,7 @@ const Hero = () => {
         <div className="md:w-1/2 md:pr-8 mb-12 md:mb-0 animate-fadeInUp">
           <h1 className="mb-4">Your Time. Your Schedule. <span className="text-primary">Your Career.</span></h1>
           <p className="mb-6">Join ApoLead - the premier remote call center platform where you can work from anywhere in the world, on your own schedule. Turn your communication skills into a flexible career with unlimited earning potential.</p>
-          <a href="#sign-up" className="btn btn-primary btn-large mb-16">Start Your Journey →</a>
+          <Link to="/login" className="btn btn-primary btn-large mb-16">Start Your Journey →</Link>
           
           <div className="flex flex-wrap mt-8">
             <div className="mr-8 mb-4">
