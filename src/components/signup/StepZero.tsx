@@ -68,7 +68,6 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
               </div>
               <div>
                 <p className="text-xs font-semibold text-white">James Kim</p>
-                <p className="text-xs opacity-75 text-white">Product Manager</p>
               </div>
             </div>
           </div>

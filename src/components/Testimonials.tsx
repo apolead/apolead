@@ -39,7 +39,7 @@ const Testimonials = () => {
           {testimonials.map((testimonial, index) => (
             <div 
               key={index} 
-              className={`w-full md:w-[calc(50%-1rem)] mb-8 bg-white rounded-xl p-8 shadow-md relative animate-fadeInUp animate-fadeInUp-delay-${index % 4}`}
+              className={`w-full md:w-[calc(50%-1rem)] mb-8 bg-white rounded-xl p-8 shadow-md relative`}
             >
               <div className="relative">
                 <div className="absolute top-[-15px] left-[-10px] text-5xl text-primary opacity-10">
