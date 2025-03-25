@@ -33,7 +33,7 @@ const Hero = () => {
         {!isMobile && (
           <div className="md:w-1/2">
             <div>
-              <img src="/agent_signup.jpg" alt="Agent Sign Up" className="max-w-full rounded-lg shadow-xl" />
+              <img src="/agent.jpg" alt="Agent" className="max-w-full rounded-lg shadow-xl" />
             </div>
           </div>
         )}
