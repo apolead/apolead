@@ -51,6 +51,21 @@ const SignUp = () => {
 
   // Function to handle next step
   const nextStep = () => {
+    // Process full name into first/last before proceeding to step 1
+    if (currentStep === 0 && userData.firstName) {
+      // Split full name into firstName and lastName if not already done
+      const nameParts = userData.firstName.trim().split(' ');
+      if (nameParts.length > 1 && !userData.lastName) {
+        const firstName = nameParts[0];
+        const lastName = nameParts.slice(1).join(' ');
+        setUserData(prev => ({
+          ...prev,
+          firstName,
+          lastName
+        }));
+      }
+    }
+    
     setCurrentStep(currentStep + 1);
   };
 

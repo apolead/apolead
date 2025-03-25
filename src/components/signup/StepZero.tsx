@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 
 const StepZero = ({ userData, updateUserData, nextStep }) => {
   const [errorMessage, setErrorMessage] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   
   const handleContinue = (e) => {
     e.preventDefault();
@@ -19,6 +20,12 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
     // Add password field
     if (!userData.password || userData.password.length < 6) {
       setErrorMessage('Password must be at least 6 characters');
+      return;
+    }
+
+    // Check if passwords match
+    if (userData.password !== confirmPassword) {
+      setErrorMessage('Passwords do not match');
       return;
     }
     
@@ -118,9 +125,10 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
             </div>
           )}
           
-          {/* Google Signup Button - Completely redone to remove the dot issue */}
+          {/* Google Signup Button - Fixed to remove the dot issue */}
           <div className="mb-6">
             <button 
+              type="button"
               className="w-full border border-gray-300 rounded-md py-3 flex items-center justify-center hover:bg-gray-50 transition"
               onClick={handleGoogleSignUp}
             >
@@ -182,6 +190,20 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
                 className="w-full"
               />
               <p className="text-xs text-green-600 mt-1">Strong</p>
+            </div>
+            
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm Password
+              </label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your password"
+                className="w-full"
+              />
             </div>
             
             <Button 
