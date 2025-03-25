@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useToast } from '../hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 const CTA = () => {
   const { toast } = useToast();
@@ -38,11 +39,20 @@ const CTA = () => {
               <li className="mb-2 flex items-center"><span className="mr-2">✓</span> Weekly payments directly to your account</li>
               <li className="mb-2 flex items-center"><span className="mr-2">✓</span> Supportive community of remote professionals</li>
             </ul>
+            
+            <div className="mt-8">
+              <Link 
+                to="/signup" 
+                className="btn btn-primary btn-large inline-block"
+              >
+                Apply Now - Create Your Account
+              </Link>
+            </div>
           </div>
           
           <div className="md:w-1/2 animate-fadeInUp animate-fadeInUp-delay-2">
             <div className="bg-white rounded-xl p-8 shadow-xl">
-              <h3 className="text-center mb-6 text-dark">Apply Now</h3>
+              <h3 className="text-center mb-6 text-dark">Quick Application</h3>
               <form onSubmit={handleSubmit}>
                 <div className="mb-5">
                   <label htmlFor="name" className="block mb-2 font-semibold text-dark">Full Name</label>
@@ -93,6 +103,12 @@ const CTA = () => {
                 </div>
                 
                 <button type="submit" className="btn btn-primary w-full">Start Your Application</button>
+                
+                <div className="mt-4 text-center">
+                  <span className="text-dark">Or</span>{' '}
+                  <Link to="/signup" className="text-primary font-semibold">Create an Account</Link> {' '}
+                  <span className="text-dark">for full access</span>
+                </div>
               </form>
             </div>
           </div>
