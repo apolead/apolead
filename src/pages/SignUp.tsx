@@ -9,10 +9,19 @@ import StepTwo from '@/components/signup/StepTwo';
 import StepThree from '@/components/signup/StepThree';
 import ConfirmationScreen from '@/components/signup/ConfirmationScreen';
 
-// Create supabase client
+// Create supabase client with proper error handling for environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Validate environment variables
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase environment variables. Make sure to set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.');
+}
+
+// Only create the client if we have the required values
+const supabase = supabaseUrl && supabaseKey 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -72,6 +81,11 @@ const SignUp = () => {
   // Function to handle form submission
   const handleSubmit = async () => {
     try {
+      // Check if Supabase client is initialized
+      if (!supabase) {
+        throw new Error('Supabase client is not initialized. Please check your environment variables.');
+      }
+
       // 1. Create user account with Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
