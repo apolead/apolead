@@ -2,10 +2,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 
 const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedDays, setSelectedDays] = useState(userData.availableDays || []);
+  const [dayHours, setDayHours] = useState(userData.dayHours || {});
   
   const daysOfWeek = [
     { id: 'monday', label: 'Monday' },
@@ -17,38 +20,44 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
     { id: 'sunday', label: 'Sunday' },
   ];
   
-  const timeSlots = [
-    { id: 'morning', label: 'Morning (6am - 12pm)' },
-    { id: 'afternoon', label: 'Afternoon (12pm - 6pm)' },
-    { id: 'evening', label: 'Evening (6pm - 12am)' },
-    { id: 'night', label: 'Night (12am - 6am)' },
-  ];
-  
-  const toggleAvailability = (day, timeSlot) => {
-    const availabilityKey = `${day}_${timeSlot}`;
-    const currentAvailability = [...userData.availableHours];
-    
-    if (currentAvailability.includes(availabilityKey)) {
-      // Remove if already selected
-      const updatedAvailability = currentAvailability.filter(item => item !== availabilityKey);
-      updateUserData({ availableHours: updatedAvailability });
+  const handleDayToggle = (day) => {
+    let updatedDays;
+    if (selectedDays.includes(day)) {
+      updatedDays = selectedDays.filter(d => d !== day);
+      // Remove hours for this day
+      const updatedHours = {...dayHours};
+      delete updatedHours[day];
+      setDayHours(updatedHours);
+      updateUserData({ dayHours: updatedHours });
     } else {
-      // Add if not already selected
-      updateUserData({ availableHours: [...currentAvailability, availabilityKey] });
+      updatedDays = [...selectedDays, day];
     }
+    setSelectedDays(updatedDays);
+    updateUserData({ availableDays: updatedDays });
   };
   
-  const isTimeSlotSelected = (day, timeSlot) => {
-    const availabilityKey = `${day}_${timeSlot}`;
-    return userData.availableHours.includes(availabilityKey);
+  const handleHoursChange = (day, value) => {
+    const updatedHours = {...dayHours, [day]: value};
+    setDayHours(updatedHours);
+    updateUserData({ dayHours: updatedHours });
+  };
+  
+  const toggleYesNo = (field, value) => {
+    updateUserData({ [field]: value });
   };
   
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     
     // Validate form
-    if (userData.availableHours.length === 0) {
-      setErrorMessage('Please select at least one availability time slot');
+    if (selectedDays.length === 0) {
+      setErrorMessage('Please select at least one day of availability');
+      return;
+    }
+    
+    if (!userData.meetObligation || !userData.loginDiscord || !userData.checkEmails || 
+        !userData.solveProblems || !userData.completeTraining) {
+      setErrorMessage('Please answer all the commitment questions');
       return;
     }
     
@@ -84,8 +93,8 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
         <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "100%" }}></div>
       </div>
       
-      <h2 className="text-2xl font-bold mb-6">Availability & Terms</h2>
-      <p className="text-gray-600 mb-8">Almost there! Let us know when you're available to work and review our terms and conditions.</p>
+      <h2 className="text-2xl font-bold mb-6">Availability & Commitments</h2>
+      <p className="text-gray-600 mb-8">Please tell us about your availability and commitment to the position.</p>
       
       {errorMessage && (
         <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md text-sm mb-6">
@@ -95,89 +104,169 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
       
       <form onSubmit={handleFormSubmit} className="space-y-8">
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-medium mb-4">Select Your Availability</h3>
-          <p className="text-sm text-gray-600 mb-4">Please indicate which times you're available to work. Select as many as apply.</p>
+          <h3 className="text-lg font-medium mb-4">Hours & Availability</h3>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr>
-                  <th className="py-2 px-3 bg-gray-100 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Day
-                  </th>
-                  {timeSlots.map(slot => (
-                    <th 
-                      key={slot.id}
-                      className="py-2 px-3 bg-gray-100 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {slot.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
+          <div className="space-y-5">
+            <p className="text-sm text-gray-600">While you can set your schedule during our hours of operation, we require 15 hours per week.</p>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Can you meet this obligation three weeks out of every four?</label>
+              <div className="flex space-x-3">
+                <button 
+                  type="button" 
+                  className={`w-20 py-1.5 border border-indigo-600 rounded text-sm ${userData.meetObligation === true ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}
+                  onClick={() => toggleYesNo('meetObligation', true)}
+                >
+                  YES
+                </button>
+                <button 
+                  type="button" 
+                  className={`w-20 py-1.5 border border-indigo-600 rounded text-sm ${userData.meetObligation === false ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}
+                  onClick={() => toggleYesNo('meetObligation', false)}
+                >
+                  NO
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-3">What days will you plan to work?</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {daysOfWeek.map(day => (
-                  <tr key={day.id} className="border-t border-gray-200">
-                    <td className="py-3 px-3 text-sm font-medium text-gray-900">
-                      {day.label}
-                    </td>
-                    {timeSlots.map(slot => (
-                      <td key={`${day.id}-${slot.id}`} className="py-3 px-3">
-                        <div 
-                          className={`cursor-pointer h-6 w-6 rounded-md flex items-center justify-center border ${
-                            isTimeSlotSelected(day.id, slot.id) 
-                              ? 'bg-indigo-600 border-indigo-600 text-white' 
-                              : 'border-gray-300 bg-white'
-                          }`}
-                          onClick={() => toggleAvailability(day.id, slot.id)}
-                        >
-                          {isTimeSlotSelected(day.id, slot.id) && (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
+                  <button 
+                    key={day.id}
+                    type="button" 
+                    className={`w-full py-1.5 border border-indigo-600 rounded text-sm ${selectedDays.includes(day.id) ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}
+                    onClick={() => handleDayToggle(day.id)}
+                  >
+                    {day.label}
+                  </button>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
+            
+            {selectedDays.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Hours planned per day:</h4>
+                <div className="space-y-3">
+                  {selectedDays.map(day => (
+                    <div key={`hours-${day}`} className="flex items-center mb-2">
+                      <span className="w-24 text-sm text-gray-700 capitalize">{day}:</span>
+                      <input
+                        type="text"
+                        value={dayHours[day] || ''}
+                        onChange={(e) => handleHoursChange(day, e.target.value)}
+                        className="flex-1 h-9 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        placeholder="e.g., 9:00 AM - 12:00 PM"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-medium mb-4">Workspace Requirements</h3>
+          <p className="text-sm text-gray-600 mb-4">We operate on a light staffing model and the expectation is that our Contractors (you!) are paying attention and driving your own performance.</p>
+          
+          <h3 className="text-lg font-medium mb-4">Will you be able to:</h3>
           
           <div className="space-y-4">
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Do you have a quiet place to work from?</h4>
-              <div className="flex space-x-4">
-                <label className="inline-flex items-center">
-                  <input 
-                    type="radio" 
-                    name="quietPlace" 
-                    value="yes" 
-                    checked={userData.hasQuietPlace === true}
-                    onChange={() => updateUserData({ hasQuietPlace: true })}
-                    className="w-5 h-5 cursor-pointer text-indigo-600"
-                  />
-                  <span className="ml-2">Yes</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input 
-                    type="radio" 
-                    name="quietPlace" 
-                    value="no" 
-                    checked={userData.hasQuietPlace === false}
-                    onChange={() => updateUserData({ hasQuietPlace: false })}
-                    className="w-5 h-5 cursor-pointer text-indigo-600"
-                  />
-                  <span className="ml-2">No</span>
-                </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Login to Discord everyday that you work?</label>
+              <div className="flex space-x-3">
+                <button 
+                  type="button" 
+                  className={`w-20 py-1.5 border border-indigo-600 rounded text-sm ${userData.loginDiscord === true ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}
+                  onClick={() => toggleYesNo('loginDiscord', true)}
+                >
+                  YES
+                </button>
+                <button 
+                  type="button" 
+                  className={`w-20 py-1.5 border border-indigo-600 rounded text-sm ${userData.loginDiscord === false ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}
+                  onClick={() => toggleYesNo('loginDiscord', false)}
+                >
+                  NO
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Check company emails every day?</label>
+              <div className="flex space-x-3">
+                <button 
+                  type="button" 
+                  className={`w-20 py-1.5 border border-indigo-600 rounded text-sm ${userData.checkEmails === true ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}
+                  onClick={() => toggleYesNo('checkEmails', true)}
+                >
+                  YES
+                </button>
+                <button 
+                  type="button" 
+                  className={`w-20 py-1.5 border border-indigo-600 rounded text-sm ${userData.checkEmails === false ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}
+                  onClick={() => toggleYesNo('checkEmails', false)}
+                >
+                  NO
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Proactively solve your own problems and help others solve theirs?</label>
+              <div className="flex space-x-3">
+                <button 
+                  type="button" 
+                  className={`w-20 py-1.5 border border-indigo-600 rounded text-sm ${userData.solveProblems === true ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}
+                  onClick={() => toggleYesNo('solveProblems', true)}
+                >
+                  YES
+                </button>
+                <button 
+                  type="button" 
+                  className={`w-20 py-1.5 border border-indigo-600 rounded text-sm ${userData.solveProblems === false ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}
+                  onClick={() => toggleYesNo('solveProblems', false)}
+                >
+                  NO
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Complete required training on your own?</label>
+              <div className="flex space-x-3">
+                <button 
+                  type="button" 
+                  className={`w-20 py-1.5 border border-indigo-600 rounded text-sm ${userData.completeTraining === true ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}
+                  onClick={() => toggleYesNo('completeTraining', true)}
+                >
+                  YES
+                </button>
+                <button 
+                  type="button" 
+                  className={`w-20 py-1.5 border border-indigo-600 rounded text-sm ${userData.completeTraining === false ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}
+                  onClick={() => toggleYesNo('completeTraining', false)}
+                >
+                  NO
+                </button>
               </div>
             </div>
           </div>
+        </div>
+        
+        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+          <p className="text-sm text-gray-600 mb-4">At Apolead, we believe in fostering a positive, results-oriented atmosphere where employees are empowered to succeed.</p>
+          
+          <label htmlFor="personal-statement" className="block text-sm font-medium text-gray-700 mb-2">Briefly tell us what this means to you:</label>
+          <Textarea
+            id="personal-statement"
+            rows={4}
+            value={userData.personalStatement || ''}
+            onChange={(e) => updateUserData({ personalStatement: e.target.value })}
+            className="w-full resize-vertical"
+            placeholder="Share your thoughts here..."
+          />
         </div>
         
         <div className="border-t pt-6">

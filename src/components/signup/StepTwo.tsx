@@ -185,6 +185,176 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
               </label>
             </div>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">I have a quiet place to work</label>
+            <div className="flex space-x-4">
+              <label className="inline-flex items-center">
+                <input 
+                  type="radio" 
+                  name="quietPlace" 
+                  value="yes" 
+                  checked={userData.hasQuietPlace === true}
+                  onChange={() => updateUserData({ hasQuietPlace: true })}
+                  className="w-5 h-5 cursor-pointer text-indigo-600"
+                />
+                <span className="ml-2">Yes</span>
+              </label>
+              <label className="inline-flex items-center">
+                <input 
+                  type="radio" 
+                  name="quietPlace" 
+                  value="no" 
+                  checked={userData.hasQuietPlace === false}
+                  onChange={() => updateUserData({ hasQuietPlace: false })}
+                  className="w-5 h-5 cursor-pointer text-indigo-600"
+                />
+                <span className="ml-2">No</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-8">
+        <h3 className="text-lg font-medium mb-4">Call Center Experience</h3>
+        
+        <div className="space-y-6">
+          <div className="border-b pb-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Sales Experience</h4>
+            <div className="flex space-x-4 mb-3">
+              <label className="inline-flex items-center">
+                <input 
+                  type="radio" 
+                  name="salesExperience" 
+                  value="yes" 
+                  checked={userData.salesExperience === true}
+                  onChange={() => updateUserData({ salesExperience: true })}
+                  className="w-5 h-5 cursor-pointer text-indigo-600"
+                />
+                <span className="ml-2">Yes</span>
+              </label>
+              <label className="inline-flex items-center">
+                <input 
+                  type="radio" 
+                  name="salesExperience" 
+                  value="no" 
+                  checked={userData.salesExperience === false}
+                  onChange={() => updateUserData({ salesExperience: false })}
+                  className="w-5 h-5 cursor-pointer text-indigo-600"
+                />
+                <span className="ml-2">No</span>
+              </label>
+            </div>
+            
+            {userData.salesExperience && (
+              <div className="pl-6 space-y-3 border-l-2 border-indigo-100">
+                <div>
+                  <label htmlFor="step2-salesMonths" className="block text-sm font-medium text-gray-700 mb-1">How many months?</label>
+                  <Input
+                    type="number"
+                    id="step2-salesMonths"
+                    value={userData.salesMonths || ''}
+                    onChange={(e) => updateUserData({ salesMonths: e.target.value })}
+                    className="w-full"
+                    placeholder="Enter number of months"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="step2-salesCompany" className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                  <Input
+                    type="text"
+                    id="step2-salesCompany"
+                    value={userData.salesCompany || ''}
+                    onChange={(e) => updateUserData({ salesCompany: e.target.value })}
+                    className="w-full"
+                    placeholder="Enter company name"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="step2-salesProduct" className="block text-sm font-medium text-gray-700 mb-1">Product sold?</label>
+                  <Input
+                    type="text"
+                    id="step2-salesProduct"
+                    value={userData.salesProduct || ''}
+                    onChange={(e) => updateUserData({ salesProduct: e.target.value })}
+                    className="w-full"
+                    placeholder="e.g., Software subscriptions, Insurance, etc."
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Service Experience</h4>
+            <div className="flex space-x-4 mb-3">
+              <label className="inline-flex items-center">
+                <input 
+                  type="radio" 
+                  name="serviceExperience" 
+                  value="yes" 
+                  checked={userData.serviceExperience === true}
+                  onChange={() => updateUserData({ serviceExperience: true })}
+                  className="w-5 h-5 cursor-pointer text-indigo-600"
+                />
+                <span className="ml-2">Yes</span>
+              </label>
+              <label className="inline-flex items-center">
+                <input 
+                  type="radio" 
+                  name="serviceExperience" 
+                  value="no" 
+                  checked={userData.serviceExperience === false}
+                  onChange={() => updateUserData({ serviceExperience: false })}
+                  className="w-5 h-5 cursor-pointer text-indigo-600"
+                />
+                <span className="ml-2">No</span>
+              </label>
+            </div>
+            
+            {userData.serviceExperience && (
+              <div className="pl-6 space-y-3 border-l-2 border-indigo-100">
+                <div>
+                  <label htmlFor="step2-serviceMonths" className="block text-sm font-medium text-gray-700 mb-1">How many months?</label>
+                  <Input
+                    type="number"
+                    id="step2-serviceMonths"
+                    value={userData.serviceMonths || ''}
+                    onChange={(e) => updateUserData({ serviceMonths: e.target.value })}
+                    className="w-full"
+                    placeholder="Enter number of months"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="step2-serviceCompany" className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                  <Input
+                    type="text"
+                    id="step2-serviceCompany"
+                    value={userData.serviceCompany || ''}
+                    onChange={(e) => updateUserData({ serviceCompany: e.target.value })}
+                    className="w-full"
+                    placeholder="Enter company name"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="step2-serviceProduct" className="block text-sm font-medium text-gray-700 mb-1">Product Supported?</label>
+                  <Input
+                    type="text"
+                    id="step2-serviceProduct"
+                    value={userData.serviceProduct || ''}
+                    onChange={(e) => updateUserData({ serviceProduct: e.target.value })}
+                    className="w-full"
+                    placeholder="e.g., Technical support, Customer service, etc."
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       
