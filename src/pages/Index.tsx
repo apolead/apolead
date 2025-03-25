@@ -1,12 +1,72 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useEffect } from 'react';
+import Header from '../components/Header';
+import Hero from '../components/Hero';
+import Features from '../components/Features';
+import HowItWorks from '../components/HowItWorks';
+import Benefits from '../components/Benefits';
+import Stats from '../components/Stats';
+import Testimonials from '../components/Testimonials';
+import CTA from '../components/CTA';
+import Footer from '../components/Footer';
+
+// Import Font Awesome
+const FontAwesomeScript = () => {
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  return null;
+};
 
 const Index = () => {
+  useEffect(() => {
+    // Animation on scroll effect
+    const animateOnScroll = () => {
+      const elements = document.querySelectorAll('.animate-fadeInUp');
+      
+      elements.forEach(element => {
+        const position = element.getBoundingClientRect();
+        // If element is in viewport
+        if (position.top < window.innerHeight - 50) {
+          element.classList.add('opacity-100');
+        }
+      });
+    };
+
+    // Initialize
+    document.querySelectorAll('.animate-fadeInUp').forEach(element => {
+      element.classList.add('opacity-0');
+    });
+
+    // Add scroll event
+    window.addEventListener('scroll', animateOnScroll);
+    // Initial check
+    animateOnScroll();
+
+    // Clean up
+    return () => window.removeEventListener('scroll', animateOnScroll);
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="overflow-x-hidden">
+      <FontAwesomeScript />
+      <Header />
+      <Hero />
+      <Features />
+      <HowItWorks />
+      <Benefits />
+      <Stats />
+      <Testimonials />
+      <CTA />
+      <Footer />
     </div>
   );
 };
