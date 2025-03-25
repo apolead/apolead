@@ -2,26 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import StepZero from '@/components/signup/StepZero';
 import StepOne from '@/components/signup/StepOne';
 import StepTwo from '@/components/signup/StepTwo';
 import StepThree from '@/components/signup/StepThree';
 import ConfirmationScreen from '@/components/signup/ConfirmationScreen';
-
-// Create supabase client with proper error handling for environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Validate environment variables
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables. Make sure to set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.');
-}
-
-// Only create the client if we have the required values
-const supabase = supabaseUrl && supabaseKey 
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
 
 const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -81,11 +67,6 @@ const SignUp = () => {
   // Function to handle form submission
   const handleSubmit = async () => {
     try {
-      // Check if Supabase client is initialized
-      if (!supabase) {
-        throw new Error('Supabase client is not initialized. Please check your environment variables.');
-      }
-
       // 1. Create user account with Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
@@ -131,7 +112,7 @@ const SignUp = () => {
 
       // 3. Store user data in Supabase database
       const { error: userDataError } = await supabase
-        .from('user_profiles')
+        .from('user_applications')
         .insert([
           {
             user_id: authData.user.id,
