@@ -38,11 +38,48 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
   };
   
   return (
-    <div className="flex flex-col md:flex-row w-full max-w-6xl shadow-xl rounded-lg overflow-hidden">
-      {/* Left Side - Form */}
-      <div className="w-full md:w-1/2 p-8 md:p-16 bg-white flex flex-col relative">
-        {/* Back to Home Link */}
-        <div className="absolute top-4 left-4">
+    <div className="flex flex-col md:flex-row w-full h-screen">
+      {/* Left Side - Visual */}
+      <div className="hidden md:block md:w-1/2 bg-indigo-600 text-white relative p-8 md:p-16 flex flex-col justify-between">
+        <div>
+          <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+            Back to Home
+          </Link>
+
+          <h2 className="text-3xl font-bold mb-6">Let us help you run your call center career.</h2>
+          <p className="opacity-80 text-white">Our registration process is quick and easy, taking no more than 10 minutes to complete.</p>
+        </div>
+        
+        {/* Testimonial */}
+        <div className="mt-auto">
+          <div className="bg-indigo-700 bg-opacity-50 rounded-lg p-5 mb-8">
+            <p className="text-sm italic mb-3">"I'm impressed with how quickly I've seen progress since starting to use this platform. I began receiving clients and projects in the first week."</p>
+            <div className="flex items-center">
+              <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-2">
+                J
+              </div>
+              <div>
+                <p className="text-xs font-semibold">James Kim</p>
+                <p className="text-xs opacity-75">Product Manager</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Bottom quote */}
+          <div className="border-t border-indigo-500 pt-4 text-sm italic">
+            <p>"If you can build a great experience, customers will come back after their first call. Word of mouth is very powerful!"</p>
+            <p className="mt-2 font-semibold">— Alex W.</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Right Side - Form */}
+      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+        {/* Back to Home Link (Mobile Only) */}
+        <div className="block md:hidden mb-8">
           <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -51,11 +88,11 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           </Link>
         </div>
       
-        <div className="flex-1 flex flex-col justify-center">
+        <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
           {/* Logo */}
-          <div className="mb-8 flex justify-center">
+          <div className="text-center mb-8">
             <h2 className="text-3xl font-bold inline">
-              <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
             </h2>
           </div>
 
@@ -162,35 +199,6 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         
         <div className="mt-auto pt-4">
           <p className="text-center text-gray-500 text-xs">© 2025 ApoLead, All rights Reserved</p>
-        </div>
-      </div>
-      
-      {/* Right Side - Visual */}
-      <div className="hidden md:block w-1/2 bg-gradient-to-br from-indigo-600 to-purple-500 p-16 text-white relative">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Let us help you run your call center career.</h2>
-          <p className="opacity-80 text-white">Our registration process is quick and easy, taking no more than 10 minutes to complete.</p>
-        </div>
-        
-        {/* Testimonial */}
-        <div className="bg-indigo-700 bg-opacity-50 rounded-lg p-5 mt-12">
-          <p className="text-sm italic mb-3">"I'm impressed with how quickly I've seen progress since starting to use this platform. I began receiving clients and projects in the first week."</p>
-          <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-2">
-              J
-            </div>
-            <div>
-              <p className="text-xs font-semibold">James Kim</p>
-              <p className="text-xs opacity-75">Product Manager</p>
-            </div>
-          </div>
-        </div>
-        
-        {/* Pagination dots */}
-        <div className="absolute bottom-16 left-0 right-0 flex justify-center space-x-1">
-          <div className="w-2 h-2 rounded-full bg-white"></div>
-          <div className="w-2 h-2 rounded-full bg-white opacity-50"></div>
-          <div className="w-2 h-2 rounded-full bg-white opacity-50"></div>
         </div>
       </div>
     </div>

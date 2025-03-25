@@ -31,7 +31,7 @@ const CTA = () => {
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 md:pr-8 mb-12 md:mb-0 animate-fadeInUp">
             <h2 className="mb-4">Ready to Transform Your Career?</h2>
-            <p className="mb-6">Join thousands of satisfied agents who have discovered the freedom and flexibility of working with ApoLead. Your new career journey starts with a simple application.</p>
+            <p className="mb-6">Join thousands of satisfied agents who have discovered the freedom and flexibility of working with <span className="text-[#00c2cb]">Apo</span><span className="text-white font-bold">Lead</span>. Your new career journey starts with a simple application.</p>
             <ul className="list-none">
               <li className="mb-2 flex items-center"><span className="mr-2">✓</span> No experience necessary - full training provided</li>
               <li className="mb-2 flex items-center"><span className="mr-2">✓</span> Minimal weekly hour requirements</li>
@@ -52,7 +52,7 @@ const CTA = () => {
           
           <div className="md:w-1/2 animate-fadeInUp animate-fadeInUp-delay-2">
             <div className="bg-white rounded-xl p-8 shadow-xl">
-              <h3 className="text-center mb-6 text-dark">Quick Application</h3>
+              <h3 className="text-center mb-6 text-dark"><span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span> Application</h3>
               <form onSubmit={handleSubmit}>
                 <div className="mb-5">
                   <label htmlFor="name" className="block mb-2 font-semibold text-dark">Full Name</label>

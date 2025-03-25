@@ -8,7 +8,7 @@ const Hero = () => {
 
   return (
     <section id="hero" className="pt-32 pb-20 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full bg-[url('/api/placeholder/1200/600')] bg-cover bg-center blur-md opacity-10"></div>
+      <div className="absolute top-0 left-0 w-full h-full bg-[url('/agent_signup.jpg')] bg-cover bg-center blur-md opacity-10"></div>
       <div className="container relative z-[2] flex flex-col md:flex-row items-center justify-between">
         <div className="md:w-1/2 md:pr-8 mb-12 md:mb-0 animate-fadeInUp">
           <h1 className={`mb-4 ${isMobile ? 'text-3xl' : ''}`}>Your Time. Your Schedule. <span className="text-primary">Your Career.</span></h1>
