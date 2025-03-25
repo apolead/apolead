@@ -95,18 +95,13 @@ const Login = () => {
           <div className="mb-8">
             {/* Logo */}
             <div className="mb-8">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="20" height="20" fill="#4F46E5" />
-                <rect x="22" width="20" height="20" fill="#4F46E5" />
-                <rect y="22" width="20" height="20" fill="#4F46E5" />
-                <rect x="22" y="22" width="20" height="20" fill="#4F46E5" />
-              </svg>
+              <h2 className="text-2xl inline">Apo<span className="text-secondary">Lead</span></h2>
             </div>
 
             <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
             <p className="text-gray-600 mb-8">Sign in to your ApoLead account</p>
             
-            {/* Social Login */}
+            {/* Social Login - Only showing Google */}
             <div className="flex justify-center mb-8">
               <button 
                 className="flex items-center justify-center border border-gray-300 rounded-md py-2 px-4 hover:bg-gray-50 transition w-full max-w-xs"
@@ -122,82 +117,17 @@ const Login = () => {
               </button>
             </div>
             
-            <div className="relative flex items-center mb-8">
-              <div className="flex-grow border-t border-gray-300"></div>
-              <span className="flex-shrink mx-4 text-gray-600">or</span>
-              <div className="flex-grow border-t border-gray-300"></div>
+            <div className="mt-auto">
+              <p className="text-center text-gray-500 text-sm">© 2025 Apolead, All rights Reserved</p>
             </div>
-            
-            {/* Form Fields */}
-            <form onSubmit={handleSignIn} className="space-y-4 mb-6">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-                <Input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <Input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full"
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                    Remember me
-                  </label>
-                </div>
-                
-                <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
-                  Forgot your password?
-                </a>
-              </div>
-              
-              <Button
-                type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-700"
-                disabled={loading}
-              >
-                {loading ? "Signing in..." : "Sign In"}
-              </Button>
-            </form>
-            
-            <p className="text-center text-gray-600">
-              Don't have an account? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link>
-            </p>
-          </div>
-          
-          <div className="mt-auto">
-            <p className="text-center text-gray-500 text-sm">© 2025 Apolead, All rights Reserved</p>
           </div>
         </div>
         
         {/* Right Side - Visual */}
-        <div className="hidden md:block w-1/2 bg-indigo-600 p-16 text-white relative">
+        <div className="hidden md:block w-1/2 bg-primary p-16 text-white relative">
           <div className="mb-8">
             <h2 className="text-3xl font-bold mb-2">Start Your Call Center Career Today</h2>
-            <p className="opacity-80">Earn competitive commissions on credit sales</p>
+            <p className="opacity-80 text-white">Earn competitive commissions on sales</p>
           </div>
           
           {/* Dashboard Mockup */}

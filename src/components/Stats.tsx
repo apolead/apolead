@@ -4,9 +4,8 @@ import React from 'react';
 const Stats = () => {
   const stats = [
     { number: "97%", label: "Agent Satisfaction" },
-    { number: "35+", label: "Countries Represented" },
-    { number: "4.8", label: "Average Agent Rating" },
-    { number: "10M+", label: "Calls Handled Monthly" }
+    { number: "32+", label: "Countries Represented" },
+    { number: "4.8", label: "Average Agent Rating" }
   ];
 
   return (
@@ -18,8 +17,8 @@ const Stats = () => {
               key={index} 
               className={`mx-4 my-4 animate-fadeInUp animate-fadeInUp-delay-${index}`}
             >
-              <h3 className="text-4xl font-bold mb-2">{stat.number}</h3>
-              <p className="text-base text-gray-300 mb-0">{stat.label}</p>
+              <h3 className="text-4xl font-bold mb-2 text-white">{stat.number}</h3>
+              <p className="text-base text-white mb-0">{stat.label}</p>
             </div>
           ))}
         </div>

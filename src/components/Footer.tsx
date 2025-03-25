@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const scrollToSection = (sectionId: string) => {
@@ -82,13 +83,12 @@ const Footer = () => {
                 </a>
               </li>
               <li className="mb-3">
-                <a 
-                  href="#sign-up" 
-                  onClick={(e) => {e.preventDefault(); scrollToSection('sign-up');}} 
+                <Link 
+                  to="/signup" 
                   className="text-gray-300 hover:text-white transition-colors duration-300"
                 >
                   Apply Now
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

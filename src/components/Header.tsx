@@ -23,7 +23,7 @@ const Header = () => {
     <header className="fixed top-0 left-0 w-full z-[1000] py-4 bg-white bg-opacity-95 shadow-sm transition-all duration-300">
       <div className="container flex justify-between items-center">
         <a href="#" className="flex items-center text-decoration-none">
-          <h1 className="text-[1.8rem] text-primary mb-0">Apo<span className="text-secondary">Lead</span></h1>
+          <h1 className="text-[1.8rem] mb-0">Apo<span className="text-secondary">Lead</span></h1>
         </a>
         <nav>
           <ul className={`flex md:flex ${mobileMenuOpen ? 'flex' : 'hidden md:flex'} ${mobileMenuOpen ? 'flex-col absolute top-16 left-0 w-full bg-white shadow-md p-4' : ''}`}>
