@@ -52,7 +52,7 @@ const CTA = () => {
           
           <div className="md:w-1/2 animate-fadeInUp animate-fadeInUp-delay-2">
             <div className="bg-white rounded-xl p-8 shadow-xl">
-              <h3 className="text-center mb-6 text-dark"><span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span> Application</h3>
+              <h3 className="text-center mb-6 text-dark"><span className="text-black">Apo</span><span className="text-[#7450fc]">Lead</span> Application</h3>
               <form onSubmit={handleSubmit}>
                 <div className="mb-5">
                   <label htmlFor="name" className="block mb-2 font-semibold text-dark">Full Name</label>
@@ -106,7 +106,7 @@ const CTA = () => {
                 
                 <div className="mt-4 text-center">
                   <span className="text-dark">Or</span>{' '}
-                  <Link to="/signup" className="text-primary font-semibold">Create an Account</Link> {' '}
+                  <Link to="/signup" className="text-[#7450fc] font-semibold">Create an Account</Link> {' '}
                   <span className="text-dark">for full access</span>
                 </div>
               </form>

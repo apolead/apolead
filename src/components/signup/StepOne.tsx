@@ -16,6 +16,12 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
       return;
     }
     
+    // Email validation
+    if (userData.email !== userData.confirmEmail) {
+      setErrorMessage('Email addresses do not match');
+      return;
+    }
+    
     // Continue to next step
     nextStep();
   };
@@ -30,13 +36,13 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="w-full md:w-1/3 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
-        <div className="relative z-10">
+        <div className="relative z-10 mt-16">
           <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -64,15 +70,15 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
       </div>
       
       {/* Right Side - Form */}
-      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+      <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
-            <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+            <span className="text-black">Apo</span><span className="text-[#7450fc]">Lead</span>
           </h2>
         </div>
         
         <div className="w-full bg-indigo-100 h-2 rounded-full mb-8">
-          <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "33.3%" }}></div>
+          <div className="bg-[#7450fc] h-2 rounded-full" style={{ width: "33.3%" }}></div>
         </div>
         
         <h2 className="text-2xl font-bold mb-4">Personal Information</h2>
@@ -112,30 +118,44 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
             </div>
           </div>
           
-          {/* Email and Birth Day */}
+          {/* Email and Confirm Email */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="step1-email" className="block text-sm font-medium text-gray-700 mb-1">Confirm Email Address</label>
+              <label htmlFor="step1-email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
               <Input
                 type="email"
                 id="step1-email" 
                 value={userData.email}
                 onChange={(e) => updateUserData({ email: e.target.value })}
                 className="w-full"
-                placeholder="Confirm your email address"
+                placeholder="Your email address"
+                readOnly
               />
             </div>
             
             <div>
-              <label htmlFor="step1-birthDay" className="block text-sm font-medium text-gray-700 mb-1">Birth Day</label>
+              <label htmlFor="step1-confirmEmail" className="block text-sm font-medium text-gray-700 mb-1">Confirm Email</label>
               <Input
-                type="date"
-                id="step1-birthDay" 
-                value={userData.birthDay}
-                onChange={(e) => updateUserData({ birthDay: e.target.value })}
+                type="email"
+                id="step1-confirmEmail" 
+                value={userData.confirmEmail || ''}
+                onChange={(e) => updateUserData({ confirmEmail: e.target.value })}
                 className="w-full"
+                placeholder="Confirm your email address"
               />
             </div>
+          </div>
+          
+          {/* Birth Day */}
+          <div>
+            <label htmlFor="step1-birthDay" className="block text-sm font-medium text-gray-700 mb-1">Birth Day</label>
+            <Input
+              type="date"
+              id="step1-birthDay" 
+              value={userData.birthDay}
+              onChange={(e) => updateUserData({ birthDay: e.target.value })}
+              className="w-full"
+            />
           </div>
           
           {/* Government ID Upload */}
@@ -188,7 +208,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
             
             <Button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="bg-[#7450fc] hover:bg-[#5e3cd9] text-white"
             >
               Continue
             </Button>

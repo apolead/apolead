@@ -30,13 +30,13 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="w-full md:w-1/3 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
-        <div className="relative z-10">
+        <div className="relative z-10 mt-16">
           <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -63,15 +63,15 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
       </div>
       
       {/* Right Side - Form */}
-      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+      <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
-            <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+            <span className="text-black">Apo</span><span className="text-[#7450fc]">Lead</span>
           </h2>
         </div>
         
         <div className="w-full bg-indigo-100 h-2 rounded-full mb-8">
-          <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "66.6%" }}></div>
+          <div className="bg-[#7450fc] h-2 rounded-full" style={{ width: "66.6%" }}></div>
         </div>
         
         <h2 className="text-2xl font-bold mb-4">System Requirements & Experience</h2>
@@ -95,7 +95,7 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
                   href="https://speed.cloudflare.com/" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-indigo-600 text-sm hover:underline"
+                  className="text-[#7450fc] text-sm hover:underline"
                 >
                   https://speed.cloudflare.com/
                 </a>
@@ -186,56 +186,40 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">I have a headset</label>
                   <div className="flex space-x-4">
-                    <label className="inline-flex items-center">
-                      <input 
-                        type="radio" 
-                        name="headset" 
-                        value="yes" 
-                        checked={userData.hasHeadset === true}
-                        onChange={() => updateUserData({ hasHeadset: true })}
-                        className="w-4 h-4 cursor-pointer text-indigo-600"
-                      />
-                      <span className="ml-2 text-sm">Yes</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                      <input 
-                        type="radio" 
-                        name="headset" 
-                        value="no" 
-                        checked={userData.hasHeadset === false}
-                        onChange={() => updateUserData({ hasHeadset: false })}
-                        className="w-4 h-4 cursor-pointer text-indigo-600"
-                      />
-                      <span className="ml-2 text-sm">No</span>
-                    </label>
+                    <button
+                      type="button"
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.hasHeadset === true ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
+                      onClick={() => updateUserData({ hasHeadset: true })}
+                    >
+                      YES
+                    </button>
+                    <button
+                      type="button"
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.hasHeadset === false ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
+                      onClick={() => updateUserData({ hasHeadset: false })}
+                    >
+                      NO
+                    </button>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">I have a quiet place to work</label>
                   <div className="flex space-x-4">
-                    <label className="inline-flex items-center">
-                      <input 
-                        type="radio" 
-                        name="quietPlace" 
-                        value="yes" 
-                        checked={userData.hasQuietPlace === true}
-                        onChange={() => updateUserData({ hasQuietPlace: true })}
-                        className="w-4 h-4 cursor-pointer text-indigo-600"
-                      />
-                      <span className="ml-2 text-sm">Yes</span>
-                    </label>
-                    <label className="inline-flex items-center">
-                      <input 
-                        type="radio" 
-                        name="quietPlace" 
-                        value="no" 
-                        checked={userData.hasQuietPlace === false}
-                        onChange={() => updateUserData({ hasQuietPlace: false })}
-                        className="w-4 h-4 cursor-pointer text-indigo-600"
-                      />
-                      <span className="ml-2 text-sm">No</span>
-                    </label>
+                    <button
+                      type="button"
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.hasQuietPlace === true ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
+                      onClick={() => updateUserData({ hasQuietPlace: true })}
+                    >
+                      YES
+                    </button>
+                    <button
+                      type="button"
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.hasQuietPlace === false ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
+                      onClick={() => updateUserData({ hasQuietPlace: false })}
+                    >
+                      NO
+                    </button>
                   </div>
                 </div>
               </div>
@@ -253,7 +237,7 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
             
             <Button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="bg-[#7450fc] hover:bg-[#5e3cd9] text-white"
             >
               Continue
             </Button>

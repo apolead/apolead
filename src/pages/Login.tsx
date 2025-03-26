@@ -70,13 +70,13 @@ const Login = () => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white flex flex-col justify-between p-8 md:p-16 relative overflow-hidden">
+      <div className="w-full md:w-1/3 bg-[#1A1F2C] text-white flex flex-col justify-between p-8 md:p-16 relative overflow-hidden">
         {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
-        <div className="relative z-10">
+        <div className="relative z-10 mt-16">
           <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -99,7 +99,6 @@ const Login = () => {
               </div>
               <div>
                 <p className="text-xs font-semibold text-white">Sarah Johnson</p>
-                <p className="text-xs opacity-75 text-white">Remote Agent</p>
               </div>
             </div>
           </div>
@@ -113,17 +112,17 @@ const Login = () => {
       </div>
       
       {/* Right Side - Form */}
-      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+      <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col">
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
           {/* Logo */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+              <span className="text-black">Apo</span><span className="text-[#7450fc]">Lead</span>
             </h2>
           </div>
 
           <h1 className="text-2xl font-bold mb-2">Login to your account</h1>
-          <p className="text-gray-600 mb-8">Don't have an account? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link></p>
+          <p className="text-gray-600 mb-8">Don't have an account? <Link to="/signup" className="text-[#7450fc] hover:underline">Sign up</Link></p>
           
           {/* Google Login */}
           <button 
@@ -178,7 +177,7 @@ const Login = () => {
               <button 
                 type="button" 
                 onClick={handleResetPassword}
-                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                className="text-[#7450fc] hover:text-[#5e3cd9] text-sm font-medium"
               >
                 Forgot password?
               </button>
@@ -186,7 +185,7 @@ const Login = () => {
             
             <Button 
               type="button" 
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2"
+              className="w-full bg-[#7450fc] hover:bg-[#5e3cd9] text-white py-2"
             >
               Login
             </Button>

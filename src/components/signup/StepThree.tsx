@@ -65,7 +65,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form - no need to validate days selection since it's optional
+    // Validate form - day selection is optional
     if (!userData.meetObligation || !userData.loginDiscord || !userData.checkEmails || 
         !userData.solveProblems || !userData.completeTraining) {
       setErrorMessage('Please answer all the commitment questions');
@@ -92,13 +92,13 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/3 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="w-full md:w-1/4 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
-        <div className="relative z-10">
+        <div className="relative z-10 mt-16">
           <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -125,15 +125,15 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
       </div>
       
       {/* Right Side - Form */}
-      <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col">
+      <div className="w-full md:w-3/4 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
-            <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+            <span className="text-black">Apo</span><span className="text-[#7450fc]">Lead</span>
           </h2>
         </div>
         
         <div className="w-full bg-indigo-100 h-2 rounded-full mb-8">
-          <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "100%" }}></div>
+          <div className="bg-[#7450fc] h-2 rounded-full" style={{ width: "100%" }}></div>
         </div>
         
         <h2 className="text-2xl font-bold mb-4">Availability & Commitments</h2>
@@ -157,14 +157,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('meetObligation', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === false ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('meetObligation', false)}
                   >
                     NO
@@ -173,13 +173,13 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
               </div>
               
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-3">What days will you plan to work?</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">What days will you plan to work? (optional)</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {daysOfWeek.map(day => (
                     <button 
                       key={day.id}
                       type="button" 
-                      className={`w-full py-1.5 border rounded text-sm ${selectedDays.includes(day.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      className={`w-full py-1.5 border rounded text-sm ${selectedDays.includes(day.id) ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
                       onClick={() => handleDayToggle(day.id)}
                     >
                       {day.label}
@@ -227,14 +227,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('loginDiscord', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === false ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('loginDiscord', false)}
                   >
                     NO
@@ -247,14 +247,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('checkEmails', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('checkEmails', false)}
                   >
                     NO
@@ -267,14 +267,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('solveProblems', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('solveProblems', false)}
                   >
                     NO
@@ -287,14 +287,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('completeTraining', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-[#7450fc] text-white border-[#7450fc]' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('completeTraining', false)}
                   >
                     NO
@@ -334,8 +334,8 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                   Terms and Conditions
                 </label>
                 <p className="text-gray-500">
-                  I agree to the <a href="#" className="text-indigo-600 hover:text-indigo-500">Terms of Service</a> and{' '}
-                  <a href="#" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>. I understand that my personal data will be processed as described.
+                  I agree to the <a href="#" className="text-[#7450fc] hover:text-[#5e3cd9]">Terms of Service</a> and{' '}
+                  <a href="#" className="text-[#7450fc] hover:text-[#5e3cd9]">Privacy Policy</a>. I understand that my personal data will be processed as described.
                 </p>
               </div>
             </div>
@@ -352,7 +352,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
             
             <Button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="bg-[#7450fc] hover:bg-[#5e3cd9] text-white"
               disabled={loading}
             >
               {loading ? "Submitting..." : "Submit Application"}

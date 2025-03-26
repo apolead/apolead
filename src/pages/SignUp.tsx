@@ -73,7 +73,8 @@ const SignUp = () => {
         setUserData(prev => ({
           ...prev,
           firstName,
-          lastName
+          lastName,
+          confirmEmail: prev.email // Automatically set confirmEmail to match email
         }));
       } else if (nameParts.length === 1 && !userData.lastName) {
         // If they entered just one name, prompt for last name
@@ -97,31 +98,12 @@ const SignUp = () => {
         return;
       }
       
-      if (userData.password !== userData.confirmPassword) {
-        toast({
-          title: "Password mismatch",
-          description: "The passwords you entered don't match",
-          variant: "destructive",
-        });
-        return;
-      }
-      
       // Basic email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(userData.email)) {
         toast({
           title: "Invalid email",
           description: "Please enter a valid email address",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Basic password strength validation
-      if (userData.password.length < 8) {
-        toast({
-          title: "Weak password",
-          description: "Password should be at least 8 characters long",
           variant: "destructive",
         });
         return;
