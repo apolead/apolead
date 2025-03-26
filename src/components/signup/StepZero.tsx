@@ -103,7 +103,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           {/* Logo */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
-              <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+              <span className="text-[#00c2cb]">Apo</span><span className="text-[#9747FF]">Lead</span>
             </h2>
           </div>
 

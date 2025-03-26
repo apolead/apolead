@@ -66,7 +66,7 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
-            <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+            <span className="text-[#00c2cb]">Apo</span><span className="text-[#9747FF]">Lead</span>
           </h2>
         </div>
         
@@ -141,7 +141,7 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
                       onChange={(e) => handleFileChange('systemSettings', e)}
                     />
                     <label htmlFor="system-settings-upload" className="cursor-pointer text-center">
-                      <svg className="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                      <svg className="mx-auto h-10 h-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path d="M12 4v16m8-8H4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                       <p className="mt-1 text-sm text-gray-500">
