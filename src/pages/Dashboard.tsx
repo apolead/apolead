@@ -254,7 +254,8 @@ const Dashboard = () => {
   
   return (
     <>
-      <style jsx>{`
+      <style>
+        {`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         
         * {
@@ -1068,8 +1069,8 @@ const Dashboard = () => {
         }
         
         .sidebar.collapsed .menu-lock-icon {
-            right: 10px;
-            font-size: 12px;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
         
         /* Info Cards - Remove from layout */
@@ -1319,7 +1320,8 @@ const Dashboard = () => {
         .start-training-btn.next-module:hover {
             box-shadow: 0 8px 25px rgba(0, 206, 209, 0.4);
         }
-      `}</style>
+      `}
+      </style>
     
       <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
         {/* Sidebar */}

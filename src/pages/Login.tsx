@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -12,6 +11,43 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      toast({
+        title: "Required fields missing",
+        description: "Please enter both email and password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      navigate('/dashboard');
+      
+      toast({
+        title: "Login successful",
+        description: "Welcome back!",
+      });
+    } catch (error) {
+      console.error('Error logging in:', error);
+      toast({
+        title: "Login failed",
+        description: error.message || "Invalid email or password",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleResetPassword = async () => {
     if (!email) {
@@ -52,7 +88,7 @@ const Login = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
@@ -69,9 +105,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Left Side - Visual */}
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white flex flex-col justify-between p-8 md:p-16 relative overflow-hidden">
-        {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -89,7 +123,6 @@ const Login = () => {
           <p className="text-white">Manage your call center work seamlessly - online, remote, and everywhere in between.</p>
         </div>
         
-        {/* Testimonial */}
         <div className="mt-auto relative z-10">
           <div className="bg-indigo-800 bg-opacity-70 rounded-lg p-5 mb-8">
             <p className="text-sm italic mb-3 text-white">"I'm impressed with how quickly I've seen sales since starting to use this platform. I began receiving clients and projects in the first week."</p>
@@ -104,7 +137,6 @@ const Login = () => {
             </div>
           </div>
           
-          {/* Bottom quote */}
           <div className="border-t border-indigo-500 pt-4 text-sm italic">
             <p className="text-white">"If you can build a great experience, customers will come back after their first call. Word of mouth is very powerful!"</p>
             <p className="mt-2 font-semibold text-white">— Alex W.</p>
@@ -112,10 +144,8 @@ const Login = () => {
         </div>
       </div>
       
-      {/* Right Side - Form */}
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-          {/* Logo */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
               <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
@@ -125,7 +155,6 @@ const Login = () => {
           <h1 className="text-2xl font-bold mb-2">Login to your account</h1>
           <p className="text-gray-600 mb-8">Don't have an account? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link></p>
           
-          {/* Google Login */}
           <button 
             className="w-full mb-4 border border-gray-300 rounded-md py-3 flex items-center justify-center hover:bg-gray-50 transition"
             onClick={handleGoogleSignIn}
@@ -145,7 +174,7 @@ const Login = () => {
             <div className="flex-1 border-t border-gray-300"></div>
           </div>
           
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
@@ -185,10 +214,11 @@ const Login = () => {
             </div>
             
             <Button 
-              type="button" 
+              type="submit" 
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2"
+              disabled={loading}
             >
-              Login
+              {loading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
           
