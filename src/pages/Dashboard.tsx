@@ -21,32 +21,6 @@ const Dashboard = () => {
                 Hello {user?.email} - You are logged in as: <span className="font-semibold uppercase">{userRole}</span>
               </p>
             </div>
-            
-            {/* User Profile Information Card */}
-            <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-              <h4 className="text-md font-medium text-gray-900 mb-4">Your Profile Information</h4>
-              <div className="bg-gray-50 p-4 rounded-md mb-6">
-                <dl className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
-                  <div className="sm:col-span-1">
-                    <dt className="text-sm font-medium text-gray-500">Email</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{user?.email}</dd>
-                  </div>
-                  <div className="sm:col-span-1">
-                    <dt className="text-sm font-medium text-gray-500">User ID</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{user?.id}</dd>
-                  </div>
-                  <div className="sm:col-span-1">
-                    <dt className="text-sm font-medium text-gray-500">Role</dt>
-                    <dd className="mt-1 text-sm text-gray-900 font-semibold uppercase">{userRole}</dd>
-                  </div>
-                  <div className="sm:col-span-1">
-                    <dt className="text-sm font-medium text-gray-500">Last Sign In</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'N/A'}</dd>
-                  </div>
-                </dl>
-              </div>
-            </div>
-            
             <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 {/* Agent Content - visible to all roles */}
