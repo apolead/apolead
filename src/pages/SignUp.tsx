@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -76,16 +77,8 @@ const SignUp = () => {
         });
         return;
       }
-    }
-    
-    if (currentStep === 1) {
-      if (!userData.confirmEmail && userData.email) {
-        setUserData(prev => ({
-          ...prev,
-          confirmEmail: prev.email
-        }));
-      }
       
+      // Move password validation from step 1 to step 0
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(userData.email)) {
         toast({
@@ -105,19 +98,30 @@ const SignUp = () => {
         return;
       }
       
-      if (userData.email && userData.confirmEmail && userData.email !== userData.confirmEmail) {
-        toast({
-          title: "Email mismatch",
-          description: "The email addresses you entered don't match",
-          variant: "destructive",
-        });
-        return;
-      }
-      
       if (userData.password !== userData.confirmPassword) {
         toast({
           title: "Password mismatch",
           description: "The passwords you entered don't match",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    if (currentStep === 1) {
+      // Auto-fill confirmEmail if it's empty but email exists
+      if (!userData.confirmEmail && userData.email) {
+        setUserData(prev => ({
+          ...prev,
+          confirmEmail: prev.email
+        }));
+      }
+      
+      // Ensure emails match if both are provided
+      if (userData.email && userData.confirmEmail && userData.email !== userData.confirmEmail) {
+        toast({
+          title: "Email mismatch",
+          description: "The email addresses you entered don't match",
           variant: "destructive",
         });
         return;

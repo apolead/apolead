@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 
 const StepZero = ({ userData, updateUserData, nextStep }) => {
   const [errorMessage, setErrorMessage] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   
   const handleContinue = (e) => {
     e.preventDefault();
@@ -23,7 +22,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
     }
 
     // Check if passwords match
-    if (userData.password !== confirmPassword) {
+    if (userData.password !== userData.confirmPassword) {
       setErrorMessage('Passwords do not match');
       return;
     }
@@ -198,8 +197,8 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
               <Input
                 id="confirmPassword"
                 type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={userData.confirmPassword || ''}
+                onChange={(e) => updateUserData({ confirmPassword: e.target.value })}
                 placeholder="Confirm your password"
                 className="w-full"
               />
