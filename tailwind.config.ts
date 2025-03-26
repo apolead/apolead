@@ -33,7 +33,6 @@ export default {
 					DEFAULT: '#00c2cb',
 					dark: '#00a8b0',
 				},
-				darkpurple: '#1A1F2C',
 				accent: '#ff6b6b',
 				light: '#f8f9fa',
 				dark: '#212529',
