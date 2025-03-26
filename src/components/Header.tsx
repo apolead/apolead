@@ -1,14 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useUser } from '@/contexts/UserContext';
-import { useRole } from '@/hooks/useRole';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, signOut } = useUser();
-  const { isAdmin, isSupervisor } = useRole();
   
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -23,11 +19,6 @@ const Header = () => {
       });
     }
     setMobileMenuOpen(false);
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
   };
 
   return (
@@ -86,53 +77,15 @@ const Header = () => {
                 Contact
               </a>
             </li>
-
-            {/* Role-specific navigation items */}
-            {user && (
-              <>
-                <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-                  <Link to="/dashboard" className="text-dark hover:text-primary font-semibold transition-colors duration-300">
-                    Dashboard
-                  </Link>
-                </li>
-                
-                {/* Supervisor-specific menu items */}
-                {isSupervisor && (
-                  <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-                    <Link to="/team" className="text-dark hover:text-primary font-semibold transition-colors duration-300">
-                      My Team
-                    </Link>
-                  </li>
-                )}
-                
-                {/* Admin-specific menu items */}
-                {isAdmin && (
-                  <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-                    <Link to="/admin" className="text-dark hover:text-primary font-semibold transition-colors duration-300">
-                      Admin Panel
-                    </Link>
-                  </li>
-                )}
-              </>
-            )}
           </ul>
           
-          {/* Login/Logout Button */}
-          {user ? (
-            <button 
-              onClick={handleSignOut}
-              className="ml-8 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-            >
-              Logout
-            </button>
-          ) : (
-            <Link 
-              to="/login" 
-              className="ml-8 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              Login
-            </Link>
-          )}
+          {/* Login Button */}
+          <Link 
+            to="/login" 
+            className="ml-8 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+          >
+            Login
+          </Link>
           
           <div className="md:hidden block cursor-pointer ml-4" onClick={toggleMobileMenu}>
             <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-xl`}></i>
