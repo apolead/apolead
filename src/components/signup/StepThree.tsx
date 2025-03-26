@@ -345,7 +345,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
             
             <Button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="bg-indigo-600 hover:bg-[#00c2cb] text-white"
               disabled={loading}
             >
               {loading ? "Submitting..." : "Submit Application"}

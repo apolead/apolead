@@ -141,6 +141,34 @@ const SignUp = () => {
 
   const handleSubmit = async () => {
     try {
+      // Don't validate availability days since they're optional
+      const requiredCommitments = [
+        userData.meetObligation, 
+        userData.loginDiscord, 
+        userData.checkEmails, 
+        userData.solveProblems, 
+        userData.completeTraining
+      ];
+      
+      // Check if any commitment question is unanswered
+      if (requiredCommitments.some(item => item === undefined || item === null)) {
+        toast({
+          title: "Missing information",
+          description: "Please answer all the commitment questions",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!userData.acceptedTerms) {
+        toast({
+          title: "Terms required",
+          description: "You must accept the terms and conditions to continue",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
         console.error('Supabase environment variables are missing or invalid');
         throw new Error('Configuration error. Please contact support.');
