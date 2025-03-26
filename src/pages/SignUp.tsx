@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -125,10 +124,11 @@ const SignUp = () => {
         return;
       }
 
-      // Check if all commitment questions are answered "yes"
       const passedAllCommitments = checkAllCommitmentsAreTrue();
 
-      // Create user with all metadata
+      console.log("User data before creating account:", userData);
+      console.log("Passed all commitments:", passedAllCommitments);
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -139,11 +139,16 @@ const SignUp = () => {
             email: userData.email,
             birth_day: userData.birthDay || null,
             gov_id_number: userData.govIdNumber || null,
-            gov_id_image: null, // Will be updated after file upload
+            gov_id_image: null,
             cpu_type: userData.cpuType || null,
             ram_amount: userData.ramAmount || null,
             has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
             has_quiet_place: userData.hasQuietPlace === null ? false : userData.hasQuietPlace,
+            speed_test: null,
+            system_settings: null,
+            available_hours: userData.availableHours || [],
+            available_days: userData.availableDays || [],
+            day_hours: userData.dayHours || {},
             sales_experience: userData.salesExperience || false,
             sales_months: userData.salesMonths || null,
             sales_company: userData.salesCompany || null,
@@ -159,12 +164,8 @@ const SignUp = () => {
             complete_training: userData.completeTraining === null ? false : userData.completeTraining,
             personal_statement: userData.personalStatement || null,
             accepted_terms: userData.acceptedTerms || false,
-            available_hours: userData.availableHours || [],
-            available_days: userData.availableDays || [],
-            day_hours: userData.dayHours || {},
             application_status: passedAllCommitments ? 'approved' : 'rejected'
           },
-          // Only send a confirmation email if they passed all commitment checks
           emailRedirectTo: passedAllCommitments ? `${window.location.origin}/login` : undefined,
         }
       });
@@ -177,7 +178,6 @@ const SignUp = () => {
 
       console.log("User created successfully:", authData.user.id);
 
-      // Only sign in if they passed all commitment checks
       if (passedAllCommitments) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: userData.email,
@@ -189,14 +189,70 @@ const SignUp = () => {
         }
       }
 
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          user_id: authData.user.id,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          email: userData.email,
+          birth_day: userData.birthDay || null,
+          gov_id_number: userData.govIdNumber || null,
+          gov_id_image: null,
+          cpu_type: userData.cpuType || null,
+          ram_amount: userData.ramAmount || null,
+          has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
+          has_quiet_place: userData.hasQuietPlace === null ? false : userData.hasQuietPlace,
+          speed_test: null,
+          system_settings: null,
+          available_hours: userData.availableHours || [],
+          available_days: userData.availableDays || [],
+          day_hours: userData.dayHours || {},
+          sales_experience: userData.salesExperience || false,
+          sales_months: userData.salesMonths || null,
+          sales_company: userData.salesCompany || null,
+          sales_product: userData.salesProduct || null,
+          service_experience: userData.serviceExperience || false,
+          service_months: userData.serviceMonths || null,
+          service_company: userData.serviceCompany || null,
+          service_product: userData.serviceProduct || null,
+          meet_obligation: userData.meetObligation === null ? false : userData.meetObligation,
+          login_discord: userData.loginDiscord === null ? false : userData.loginDiscord,
+          check_emails: userData.checkEmails === null ? false : userData.checkEmails,
+          solve_problems: userData.solveProblems === null ? false : userData.solveProblems,
+          complete_training: userData.completeTraining === null ? false : userData.completeTraining,
+          personal_statement: userData.personalStatement || null,
+          accepted_terms: userData.acceptedTerms || false,
+          application_status: passedAllCommitments ? 'approved' : 'rejected'
+        });
+
+      if (profileError) {
+        console.error('Error creating user profile:', profileError);
+      } else {
+        console.log('User profile created successfully');
+      }
+
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authData.user.id,
+          role: 'agent'
+        });
+
+      if (roleError) {
+        console.error('Error creating user role:', roleError);
+      } else {
+        console.log('User role created successfully');
+      }
+
       let govIdPath = null;
       let speedTestPath = null;
       let systemSettingsPath = null;
 
-      // Upload government ID image
       if (userData.govIdImage) {
         try {
           const govIdFileName = `${authData.user.id}_gov_id`;
+          console.log('Uploading government ID image:', govIdFileName);
           const { data: govIdData, error: govIdError } = await supabase.storage
             .from('user_documents')
             .upload(govIdFileName, userData.govIdImage);
@@ -205,14 +261,15 @@ const SignUp = () => {
             console.error('Error uploading government ID:', govIdError);
           } else {
             govIdPath = govIdData.path;
+            console.log('Government ID uploaded successfully:', govIdPath);
             
-            // Update user metadata with file path
-            const { error: updateError } = await supabase.auth.updateUser({
-              data: { gov_id_image: govIdPath }
-            });
+            const { error: updateError } = await supabase
+              .from('user_profiles')
+              .update({ gov_id_image: govIdPath })
+              .eq('user_id', authData.user.id);
             
             if (updateError) {
-              console.error('Error updating user metadata with gov ID path:', updateError);
+              console.error('Error updating user profile with gov ID path:', updateError);
             }
           }
         } catch (fileError) {
@@ -220,10 +277,10 @@ const SignUp = () => {
         }
       }
 
-      // Upload speed test screenshot
       if (userData.speedTest) {
         try {
           const speedTestFileName = `${authData.user.id}_speed_test`;
+          console.log('Uploading speed test:', speedTestFileName);
           const { data: speedTestData, error: speedTestError } = await supabase.storage
             .from('user_documents')
             .upload(speedTestFileName, userData.speedTest);
@@ -232,14 +289,15 @@ const SignUp = () => {
             console.error('Error uploading speed test:', speedTestError);
           } else {
             speedTestPath = speedTestData.path;
+            console.log('Speed test uploaded successfully:', speedTestPath);
             
-            // Update user metadata with file path
-            const { error: updateError } = await supabase.auth.updateUser({
-              data: { speed_test: speedTestPath }
-            });
+            const { error: updateError } = await supabase
+              .from('user_profiles')
+              .update({ speed_test: speedTestPath })
+              .eq('user_id', authData.user.id);
             
             if (updateError) {
-              console.error('Error updating user metadata with speed test path:', updateError);
+              console.error('Error updating user profile with speed test path:', updateError);
             }
           }
         } catch (fileError) {
@@ -247,10 +305,10 @@ const SignUp = () => {
         }
       }
 
-      // Upload system settings screenshot
       if (userData.systemSettings) {
         try {
           const systemSettingsFileName = `${authData.user.id}_system_settings`;
+          console.log('Uploading system settings:', systemSettingsFileName);
           const { data: systemSettingsData, error: systemSettingsError } = await supabase.storage
             .from('user_documents')
             .upload(systemSettingsFileName, userData.systemSettings);
@@ -259,14 +317,15 @@ const SignUp = () => {
             console.error('Error uploading system settings:', systemSettingsError);
           } else {
             systemSettingsPath = systemSettingsData.path;
+            console.log('System settings uploaded successfully:', systemSettingsPath);
             
-            // Update user metadata with file path
-            const { error: updateError } = await supabase.auth.updateUser({
-              data: { system_settings: systemSettingsPath }
-            });
+            const { error: updateError } = await supabase
+              .from('user_profiles')
+              .update({ system_settings: systemSettingsPath })
+              .eq('user_id', authData.user.id);
             
             if (updateError) {
-              console.error('Error updating user metadata with system settings path:', updateError);
+              console.error('Error updating user profile with system settings path:', updateError);
             }
           }
         } catch (fileError) {
@@ -274,7 +333,6 @@ const SignUp = () => {
         }
       }
 
-      // Show appropriate toast message based on whether they passed
       if (passedAllCommitments) {
         toast({
           title: "Application submitted successfully",
