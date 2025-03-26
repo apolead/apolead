@@ -3,13 +3,26 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  Play, 
+  PieChart, 
+  Wrench, 
+  CreditCard, 
+  BarChart2, 
+  Trophy, 
+  FileText, 
+  Settings, 
+  LogOut,
+  HelpCircle 
+} from 'lucide-react';
 
 const Dashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState('agent');
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0); // Starting at 0 for onboarding
+  const [showSupportFAQ, setShowSupportFAQ] = useState(false);
   const trainingModalRef = useRef<HTMLDivElement>(null);
   const progressFillRef = useRef<HTMLDivElement>(null);
   const progressTextRef = useRef<HTMLSpanElement>(null);
@@ -78,11 +91,11 @@ const Dashboard = () => {
 
         if (!progressError && progressData) {
           // If user has onboarding data, set the current step
-          let step = 1;
-          if (progressData.welcome_completed) step = 2;
-          if (progressData.training_completed) step = 3;
-          if (progressData.interview_scheduled) step = 4;
-          if (progressData.final_quiz_passed) step = 5; // Completed all steps
+          let step = 0;
+          if (progressData.welcome_completed) step = 1;
+          if (progressData.training_completed) step = 2;
+          if (progressData.interview_scheduled) step = 3;
+          if (progressData.final_quiz_passed) step = 4; // Completed all steps
           
           setCurrentStep(step);
         } else {
@@ -136,7 +149,7 @@ const Dashboard = () => {
     }
     
     // If this is the first step, mark welcome as completed
-    if (currentStep === 1 && userProfile) {
+    if (currentStep === 0 && userProfile) {
       completeWelcomeStep();
     }
   };
@@ -152,6 +165,11 @@ const Dashboard = () => {
       }, 300);
     }
   };
+
+  // Toggle Support FAQ modal
+  const toggleSupportFAQ = () => {
+    setShowSupportFAQ(!showSupportFAQ);
+  };
   
   // Mark the welcome step as completed
   const completeWelcomeStep = async () => {
@@ -163,7 +181,7 @@ const Dashboard = () => {
       .eq('user_id', userProfile.id);
       
     if (!error) {
-      setCurrentStep(2);
+      setCurrentStep(1);
     } else {
       console.error('Error updating onboarding progress:', error);
     }
@@ -254,7 +272,7 @@ const Dashboard = () => {
   
   return (
     <>
-      <style>
+      <style jsx>
         {`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         
@@ -465,15 +483,15 @@ const Dashboard = () => {
             font-weight: 500;
         }
         
-        .nav-item i {
-            margin-right: 12px;
+        .nav-item i, .nav-item svg {
+            margin-right: 18px;
             font-size: 18px;
             width: 24px;
             text-align: center;
             flex-shrink: 0;
         }
         
-        .sidebar.collapsed .nav-item i {
+        .sidebar.collapsed .nav-item i, .sidebar.collapsed .nav-item svg {
             margin-right: 0;
         }
         
@@ -504,6 +522,7 @@ const Dashboard = () => {
             color: #64748b;
             font-size: 14px;
             transition: opacity 0.3s;
+            cursor: pointer;
         }
         
         .sidebar.collapsed .sidebar-footer {
@@ -826,7 +845,7 @@ const Dashboard = () => {
         
         .progress-fill {
             height: 100%;
-            width: 25%;
+            width: 0%;
             background: linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%);
             border-radius: 4px;
             position: relative;
@@ -1320,6 +1339,76 @@ const Dashboard = () => {
         .start-training-btn.next-module:hover {
             box-shadow: 0 8px 25px rgba(0, 206, 209, 0.4);
         }
+
+        /* Support FAQ Modal Styles */
+        .support-faq-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .support-faq-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .support-faq-content {
+            background-color: white;
+            width: 100%;
+            max-width: 600px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .faq-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #eaeaea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to right, #4169E1, #00CED1);
+            color: white;
+        }
+        
+        .faq-body {
+            padding: 25px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .faq-item {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 20px;
+        }
+        
+        .faq-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .faq-question {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .faq-answer {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
       `}
       </style>
     
@@ -1337,36 +1426,36 @@ const Dashboard = () => {
           
           <div className="nav-menu">
             <a href="#" className="nav-item active">
-              <i className="fas fa-play-circle"></i>
+              <Play size={20} />
               <span>Getting Started</span>
             </a>
             <a href="#" className="nav-item locked">
-              <i className="fas fa-chart-pie"></i>
+              <PieChart size={20} />
               <span>Dashboard</span>
               <i className="fas fa-lock menu-lock-icon"></i>
             </a>
             <a href="#" className="nav-item locked">
-              <i className="fas fa-tools"></i>
+              <Wrench size={20} />
               <span>Tool Page</span>
               <i className="fas fa-lock menu-lock-icon"></i>
             </a>
             <a href="#" className="nav-item locked">
-              <i className="fas fa-money-bill-wave"></i>
+              <CreditCard size={20} />
               <span>Payment History</span>
               <i className="fas fa-lock menu-lock-icon"></i>
             </a>
             <a href="#" className="nav-item locked">
-              <i className="fas fa-chart-line"></i>
+              <BarChart2 size={20} />
               <span>Performance</span>
               <i className="fas fa-lock menu-lock-icon"></i>
             </a>
             <a href="#" className="nav-item locked">
-              <i className="fas fa-trophy"></i>
+              <Trophy size={20} />
               <span>Ranking</span>
               <i className="fas fa-lock menu-lock-icon"></i>
             </a>
             <a href="#" className="nav-item locked">
-              <i className="fas fa-file-invoice-dollar"></i>
+              <FileText size={20} />
               <span>Billing Information</span>
               <i className="fas fa-lock menu-lock-icon"></i>
             </a>
@@ -1374,20 +1463,20 @@ const Dashboard = () => {
             <div className="nav-divider"></div>
             
             <a href="#" className="nav-item locked">
-              <i className="fas fa-cog"></i>
+              <Settings size={20} />
               <span>Settings</span>
               <i className="fas fa-lock menu-lock-icon"></i>
             </a>
             <a href="#" className="nav-item" onClick={handleLogout}>
-              <i className="fas fa-sign-out-alt"></i>
+              <LogOut size={20} />
               <span>Log Out</span>
             </a>
             
             <div style={{ flexGrow: 1 }}></div>
           </div>
           
-          <div className="sidebar-footer">
-            <i className="fas fa-info-circle"></i> Need help? <a href="#">Support Center</a>
+          <div className="sidebar-footer" onClick={toggleSupportFAQ}>
+            <i className="fas fa-info-circle"></i> Need help? Support Center
           </div>
         </div>
         
@@ -1417,7 +1506,7 @@ const Dashboard = () => {
                   {getUserInitials()}
                 </div>
                 <div className="user-name">
-                  {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}
+                  {userProfile?.first_name} {userProfile?.last_name}
                 </div>
                 <i className="fas fa-chevron-down dropdown-icon"></i>
               </div>
@@ -1442,7 +1531,7 @@ const Dashboard = () => {
                 <i className="fas fa-graduation-cap"></i>
               </div>
               <div className="stat-info">
-                <h3>{(currentStep - 1) * 25}%</h3>
+                <h3>{currentStep * 25}%</h3>
                 <p><i className="fas fa-arrow-up"></i> Onboarding Progress</p>
               </div>
             </div>
@@ -1452,7 +1541,7 @@ const Dashboard = () => {
                 <i className="fas fa-tasks"></i>
               </div>
               <div className="stat-info">
-                <h3>{Math.max(0, currentStep - 1)}/4</h3>
+                <h3>{currentStep}/4</h3>
                 <p><i className="fas fa-check-circle"></i> Steps Completed</p>
               </div>
             </div>
@@ -1490,10 +1579,10 @@ const Dashboard = () => {
               
               <div className="progress-indicator">
                 <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${(currentStep - 1) * 25}%` }}></div>
+                  <div className="progress-fill" style={{ width: `${currentStep * 25}%` }}></div>
                 </div>
                 <div className="progress-text">
-                  <i className="fas fa-check-circle"></i> {Math.max(0, currentStep - 1)} of 4 completed
+                  <i className="fas fa-check-circle"></i> {currentStep} of 4 completed
                 </div>
               </div>
             </div>
@@ -1501,25 +1590,57 @@ const Dashboard = () => {
             {/* Action Cards */}
             <div className="action-cards">
               {/* Step 1: Initial Training */}
-              <div className={`action-card ${currentStep > 1 ? 'completed' : ''}`}>
-                <div className={`step-number ${currentStep > 1 ? 'completed' : ''}`}>
-                  {currentStep > 1 ? <i className="fas fa-check"></i> : 1}
+              <div className={`action-card ${currentStep > 0 ? 'completed' : ''}`}>
+                <div className={`step-number ${currentStep > 0 ? 'completed' : ''}`}>
+                  {currentStep > 0 ? <i className="fas fa-check"></i> : 1}
                 </div>
-                <div className={`action-icon ${currentStep > 1 ? 'completed' : ''}`}>
+                <div className={`action-icon ${currentStep > 0 ? 'completed' : ''}`}>
                   <i className="fas fa-book-reader"></i>
                 </div>
                 <h3>Initial Training</h3>
                 <p>Complete the initial training module to unlock the next step. This will teach you the fundamentals.</p>
                 <button 
-                  className={`card-button ${currentStep > 1 ? 'button-completed' : 'button-current'}`}
+                  className={`card-button ${currentStep > 0 ? 'button-completed' : 'button-current'}`}
                   onClick={openTrainingModal}
                 >
-                  <i className={`fas ${currentStep > 1 ? 'fa-check-circle' : 'fa-play-circle'}`}></i>
-                  {currentStep > 1 ? 'Completed' : 'Start'}
+                  <i className={`fas ${currentStep > 0 ? 'fa-check-circle' : 'fa-play-circle'}`}></i>
+                  {currentStep > 0 ? 'Completed' : 'Start'}
                 </button>
               </div>
               
               {/* Step 2: Interview - Locked or Current */}
+              <div className={`action-card ${currentStep > 1 ? 'completed' : currentStep < 1 ? 'locked' : ''}`}>
+                {currentStep < 1 && 
+                  <div className="lock-icon">
+                    <i className="fas fa-lock"></i>
+                  </div>
+                }
+                <div className={`step-number ${currentStep > 1 ? 'completed' : currentStep < 1 ? 'locked' : ''}`}>
+                  {currentStep > 1 ? <i className="fas fa-check"></i> : 2}
+                </div>
+                <div className={`action-icon ${currentStep > 1 ? 'completed' : currentStep < 1 ? 'locked' : ''}`}>
+                  <i className="fas fa-user-friends"></i>
+                </div>
+                <h3>Schedule Interview</h3>
+                <p>Once your training is reviewed, you'll be able to schedule your interview with our team.</p>
+                <button 
+                  className={`card-button ${
+                    currentStep > 1 ? 'button-completed' : 
+                    currentStep === 1 ? 'button-current' : 
+                    'button-locked'
+                  }`}
+                  onClick={currentStep >= 1 ? openTrainingModal : undefined}
+                >
+                  <i className={`fas ${
+                    currentStep > 1 ? 'fa-check-circle' : 
+                    currentStep === 1 ? 'fa-calendar-alt' : 
+                    'fa-lock'
+                  }`}></i>
+                  {currentStep > 1 ? 'Completed' : currentStep === 1 ? 'Schedule' : 'Locked'}
+                </button>
+              </div>
+              
+              {/* Step 3: Additional Training - Locked or Current */}
               <div className={`action-card ${currentStep > 2 ? 'completed' : currentStep < 2 ? 'locked' : ''}`}>
                 {currentStep < 2 && 
                   <div className="lock-icon">
@@ -1527,13 +1648,13 @@ const Dashboard = () => {
                   </div>
                 }
                 <div className={`step-number ${currentStep > 2 ? 'completed' : currentStep < 2 ? 'locked' : ''}`}>
-                  {currentStep > 2 ? <i className="fas fa-check"></i> : 2}
+                  {currentStep > 2 ? <i className="fas fa-check"></i> : 3}
                 </div>
                 <div className={`action-icon ${currentStep > 2 ? 'completed' : currentStep < 2 ? 'locked' : ''}`}>
-                  <i className="fas fa-user-friends"></i>
+                  <i className="fas fa-chalkboard-teacher"></i>
                 </div>
-                <h3>Schedule Interview</h3>
-                <p>Once your training is reviewed, you'll be able to schedule your interview with our team.</p>
+                <h3>Additional Training</h3>
+                <p>After your interview, complete additional training modules to refine your skills.</p>
                 <button 
                   className={`card-button ${
                     currentStep > 2 ? 'button-completed' : 
@@ -1544,14 +1665,14 @@ const Dashboard = () => {
                 >
                   <i className={`fas ${
                     currentStep > 2 ? 'fa-check-circle' : 
-                    currentStep === 2 ? 'fa-calendar-alt' : 
+                    currentStep === 2 ? 'fa-book' : 
                     'fa-lock'
                   }`}></i>
-                  {currentStep > 2 ? 'Completed' : currentStep === 2 ? 'Schedule' : 'Locked'}
+                  {currentStep > 2 ? 'Completed' : currentStep === 2 ? 'Start Training' : 'Locked'}
                 </button>
               </div>
               
-              {/* Step 3: Additional Training - Locked or Current */}
+              {/* Step 4: Kickoff & Onboarding - Locked or Current */}
               <div className={`action-card ${currentStep > 3 ? 'completed' : currentStep < 3 ? 'locked' : ''}`}>
                 {currentStep < 3 && 
                   <div className="lock-icon">
@@ -1559,13 +1680,13 @@ const Dashboard = () => {
                   </div>
                 }
                 <div className={`step-number ${currentStep > 3 ? 'completed' : currentStep < 3 ? 'locked' : ''}`}>
-                  {currentStep > 3 ? <i className="fas fa-check"></i> : 3}
+                  {currentStep > 3 ? <i className="fas fa-check"></i> : 4}
                 </div>
                 <div className={`action-icon ${currentStep > 3 ? 'completed' : currentStep < 3 ? 'locked' : ''}`}>
-                  <i className="fas fa-chalkboard-teacher"></i>
+                  <i className="fas fa-rocket"></i>
                 </div>
-                <h3>Additional Training</h3>
-                <p>After your interview, complete additional training modules to refine your skills.</p>
+                <h3>Kickoff & Setup</h3>
+                <p>Add your banking info, join Discord, and complete final onboarding steps to get started.</p>
                 <button 
                   className={`card-button ${
                     currentStep > 3 ? 'button-completed' : 
@@ -1576,42 +1697,10 @@ const Dashboard = () => {
                 >
                   <i className={`fas ${
                     currentStep > 3 ? 'fa-check-circle' : 
-                    currentStep === 3 ? 'fa-book' : 
+                    currentStep === 3 ? 'fa-rocket' : 
                     'fa-lock'
                   }`}></i>
-                  {currentStep > 3 ? 'Completed' : currentStep === 3 ? 'Start Training' : 'Locked'}
-                </button>
-              </div>
-              
-              {/* Step 4: Kickoff & Onboarding - Locked or Current */}
-              <div className={`action-card ${currentStep > 4 ? 'completed' : currentStep < 4 ? 'locked' : ''}`}>
-                {currentStep < 4 && 
-                  <div className="lock-icon">
-                    <i className="fas fa-lock"></i>
-                  </div>
-                }
-                <div className={`step-number ${currentStep > 4 ? 'completed' : currentStep < 4 ? 'locked' : ''}`}>
-                  {currentStep > 4 ? <i className="fas fa-check"></i> : 4}
-                </div>
-                <div className={`action-icon ${currentStep > 4 ? 'completed' : currentStep < 4 ? 'locked' : ''}`}>
-                  <i className="fas fa-rocket"></i>
-                </div>
-                <h3>Kickoff & Setup</h3>
-                <p>Add your banking info, join Discord, and complete final onboarding steps to get started.</p>
-                <button 
-                  className={`card-button ${
-                    currentStep > 4 ? 'button-completed' : 
-                    currentStep === 4 ? 'button-current' : 
-                    'button-locked'
-                  }`}
-                  onClick={currentStep >= 4 ? openTrainingModal : undefined}
-                >
-                  <i className={`fas ${
-                    currentStep > 4 ? 'fa-check-circle' : 
-                    currentStep === 4 ? 'fa-rocket' : 
-                    'fa-lock'
-                  }`}></i>
-                  {currentStep > 4 ? 'Completed' : currentStep === 4 ? 'Start Setup' : 'Locked'}
+                  {currentStep > 3 ? 'Completed' : currentStep === 3 ? 'Start Setup' : 'Locked'}
                 </button>
               </div>
             </div>
@@ -1677,6 +1766,64 @@ const Dashboard = () => {
               >
                 Begin Training
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Support FAQ Modal */}
+        <div className={`support-faq-modal ${showSupportFAQ ? 'show' : ''}`}>
+          <div className="support-faq-content">
+            <div className="faq-header">
+              <h2><HelpCircle size={18} style={{ marginRight: '8px' }} /> Support Center</h2>
+              <span className="close-modal" onClick={toggleSupportFAQ}>&times;</span>
+            </div>
+            <div className="faq-body">
+              <div className="faq-item">
+                <div className="faq-question">How long does the onboarding process take?</div>
+                <div className="faq-answer">
+                  The entire onboarding process typically takes 2-3 days to complete. This includes the initial training (1-2 hours), 
+                  scheduling and attending your interview (30-45 minutes), completing additional training (1-2 hours), 
+                  and setting up your account (30 minutes). Our team will review your application within 24-48 hours after completion.
+                </div>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">Why are some features locked?</div>
+                <div className="faq-answer">
+                  Features are unlocked as you progress through the onboarding process. This ensures you have the necessary training and 
+                  understanding before accessing all platform capabilities. Each completed step unlocks new features and functionality.
+                </div>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">What happens after I complete all onboarding steps?</div>
+                <div className="faq-answer">
+                  After completing all onboarding steps, our team will review your application and training performance. Once approved, 
+                  you'll receive full access to the platform and can begin accepting assignments. You'll also receive notifications about 
+                  available opportunities matched to your skills and availability.
+                </div>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">Can I pause my onboarding and continue later?</div>
+                <div className="faq-answer">
+                  Yes, your progress is automatically saved at each step. You can return at any time to continue where you left off. 
+                  However, we recommend completing the process within 7 days to ensure your application remains active in our system.
+                </div>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">Why is the training so important?</div>
+                <div className="faq-answer">
+                  Training is critical to ensure all our agents represent ApoLead with professionalism and expertise. The training 
+                  modules cover essential skills, company policies, and best practices that will help you succeed. Take each module 
+                  seriously as your performance during training impacts your approval and initial ranking.
+                </div>
+              </div>
+              <div className="faq-item">
+                <div className="faq-question">How do I get help if I'm stuck?</div>
+                <div className="faq-answer">
+                  If you need assistance at any point, you can reach our support team at support@apolead.com. We typically respond within 
+                  24 hours. For urgent matters, you can also schedule a quick 15-minute call with our onboarding specialists through the 
+                  support portal that will be available after completing the first training module.
+                </div>
+              </div>
             </div>
           </div>
         </div>
