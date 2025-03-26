@@ -90,13 +90,77 @@ WITH CHECK (true);      -- No restrictions on insert
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.user_profiles (user_id, first_name, last_name, email)
+  INSERT INTO public.user_profiles (
+    user_id, 
+    first_name, 
+    last_name, 
+    email,
+    birth_day,
+    gov_id_number,
+    gov_id_image,
+    cpu_type,
+    ram_amount,
+    has_headset,
+    has_quiet_place,
+    speed_test,
+    system_settings,
+    available_hours,
+    available_days,
+    day_hours,
+    sales_experience,
+    sales_months,
+    sales_company,
+    sales_product,
+    service_experience,
+    service_months,
+    service_company,
+    service_product,
+    meet_obligation,
+    login_discord,
+    check_emails,
+    solve_problems,
+    complete_training,
+    personal_statement,
+    accepted_terms
+  )
   VALUES (
     new.id,
     coalesce(new.raw_user_meta_data->>'first_name', ''),
     coalesce(new.raw_user_meta_data->>'last_name', ''),
-    new.email
+    new.email,
+    (new.raw_user_meta_data->>'birth_day')::DATE,
+    new.raw_user_meta_data->>'gov_id_number',
+    new.raw_user_meta_data->>'gov_id_image',
+    new.raw_user_meta_data->>'cpu_type',
+    new.raw_user_meta_data->>'ram_amount',
+    (new.raw_user_meta_data->>'has_headset')::boolean,
+    (new.raw_user_meta_data->>'has_quiet_place')::boolean,
+    new.raw_user_meta_data->>'speed_test',
+    new.raw_user_meta_data->>'system_settings',
+    (new.raw_user_meta_data->>'available_hours')::text[],
+    (new.raw_user_meta_data->>'available_days')::text[],
+    (new.raw_user_meta_data->>'day_hours')::jsonb,
+    (new.raw_user_meta_data->>'sales_experience')::boolean,
+    new.raw_user_meta_data->>'sales_months',
+    new.raw_user_meta_data->>'sales_company',
+    new.raw_user_meta_data->>'sales_product',
+    (new.raw_user_meta_data->>'service_experience')::boolean,
+    new.raw_user_meta_data->>'service_months',
+    new.raw_user_meta_data->>'service_company',
+    new.raw_user_meta_data->>'service_product',
+    (new.raw_user_meta_data->>'meet_obligation')::boolean,
+    (new.raw_user_meta_data->>'login_discord')::boolean,
+    (new.raw_user_meta_data->>'check_emails')::boolean,
+    (new.raw_user_meta_data->>'solve_problems')::boolean,
+    (new.raw_user_meta_data->>'complete_training')::boolean,
+    new.raw_user_meta_data->>'personal_statement',
+    (new.raw_user_meta_data->>'accepted_terms')::boolean
   );
+  
+  -- Also create a default role entry for the new user (agent)
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (new.id, 'agent');
+  
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -119,3 +183,44 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER set_updated_at_on_user_profiles
   BEFORE UPDATE ON public.user_profiles
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- Create app_role enum type if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role') THEN
+    CREATE TYPE public.app_role AS ENUM ('admin', 'supervisor', 'agent');
+  END IF;
+END
+$$;
+
+-- Create user_roles table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.user_roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  role app_role NOT NULL DEFAULT 'agent',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
+-- Set up RLS for the user_roles table
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+
+-- Create function to check if a user has a role (to avoid RLS recursion)
+CREATE OR REPLACE FUNCTION public.has_role(_user_id UUID, _role app_role)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.user_roles
+    WHERE user_id = _user_id AND role = _role
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create function to get a user's role
+CREATE OR REPLACE FUNCTION public.get_user_role(user_id UUID)
+RETURNS app_role AS $$
+BEGIN
+  RETURN (SELECT role FROM public.user_roles WHERE user_id = $1 LIMIT 1);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

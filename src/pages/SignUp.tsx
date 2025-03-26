@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -112,13 +113,39 @@ const SignUp = () => {
         return;
       }
 
+      // Create user with all metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
         options: {
           data: {
             first_name: userData.firstName,
-            last_name: userData.lastName
+            last_name: userData.lastName,
+            email: userData.email,
+            birth_day: userData.birthDay || null,
+            gov_id_number: userData.govIdNumber || null,
+            cpu_type: userData.cpuType || null,
+            ram_amount: userData.ramAmount || null,
+            has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
+            has_quiet_place: userData.hasQuietPlace === null ? false : userData.hasQuietPlace,
+            sales_experience: userData.salesExperience || false,
+            sales_months: userData.salesMonths || null,
+            sales_company: userData.salesCompany || null,
+            sales_product: userData.salesProduct || null,
+            service_experience: userData.serviceExperience || false,
+            service_months: userData.serviceMonths || null,
+            service_company: userData.serviceCompany || null,
+            service_product: userData.serviceProduct || null,
+            meet_obligation: userData.meetObligation === null ? false : userData.meetObligation,
+            login_discord: userData.loginDiscord === null ? false : userData.loginDiscord,
+            check_emails: userData.checkEmails === null ? false : userData.checkEmails,
+            solve_problems: userData.solveProblems === null ? false : userData.solveProblems,
+            complete_training: userData.completeTraining === null ? false : userData.completeTraining,
+            personal_statement: userData.personalStatement || null,
+            accepted_terms: userData.acceptedTerms || false,
+            available_hours: userData.availableHours || [],
+            available_days: userData.availableDays || [],
+            day_hours: userData.dayHours || {}
           }
         }
       });
@@ -144,6 +171,7 @@ const SignUp = () => {
       let speedTestPath = null;
       let systemSettingsPath = null;
 
+      // Upload government ID image
       if (userData.govIdImage) {
         try {
           const govIdFileName = `${authData.user.id}_gov_id`;
@@ -161,6 +189,7 @@ const SignUp = () => {
         }
       }
 
+      // Upload speed test screenshot
       if (userData.speedTest) {
         try {
           const speedTestFileName = `${authData.user.id}_speed_test`;
@@ -178,6 +207,7 @@ const SignUp = () => {
         }
       }
 
+      // Upload system settings screenshot
       if (userData.systemSettings) {
         try {
           const systemSettingsFileName = `${authData.user.id}_system_settings`;
@@ -195,48 +225,8 @@ const SignUp = () => {
         }
       }
 
-      const { error: userDataError } = await supabase
-        .from('user_profiles')
-        .insert({
-          user_id: authData.user.id,
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          email: userData.email,
-          birth_day: userData.birthDay || null,
-          gov_id_number: userData.govIdNumber || null,
-          gov_id_image: govIdPath,
-          cpu_type: userData.cpuType || null,
-          ram_amount: userData.ramAmount || null,
-          has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
-          has_quiet_place: userData.hasQuietPlace === null ? false : userData.hasQuietPlace,
-          speed_test: speedTestPath,
-          system_settings: systemSettingsPath,
-          available_hours: userData.availableHours || [],
-          available_days: userData.availableDays || [],
-          day_hours: userData.dayHours || {},
-          sales_experience: userData.salesExperience || false,
-          sales_months: userData.salesMonths || null,
-          sales_company: userData.salesCompany || null,
-          sales_product: userData.salesProduct || null,
-          service_experience: userData.serviceExperience || false,
-          service_months: userData.serviceMonths || null,
-          service_company: userData.serviceCompany || null,
-          service_product: userData.serviceProduct || null,
-          meet_obligation: userData.meetObligation === null ? false : userData.meetObligation,
-          login_discord: userData.loginDiscord === null ? false : userData.loginDiscord,
-          check_emails: userData.checkEmails === null ? false : userData.checkEmails,
-          solve_problems: userData.solveProblems === null ? false : userData.solveProblems,
-          complete_training: userData.completeTraining === null ? false : userData.completeTraining,
-          personal_statement: userData.personalStatement || null,
-          accepted_terms: userData.acceptedTerms || false,
-          application_date: new Date().toISOString(),
-          application_status: 'pending',
-        });
-
-      if (userDataError) {
-        console.error('Error submitting profile data:', userDataError);
-        throw userDataError;
-      }
+      // We no longer need to insert into user_profiles manually as this is handled by the trigger
+      // The handle_new_user() function in Supabase will now handle this
 
       toast({
         title: "Application submitted successfully",
