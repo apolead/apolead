@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -234,7 +233,66 @@ const SignUp = () => {
         // Continue with profile creation even if sign-in fails
       }
 
-      // Directly insert user profile data
+      // First handle file uploads to storage
+      let govIdPath = null;
+      let speedTestPath = null;
+      let systemSettingsPath = null;
+
+      // Upload government ID if provided
+      if (userData.govIdImage) {
+        try {
+          const govIdFileName = `${authData.user.id}_gov_id`;
+          const { data: govIdData, error: govIdError } = await supabase.storage
+            .from('user_documents')
+            .upload(govIdFileName, userData.govIdImage);
+          
+          if (govIdError) {
+            console.error('Error uploading government ID:', govIdError);
+          } else {
+            govIdPath = govIdData.path;
+          }
+        } catch (fileError) {
+          console.error('Error in government ID upload:', fileError);
+        }
+      }
+
+      // Upload speed test if provided
+      if (userData.speedTest) {
+        try {
+          const speedTestFileName = `${authData.user.id}_speed_test`;
+          const { data: speedTestData, error: speedTestError } = await supabase.storage
+            .from('user_documents')
+            .upload(speedTestFileName, userData.speedTest);
+          
+          if (speedTestError) {
+            console.error('Error uploading speed test:', speedTestError);
+          } else {
+            speedTestPath = speedTestData.path;
+          }
+        } catch (fileError) {
+          console.error('Error in speed test upload:', fileError);
+        }
+      }
+
+      // Upload system settings if provided
+      if (userData.systemSettings) {
+        try {
+          const systemSettingsFileName = `${authData.user.id}_system_settings`;
+          const { data: systemSettingsData, error: systemSettingsError } = await supabase.storage
+            .from('user_documents')
+            .upload(systemSettingsFileName, userData.systemSettings);
+          
+          if (systemSettingsError) {
+            console.error('Error uploading system settings:', systemSettingsError);
+          } else {
+            systemSettingsPath = systemSettingsData.path;
+          }
+        } catch (fileError) {
+          console.error('Error in system settings upload:', fileError);
+        }
+      }
+
+      // Now insert user profile data with file paths
       const { error: userDataError } = await supabase
         .from('user_profiles')
         .insert({
@@ -244,13 +302,13 @@ const SignUp = () => {
           email: userData.email,
           birth_day: userData.birthDay || null,
           gov_id_number: userData.govIdNumber || null,
-          gov_id_image: null, // We'll update this after upload
+          gov_id_image: govIdPath,
           cpu_type: userData.cpuType || null,
           ram_amount: userData.ramAmount || null,
           has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
           has_quiet_place: userData.hasQuietPlace === null ? false : userData.hasQuietPlace,
-          speed_test: null, // We'll update this after upload
-          system_settings: null, // We'll update this after upload
+          speed_test: speedTestPath,
+          system_settings: systemSettingsPath,
           available_hours: userData.availableHours || [],
           available_days: userData.availableDays || [],
           day_hours: userData.dayHours || {},
@@ -276,70 +334,6 @@ const SignUp = () => {
       if (userDataError) {
         console.error('Error submitting profile data:', userDataError);
         throw userDataError;
-      }
-
-      // Now handle file uploads if needed
-      if (userData.govIdImage) {
-        try {
-          const govIdFileName = `${authData.user.id}_gov_id`;
-          const { data: govIdData, error: govIdError } = await supabase.storage
-            .from('user_documents')
-            .upload(govIdFileName, userData.govIdImage);
-          
-          if (!govIdError) {
-            // Update the user profile with the file path
-            await supabase
-              .from('user_profiles')
-              .update({ gov_id_image: govIdData.path })
-              .eq('user_id', authData.user.id);
-          } else {
-            console.error('Error uploading government ID:', govIdError);
-          }
-        } catch (fileError) {
-          console.error('Error in government ID upload:', fileError);
-        }
-      }
-
-      if (userData.speedTest) {
-        try {
-          const speedTestFileName = `${authData.user.id}_speed_test`;
-          const { data: speedTestData, error: speedTestError } = await supabase.storage
-            .from('user_documents')
-            .upload(speedTestFileName, userData.speedTest);
-          
-          if (!speedTestError) {
-            // Update the user profile with the file path
-            await supabase
-              .from('user_profiles')
-              .update({ speed_test: speedTestData.path })
-              .eq('user_id', authData.user.id);
-          } else {
-            console.error('Error uploading speed test:', speedTestError);
-          }
-        } catch (fileError) {
-          console.error('Error in speed test upload:', fileError);
-        }
-      }
-
-      if (userData.systemSettings) {
-        try {
-          const systemSettingsFileName = `${authData.user.id}_system_settings`;
-          const { data: systemSettingsData, error: systemSettingsError } = await supabase.storage
-            .from('user_documents')
-            .upload(systemSettingsFileName, userData.systemSettings);
-          
-          if (!systemSettingsError) {
-            // Update the user profile with the file path
-            await supabase
-              .from('user_profiles')
-              .update({ system_settings: systemSettingsData.path })
-              .eq('user_id', authData.user.id);
-          } else {
-            console.error('Error uploading system settings:', systemSettingsError);
-          }
-        } catch (fileError) {
-          console.error('Error in system settings upload:', fileError);
-        }
       }
 
       toast({
