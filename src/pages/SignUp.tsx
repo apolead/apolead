@@ -48,8 +48,45 @@ const SignUp = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
-  const nextStep = () => {
+  const nextStep = async () => {
+    if (currentStep === 0) {
+      if (!userData.email) {
+        toast({
+          title: "Email required",
+          description: "Please enter an email address to continue",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setIsCheckingEmail(true);
+      try {
+        const { data: existingProfiles, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('application_status')
+          .eq('email', userData.email.toLowerCase())
+          .in('application_status', ['rejected']);
+        
+        if (profileError) throw profileError;
+        
+        if (existingProfiles && existingProfiles.length > 0) {
+          toast({
+            title: "Application Previously Submitted",
+            description: "This email has been used for a previous application that did not meet our requirements. Please use a different email address.",
+            variant: "destructive",
+          });
+          setIsCheckingEmail(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking email:', error);
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    }
+    
     setCurrentStep(currentStep + 1);
   };
 
@@ -118,6 +155,24 @@ const SignUp = () => {
         toast({
           title: "Invalid email",
           description: "Only Gmail accounts are accepted at this time",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { data: existingProfiles, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('application_status')
+        .eq('email', userData.email.toLowerCase())
+        .in('application_status', ['rejected']);
+      
+      if (profileError) throw profileError;
+      
+      if (existingProfiles && existingProfiles.length > 0) {
+        toast({
+          title: "Application Previously Submitted",
+          description: "This email has been used for a previous application that did not meet our requirements. Please use a different email address.",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -363,7 +418,12 @@ const SignUp = () => {
   const renderStep = () => {
     switch (currentStep) {
       case 0:
-        return <StepZero userData={userData} updateUserData={updateUserData} nextStep={nextStep} />;
+        return <StepZero 
+          userData={userData} 
+          updateUserData={updateUserData} 
+          nextStep={nextStep} 
+          isCheckingEmail={isCheckingEmail}
+        />;
       case 1:
         return <StepOne userData={userData} updateUserData={updateUserData} nextStep={nextStep} prevStep={prevStep} />;
       case 2:
@@ -373,7 +433,12 @@ const SignUp = () => {
       case 4:
         return <ConfirmationScreen />;
       default:
-        return <StepZero userData={userData} updateUserData={updateUserData} nextStep={nextStep} />;
+        return <StepZero 
+          userData={userData} 
+          updateUserData={updateUserData} 
+          nextStep={nextStep} 
+          isCheckingEmail={isCheckingEmail}
+        />;
     }
   };
 

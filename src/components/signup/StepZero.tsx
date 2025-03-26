@@ -1,12 +1,15 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Loader2 } from 'lucide-react';
 
 const StepZero = ({
   userData,
   updateUserData,
-  nextStep
+  nextStep,
+  isCheckingEmail = false
 }) => {
   const [errorMessage, setErrorMessage] = useState('');
   
@@ -58,7 +61,8 @@ const StepZero = ({
     }
   };
 
-  return <div className="flex flex-col md:flex-row w-full h-screen">
+  return (
+    <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes - adjusted to not overlap */}
@@ -123,9 +127,6 @@ const StepZero = ({
           <h1 className="text-2xl font-bold mb-2 text-center">Get started</h1>
           <p className="text-gray-600 mb-8 text-center">Create your account now</p>
           
-          {/* Progress dots - fixed to remove the extra dot */}
-          
-          
           {/* Form error - ENHANCED: make error more visible */}
           {errorMessage && <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6">
               <div className="flex">
@@ -164,43 +165,91 @@ const StepZero = ({
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
                 First & Last Name
               </label>
-              <Input id="fullName" type="text" value={userData.firstName} onChange={e => updateUserData({
-              firstName: e.target.value
-            })} placeholder="Enter your first and last name" className="w-full" />
+              <Input 
+                id="fullName" 
+                type="text" 
+                value={userData.firstName} 
+                onChange={e => updateUserData({
+                  firstName: e.target.value
+                })} 
+                placeholder="Enter your first and last name" 
+                className="w-full" 
+              />
             </div>
             
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
-              <Input id="email" type="email" value={userData.email} onChange={e => updateUserData({
-              email: e.target.value
-            })} placeholder="you@gmail.com" className="w-full" />
-              {userData.email && !userData.email.toLowerCase().endsWith('@gmail.com') && <p className="text-xs text-red-600 mt-1">Only Gmail addresses are accepted</p>}
+              <Input 
+                id="email" 
+                type="email" 
+                value={userData.email} 
+                onChange={e => updateUserData({
+                  email: e.target.value
+                })} 
+                placeholder="you@gmail.com" 
+                className="w-full" 
+              />
+              {userData.email && !userData.email.toLowerCase().endsWith('@gmail.com') && 
+                <p className="text-xs text-red-600 mt-1">Only Gmail addresses are accepted</p>
+              }
             </div>
             
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
-              <Input id="password" type="password" value={userData.password || ''} onChange={e => updateUserData({
-              password: e.target.value
-            })} placeholder="Create a password" className="w-full" />
-              {userData.password && userData.password.length >= 6 ? <p className="text-xs text-green-600 mt-1">Strong</p> : userData.password ? <p className="text-xs text-orange-600 mt-1">Password should be at least 6 characters</p> : null}
+              <Input 
+                id="password" 
+                type="password" 
+                value={userData.password || ''} 
+                onChange={e => updateUserData({
+                  password: e.target.value
+                })} 
+                placeholder="Create a password" 
+                className="w-full" 
+              />
+              {userData.password && userData.password.length >= 6 ? 
+                <p className="text-xs text-green-600 mt-1">Strong</p> : 
+                userData.password ? 
+                <p className="text-xs text-orange-600 mt-1">Password should be at least 6 characters</p> : 
+                null
+              }
             </div>
             
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                 Confirm Password
               </label>
-              <Input id="confirmPassword" type="password" value={userData.confirmPassword || ''} onChange={e => updateUserData({
-              confirmPassword: e.target.value
-            })} placeholder="Confirm your password" className="w-full" />
-              {userData.confirmPassword && userData.password !== userData.confirmPassword && <p className="text-xs text-red-600 mt-1">Passwords don't match</p>}
+              <Input 
+                id="confirmPassword" 
+                type="password" 
+                value={userData.confirmPassword || ''} 
+                onChange={e => updateUserData({
+                  confirmPassword: e.target.value
+                })} 
+                placeholder="Confirm your password" 
+                className="w-full" 
+              />
+              {userData.confirmPassword && userData.password !== userData.confirmPassword && 
+                <p className="text-xs text-red-600 mt-1">Passwords don't match</p>
+              }
             </div>
             
-            <Button type="submit" className="w-full bg-indigo-600 hover:bg-[#00c2cb] text-white py-2 mt-4">
-              Sign Up
+            <Button 
+              type="submit" 
+              className="w-full bg-indigo-600 hover:bg-[#00c2cb] text-white py-2 mt-4"
+              disabled={isCheckingEmail}
+            >
+              {isCheckingEmail ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Checking email...
+                </>
+              ) : (
+                "Sign Up"
+              )}
             </Button>
           </form>
           
@@ -219,7 +268,8 @@ const StepZero = ({
           <p className="text-center text-gray-500 text-xs">© 2025 ApoLead, All rights Reserved</p>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default StepZero;

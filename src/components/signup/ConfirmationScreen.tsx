@@ -48,7 +48,7 @@ const ConfirmationScreen = () => {
           </Link>
 
           <h2 className="text-2xl font-bold mb-6">
-            {isApproved ? 'Application Complete' : 'Application Received'}
+            {isApproved ? 'Application Complete' : 'Application Status'}
           </h2>
           <p className="text-white/80 mb-6">
             {isApproved 
@@ -104,13 +104,13 @@ const ConfirmationScreen = () => {
           <h2 className="text-2xl font-bold mb-4">
             {isApproved 
               ? "Thank You for Your Application!" 
-              : "We've Received Your Application"}
+              : "We're Unable to Proceed with Your Application"}
           </h2>
           
           <p className={`${isApproved ? "text-gray-600" : "text-red-600"} mb-6`}>
             {isApproved 
               ? "We appreciate your interest in joining our call center team at Apolead. Your application has been successfully submitted and is now being reviewed by our team."
-              : "We're unable to move forward with your application at this time based on your information."}
+              : "Unfortunately, based on the information provided, we're unable to move forward with your application at this time."}
           </p>
           
           {isApproved ? (
@@ -133,30 +133,39 @@ const ConfirmationScreen = () => {
             </div>
           ) : (
             <div className="bg-red-50 p-6 rounded-lg border border-red-100 text-left mb-6 w-full">
-              <h3 className="text-lg font-medium text-red-800 mb-3">Application Status</h3>
+              <h3 className="text-lg font-medium text-red-800 mb-3">Application Unsuccessful</h3>
               <div className="space-y-2 text-gray-700">
                 <div className="flex items-start">
                   <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                  <span>We've carefully reviewed your information.</span>
+                  <span>Your application doesn't meet our current requirements.</span>
                 </div>
                 <div className="flex items-start">
                   <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                  <span>Unfortunately, your application doesn't meet our current requirements.</span>
+                  <span>This email address cannot be used for future applications.</span>
                 </div>
                 <div className="flex items-start">
                   <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                  <span>You may be eligible to apply again after 90 days.</span>
+                  <span>Please note that we do not send confirmation emails for unsuccessful applications.</span>
                 </div>
               </div>
             </div>
           )}
           
-          <p className="text-gray-600 mb-8">
-            If you have any questions, please contact our support team at{' '}
-            <a href="mailto:support@apolead.com" className={isApproved ? "text-indigo-600 font-medium" : "text-red-600 font-medium"}>
-              support@apolead.com
-            </a>
-          </p>
+          {isApproved ? (
+            <p className="text-gray-600 mb-8">
+              If you have any questions, please contact our support team at{' '}
+              <a href="mailto:support@apolead.com" className="text-indigo-600 font-medium">
+                support@apolead.com
+              </a>
+            </p>
+          ) : (
+            <p className="text-gray-600 mb-8">
+              Thank you for your understanding. For any questions about our decision, please contact{' '}
+              <a href="mailto:support@apolead.com" className="text-red-600 font-medium">
+                support@apolead.com
+              </a>
+            </p>
+          )}
           
           <Link to="/">
             <Button 
