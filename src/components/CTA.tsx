@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useToast } from '../hooks/use-toast';
 import { Link } from 'react-router-dom';
@@ -52,7 +51,7 @@ const CTA = () => {
           
           <div className="md:w-1/2 animate-fadeInUp animate-fadeInUp-delay-2">
             <div className="bg-white rounded-xl p-8 shadow-xl">
-              <h3 className="text-center mb-6 text-dark"><span className="text-[#00c2cb]">Apo</span><span className="text-[#9747FF]">Lead</span> Application</h3>
+              <h3 className="text-center mb-6 text-dark"><span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span> Application</h3>
               <form onSubmit={handleSubmit}>
                 <div className="mb-5">
                   <label htmlFor="name" className="block mb-2 font-semibold text-dark">Full Name</label>

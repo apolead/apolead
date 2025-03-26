@@ -67,7 +67,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
-            <span className="text-[#00c2cb]">Apo</span><span className="text-[#9747FF]">Lead</span>
+            <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
           </h2>
         </div>
         

@@ -27,7 +27,7 @@ const Header = () => {
         <a href="#" className="flex items-center text-decoration-none">
           <h1 className="text-[1.8rem] mb-0">
             <span className="text-[#00c2cb]">Apo</span>
-            <span className="text-[#9747FF]">Lead</span>
+            <span className="text-indigo-600">Lead</span>
           </h1>
         </a>
         <nav className="flex items-center">
