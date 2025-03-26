@@ -75,19 +75,16 @@ ON public.user_profiles
 FOR UPDATE 
 USING (auth.uid() = user_id);
 
--- Critical fix: Allow authenticated users to insert rows
-CREATE POLICY "Users can insert their own profile" 
-ON public.user_profiles 
-FOR INSERT 
-TO authenticated
-WITH CHECK (auth.uid() = user_id);
+-- CRITICAL FIX: First, drop the conflicting policies
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.user_profiles;
+DROP POLICY IF EXISTS "Anyone can insert profiles" ON public.user_profiles;
 
--- Allow unauthenticated users to insert rows - needed for signup process
-CREATE POLICY "Anyone can insert profiles" 
+-- CRITICAL FIX: Allow new signups to create their profiles, this is the key change
+CREATE POLICY "Anyone can insert user profiles" 
 ON public.user_profiles 
 FOR INSERT 
-TO anon
-WITH CHECK (true);
+TO authenticated, anon  -- This allows both authenticated and anonymous users
+WITH CHECK (true);      -- No restrictions on insert
 
 -- Create function to handle user creation
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
