@@ -1,35 +1,67 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
+import SupportFAQ from '@/components/SupportFAQ';
+import { 
+  Play, 
+  PieChart, 
+  Tool, 
+  CreditCard, 
+  BarChart2, 
+  Trophy, 
+  FileText, 
+  Settings, 
+  LogOut, 
+  Lock, 
+  ChevronLeft, 
+  ChevronRight, 
+  Search, 
+  Bell, 
+  User, 
+  ChevronDown, 
+  ClipboardList, 
+  GraduationCap, 
+  CheckSquare, 
+  Calendar, 
+  Star, 
+  BookOpen, 
+  Users, 
+  PenTool, 
+  Rocket, 
+  X
+} from 'lucide-react';
 
 const Dashboard = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState('agent');
-  const [currentStep, setCurrentStep] = useState(1);
-  const trainingModalRef = useRef<HTMLDivElement>(null);
-  const progressFillRef = useRef<HTMLDivElement>(null);
-  const progressTextRef = useRef<HTMLSpanElement>(null);
-  const beginTrainingBtnRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showTrainingModal, setShowTrainingModal] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [onboardingProgress, setOnboardingProgress] = useState<any>({
+    welcome_completed: false,
+    training_completed: false,
+    interview_scheduled: false,
+    final_quiz_passed: false,
+    quiz_score: null
+  });
+  const [moduleProgress, setModuleProgress] = useState(0);
   
-  // Load FontAwesome
-  useEffect(() => {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css';
-    document.head.appendChild(link);
-    
-    return () => {
-      document.head.removeChild(link);
-    };
-  }, []);
-
-  // Fetch user data and onboarding progress
+  // Fetch user and profile data
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -39,1649 +71,678 @@ const Dashboard = () => {
           navigate('/login');
           return;
         }
-
+        
+        setUser(user);
+        
         // Fetch user profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('user_profiles')
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('id', user.id)
           .single();
-
+        
         if (profileError) {
           console.error('Error fetching profile:', profileError);
-          toast({
-            title: "Error loading profile",
-            description: "Unable to load your profile data.",
-            variant: "destructive",
-          });
+          return;
         }
-
-        // Fetch user role
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
-
-        if (roleError) {
-          console.error('Error fetching role:', roleError);
-        } else if (roleData) {
-          setRole(roleData.role);
-        }
-
-        // Fetch user's onboarding progress
-        const { data: progressData, error: progressError } = await supabase
+        
+        setUserProfile(profile);
+        
+        // Fetch onboarding progress
+        const { data: onboarding, error: onboardingError } = await supabase
           .from('user_onboarding')
           .select('*')
           .eq('user_id', user.id)
           .single();
-
-        if (!progressError && progressData) {
-          // If user has onboarding data, set the current step
-          let step = 1;
-          if (progressData.welcome_completed) step = 2;
-          if (progressData.training_completed) step = 3;
-          if (progressData.interview_scheduled) step = 4;
-          if (progressData.final_quiz_passed) step = 5; // Completed all steps
-          
-          setCurrentStep(step);
-        } else {
-          // Create initial onboarding entry for the user
-          const { error: insertError } = await supabase
-            .from('user_onboarding')
-            .insert({
-              user_id: user.id,
-              welcome_completed: false,
-              training_completed: false,
-              interview_scheduled: false,
-              final_quiz_passed: false,
-              quiz_score: 0
-            });
-
-          if (insertError) {
-            console.error('Error creating onboarding record:', insertError);
+        
+        if (onboardingError) {
+          if (onboardingError.code === 'PGRST116') {
+            // Record doesn't exist, create it
+            const { data: newOnboarding, error: createError } = await supabase
+              .from('user_onboarding')
+              .insert([
+                { 
+                  user_id: user.id,
+                  welcome_completed: false,
+                  training_completed: false,
+                  interview_scheduled: false,
+                  final_quiz_passed: false,
+                  quiz_score: 0
+                }
+              ])
+              .select()
+              .single();
+            
+            if (createError) {
+              console.error('Error creating onboarding record:', createError);
+              return;
+            }
+            
+            setOnboardingProgress(newOnboarding);
+          } else {
+            console.error('Error fetching onboarding progress:', onboardingError);
           }
+        } else {
+          setOnboardingProgress(onboarding);
         }
-
-        // Set user profile data
-        setUserProfile({
-          ...profileData,
-          email: user.email,
-          id: user.id
-        });
+        
       } catch (error) {
-        console.error('Error in dashboard:', error);
-        toast({
-          title: "Error",
-          description: "There was a problem loading the dashboard.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+        console.error('Error in fetchUserData:', error);
       }
     };
-
+    
     fetchUserData();
-  }, [navigate, toast]);
-
-  // Show the training modal
-  const openTrainingModal = () => {
-    if (trainingModalRef.current) {
-      trainingModalRef.current.style.display = 'flex';
-      setTimeout(() => {
-        if (trainingModalRef.current) {
-          trainingModalRef.current.classList.add('show');
-        }
-      }, 10);
-    }
-    
-    // If this is the first step, mark welcome as completed
-    if (currentStep === 1 && userProfile) {
-      completeWelcomeStep();
-    }
+  }, [navigate]);
+  
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
   };
   
-  // Close the training modal
-  const closeTrainingModal = () => {
-    if (trainingModalRef.current) {
-      trainingModalRef.current.classList.remove('show');
-      setTimeout(() => {
-        if (trainingModalRef.current) {
-          trainingModalRef.current.style.display = 'none';
-        }
-      }, 300);
-    }
-  };
-  
-  // Mark the welcome step as completed
-  const completeWelcomeStep = async () => {
-    if (!userProfile) return;
-    
-    const { error } = await supabase
-      .from('user_onboarding')
-      .update({ welcome_completed: true })
-      .eq('user_id', userProfile.id);
-      
-    if (!error) {
-      setCurrentStep(2);
-    } else {
-      console.error('Error updating onboarding progress:', error);
-    }
-  };
-  
-  // Begin the training and animate the progress
-  const beginTraining = () => {
-    if (!progressFillRef.current || !progressTextRef.current || !beginTrainingBtnRef.current) return;
-    
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 1;
-      
-      if (progressFillRef.current) {
-        progressFillRef.current.style.width = `${progress}%`;
-      }
-      
-      if (progressTextRef.current) {
-        progressTextRef.current.textContent = `${progress}% Complete`;
-      }
-      
-      if (progress >= 100) {
-        clearInterval(interval);
-        
-        if (beginTrainingBtnRef.current) {
-          beginTrainingBtnRef.current.textContent = 'Continue to Next Module';
-          beginTrainingBtnRef.current.classList.add('next-module');
-        }
-        
-        // Unlock the second module
-        const modules = document.querySelectorAll('.module');
-        const secondModule = modules[1];
-        if (secondModule) {
-          const icon = secondModule.querySelector('.module-icon i');
-          const span = secondModule.querySelector('.module-progress span');
-          
-          if (icon) {
-            icon.classList.remove('fa-lock');
-            icon.classList.add('fa-play-circle');
+  const handleTrainingModuleProgress = () => {
+    if (moduleProgress < 100) {
+      const timer = setInterval(() => {
+        setModuleProgress(prev => {
+          if (prev < 100) {
+            return prev + 1;
+          } else {
+            clearInterval(timer);
+            return 100;
           }
-          
-          if (span) {
-            span.textContent = 'Ready to Start';
-          }
-        }
-      }
-    }, 30);
+        });
+      }, 30);
+    }
   };
   
-  // Handle user logout
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
       navigate('/login');
     } catch (error) {
       console.error('Error signing out:', error);
       toast({
-        title: "Error signing out",
-        description: "There was a problem signing you out.",
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
         variant: "destructive",
       });
     }
   };
   
-  // Toggle sidebar collapsed state
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
+  // Calculate onboarding completion percentage
+  const calculateCompletionPercentage = () => {
+    if (!onboardingProgress) return 0;
+    
+    const steps = [
+      onboardingProgress.welcome_completed,
+      onboardingProgress.training_completed,
+      onboardingProgress.interview_scheduled,
+      onboardingProgress.final_quiz_passed
+    ];
+    
+    const completedSteps = steps.filter(step => step === true).length;
+    return (completedSteps / steps.length) * 100;
   };
   
-  // Get user initials for avatar
+  const completionPercentage = calculateCompletionPercentage();
+  
   const getUserInitials = () => {
     if (!userProfile) return '';
     
-    const firstName = userProfile.first_name || '';
-    const lastName = userProfile.last_name || '';
+    const firstInitial = userProfile.first_name ? userProfile.first_name.charAt(0) : '';
+    const lastInitial = userProfile.last_name ? userProfile.last_name.charAt(0) : '';
     
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    return `${firstInitial}${lastInitial}`;
   };
   
-  // Loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex justify-center items-center">
-        <div className="animate-spin w-10 h-10 border-4 border-indigo-600 rounded-full border-t-transparent"></div>
-      </div>
-    );
-  }
+  const getFullName = () => {
+    if (!userProfile) return '';
+    return `${userProfile.first_name || ''} ${userProfile.last_name || ''}`;
+  };
+  
+  const menuItems = [
+    { 
+      name: 'Getting Started', 
+      icon: <Play className="mr-3 h-5 w-5" />, 
+      active: true, 
+      locked: false 
+    },
+    { 
+      name: 'Dashboard', 
+      icon: <PieChart className="mr-3 h-5 w-5" />, 
+      active: false, 
+      locked: true 
+    },
+    { 
+      name: 'Tool Page', 
+      icon: <Tool className="mr-3 h-5 w-5" />, 
+      active: false, 
+      locked: true 
+    },
+    { 
+      name: 'Payment History', 
+      icon: <CreditCard className="mr-3 h-5 w-5" />, 
+      active: false, 
+      locked: true 
+    },
+    { 
+      name: 'Performance', 
+      icon: <BarChart2 className="mr-3 h-5 w-5" />, 
+      active: false, 
+      locked: true 
+    },
+    { 
+      name: 'Ranking', 
+      icon: <Trophy className="mr-3 h-5 w-5" />, 
+      active: false, 
+      locked: true 
+    },
+    { 
+      name: 'Billing Information', 
+      icon: <FileText className="mr-3 h-5 w-5" />, 
+      active: false, 
+      locked: true 
+    }
+  ];
+  
+  const bottomMenuItems = [
+    { 
+      name: 'Settings', 
+      icon: <Settings className="mr-3 h-5 w-5" />, 
+      active: false, 
+      locked: true 
+    },
+    { 
+      name: 'Log Out', 
+      icon: <LogOut className="mr-3 h-5 w-5" />, 
+      active: false, 
+      locked: false 
+    }
+  ];
   
   return (
-    <>
-      <style>
-        {`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-        
-        body {
-            display: flex;
-            min-height: 100vh;
-            background-color: #f8fafc;
-        }
-        
-        /* Sidebar Styles */
-        .sidebar {
-            width: 240px;
-            background-color: white;
-            border-right: 1px solid #eaeaea;
-            padding: 25px 0;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 0 20px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 10;
-            text-align: left;
-            box-sizing: border-box;
-        }
-        
-        .sidebar.collapsed {
-            width: 60px !important;
-            text-align: center !important;
-            overflow: visible !important;
-        }
-        
-        .logo {
-            padding: 0 25px 25px;
-            border-bottom: 1px solid #eaeaea;
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            overflow: hidden;
-        }
-        
-        .logo h1 {
-            font-size: 28px;
-            font-weight: 700;
-            transition: opacity 0.3s;
-        }
-        
-        .sidebar.collapsed .logo h1 {
-            opacity: 0;
-            position: absolute;
-            left: -9999px;
-            width: 0;
-            height: 0;
-            overflow: hidden;
-            visibility: hidden;
-        }
-        
-        .sidebar.collapsed .logo {
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            padding: 25px 0 25px 0 !important;
-            width: 100% !important;
-            text-align: center !important;
-            margin: 0 auto !important;
-            position: relative !important;
-            overflow: visible !important;
-        }
-        
-        .sidebar.collapsed .toggle-btn {
-            position: absolute !important;
-            right: -10px !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            background-color: white !important;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1) !important;
-            border-radius: 50% !important;
-            width: 20px !important;
-            height: 20px !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            font-size: 10px !important;
-            z-index: 999 !important;
-            border: 1px solid #eaeaea !important;
-        }
-        
-        .toggle-btn {
-            cursor: pointer;
-            font-size: 12px;
-            color: #64748b;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.3s;
-            position: relative;
-            z-index: 20;
-        }
-        
-        .toggle-btn:hover {
-            color: #4f46e5;
-        }
-        
-        .sidebar.collapsed .toggle-btn {
-            position: absolute !important;
-            right: -15px !important;
-            top: 20px !important;
-            background-color: white !important;
-            box-shadow: 0 0 8px rgba(0,0,0,0.1) !important;
-            border-radius: 50% !important;
-            width: 30px !important;
-            height: 30px !important;
-        }
-        
-        .logo span:first-child {
-            color: #00c2cb;
-        }
-        
-        .logo span:last-child {
-            color: #4f46e5;
-        }
-        
-        .nav-menu {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            padding: 0 15px;
-            overflow-x: hidden;
-        }
-        
-        .sidebar.collapsed .nav-menu {
-            padding: 0 !important;
-            align-items: center !important;
-        }
-        
-        .sidebar.collapsed .nav-menu {
-            padding: 0 !important;
-            width: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: flex-start !important;
-        }
-        
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            color: #64748b;
-            text-decoration: none;
-            transition: all 0.3s;
-            margin-bottom: 8px;
-            border-radius: 10px;
-            width: 100%;
-            white-space: nowrap;
-            position: relative;
-            box-sizing: border-box;
-        }
-        
-        .nav-item.locked {
-            cursor: not-allowed;
-        }
-        
-        .nav-item.locked:hover {
-            background-color: rgba(148, 163, 184, 0.2);
-            color: #94A3B8;
-            position: relative;
-        }
-        
-        .nav-item.locked:hover i:not(.menu-lock-icon),
-        .nav-item.locked:hover span {
-            opacity: 0.5;
-        }
-        
-        .nav-item.locked:hover .menu-lock-icon {
-            color: #64748B;
-            font-size: 20px;
-            text-shadow: 0 0 5px rgba(255,255,255,0.8);
-        }
-        
-        .sidebar.collapsed .nav-item {
-            padding: 12px 0 !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            width: 100% !important;
-            text-align: center !important;
-            overflow: hidden !important;
-        }
-        
-        .nav-item:hover, .nav-item.active {
-            background-color: rgba(79, 70, 229, 0.08);
-            color: #4f46e5;
-        }
-        
-        .nav-item.active {
-            background-color: rgba(79, 70, 229, 0.1);
-            font-weight: 500;
-        }
-        
-        .nav-item i {
-            margin-right: 12px;
-            font-size: 18px;
-            width: 24px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-        
-        .sidebar.collapsed .nav-item i {
-            margin-right: 0;
-        }
-        
-        .sidebar.collapsed .nav-item span {
-            display: none !important;
-            opacity: 0;
-            visibility: hidden;
-            width: 0;
-            height: 0;
-            overflow: hidden;
-        }
-        
-        .sidebar.collapsed .menu-lock-icon {
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        .nav-divider {
-            height: 1px;
-            background-color: #eaeaea;
-            margin: 15px 10px 15px;
-            width: calc(100% - 20px);
-        }
-        
-        .sidebar-footer {
-            padding: 20px 25px;
-            border-top: 1px solid #eaeaea;
-            color: #64748b;
-            font-size: 14px;
-            transition: opacity 0.3s;
-        }
-        
-        .sidebar.collapsed .sidebar-footer {
-            opacity: 0;
-            visibility: hidden;
-            height: 0;
-            padding: 0;
-            border: none;
-        }
-        
-        .sidebar-footer a {
-            color: #4f46e5;
-            text-decoration: none;
-        }
-        
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: 30px 40px;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-        
-        .welcome {
-            font-size: 26px;
-            font-weight: 600;
-            color: #1e293b;
-        }
-        
-        .welcome span {
-            color: #4f46e5;
-            position: relative;
-        }
-        
-        .welcome span::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%);
-            border-radius: 2px;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-right: 20px;
-        }
-        
-        .action-button {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            background-color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            cursor: pointer;
-            position: relative;
-            color: #64748b;
-            transition: all 0.3s;
-        }
-        
-        .action-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-            color: #4f46e5;
-        }
-        
-        .notification::after {
-            content: '';
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #f56565;
-            border: 2px solid white;
-        }
-        
-        .user-profile {
-            display: flex;
-            align-items: center;
-            background: white;
-            padding: 8px 15px 8px 8px;
-            border-radius: 50px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .user-profile:hover {
-            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-            transform: translateY(-3px);
-        }
-        
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            margin-right: 10px;
-            background: linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 16px;
-        }
-        
-        .user-name {
-            font-weight: 500;
-            color: #1e293b;
-        }
-        
-        .dropdown-icon {
-            margin-left: 8px;
-            color: #64748b;
-        }
-        
-        /* Page Title */
-        .page-title {
-            display: flex;
-            align-items: center;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        
-        .page-title h2 {
-            font-size: 24px;
-            color: #1e293b;
-            display: flex;
-            align-items: center;
-        }
-        
-        .page-title-icon {
-            margin-right: 12px;
-            background: linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%);
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
-        
-        .page-subtitle {
-            color: #64748b;
-            margin-left: 15px;
-            font-size: 14px;
-            padding-left: 15px;
-            border-left: 2px solid #e2e8f0;
-        }
-        
-        /* Stats Section */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-        
-        .stat-card {
-            background-color: white;
-            border-radius: 16px;
-            padding: 25px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle, rgba(79,70,229,0.1) 0%, rgba(79,70,229,0) 70%);
-            border-radius: 0 0 0 70%;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-        
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 20px;
-            background: linear-gradient(135deg, rgba(79,70,229,0.1) 0%, rgba(0,194,203,0.1) 100%);
-            color: #4f46e5;
-            font-size: 24px;
-            position: relative;
-        }
-        
-        .stat-icon::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%);
-            border-radius: 16px;
-            opacity: 0.2;
-        }
-        
-        .stat-info h3 {
-            font-size: 28px;
-            color: #1e293b;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        
-        .stat-info p {
-            color: #64748b;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .stat-info p i {
-            color: #4f46e5;
-            margin-right: 5px;
-            font-size: 12px;
-        }
-        
-        /* Action Cards */
-        .action-cards-container {
-            margin-bottom: 40px;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .action-cards-container::before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(79,70,229,0.05) 0%, rgba(79,70,229,0) 70%);
-            border-radius: 0;
-        }
-        
-        .action-cards-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        
-        .action-cards-header h2 {
-            font-size: 20px;
-            color: #1e293b;
-            display: flex;
-            align-items: center;
-        }
-        
-        .header-icon {
-            margin-right: 10px;
-            background: linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%);
-            color: white;
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-        }
-        
-        .progress-indicator {
-            display: flex;
-            align-items: center;
-            background: rgba(226, 232, 240, 0.5);
-            padding: 8px 15px;
-            border-radius: 50px;
-        }
-        
-        .progress-bar {
-            width: 150px;
-            height: 8px;
-            background-color: rgba(148, 163, 184, 0.2);
-            border-radius: 4px;
-            margin-right: 15px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            width: 25%;
-            background: linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%);
-            border-radius: 4px;
-            position: relative;
-        }
-        
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 8px;
-            height: 100%;
-            background: white;
-            opacity: 0.3;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.3; }
-            50% { opacity: 0.6; }
-            100% { opacity: 0.3; }
-        }
-        
-        .progress-text {
-            font-size: 14px;
-            color: #64748b;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-        }
-        
-        .progress-text i {
-            color: #10B981;
-            margin-right: 5px;
-        }
-        
-        .action-cards {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 25px;
-            position: relative;
-            padding-top: 20px;
-            padding-bottom: 20px;
-        }
-        
-        .action-card {
-            background-color: white;
-            border-radius: 16px;
-            padding: 30px 25px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            position: relative;
-            z-index: 2;
-            transition: all 0.3s ease;
-            height: 100%;
-        }
-        
-        .action-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-        }
-        
-        .action-card.locked {
-            opacity: 0.5;
-            background-color: rgba(241, 245, 249, 0.5);
-            box-shadow: none;
-            filter: grayscale(100%);
-            transform: none;
-            border: 1px dashed #cbd5e1;
-        }
-        
-        .action-card.locked:hover {
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .step-number {
-            position: absolute;
-            top: -18px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 4px 10px rgba(79,70,229,0.3);
-            z-index: 3;
-            border: 3px solid white;
-        }
-        
-        .step-number.completed {
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-            box-shadow: 0 4px 10px rgba(16,185,129,0.3);
-        }
-        
-        .step-number.locked {
-            background: linear-gradient(135deg, #94A3B8 0%, #64748B 100%);
-            box-shadow: none;
-        }
-        
-        .action-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 25px;
-            background: linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%);
-            color: white;
-            font-size: 30px;
-            box-shadow: 0 8px 20px rgba(79,70,229,0.2);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .action-icon::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 60%);
-        }
-        
-        .action-icon.completed {
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-            box-shadow: 0 8px 20px rgba(16,185,129,0.2);
-        }
-        
-        .action-icon.locked {
-            background: linear-gradient(135deg, #94A3B8 0%, #64748B 100%);
-            box-shadow: none;
-        }
-        
-        .action-card h3 {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: #1e293b;
-            font-weight: 600;
-        }
-        
-        .action-card p {
-            color: #64748b;
-            font-size: 14px;
-            margin-bottom: 25px;
-            flex-grow: 1;
-            line-height: 1.6;
-        }
-        
-        .card-button {
-            padding: 12px 24px;
-            border-radius: 12px;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-        }
-        
-        .card-button i {
-            margin-right: 8px;
-            font-size: 16px;
-        }
-        
-        .button-completed {
-            background: linear-gradient(90deg, #10B981 0%, #059669 100%);
-            box-shadow: 0 4px 10px rgba(16,185,129,0.2);
-        }
-        
-        .button-completed:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(16,185,129,0.3);
-        }
-        
-        .button-current {
-            background: linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%);
-            box-shadow: 0 4px 10px rgba(79,70,229,0.2);
-        }
-        
-        .button-current:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(79,70,229,0.3);
-        }
-        
-        .button-locked {
-            background: #94A3B8;
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-        
-        /* Lock Icon */
-        .lock-icon {
-            position: absolute;
-            top: -12px;
-            right: -12px;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #94A3B8;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            z-index: 3;
-            font-size: 14px;
-        }
-        
-        /* Menu Lock Icon - Only shows on hover */
-        .menu-lock-icon {
-            display: none !important;
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            color: #94A3B8;
-            font-size: 18px;
-            z-index: 5;
-        }
-        
-        .nav-item.locked:hover .menu-lock-icon {
-            display: block !important;
-        }
-        
-        .sidebar.collapsed .menu-lock-icon {
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        /* Info Cards - Remove from layout */
-        .info-cards {
-            display: none;
-        }
-        
-        /* Adjust main content padding for better vertical fit */
-        .main-content {
-            flex: 1;
-            padding: 20px 30px;
-        }
-        
-        /* Reduce top margin on header */
-        .header {
-            margin-bottom: 25px;
-        }
-        
-        /* Reduce space between sections */
-        .stats {
-            margin-bottom: 25px;
-        }
-        
-        .page-title {
-            margin-bottom: 20px;
-        }
-        
-        /* Make action cards container more compact */
-        .action-cards-container {
-            margin-bottom: 20px;
-            padding: 25px;
-        }
-        
-        .action-cards-header {
-            margin-bottom: 20px;
-        }
-        
-        /* Adjust vertical spacing in cards */
-        .action-icon {
-            margin-bottom: 15px;
-        }
-        
-        .action-card h3 {
-            margin-bottom: 10px;
-        }
-        
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .modal.show {
-            opacity: 1;
-        }
-        
-        .modal-content {
-            background-color: white;
-            width: 100%;
-            max-width: 600px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
-        }
-        
-        .modal.show .modal-content {
-            transform: translateY(0);
-        }
-        
-        .modal-header {
-            padding: 20px 25px;
-            border-bottom: 1px solid #eaeaea;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(to right, #4169E1, #00CED1);
-            color: white;
-        }
-        
-        .modal-header h2 {
-            font-size: 20px;
-            font-weight: 600;
-            margin: 0;
-            display: flex;
-            align-items: center;
-        }
-        
-        .modal-header h2 i {
-            margin-right: 10px;
-        }
-        
-        .close-modal {
-            font-size: 24px;
-            cursor: pointer;
-            color: white;
-            opacity: 0.8;
-            transition: opacity 0.3s;
-        }
-        
-        .close-modal:hover {
-            opacity: 1;
-        }
-        
-        .modal-body {
-            padding: 30px;
-        }
-        
-        .modal-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #4169E1, #00CED1);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            margin: 0 auto 25px;
-            box-shadow: 0 8px 20px rgba(65, 105, 225, 0.3);
-        }
-        
-        .modal-body h3 {
-            font-size: 22px;
-            font-weight: 600;
-            color: #1e293b;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        
-        .modal-body p {
-            color: #64748b;
-            text-align: center;
-            margin-bottom: 15px;
-            line-height: 1.6;
-        }
-        
-        .training-modules {
-            margin: 30px 0;
-        }
-        
-        .module {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            border-radius: 12px;
-            background-color: #f8fafc;
-            margin-bottom: 15px;
-            border: 1px solid #eaeaea;
-            transition: all 0.3s;
-        }
-        
-        .module:hover {
-            background-color: #f1f5f9;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        }
-        
-        .module-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #4169E1;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            margin-right: 15px;
-            flex-shrink: 0;
-            box-shadow: 0 4px 8px rgba(65, 105, 225, 0.2);
-        }
-        
-        .module-info {
-            flex-grow: 1;
-        }
-        
-        .module-info h4 {
-            font-size: 16px;
-            font-weight: 500;
-            color: #1e293b;
-            margin-bottom: 5px;
-        }
-        
-        .module-progress {
-            display: flex;
-            align-items: center;
-        }
-        
-        .module-progress .progress-bar {
-            width: 120px;
-            height: 6px;
-            background-color: rgba(148, 163, 184, 0.2);
-            border-radius: 3px;
-            margin-right: 10px;
-            overflow: hidden;
-        }
-        
-        .module-progress .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4169E1, #00CED1);
-            width: 0%;
-            transition: width 0.3s;
-        }
-        
-        .module-progress span {
-            font-size: 12px;
-            color: #64748b;
-        }
-        
-        .start-training-btn {
-            display: block;
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(90deg, #4169E1, #00CED1);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-weight: 500;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(65, 105, 225, 0.3);
-        }
-        
-        .start-training-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(65, 105, 225, 0.4);
-        }
-        
-        .start-training-btn.next-module {
-            background: linear-gradient(90deg, #00CED1, #4169E1);
-            box-shadow: 0 4px 15px rgba(0, 206, 209, 0.3);
-        }
-        
-        .start-training-btn.next-module:hover {
-            box-shadow: 0 8px 25px rgba(0, 206, 209, 0.4);
-        }
-      `}
-      </style>
-    
-      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-        {/* Sidebar */}
-        <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} id="sidebar">
-          <div className="logo">
-            <h1>
-              <span style={{ color: '#00c2cb' }}>Apo</span><span style={{ color: '#4f46e5' }}>Lead</span>
-            </h1>
-            <div className="toggle-btn" id="sidebarToggle" onClick={toggleSidebar}>
-              <i className={`fas ${sidebarCollapsed ? 'fa-angle-right' : 'fa-angle-left'}`}></i>
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <div 
+        className={`fixed left-0 top-0 h-full bg-white shadow-md transition-all duration-300 z-50 ${
+          sidebarCollapsed ? 'w-16' : 'w-64'
+        }`}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <h1 className={`text-xl font-bold ${sidebarCollapsed ? 'hidden' : 'block'}`}>
+            <span className="text-[#00c2cb]">Apo</span>
+            <span className="text-indigo-600">Lead</span>
+          </h1>
+          <button
+            onClick={toggleSidebar}
+            className={`h-6 w-6 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-all ${
+              sidebarCollapsed ? 'ml-auto mr-auto' : ''
+            }`}
+          >
+            {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </button>
+        </div>
+        
+        {/* Navigation */}
+        <div className="py-4 flex flex-col h-[calc(100%-64px)] justify-between">
+          <div>
+            {menuItems.map((item, index) => (
+              <TooltipProvider key={index} delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      className={`w-full flex items-center px-4 py-3 ${
+                        item.active ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'
+                      } transition-colors`}
+                      disabled={item.locked}
+                    >
+                      {item.icon}
+                      {!sidebarCollapsed && (
+                        <span className="text-sm font-medium">{item.name}</span>
+                      )}
+                      {!sidebarCollapsed && item.locked && (
+                        <Lock className="ml-auto h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  {sidebarCollapsed && (
+                    <TooltipContent side="right">
+                      <p>{item.name} {item.locked ? '(Locked)' : ''}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            ))}
+          </div>
+          
+          <div>
+            <div className="border-t border-gray-100 my-2"></div>
+            {bottomMenuItems.map((item, index) => (
+              <TooltipProvider key={index} delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      className={`w-full flex items-center px-4 py-3 ${
+                        item.active ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50'
+                      } transition-colors`}
+                      disabled={item.locked}
+                      onClick={item.name === 'Log Out' ? handleSignOut : undefined}
+                    >
+                      {item.icon}
+                      {!sidebarCollapsed && (
+                        <span className="text-sm font-medium">{item.name}</span>
+                      )}
+                      {!sidebarCollapsed && item.locked && (
+                        <Lock className="ml-auto h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  {sidebarCollapsed && (
+                    <TooltipContent side="right">
+                      <p>{item.name} {item.locked ? '(Locked)' : ''}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            ))}
+            
+            {!sidebarCollapsed && (
+              <div className="px-4 py-3 text-xs text-gray-500 mt-4">
+                <SupportFAQ />
+              </div>
+            )}
+            {sidebarCollapsed && (
+              <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="w-full flex items-center justify-center px-4 py-3 text-gray-500 hover:text-indigo-600">
+                      <Help className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>Support Center</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Main Content */}
+      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
+        {/* Header */}
+        <div className="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
+          <div className="text-gray-700">
+            Thanks for signing up, <span className="font-semibold">{userProfile?.first_name || 'User'}</span>!
+          </div>
+          
+          <div className="flex items-center">
+            <div className="flex mr-4">
+              <button className="p-2 rounded-full hover:bg-gray-100">
+                <Search className="h-5 w-5 text-gray-600" />
+              </button>
+              <button className="p-2 rounded-full hover:bg-gray-100 relative">
+                <Bell className="h-5 w-5 text-gray-600" />
+                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+              </button>
+              <button className="p-2 rounded-full hover:bg-gray-100">
+                <Settings className="h-5 w-5 text-gray-600" />
+              </button>
             </div>
-          </div>
-          
-          <div className="nav-menu">
-            <a href="#" className="nav-item active">
-              <i className="fas fa-play-circle"></i>
-              <span>Getting Started</span>
-            </a>
-            <a href="#" className="nav-item locked">
-              <i className="fas fa-chart-pie"></i>
-              <span>Dashboard</span>
-              <i className="fas fa-lock menu-lock-icon"></i>
-            </a>
-            <a href="#" className="nav-item locked">
-              <i className="fas fa-tools"></i>
-              <span>Tool Page</span>
-              <i className="fas fa-lock menu-lock-icon"></i>
-            </a>
-            <a href="#" className="nav-item locked">
-              <i className="fas fa-money-bill-wave"></i>
-              <span>Payment History</span>
-              <i className="fas fa-lock menu-lock-icon"></i>
-            </a>
-            <a href="#" className="nav-item locked">
-              <i className="fas fa-chart-line"></i>
-              <span>Performance</span>
-              <i className="fas fa-lock menu-lock-icon"></i>
-            </a>
-            <a href="#" className="nav-item locked">
-              <i className="fas fa-trophy"></i>
-              <span>Ranking</span>
-              <i className="fas fa-lock menu-lock-icon"></i>
-            </a>
-            <a href="#" className="nav-item locked">
-              <i className="fas fa-file-invoice-dollar"></i>
-              <span>Billing Information</span>
-              <i className="fas fa-lock menu-lock-icon"></i>
-            </a>
             
-            <div className="nav-divider"></div>
-            
-            <a href="#" className="nav-item locked">
-              <i className="fas fa-cog"></i>
-              <span>Settings</span>
-              <i className="fas fa-lock menu-lock-icon"></i>
-            </a>
-            <a href="#" className="nav-item" onClick={handleLogout}>
-              <i className="fas fa-sign-out-alt"></i>
-              <span>Log Out</span>
-            </a>
-            
-            <div style={{ flexGrow: 1 }}></div>
-          </div>
-          
-          <div className="sidebar-footer">
-            <i className="fas fa-info-circle"></i> Need help? <a href="#">Support Center</a>
+            <div className="flex items-center">
+              <div className="h-9 w-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-medium text-sm">
+                {getUserInitials()}
+              </div>
+              <div className="ml-2 mr-1">
+                <div className="text-sm font-medium">{getFullName()}</div>
+              </div>
+              <ChevronDown className="h-4 w-4 text-gray-600" />
+            </div>
           </div>
         </div>
         
-        {/* Main Content */}
-        <div className="main-content">
-          {/* Header */}
-          <div className="header">
-            <div className="welcome">
-              Thanks for signing up, <span>{userProfile?.first_name || 'User'}</span>!
-            </div>
-            
-            <div className="user-info">
-              <div className="action-buttons">
-                <div className="action-button">
-                  <i className="fas fa-search"></i>
-                </div>
-                <div className="action-button notification">
-                  <i className="fas fa-bell"></i>
-                </div>
-                <div className="action-button">
-                  <i className="fas fa-cog"></i>
-                </div>
-              </div>
-              
-              <div className="user-profile">
-                <div className="user-avatar">
-                  {getUserInitials()}
-                </div>
-                <div className="user-name">
-                  {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}
-                </div>
-                <i className="fas fa-chevron-down dropdown-icon"></i>
-              </div>
-            </div>
-          </div>
-          
+        {/* Page Content */}
+        <div className="p-8">
           {/* Page Title */}
-          <div className="page-title">
-            <h2>
-              <div className="page-title-icon">
-                <i className="fas fa-clipboard-list"></i>
+          <div className="mb-8">
+            <div className="flex items-center">
+              <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                <ClipboardList className="h-5 w-5 text-indigo-600" />
               </div>
-              Onboarding Process
-            </h2>
-            <div className="page-subtitle">Complete all steps to start earning</div>
+              <h1 className="text-2xl font-bold text-gray-800">Onboarding Process</h1>
+            </div>
+            <p className="text-gray-600 mt-1 ml-13">Complete all steps to start earning</p>
           </div>
           
           {/* Stats Section */}
-          <div className="stats">
-            <div className="stat-card">
-              <div className="stat-icon">
-                <i className="fas fa-graduation-cap"></i>
-              </div>
-              <div className="stat-info">
-                <h3>{(currentStep - 1) * 25}%</h3>
-                <p><i className="fas fa-arrow-up"></i> Onboarding Progress</p>
-              </div>
-            </div>
-            
-            <div className="stat-card">
-              <div className="stat-icon">
-                <i className="fas fa-tasks"></i>
-              </div>
-              <div className="stat-info">
-                <h3>{Math.max(0, currentStep - 1)}/4</h3>
-                <p><i className="fas fa-check-circle"></i> Steps Completed</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-lg shadow-sm p-5">
+              <div className="flex items-start">
+                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                  <GraduationCap className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-gray-600 text-sm">Onboarding Progress</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mt-1">{Math.floor(completionPercentage)}%</h3>
+                </div>
               </div>
             </div>
             
-            <div className="stat-card">
-              <div className="stat-icon">
-                <i className="fas fa-calendar-alt"></i>
-              </div>
-              <div className="stat-info">
-                <h3>7 days</h3>
-                <p><i className="fas fa-hourglass-half"></i> Until Deadline</p>
+            <div className="bg-white rounded-lg shadow-sm p-5">
+              <div className="flex items-start">
+                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                  <CheckSquare className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-gray-600 text-sm">Steps Completed</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mt-1">
+                    {onboardingProgress ? [
+                      onboardingProgress.welcome_completed,
+                      onboardingProgress.training_completed,
+                      onboardingProgress.interview_scheduled, 
+                      onboardingProgress.final_quiz_passed
+                    ].filter(Boolean).length : 0}/4
+                  </h3>
+                </div>
               </div>
             </div>
             
-            <div className="stat-card">
-              <div className="stat-icon">
-                <i className="fas fa-star"></i>
+            <div className="bg-white rounded-lg shadow-sm p-5">
+              <div className="flex items-start">
+                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                  <Calendar className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-gray-600 text-sm">Until Deadline</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mt-1">7 days</h3>
+                </div>
               </div>
-              <div className="stat-info">
-                <h3>-</h3>
-                <p><i className="fas fa-trophy"></i> Assessment Score</p>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-sm p-5">
+              <div className="flex items-start">
+                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                  <Star className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-gray-600 text-sm">Assessment Score</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mt-1">
+                    {onboardingProgress?.quiz_score ? `${onboardingProgress.quiz_score}%` : '-'}
+                  </h3>
+                </div>
               </div>
             </div>
           </div>
           
-          {/* Action Cards Container */}
-          <div className="action-cards-container">
-            <div className="action-cards-header">
-              <h2>
-                <div className="header-icon">
-                  <i className="fas fa-tasks"></i>
+          {/* Onboarding Steps */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center">
+                <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                  <CheckSquare className="h-4 w-4 text-indigo-600" />
                 </div>
-                Complete These Steps
-              </h2>
+                <h2 className="text-xl font-bold text-gray-800">Complete These Steps</h2>
+              </div>
               
-              <div className="progress-indicator">
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${(currentStep - 1) * 25}%` }}></div>
+              <div className="flex items-center">
+                <div className="w-48 h-2 rounded-full bg-gray-200 mr-3">
+                  <div 
+                    className="h-full rounded-full bg-indigo-600" 
+                    style={{ width: `${completionPercentage}%` }}
+                  ></div>
                 </div>
-                <div className="progress-text">
-                  <i className="fas fa-check-circle"></i> {Math.max(0, currentStep - 1)} of 4 completed
+                <div className="text-sm text-gray-600">
+                  {onboardingProgress ? [
+                    onboardingProgress.welcome_completed,
+                    onboardingProgress.training_completed,
+                    onboardingProgress.interview_scheduled, 
+                    onboardingProgress.final_quiz_passed
+                  ].filter(Boolean).length : 0} of 4 completed
                 </div>
               </div>
             </div>
             
-            {/* Action Cards */}
-            <div className="action-cards">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Step 1: Initial Training */}
-              <div className={`action-card ${currentStep > 1 ? 'completed' : ''}`}>
-                <div className={`step-number ${currentStep > 1 ? 'completed' : ''}`}>
-                  {currentStep > 1 ? <i className="fas fa-check"></i> : 1}
+              <div className={`rounded-lg border ${onboardingProgress?.training_completed ? 'border-green-200 bg-green-50' : 'border-indigo-200 bg-white'} p-5 relative`}>
+                <div className={`absolute top-4 right-4 h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                  onboardingProgress?.training_completed ? 'bg-green-500 text-white' : 'bg-indigo-100 text-indigo-600'
+                }`}>
+                  1
                 </div>
-                <div className={`action-icon ${currentStep > 1 ? 'completed' : ''}`}>
-                  <i className="fas fa-book-reader"></i>
+                <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                  <BookOpen className="h-6 w-6 text-indigo-600" />
                 </div>
-                <h3>Initial Training</h3>
-                <p>Complete the initial training module to unlock the next step. This will teach you the fundamentals.</p>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Initial Training</h3>
+                <p className="text-gray-600 text-sm mb-4">Complete the initial training module to unlock the next step. This will teach you the fundamentals.</p>
                 <button 
-                  className={`card-button ${currentStep > 1 ? 'button-completed' : 'button-current'}`}
-                  onClick={openTrainingModal}
+                  className={`px-4 py-2 rounded-md text-sm font-medium ${
+                    onboardingProgress?.training_completed 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  }`}
+                  onClick={() => setShowTrainingModal(true)}
                 >
-                  <i className={`fas ${currentStep > 1 ? 'fa-check-circle' : 'fa-play-circle'}`}></i>
-                  {currentStep > 1 ? 'Completed' : 'Start'}
+                  {onboardingProgress?.training_completed ? 'Completed' : 'Start'}
                 </button>
               </div>
               
-              {/* Step 2: Interview - Locked or Current */}
-              <div className={`action-card ${currentStep > 2 ? 'completed' : currentStep < 2 ? 'locked' : ''}`}>
-                {currentStep < 2 && 
-                  <div className="lock-icon">
-                    <i className="fas fa-lock"></i>
+              {/* Step 2: Interview */}
+              <div className={`rounded-lg border ${
+                onboardingProgress?.interview_scheduled 
+                  ? 'border-green-200 bg-green-50' 
+                  : !onboardingProgress?.training_completed 
+                    ? 'border-gray-200 bg-gray-50' 
+                    : 'border-indigo-200 bg-white'
+              } p-5 relative`}>
+                <div className={`absolute top-4 right-4 h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                  onboardingProgress?.interview_scheduled 
+                    ? 'bg-green-500 text-white' 
+                    : !onboardingProgress?.training_completed 
+                      ? 'bg-gray-300 text-white' 
+                      : 'bg-indigo-100 text-indigo-600'
+                }`}>
+                  2
+                </div>
+                {!onboardingProgress?.training_completed && (
+                  <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-lg">
+                    <Lock className="h-10 w-10 text-gray-400" />
                   </div>
-                }
-                <div className={`step-number ${currentStep > 2 ? 'completed' : currentStep < 2 ? 'locked' : ''}`}>
-                  {currentStep > 2 ? <i className="fas fa-check"></i> : 2}
+                )}
+                <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6 text-indigo-600" />
                 </div>
-                <div className={`action-icon ${currentStep > 2 ? 'completed' : currentStep < 2 ? 'locked' : ''}`}>
-                  <i className="fas fa-user-friends"></i>
-                </div>
-                <h3>Schedule Interview</h3>
-                <p>Once your training is reviewed, you'll be able to schedule your interview with our team.</p>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Schedule Interview</h3>
+                <p className="text-gray-600 text-sm mb-4">Once your training is reviewed, you'll be able to schedule your interview with our team.</p>
                 <button 
-                  className={`card-button ${
-                    currentStep > 2 ? 'button-completed' : 
-                    currentStep === 2 ? 'button-current' : 
-                    'button-locked'
+                  className={`px-4 py-2 rounded-md text-sm font-medium ${
+                    onboardingProgress?.interview_scheduled 
+                      ? 'bg-green-500 text-white' 
+                      : onboardingProgress?.training_completed 
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                        : 'bg-gray-300 text-white'
                   }`}
-                  onClick={currentStep >= 2 ? openTrainingModal : undefined}
+                  disabled={!onboardingProgress?.training_completed}
                 >
-                  <i className={`fas ${
-                    currentStep > 2 ? 'fa-check-circle' : 
-                    currentStep === 2 ? 'fa-calendar-alt' : 
-                    'fa-lock'
-                  }`}></i>
-                  {currentStep > 2 ? 'Completed' : currentStep === 2 ? 'Schedule' : 'Locked'}
+                  {onboardingProgress?.interview_scheduled ? 'Completed' : 'Schedule'}
                 </button>
               </div>
               
-              {/* Step 3: Additional Training - Locked or Current */}
-              <div className={`action-card ${currentStep > 3 ? 'completed' : currentStep < 3 ? 'locked' : ''}`}>
-                {currentStep < 3 && 
-                  <div className="lock-icon">
-                    <i className="fas fa-lock"></i>
+              {/* Step 3: Additional Training */}
+              <div className={`rounded-lg border ${
+                onboardingProgress?.final_quiz_passed 
+                  ? 'border-green-200 bg-green-50' 
+                  : !onboardingProgress?.interview_scheduled 
+                    ? 'border-gray-200 bg-gray-50' 
+                    : 'border-indigo-200 bg-white'
+              } p-5 relative`}>
+                <div className={`absolute top-4 right-4 h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                  onboardingProgress?.final_quiz_passed 
+                    ? 'bg-green-500 text-white' 
+                    : !onboardingProgress?.interview_scheduled 
+                      ? 'bg-gray-300 text-white' 
+                      : 'bg-indigo-100 text-indigo-600'
+                }`}>
+                  3
+                </div>
+                {!onboardingProgress?.interview_scheduled && (
+                  <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-lg">
+                    <Lock className="h-10 w-10 text-gray-400" />
                   </div>
-                }
-                <div className={`step-number ${currentStep > 3 ? 'completed' : currentStep < 3 ? 'locked' : ''}`}>
-                  {currentStep > 3 ? <i className="fas fa-check"></i> : 3}
+                )}
+                <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                  <PenTool className="h-6 w-6 text-indigo-600" />
                 </div>
-                <div className={`action-icon ${currentStep > 3 ? 'completed' : currentStep < 3 ? 'locked' : ''}`}>
-                  <i className="fas fa-chalkboard-teacher"></i>
-                </div>
-                <h3>Additional Training</h3>
-                <p>After your interview, complete additional training modules to refine your skills.</p>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Additional Training</h3>
+                <p className="text-gray-600 text-sm mb-4">After your interview, complete additional training modules to refine your skills.</p>
                 <button 
-                  className={`card-button ${
-                    currentStep > 3 ? 'button-completed' : 
-                    currentStep === 3 ? 'button-current' : 
-                    'button-locked'
+                  className={`px-4 py-2 rounded-md text-sm font-medium ${
+                    onboardingProgress?.final_quiz_passed 
+                      ? 'bg-green-500 text-white' 
+                      : onboardingProgress?.interview_scheduled 
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                        : 'bg-gray-300 text-white'
                   }`}
-                  onClick={currentStep >= 3 ? openTrainingModal : undefined}
+                  disabled={!onboardingProgress?.interview_scheduled}
                 >
-                  <i className={`fas ${
-                    currentStep > 3 ? 'fa-check-circle' : 
-                    currentStep === 3 ? 'fa-book' : 
-                    'fa-lock'
-                  }`}></i>
-                  {currentStep > 3 ? 'Completed' : currentStep === 3 ? 'Start Training' : 'Locked'}
+                  {onboardingProgress?.final_quiz_passed ? 'Completed' : 'Start'}
                 </button>
               </div>
               
-              {/* Step 4: Kickoff & Onboarding - Locked or Current */}
-              <div className={`action-card ${currentStep > 4 ? 'completed' : currentStep < 4 ? 'locked' : ''}`}>
-                {currentStep < 4 && 
-                  <div className="lock-icon">
-                    <i className="fas fa-lock"></i>
+              {/* Step 4: Kickoff & Setup */}
+              <div className={`rounded-lg border ${
+                !onboardingProgress?.final_quiz_passed 
+                  ? 'border-gray-200 bg-gray-50' 
+                  : 'border-indigo-200 bg-white'
+              } p-5 relative`}>
+                <div className={`absolute top-4 right-4 h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                  !onboardingProgress?.final_quiz_passed 
+                    ? 'bg-gray-300 text-white' 
+                    : 'bg-indigo-100 text-indigo-600'
+                }`}>
+                  4
+                </div>
+                {!onboardingProgress?.final_quiz_passed && (
+                  <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-lg">
+                    <Lock className="h-10 w-10 text-gray-400" />
                   </div>
-                }
-                <div className={`step-number ${currentStep > 4 ? 'completed' : currentStep < 4 ? 'locked' : ''}`}>
-                  {currentStep > 4 ? <i className="fas fa-check"></i> : 4}
+                )}
+                <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                  <Rocket className="h-6 w-6 text-indigo-600" />
                 </div>
-                <div className={`action-icon ${currentStep > 4 ? 'completed' : currentStep < 4 ? 'locked' : ''}`}>
-                  <i className="fas fa-rocket"></i>
-                </div>
-                <h3>Kickoff & Setup</h3>
-                <p>Add your banking info, join Discord, and complete final onboarding steps to get started.</p>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Kickoff & Setup</h3>
+                <p className="text-gray-600 text-sm mb-4">Add your banking info, join Discord, and complete final onboarding steps to get started.</p>
                 <button 
-                  className={`card-button ${
-                    currentStep > 4 ? 'button-completed' : 
-                    currentStep === 4 ? 'button-current' : 
-                    'button-locked'
+                  className={`px-4 py-2 rounded-md text-sm font-medium ${
+                    onboardingProgress?.final_quiz_passed 
+                      ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                      : 'bg-gray-300 text-white'
                   }`}
-                  onClick={currentStep >= 4 ? openTrainingModal : undefined}
+                  disabled={!onboardingProgress?.final_quiz_passed}
                 >
-                  <i className={`fas ${
-                    currentStep > 4 ? 'fa-check-circle' : 
-                    currentStep === 4 ? 'fa-rocket' : 
-                    'fa-lock'
-                  }`}></i>
-                  {currentStep > 4 ? 'Completed' : currentStep === 4 ? 'Start Setup' : 'Locked'}
+                  Start
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Training Modal */}
-        <div id="trainingModal" className="modal" ref={trainingModalRef}>
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2><i className="fas fa-book-reader"></i> Initial Training</h2>
-              <span className="close-modal" onClick={closeTrainingModal}>&times;</span>
-            </div>
-            <div className="modal-body">
-              <div className="modal-icon">
-                <i className="fas fa-graduation-cap"></i>
-              </div>
-              <h3>Welcome to ApoLead Training!</h3>
-              <p>This training module will teach you the fundamentals needed to get started. It should take approximately 45-60 minutes to complete.</p>
-              <p>Once completed, you'll be able to proceed to the next steps in your onboarding journey.</p>
-              <div className="training-modules">
-                <div className="module">
-                  <div className="module-icon">
-                    <i className="fas fa-play-circle"></i>
-                  </div>
-                  <div className="module-info">
-                    <h4>Introduction to ApoLead</h4>
-                    <div className="module-progress">
-                      <div className="progress-bar">
-                        <div className="progress-fill" ref={progressFillRef} style={{ width: '0%' }}></div>
-                      </div>
-                      <span ref={progressTextRef}>0% Complete</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="module">
-                  <div className="module-icon">
-                    <i className="fas fa-lock"></i>
-                  </div>
-                  <div className="module-info">
-                    <h4>Core Principles</h4>
-                    <div className="module-progress">
-                      <span>Locked</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="module">
-                  <div className="module-icon">
-                    <i className="fas fa-lock"></i>
-                  </div>
-                  <div className="module-info">
-                    <h4>Best Practices</h4>
-                    <div className="module-progress">
-                      <span>Locked</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <button 
-                className="start-training-btn" 
-                ref={beginTrainingBtnRef}
-                onClick={beginTraining}
-              >
-                Begin Training
-              </button>
             </div>
           </div>
         </div>
       </div>
-    </>
+      
+      {/* Training Modal */}
+      {showTrainingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                <BookOpen className="h-5 w-5 mr-2" /> Initial Training
+              </h2>
+              <button onClick={() => setShowTrainingModal(false)} className="text-gray-500 hover:text-gray-700">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
+                  <GraduationCap className="h-8 w-8 text-indigo-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Welcome to ApoLead Training!</h3>
+                <p className="text-gray-600">
+                  This training module will teach you the fundamentals needed to get started. 
+                  It should take approximately 45-60 minutes to complete.
+                </p>
+                <p className="text-gray-600 mt-2">
+                  Once completed, you'll be able to proceed to the next steps in your onboarding journey.
+                </p>
+              </div>
+              
+              <div className="space-y-4 mb-6">
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 mr-4">
+                      <Play className="h-8 w-8 text-indigo-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-800">Introduction to ApoLead</h4>
+                      <div className="mt-2">
+                        <div className="h-2 w-full bg-gray-200 rounded-full">
+                          <div 
+                            className="h-full bg-indigo-600 rounded-full" 
+                            style={{ width: `${moduleProgress}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {moduleProgress}% Complete
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 mr-4">
+                      <Lock className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-800">Core Principles</h4>
+                      <div className="text-sm text-gray-600 mt-1">
+                        Locked
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 mr-4">
+                      <Lock className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-800">Best Practices</h4>
+                      <div className="text-sm text-gray-600 mt-1">
+                        Locked
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-center">
+                <button 
+                  className="px-6 py-3 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 transition-colors"
+                  onClick={handleTrainingModuleProgress}
+                >
+                  {moduleProgress === 0 ? 'Begin Training' : 
+                   moduleProgress < 100 ? 'Continue Training' : 'Continue to Next Module'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
