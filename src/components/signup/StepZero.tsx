@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -52,7 +53,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
-        <div className="relative z-10 mt-12">
+        <div className="relative z-10 mt-2">
           <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -60,20 +61,21 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
             Back to Home
           </Link>
 
-          <h2 className="text-3xl font-bold mb-6 text-white">Let us help you run your call center career.</h2>
-          <p className="text-white/80">Our registration process is quick and easy, taking no more than 10 minutes to complete.</p>
+          <h2 className="text-3xl font-bold mb-6 text-white">Let us help you run your sales agent career.</h2>
+          <p className="text-white/80">Our platform connects you with clients, helps you earn commissions, and provides all the tools you need to succeed.</p>
         </div>
         
         {/* Testimonial - moved up */}
-        <div className="mt-auto relative z-10 mb-12">
-          <div className="bg-indigo-800 bg-opacity-70 rounded-lg p-5 mb-8">
-            <p className="text-sm italic mb-3 text-white">"I'm impressed with how quickly I've seen progress since starting to use this platform. I began receiving clients and projects in the first week."</p>
+        <div className="relative z-10 mt-12 mb-auto">
+          <div className="bg-[#6E59A5] bg-opacity-90 rounded-lg p-5 mb-8">
+            <p className="text-sm italic mb-3 text-white">"I'm impressed with how quickly I've seen sales since starting to use this platform. I began receiving clients and earning commissions in the first week."</p>
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-2">
+              <div className="w-8 h-8 rounded-full bg-[#8B5CF6] flex items-center justify-center text-white font-bold mr-2">
                 S
               </div>
               <div>
                 <p className="text-xs font-semibold text-white">Sarah Johnson</p>
+                <p className="text-xs opacity-75 text-white">Remote Agent</p>
               </div>
             </div>
           </div>
@@ -84,7 +86,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col items-center justify-center">
         {/* Back to Home Link (Mobile Only) */}
         <div className="block md:hidden mb-8">
-          <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
+          <Link to="/" className="text-[#9b87f5] hover:text-[#7E69AB] flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
@@ -92,11 +94,11 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           </Link>
         </div>
       
-        <div className="max-w-md w-full flex-1 flex flex-col justify-center">
+        <div className="max-w-md w-full">
           {/* Logo */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-[#8a4fff]">Lead</span>
+              <span className="text-[#00c2cb]">Apo</span><span className="text-[#9b87f5]">Lead</span>
             </h2>
           </div>
 
@@ -105,7 +107,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           
           {/* Progress dots */}
           <div className="flex justify-center mb-6 space-x-2">
-            <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
+            <div className="w-2 h-2 rounded-full bg-[#9b87f5]"></div>
             <div className="w-2 h-2 rounded-full bg-gray-300"></div>
             <div className="w-2 h-2 rounded-full bg-gray-300"></div>
             <div className="w-2 h-2 rounded-full bg-gray-300"></div>
@@ -201,7 +203,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
             
             <Button 
               type="submit" 
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 mt-4"
+              className="w-full bg-[#9b87f5] hover:bg-[#7E69AB] text-white py-2 mt-4"
             >
               Sign Up
             </Button>
@@ -209,7 +211,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           
           <div className="mt-6 text-center">
             <p className="text-sm">
-              Have an account? <Link to="/login" className="text-indigo-600 hover:underline">Login</Link>
+              Have an account? <Link to="/login" className="text-[#9b87f5] hover:underline">Login</Link>
             </p>
           </div>
           
