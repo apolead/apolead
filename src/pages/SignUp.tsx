@@ -63,13 +63,13 @@ const SignUp = () => {
       
       setIsCheckingEmail(true);
       try {
-        const { data: existingProfiles, error: profileError } = await supabase
+        const { data: existingProfiles, error: checkEmailError } = await supabase
           .from('user_profiles')
           .select('application_status')
           .eq('email', userData.email.toLowerCase())
           .in('application_status', ['rejected']);
         
-        if (profileError) throw profileError;
+        if (checkEmailError) throw checkEmailError;
         
         if (existingProfiles && existingProfiles.length > 0) {
           toast({
@@ -161,13 +161,13 @@ const SignUp = () => {
         return;
       }
 
-      const { data: existingProfiles, error: profileError } = await supabase
+      const { data: existingProfiles, error: duplicateEmailError } = await supabase
         .from('user_profiles')
         .select('application_status')
         .eq('email', userData.email.toLowerCase())
         .in('application_status', ['rejected']);
       
-      if (profileError) throw profileError;
+      if (duplicateEmailError) throw duplicateEmailError;
       
       if (existingProfiles && existingProfiles.length > 0) {
         toast({
