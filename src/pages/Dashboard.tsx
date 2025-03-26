@@ -19,7 +19,7 @@ import SupportFAQ from '@/components/SupportFAQ';
 import { 
   Play, 
   PieChart, 
-  Tool, 
+  Wrench, // Replacing Tool with Wrench since Tool isn't available
   CreditCard, 
   BarChart2, 
   Trophy, 
@@ -42,7 +42,8 @@ import {
   Users, 
   PenTool, 
   Rocket, 
-  X
+  X,
+  HelpCircle // Adding HelpCircle to replace Help
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -74,9 +75,9 @@ const Dashboard = () => {
         
         setUser(user);
         
-        // Fetch user profile
+        // Fetch user profile - Fix the table name from "profiles" to "user_profiles"
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
+          .from('user_profiles')
           .select('*')
           .eq('id', user.id)
           .single();
@@ -213,7 +214,7 @@ const Dashboard = () => {
     },
     { 
       name: 'Tool Page', 
-      icon: <Tool className="mr-3 h-5 w-5" />, 
+      icon: <Wrench className="mr-3 h-5 w-5" />, // Changed from Tool to Wrench
       active: false, 
       locked: true 
     },
@@ -355,7 +356,7 @@ const Dashboard = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button className="w-full flex items-center justify-center px-4 py-3 text-gray-500 hover:text-indigo-600">
-                      <Help className="h-5 w-5" />
+                      <HelpCircle className="h-5 w-5" /> {/* Changed from Help to HelpCircle */}
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="right">
