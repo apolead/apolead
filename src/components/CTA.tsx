@@ -43,7 +43,7 @@ const CTA = () => {
             <div className="mt-8">
               <Link 
                 to="/signup" 
-                className="btn btn-primary btn-large inline-block"
+                className="btn btn-primary btn-large inline-block hover:bg-[#00c2cb]"
               >
                 Apply Now - Create Your Account
               </Link>
@@ -106,7 +106,7 @@ const CTA = () => {
                 
                 <div className="mt-4 text-center">
                   <span className="text-dark">Or</span>{' '}
-                  <Link to="/signup" className="text-primary font-semibold">Create an Account</Link> {' '}
+                  <Link to="/signup" className="text-primary font-semibold hover:text-[#00c2cb]">Create an Account</Link> {' '}
                   <span className="text-dark">for full access</span>
                 </div>
               </form>

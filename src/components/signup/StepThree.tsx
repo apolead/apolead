@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +12,24 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   const [loading, setLoading] = useState(false);
   const [selectedDays, setSelectedDays] = useState(userData.availableDays || []);
   const [dayHours, setDayHours] = useState(userData.dayHours || {});
+  
+  // Initialize commitment values properly if they're undefined
+  useEffect(() => {
+    const commitmentFields = ['meetObligation', 'loginDiscord', 'checkEmails', 'solveProblems', 'completeTraining'];
+    let updates = {};
+    let hasUpdates = false;
+    
+    commitmentFields.forEach(field => {
+      if (userData[field] === undefined) {
+        updates[field] = null;
+        hasUpdates = true;
+      }
+    });
+    
+    if (hasUpdates) {
+      updateUserData(updates);
+    }
+  }, []);
   
   const daysOfWeek = [
     { id: 'monday', label: 'Monday' },
@@ -66,7 +84,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
     ];
     
     return commitments
-      .filter(commitment => userData[commitment.field] === undefined || userData[commitment.field] === null)
+      .filter(commitment => userData[commitment.field] !== true && userData[commitment.field] !== false)
       .map(commitment => commitment.label);
   };
   

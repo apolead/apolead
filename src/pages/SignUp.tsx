@@ -37,13 +37,13 @@ const SignUp = () => {
     serviceMonths: '',
     serviceCompany: '',
     serviceProduct: '',
-    meetObligation: false,
+    meetObligation: null,
     availableDays: [],
     dayHours: {},
-    loginDiscord: false,
-    checkEmails: false,
-    solveProblems: false,
-    completeTraining: false,
+    loginDiscord: null,
+    checkEmails: null,
+    solveProblems: null,
+    completeTraining: null,
     personalStatement: ''
   });
   const { toast } = useToast();
@@ -152,7 +152,7 @@ const SignUp = () => {
         ];
         
         return commitments
-          .filter(commitment => userData[commitment.field] === undefined || userData[commitment.field] === false)
+          .filter(commitment => userData[commitment.field] !== true && userData[commitment.field] !== false)
           .map(commitment => commitment.label);
       };
       
