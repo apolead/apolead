@@ -1,12 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Popover,
-  PopoverTrigger,
-  PopoverContent 
-} from "@/components/ui/popover";
-import { ChevronDown, Menu } from 'lucide-react';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -94,7 +88,7 @@ const Header = () => {
           </Link>
           
           <div className="md:hidden block cursor-pointer ml-4" onClick={toggleMobileMenu}>
-            <Menu className="h-6 w-6" />
+            <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-xl`}></i>
           </div>
         </nav>
       </div>
