@@ -1483,7 +1483,7 @@ const Dashboard = () => {
                   {getUserInitials()}
                 </div>
                 <div className="user-name">
-                  {userProfile?.first_name} {userProfile?.last_name}
+                  {userProfile?.first_name || ''} {userProfile?.last_name || ''}
                 </div>
                 <i className="fas fa-chevron-down dropdown-icon"></i>
               </div>
