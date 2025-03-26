@@ -141,20 +141,27 @@ const SignUp = () => {
 
   const handleSubmit = async () => {
     try {
-      // Don't validate availability days since they're optional
-      const requiredCommitments = [
-        userData.meetObligation, 
-        userData.loginDiscord, 
-        userData.checkEmails, 
-        userData.solveProblems, 
-        userData.completeTraining
-      ];
+      // Get missing commitments to show specific error
+      const getMissingCommitments = () => {
+        const commitments = [
+          { field: 'meetObligation', label: 'Meeting the 15 hours per week obligation' },
+          { field: 'loginDiscord', label: 'Login to Discord everyday' },
+          { field: 'checkEmails', label: 'Check company emails every day' },
+          { field: 'solveProblems', label: 'Proactively solve problems' },
+          { field: 'completeTraining', label: 'Complete required training' }
+        ];
+        
+        return commitments
+          .filter(commitment => userData[commitment.field] === undefined || userData[commitment.field] === null)
+          .map(commitment => commitment.label);
+      };
       
-      // Check if any commitment question is unanswered
-      if (requiredCommitments.some(item => item === undefined || item === null)) {
+      // Check for specific missing commitments
+      const missingCommitments = getMissingCommitments();
+      if (missingCommitments.length > 0) {
         toast({
           title: "Missing information",
-          description: "Please answer all the commitment questions",
+          description: `Please answer these commitment questions: ${missingCommitments.join(', ')}`,
           variant: "destructive",
         });
         return;

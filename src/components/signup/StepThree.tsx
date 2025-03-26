@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   const [errorMessage, setErrorMessage] = useState('');
@@ -55,13 +56,32 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
     updateUserData({ [field]: value });
   };
   
+  const getMissingCommitments = () => {
+    const commitments = [
+      { field: 'meetObligation', label: 'Meeting the 15 hours per week obligation' },
+      { field: 'loginDiscord', label: 'Login to Discord everyday' },
+      { field: 'checkEmails', label: 'Check company emails every day' },
+      { field: 'solveProblems', label: 'Proactively solve problems' },
+      { field: 'completeTraining', label: 'Complete required training' }
+    ];
+    
+    return commitments
+      .filter(commitment => userData[commitment.field] === undefined || userData[commitment.field] === null)
+      .map(commitment => commitment.label);
+  };
+  
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form - only validate commitments, days are optional
-    if (!userData.meetObligation || !userData.loginDiscord || !userData.checkEmails || 
-        !userData.solveProblems || !userData.completeTraining) {
-      setErrorMessage('Please answer all the commitment questions');
+    // Clear previous error
+    setErrorMessage('');
+    
+    // Get specific missing commitments
+    const missingCommitments = getMissingCommitments();
+    
+    // Validate form - check for specific missing commitments
+    if (missingCommitments.length > 0) {
+      setErrorMessage(`Please answer the following commitment questions: ${missingCommitments.join(', ')}`);
       return;
     }
     
@@ -138,220 +158,222 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
           </div>
         )}
         
-        <form onSubmit={handleFormSubmit} className="space-y-6 overflow-y-auto">
-          <div className="border rounded-lg p-4 bg-gray-50">
-            <h3 className="text-lg font-medium mb-4">Hours & Availability</h3>
-            
-            <div className="space-y-5">
-              <p className="text-sm text-gray-600">While you can set your schedule during our hours of operation, we require 15 hours per week.</p>
+        <ScrollArea className="h-[calc(100vh-240px)] pr-4">
+          <form onSubmit={handleFormSubmit} className="space-y-6">
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <h3 className="text-lg font-medium mb-4">Hours & Availability</h3>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Can you meet this obligation three weeks out of every four?</label>
-                <div className="flex space-x-3">
-                  <button 
-                    type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                    onClick={() => toggleYesNo('meetObligation', true)}
-                  >
-                    YES
-                  </button>
-                  <button 
-                    type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                    onClick={() => toggleYesNo('meetObligation', false)}
-                  >
-                    NO
-                  </button>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-3">What days will you plan to work?</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {daysOfWeek.map(day => (
+              <div className="space-y-5">
+                <p className="text-sm text-gray-600">While you can set your schedule during our hours of operation, we require 15 hours per week.</p>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Can you meet this obligation three weeks out of every four?</label>
+                  <div className="flex space-x-3">
                     <button 
-                      key={day.id}
                       type="button" 
-                      className={`w-full py-1.5 border rounded text-sm ${selectedDays.includes(day.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                      onClick={() => handleDayToggle(day.id)}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      onClick={() => toggleYesNo('meetObligation', true)}
                     >
-                      {day.label}
+                      YES
                     </button>
-                  ))}
+                    <button 
+                      type="button" 
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
+                      onClick={() => toggleYesNo('meetObligation', false)}
+                    >
+                      NO
+                    </button>
+                  </div>
                 </div>
-              </div>
-              
-              {selectedDays.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">Hours planned per day:</h4>
-                  <div className="space-y-3">
-                    {selectedDays.map(day => (
-                      <div key={`hours-${day}`} className="flex items-center mb-2">
-                        <span className="w-24 text-sm text-gray-700 capitalize">{day}:</span>
-                        <Select
-                          value={dayHours[day] || ""}
-                          onValueChange={(value) => handleHoursChange(day, value)}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select hours" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {hoursOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">What days will you plan to work?</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {daysOfWeek.map(day => (
+                      <button 
+                        key={day.id}
+                        type="button" 
+                        className={`w-full py-1.5 border rounded text-sm ${selectedDays.includes(day.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                        onClick={() => handleDayToggle(day.id)}
+                      >
+                        {day.label}
+                      </button>
                     ))}
                   </div>
                 </div>
-              )}
+                
+                {selectedDays.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Hours planned per day:</h4>
+                    <div className="space-y-3">
+                      {selectedDays.map(day => (
+                        <div key={`hours-${day}`} className="flex items-center mb-2">
+                          <span className="w-24 text-sm text-gray-700 capitalize">{day}:</span>
+                          <Select
+                            value={dayHours[day] || ""}
+                            onValueChange={(value) => handleHoursChange(day, value)}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select hours" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {hoursOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          
-          <div className="border rounded-lg p-4 bg-gray-50">
-            <h3 className="text-lg font-medium mb-4">Commitments</h3>
             
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Login to Discord everyday that you work?</label>
-                <div className="flex space-x-3">
-                  <button 
-                    type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                    onClick={() => toggleYesNo('loginDiscord', true)}
-                  >
-                    YES
-                  </button>
-                  <button 
-                    type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                    onClick={() => toggleYesNo('loginDiscord', false)}
-                  >
-                    NO
-                  </button>
-                </div>
-              </div>
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <h3 className="text-lg font-medium mb-4">Commitments</h3>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Check company emails every day?</label>
-                <div className="flex space-x-3">
-                  <button 
-                    type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                    onClick={() => toggleYesNo('checkEmails', true)}
-                  >
-                    YES
-                  </button>
-                  <button 
-                    type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                    onClick={() => toggleYesNo('checkEmails', false)}
-                  >
-                    NO
-                  </button>
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Login to Discord everyday that you work?</label>
+                  <div className="flex space-x-3">
+                    <button 
+                      type="button" 
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      onClick={() => toggleYesNo('loginDiscord', true)}
+                    >
+                      YES
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
+                      onClick={() => toggleYesNo('loginDiscord', false)}
+                    >
+                      NO
+                    </button>
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Proactively solve your own problems and help others solve theirs?</label>
-                <div className="flex space-x-3">
-                  <button 
-                    type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                    onClick={() => toggleYesNo('solveProblems', true)}
-                  >
-                    YES
-                  </button>
-                  <button 
-                    type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                    onClick={() => toggleYesNo('solveProblems', false)}
-                  >
-                    NO
-                  </button>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Check company emails every day?</label>
+                  <div className="flex space-x-3">
+                    <button 
+                      type="button" 
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      onClick={() => toggleYesNo('checkEmails', true)}
+                    >
+                      YES
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
+                      onClick={() => toggleYesNo('checkEmails', false)}
+                    >
+                      NO
+                    </button>
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Complete required training on your own?</label>
-                <div className="flex space-x-3">
-                  <button 
-                    type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                    onClick={() => toggleYesNo('completeTraining', true)}
-                  >
-                    YES
-                  </button>
-                  <button 
-                    type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
-                    onClick={() => toggleYesNo('completeTraining', false)}
-                  >
-                    NO
-                  </button>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Proactively solve your own problems and help others solve theirs?</label>
+                  <div className="flex space-x-3">
+                    <button 
+                      type="button" 
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      onClick={() => toggleYesNo('solveProblems', true)}
+                    >
+                      YES
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
+                      onClick={() => toggleYesNo('solveProblems', false)}
+                    >
+                      NO
+                    </button>
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <label htmlFor="personal-statement" className="block text-sm font-medium text-gray-700 mb-2">
-                  At Apolead, we believe in fostering a positive, results-oriented atmosphere.
-                  <br />Briefly tell us what this means to you:
-                </label>
-                <Textarea
-                  id="personal-statement"
-                  rows={4}
-                  value={userData.personalStatement || ''}
-                  onChange={(e) => updateUserData({ personalStatement: e.target.value })}
-                  className="w-full resize-vertical"
-                  placeholder="Share your thoughts here..."
-                />
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Complete required training on your own?</label>
+                  <div className="flex space-x-3">
+                    <button 
+                      type="button" 
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      onClick={() => toggleYesNo('completeTraining', true)}
+                    >
+                      YES
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
+                      onClick={() => toggleYesNo('completeTraining', false)}
+                    >
+                      NO
+                    </button>
+                  </div>
+                </div>
+                
+                <div>
+                  <label htmlFor="personal-statement" className="block text-sm font-medium text-gray-700 mb-2">
+                    At Apolead, we believe in fostering a positive, results-oriented atmosphere.
+                    <br />Briefly tell us what this means to you:
+                  </label>
+                  <Textarea
+                    id="personal-statement"
+                    rows={4}
+                    value={userData.personalStatement || ''}
+                    onChange={(e) => updateUserData({ personalStatement: e.target.value })}
+                    className="w-full resize-vertical"
+                    placeholder="Share your thoughts here..."
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="border-t pt-6">
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
-                <Checkbox
-                  id="terms"
-                  checked={userData.acceptedTerms}
-                  onCheckedChange={(checked) => updateUserData({ acceptedTerms: checked })}
-                  className="h-4 w-4"
-                />
-              </div>
-              <div className="ml-3 text-sm">
-                <label htmlFor="terms" className="font-medium text-gray-700">
-                  Terms and Conditions
-                </label>
-                <p className="text-gray-500">
-                  I agree to the <a href="#" className="text-indigo-600 hover:text-indigo-500">Terms of Service</a> and{' '}
-                  <a href="#" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>. I understand that my personal data will be processed as described.
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={prevStep}
-            >
-              Back
-            </Button>
             
-            <Button
-              type="submit"
-              className="bg-indigo-600 hover:bg-[#00c2cb] text-white"
-              disabled={loading}
-            >
-              {loading ? "Submitting..." : "Submit Application"}
-            </Button>
-          </div>
-        </form>
+            <div className="border-t pt-6">
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <Checkbox
+                    id="terms"
+                    checked={userData.acceptedTerms}
+                    onCheckedChange={(checked) => updateUserData({ acceptedTerms: checked })}
+                    className="h-4 w-4"
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="terms" className="font-medium text-gray-700">
+                    Terms and Conditions
+                  </label>
+                  <p className="text-gray-500">
+                    I agree to the <a href="#" className="text-indigo-600 hover:text-indigo-500">Terms of Service</a> and{' '}
+                    <a href="#" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>. I understand that my personal data will be processed as described.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-between py-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={prevStep}
+              >
+                Back
+              </Button>
+              
+              <Button
+                type="submit"
+                className="bg-indigo-600 hover:bg-[#00c2cb] text-white"
+                disabled={loading}
+              >
+                {loading ? "Submitting..." : "Submit Application"}
+              </Button>
+            </div>
+          </form>
+        </ScrollArea>
       </div>
     </div>
   );

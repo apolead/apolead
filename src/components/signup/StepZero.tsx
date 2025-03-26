@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -206,7 +207,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
             
             <Button 
               type="submit" 
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 mt-4"
+              className="w-full bg-indigo-600 hover:bg-[#00c2cb] text-white py-2 mt-4"
             >
               Sign Up
             </Button>
