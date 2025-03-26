@@ -97,7 +97,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/4 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="w-full md:w-1/3 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
@@ -129,11 +129,11 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
         </div>
       </div>
       
-      {/* Right Side - Form - Expanded to 3/4 width */}
-      <div className="w-full md:w-3/4 bg-white p-8 md:p-16 flex flex-col">
+      {/* Right Side - Form - Maintained at 2/3 width */}
+      <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
-            <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+            <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
           </h2>
         </div>
         
@@ -162,14 +162,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`px-4 py-2 rounded-md ${userData.meetObligation === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
                     onClick={() => toggleYesNo('meetObligation', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`px-4 py-2 rounded-md ${userData.meetObligation === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
                     onClick={() => toggleYesNo('meetObligation', false)}
                   >
                     NO
@@ -184,7 +184,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                     <button 
                       key={day.id}
                       type="button" 
-                      className={`w-full py-1.5 border rounded text-sm ${selectedDays.includes(day.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      className={`w-full py-1.5 border rounded-md text-sm ${selectedDays.includes(day.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                       onClick={() => handleDayToggle(day.id)}
                     >
                       {day.label}
@@ -232,14 +232,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`px-4 py-2 rounded-md ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
                     onClick={() => toggleYesNo('loginDiscord', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`px-4 py-2 rounded-md ${userData.loginDiscord === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
                     onClick={() => toggleYesNo('loginDiscord', false)}
                   >
                     NO
@@ -252,14 +252,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`px-4 py-2 rounded-md ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
                     onClick={() => toggleYesNo('checkEmails', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`px-4 py-2 rounded-md ${userData.checkEmails === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
                     onClick={() => toggleYesNo('checkEmails', false)}
                   >
                     NO
@@ -272,14 +272,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`px-4 py-2 rounded-md ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
                     onClick={() => toggleYesNo('solveProblems', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`px-4 py-2 rounded-md ${userData.solveProblems === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
                     onClick={() => toggleYesNo('solveProblems', false)}
                   >
                     NO
@@ -292,14 +292,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`px-4 py-2 rounded-md ${userData.completeTraining === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
                     onClick={() => toggleYesNo('completeTraining', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`px-4 py-2 rounded-md ${userData.completeTraining === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
                     onClick={() => toggleYesNo('completeTraining', false)}
                   >
                     NO

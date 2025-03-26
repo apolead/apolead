@@ -70,7 +70,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white flex flex-col justify-between p-8 md:p-16 relative overflow-hidden">
+      <div className="w-full md:w-1/3 bg-[#1A1F2C] text-white flex flex-col justify-between p-8 md:p-16 relative overflow-hidden">
         {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
@@ -113,9 +113,9 @@ const Login = () => {
       </div>
       
       {/* Right Side - Form */}
-      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+      <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col">
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-          {/* Logo */}
+          {/* Logo - Updated with correct colors */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
               <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>

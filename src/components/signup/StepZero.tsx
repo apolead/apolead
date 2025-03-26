@@ -94,10 +94,10 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         </div>
       
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-          {/* Logo - Fixed to match home page logo */}
+          {/* Logo - Updated to match home page logo with correct colors */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
-              <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
             </h2>
           </div>
 
