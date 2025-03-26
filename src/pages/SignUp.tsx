@@ -48,6 +48,7 @@ const SignUp = () => {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const nextStep = () => {
     if (currentStep === 0) {
@@ -55,6 +56,16 @@ const SignUp = () => {
         toast({
           title: "Missing information",
           description: "Please enter your first and last name",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validate Gmail-only email
+      if (!userData.email.toLowerCase().endsWith('@gmail.com')) {
+        toast({
+          title: "Invalid email",
+          description: "Only Gmail accounts are accepted at this time",
           variant: "destructive",
         });
         return;
@@ -79,11 +90,11 @@ const SignUp = () => {
       }
       
       // Move password validation from step 1 to step 0
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailRegex = /^[^\s@]+@gmail\.com$/i;
       if (!emailRegex.test(userData.email)) {
         toast({
           title: "Invalid email",
-          description: "Please enter a valid email address",
+          description: "Please enter a valid Gmail address",
           variant: "destructive",
         });
         return;
@@ -140,7 +151,11 @@ const SignUp = () => {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+    
     try {
+      setIsSubmitting(true);
+      
       // Get missing commitments to show specific error
       const getMissingCommitments = () => {
         const commitments = [
@@ -164,6 +179,7 @@ const SignUp = () => {
           description: `Please answer these commitment questions: ${missingCommitments.join(', ')}`,
           variant: "destructive",
         });
+        setIsSubmitting(false);
         return;
       }
       
@@ -173,17 +189,30 @@ const SignUp = () => {
           description: "You must accept the terms and conditions to continue",
           variant: "destructive",
         });
+        setIsSubmitting(false);
         return;
       }
-      
-      if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-        console.error('Supabase environment variables are missing or invalid');
-        throw new Error('Configuration error. Please contact support.');
+
+      // Check email is a Gmail account
+      if (!userData.email.toLowerCase().endsWith('@gmail.com')) {
+        toast({
+          title: "Invalid email",
+          description: "Only Gmail accounts are accepted at this time",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
       }
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
+        options: {
+          data: {
+            first_name: userData.firstName,
+            last_name: userData.lastName
+          }
+        }
       });
 
       if (authError) throw authError;
@@ -192,6 +221,9 @@ const SignUp = () => {
         throw new Error('User creation failed. Please try again.');
       }
 
+      // Get session token
+      const { data: sessionData } = await supabase.auth.getSession();
+      
       // Create the user_profiles entry first
       const { error: userDataError } = await supabase
         .from('user_profiles')
@@ -323,6 +355,8 @@ const SignUp = () => {
         description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

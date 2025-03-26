@@ -63,23 +63,34 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
 -- Set up RLS (Row Level Security) for the user_profiles table
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 
--- Policy for selecting user's own profile
-CREATE POLICY "Users can view their own profile" 
-ON public.user_profiles 
-FOR SELECT 
-USING (auth.uid() = user_id);
-
--- Policy for inserting user's own profile
+-- Allow authenticated users to view and insert their own profiles
+-- This policy allows authenticated users to insert records 
 CREATE POLICY "Users can insert their own profile" 
 ON public.user_profiles 
 FOR INSERT 
+TO authenticated
 WITH CHECK (auth.uid() = user_id);
 
--- Policy for updating user's own profile
+-- Allow authenticated users to view their own profiles
+CREATE POLICY "Users can view their own profile" 
+ON public.user_profiles 
+FOR SELECT 
+TO authenticated
+USING (auth.uid() = user_id);
+
+-- Allow authenticated users to update their own profiles
 CREATE POLICY "Users can update their own profile" 
 ON public.user_profiles 
 FOR UPDATE 
+TO authenticated
 USING (auth.uid() = user_id);
+
+-- Allow service role to insert records (for the handle_new_user function)
+CREATE POLICY "Service role can insert profiles" 
+ON public.user_profiles 
+FOR INSERT 
+TO service_role
+WITH CHECK (true);
 
 -- Create function to handle user creation
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
@@ -88,8 +99,8 @@ BEGIN
   INSERT INTO public.user_profiles (user_id, first_name, last_name, email)
   VALUES (
     new.id,
-    new.raw_user_meta_data->>'first_name' or '',
-    new.raw_user_meta_data->>'last_name' or '',
+    coalesce(new.raw_user_meta_data->>'first_name', ''),
+    coalesce(new.raw_user_meta_data->>'last_name', ''),
     new.email
   );
   RETURN new;

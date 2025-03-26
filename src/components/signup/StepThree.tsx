@@ -189,7 +189,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                   <div className="flex space-x-3">
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
                       onClick={() => toggleYesNo('meetObligation', true)}
                     >
                       YES
@@ -211,7 +211,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                       <button 
                         key={day.id}
                         type="button" 
-                        className={`w-full py-1.5 border rounded text-sm ${selectedDays.includes(day.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                        className={`w-full py-1.5 border rounded text-sm ${selectedDays.includes(day.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
                         onClick={() => handleDayToggle(day.id)}
                       >
                         {day.label}
@@ -259,7 +259,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                   <div className="flex space-x-3">
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
                       onClick={() => toggleYesNo('loginDiscord', true)}
                     >
                       YES
@@ -279,7 +279,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                   <div className="flex space-x-3">
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
                       onClick={() => toggleYesNo('checkEmails', true)}
                     >
                       YES
@@ -299,7 +299,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                   <div className="flex space-x-3">
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
                       onClick={() => toggleYesNo('solveProblems', true)}
                     >
                       YES
@@ -319,7 +319,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                   <div className="flex space-x-3">
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
                       onClick={() => toggleYesNo('completeTraining', true)}
                     >
                       YES

@@ -16,6 +16,12 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
       return;
     }
     
+    // Validate Gmail-only email
+    if (!userData.email.toLowerCase().endsWith('@gmail.com')) {
+      setErrorMessage('Only Gmail accounts are accepted at this time.');
+      return;
+    }
+    
     // Add password field
     if (!userData.password || userData.password.length < 6) {
       setErrorMessage('Password must be at least 6 characters');
@@ -171,9 +177,12 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
                 type="email"
                 value={userData.email}
                 onChange={(e) => updateUserData({ email: e.target.value })}
-                placeholder="you@example.com"
+                placeholder="you@gmail.com"
                 className="w-full"
               />
+              {userData.email && !userData.email.toLowerCase().endsWith('@gmail.com') && (
+                <p className="text-xs text-red-600 mt-1">Only Gmail addresses are accepted</p>
+              )}
             </div>
             
             <div>
@@ -188,7 +197,11 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
                 placeholder="Create a password"
                 className="w-full"
               />
-              <p className="text-xs text-green-600 mt-1">Strong</p>
+              {userData.password && userData.password.length >= 6 ? (
+                <p className="text-xs text-green-600 mt-1">Strong</p>
+              ) : userData.password ? (
+                <p className="text-xs text-orange-600 mt-1">Password should be at least 6 characters</p>
+              ) : null}
             </div>
             
             <div>
@@ -203,6 +216,9 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
                 placeholder="Confirm your password"
                 className="w-full"
               />
+              {userData.confirmPassword && userData.password !== userData.confirmPassword && (
+                <p className="text-xs text-red-600 mt-1">Passwords don't match</p>
+              )}
             </div>
             
             <Button 
