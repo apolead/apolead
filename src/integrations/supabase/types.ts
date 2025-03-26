@@ -126,6 +126,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_onboarding: {
+        Row: {
+          created_at: string | null
+          final_quiz_passed: boolean | null
+          id: string
+          interview_scheduled: boolean | null
+          quiz_score: number | null
+          training_completed: boolean | null
+          updated_at: string | null
+          user_id: string
+          welcome_completed: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          final_quiz_passed?: boolean | null
+          id?: string
+          interview_scheduled?: boolean | null
+          quiz_score?: number | null
+          training_completed?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          welcome_completed?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          final_quiz_passed?: boolean | null
+          id?: string
+          interview_scheduled?: boolean | null
+          quiz_score?: number | null
+          training_completed?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          welcome_completed?: boolean | null
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           accepted_terms: boolean | null
