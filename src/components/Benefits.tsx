@@ -30,7 +30,7 @@ const Benefits = () => {
       <div className="container">
         <div className="flex flex-col md:flex-row">
           <div className="md:w-1/2 md:pr-12 mb-12 md:mb-0 animate-fadeInUp">
-            <h2 className="mb-4">Benefits of Working with <span className="text-primary">ApoLead</span></h2>
+            <h2 className="mb-4">Benefits of Working with <span className="text-secondary">Apo<span className="text-primary">Lead</span></span></h2>
             <p className="mb-8">Our agents enjoy numerous benefits that traditional call centers simply can't match. Experience the freedom and flexibility of the gig economy with the stability and support of a professional organization.</p>
             
             {benefits.map((benefit, index) => (
@@ -48,7 +48,7 @@ const Benefits = () => {
           
           <div className="md:w-1/2 animate-fadeInUp animate-fadeInUp-delay-2">
             <div className="animate-floating">
-              <img src="/api/placeholder/500/600" alt="Remote Working Benefits" className="max-w-full rounded-lg shadow-xl" />
+              <img src="/agent.jpg" alt="Agent Benefits" className="max-w-full rounded-lg shadow-xl" />
             </div>
           </div>
         </div>

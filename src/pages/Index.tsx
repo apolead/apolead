@@ -7,7 +7,6 @@ import HowItWorks from '../components/HowItWorks';
 import Benefits from '../components/Benefits';
 import Stats from '../components/Stats';
 import Testimonials from '../components/Testimonials';
-import CTA from '../components/CTA';
 import Footer from '../components/Footer';
 
 // Import Font Awesome
@@ -65,7 +64,6 @@ const Index = () => {
       <Benefits />
       <Stats />
       <Testimonials />
-      <CTA />
       <Footer />
     </div>
   );
