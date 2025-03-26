@@ -150,14 +150,14 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           <form className="space-y-4" onSubmit={handleContinue}>
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                Full name
+                First & Last Name
               </label>
               <Input
                 id="fullName"
                 type="text"
                 value={userData.firstName}
                 onChange={(e) => updateUserData({ firstName: e.target.value })}
-                placeholder="Enter your full name"
+                placeholder="Enter your first and last name"
                 className="w-full"
               />
             </div>

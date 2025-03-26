@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -29,7 +28,6 @@ const SignUp = () => {
     acceptedTerms: false,
     password: '',
     confirmPassword: '',
-    // New fields for call center experience
     salesExperience: false,
     salesMonths: '',
     salesCompany: '',
@@ -38,7 +36,6 @@ const SignUp = () => {
     serviceMonths: '',
     serviceCompany: '',
     serviceProduct: '',
-    // Fields for availability and commitments
     meetObligation: false,
     availableDays: [],
     dayHours: {},
@@ -51,21 +48,17 @@ const SignUp = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Function to handle next step with added validations
   const nextStep = () => {
-    // Process full name into first/last before proceeding to step 1
     if (currentStep === 0) {
-      // Validate full name is provided
       if (!userData.firstName.trim()) {
         toast({
           title: "Missing information",
-          description: "Please enter your full name",
+          description: "Please enter your first and last name",
           variant: "destructive",
         });
         return;
       }
       
-      // Split full name into firstName and lastName if not already done
       const nameParts = userData.firstName.trim().split(' ');
       if (nameParts.length > 1 && !userData.lastName) {
         const firstName = nameParts[0];
@@ -76,19 +69,43 @@ const SignUp = () => {
           lastName
         }));
       } else if (nameParts.length === 1 && !userData.lastName) {
-        // If they entered just one name, prompt for last name
         toast({
           title: "Missing information",
-          description: "Please enter your full name (first and last name)",
+          description: "Please enter both your first and last name",
           variant: "destructive",
         });
         return;
       }
     }
     
-    // Email validation for step 1
     if (currentStep === 1) {
-      if (userData.email !== userData.confirmEmail) {
+      if (!userData.confirmEmail && userData.email) {
+        setUserData(prev => ({
+          ...prev,
+          confirmEmail: prev.email
+        }));
+      }
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(userData.email)) {
+        toast({
+          title: "Invalid email",
+          description: "Please enter a valid email address",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (userData.password.length < 8) {
+        toast({
+          title: "Weak password",
+          description: "Password should be at least 8 characters long",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (userData.email && userData.confirmEmail && userData.email !== userData.confirmEmail) {
         toast({
           title: "Email mismatch",
           description: "The email addresses you entered don't match",
@@ -105,52 +122,26 @@ const SignUp = () => {
         });
         return;
       }
-      
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(userData.email)) {
-        toast({
-          title: "Invalid email",
-          description: "Please enter a valid email address",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Basic password strength validation
-      if (userData.password.length < 8) {
-        toast({
-          title: "Weak password",
-          description: "Password should be at least 8 characters long",
-          variant: "destructive",
-        });
-        return;
-      }
     }
     
     setCurrentStep(currentStep + 1);
   };
 
-  // Function to handle previous step
   const prevStep = () => {
     setCurrentStep(currentStep - 1);
   };
 
-  // Function to update user data
   const updateUserData = (data) => {
     setUserData({ ...userData, ...data });
   };
 
-  // Function to handle form submission
   const handleSubmit = async () => {
     try {
-      // Check Supabase URL and Key are available
       if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
         console.error('Supabase environment variables are missing or invalid');
         throw new Error('Configuration error. Please contact support.');
       }
 
-      // 1. Create user account with Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -162,7 +153,6 @@ const SignUp = () => {
         throw new Error('User creation failed. Please try again.');
       }
 
-      // 2. Upload images to Supabase Storage
       let govIdUrl = null;
       let speedTestUrl = null;
       let systemSettingsUrl = null;
@@ -197,7 +187,6 @@ const SignUp = () => {
         systemSettingsUrl = systemSettingsData.path;
       }
 
-      // 3. Store user data in Supabase database
       const { error: userDataError } = await supabase
         .from('user_profiles')
         .insert([
@@ -243,7 +232,6 @@ const SignUp = () => {
         throw userDataError;
       }
 
-      // Show success message and confirmation screen
       toast({
         title: "Application submitted successfully",
         description: "Your application has been received. We'll be in touch soon!",
@@ -261,7 +249,6 @@ const SignUp = () => {
     }
   };
 
-  // Render the appropriate step
   const renderStep = () => {
     switch (currentStep) {
       case 0:
