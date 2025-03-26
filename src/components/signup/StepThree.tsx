@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,7 +12,6 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   const [selectedDays, setSelectedDays] = useState(userData.availableDays || []);
   const [dayHours, setDayHours] = useState(userData.dayHours || {});
   
-  // Initialize commitment values properly if they're undefined
   useEffect(() => {
     const commitmentFields = ['meetObligation', 'loginDiscord', 'checkEmails', 'solveProblems', 'completeTraining'];
     let updates = {};
@@ -52,7 +50,6 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
     let updatedDays;
     if (selectedDays.includes(day)) {
       updatedDays = selectedDays.filter(d => d !== day);
-      // Remove hours for this day
       const updatedHours = {...dayHours};
       delete updatedHours[day];
       setDayHours(updatedHours);
@@ -90,16 +87,27 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    
-    // Clear previous error
     setErrorMessage('');
     
-    // Get specific missing commitments
-    const missingCommitments = getMissingCommitments();
+    if (selectedDays.length === 0) {
+      setErrorMessage('Please select at least one day of availability');
+      return;
+    }
     
-    // Validate form - check for specific missing commitments
+    const missingHours = selectedDays.filter(day => !dayHours[day]);
+    if (missingHours.length > 0) {
+      setErrorMessage(`Please select hours for: ${missingHours.join(', ')}`);
+      return;
+    }
+    
+    const missingCommitments = getMissingCommitments();
     if (missingCommitments.length > 0) {
-      setErrorMessage(`Please answer the following commitment questions: ${missingCommitments.join(', ')}`);
+      setErrorMessage(`Please answer these commitment questions: ${missingCommitments.join(', ')}`);
+      return;
+    }
+    
+    if (!userData.personalStatement || !userData.personalStatement.trim()) {
+      setErrorMessage('Please provide a personal statement');
       return;
     }
     
@@ -122,9 +130,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
-      {/* Left Side - Visual */}
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
-        {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -155,7 +161,6 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
         </div>
       </div>
       
-      {/* Right Side - Form */}
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">

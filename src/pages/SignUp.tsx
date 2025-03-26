@@ -50,93 +50,6 @@ const SignUp = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const nextStep = () => {
-    if (currentStep === 0) {
-      if (!userData.firstName.trim()) {
-        toast({
-          title: "Missing information",
-          description: "Please enter your first and last name",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Validate Gmail-only email
-      if (!userData.email.toLowerCase().endsWith('@gmail.com')) {
-        toast({
-          title: "Invalid email",
-          description: "Only Gmail accounts are accepted at this time",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const nameParts = userData.firstName.trim().split(' ');
-      if (nameParts.length > 1 && !userData.lastName) {
-        const firstName = nameParts[0];
-        const lastName = nameParts.slice(1).join(' ');
-        setUserData(prev => ({
-          ...prev,
-          firstName,
-          lastName
-        }));
-      } else if (nameParts.length === 1 && !userData.lastName) {
-        toast({
-          title: "Missing information",
-          description: "Please enter both your first and last name",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const emailRegex = /^[^\s@]+@gmail\.com$/i;
-      if (!emailRegex.test(userData.email)) {
-        toast({
-          title: "Invalid email",
-          description: "Please enter a valid Gmail address",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (!userData.password || userData.password.length < 8) {
-        toast({
-          title: "Weak password",
-          description: "Password should be at least 8 characters long",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (userData.password !== userData.confirmPassword) {
-        toast({
-          title: "Password mismatch",
-          description: "The passwords you entered don't match",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
-    if (currentStep === 1) {
-      // Auto-fill confirmEmail if it's empty but email exists
-      if (!userData.confirmEmail && userData.email) {
-        setUserData(prev => ({
-          ...prev,
-          confirmEmail: prev.email
-        }));
-      }
-      
-      // Ensure emails match if both are provided
-      if (userData.email && userData.confirmEmail && userData.email !== userData.confirmEmail) {
-        toast({
-          title: "Email mismatch",
-          description: "The email addresses you entered don't match",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
     setCurrentStep(currentStep + 1);
   };
 
@@ -154,7 +67,6 @@ const SignUp = () => {
     try {
       setIsSubmitting(true);
       
-      // Get missing commitments to show specific error
       const getMissingCommitments = () => {
         const commitments = [
           { field: 'meetObligation', label: 'Meeting the 15 hours per week obligation' },
@@ -169,7 +81,6 @@ const SignUp = () => {
           .map(commitment => commitment.label);
       };
       
-      // Check for specific missing commitments
       const missingCommitments = getMissingCommitments();
       if (missingCommitments.length > 0) {
         toast({
@@ -191,7 +102,6 @@ const SignUp = () => {
         return;
       }
 
-      // Check email is a Gmail account
       if (!userData.email.toLowerCase().endsWith('@gmail.com')) {
         toast({
           title: "Invalid email",
@@ -202,7 +112,6 @@ const SignUp = () => {
         return;
       }
 
-      // Create the user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -222,7 +131,6 @@ const SignUp = () => {
 
       console.log("User created successfully:", authData.user.id);
 
-      // CRITICAL FIX: Sign in the user after registration
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: userData.email,
         password: userData.password,
@@ -230,15 +138,12 @@ const SignUp = () => {
       
       if (signInError) {
         console.error('Error signing in after registration:', signInError);
-        // Continue with profile creation even if sign-in fails
       }
 
-      // First handle file uploads to storage
       let govIdPath = null;
       let speedTestPath = null;
       let systemSettingsPath = null;
 
-      // Upload government ID if provided
       if (userData.govIdImage) {
         try {
           const govIdFileName = `${authData.user.id}_gov_id`;
@@ -256,7 +161,6 @@ const SignUp = () => {
         }
       }
 
-      // Upload speed test if provided
       if (userData.speedTest) {
         try {
           const speedTestFileName = `${authData.user.id}_speed_test`;
@@ -274,7 +178,6 @@ const SignUp = () => {
         }
       }
 
-      // Upload system settings if provided
       if (userData.systemSettings) {
         try {
           const systemSettingsFileName = `${authData.user.id}_system_settings`;
@@ -292,7 +195,6 @@ const SignUp = () => {
         }
       }
 
-      // Now insert user profile data with file paths
       const { error: userDataError } = await supabase
         .from('user_profiles')
         .insert({

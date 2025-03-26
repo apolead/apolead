@@ -9,10 +9,36 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
   
   const handleContinue = (e) => {
     e.preventDefault();
+    setErrorMessage('');
     
-    // Validate form
-    if (!userData.cpuType || !userData.ramAmount) {
-      setErrorMessage('Please fill in all required fields');
+    // Validate form - comprehensive checks
+    if (!userData.cpuType || !userData.cpuType.trim()) {
+      setErrorMessage('Please enter your CPU type');
+      return;
+    }
+    
+    if (!userData.ramAmount || !userData.ramAmount.trim()) {
+      setErrorMessage('Please enter your RAM amount');
+      return;
+    }
+    
+    if (userData.hasHeadset === null) {
+      setErrorMessage('Please indicate whether you have a headset');
+      return;
+    }
+    
+    if (userData.hasQuietPlace === null) {
+      setErrorMessage('Please indicate whether you have a quiet place to work');
+      return;
+    }
+    
+    if (!userData.speedTest) {
+      setErrorMessage('Please upload a screenshot of your speed test results');
+      return;
+    }
+    
+    if (!userData.systemSettings) {
+      setErrorMessage('Please upload a screenshot of your system settings');
       return;
     }
     

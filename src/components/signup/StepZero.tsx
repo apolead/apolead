@@ -2,18 +2,26 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
 const StepZero = ({
   userData,
   updateUserData,
   nextStep
 }) => {
   const [errorMessage, setErrorMessage] = useState('');
+  
   const handleContinue = e => {
     e.preventDefault();
+    setErrorMessage('');
 
     // Validate form
-    if (!userData.firstName || !userData.email) {
-      setErrorMessage('Please fill in all required fields');
+    if (!userData.firstName || !userData.firstName.trim()) {
+      setErrorMessage('Please enter your first name');
+      return;
+    }
+
+    if (!userData.email || !userData.email.trim()) {
+      setErrorMessage('Please enter your email address');
       return;
     }
 
@@ -38,6 +46,7 @@ const StepZero = ({
     // Continue to next step
     nextStep();
   };
+  
   const handleGoogleSignUp = async () => {
     // This would be implemented with Supabase Auth
     try {
@@ -48,6 +57,7 @@ const StepZero = ({
       setErrorMessage(error.message || 'Failed to sign up with Google');
     }
   };
+
   return <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
@@ -211,4 +221,5 @@ const StepZero = ({
       </div>
     </div>;
 };
+
 export default StepZero;

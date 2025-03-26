@@ -9,10 +9,36 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
   
   const handleContinue = (e) => {
     e.preventDefault();
+    setErrorMessage('');
     
-    // Validate form
-    if (!userData.firstName || !userData.lastName || !userData.email || !userData.birthDay) {
-      setErrorMessage('Please fill in all required fields');
+    // Validate form - comprehensive checks
+    if (!userData.firstName || !userData.firstName.trim()) {
+      setErrorMessage('Please enter your first name');
+      return;
+    }
+    
+    if (!userData.lastName || !userData.lastName.trim()) {
+      setErrorMessage('Please enter your last name');
+      return;
+    }
+    
+    if (!userData.email || !userData.email.trim()) {
+      setErrorMessage('Please enter your email address');
+      return;
+    }
+    
+    if (!userData.birthDay) {
+      setErrorMessage('Please enter your birth date');
+      return;
+    }
+    
+    if (!userData.govIdImage) {
+      setErrorMessage('Please upload a picture of your government ID');
+      return;
+    }
+    
+    if (!userData.govIdNumber || !userData.govIdNumber.trim()) {
+      setErrorMessage('Please enter your government ID number');
       return;
     }
     
