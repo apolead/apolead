@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -47,7 +46,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/3 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes - adjusted to not overlap */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
@@ -82,7 +81,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
       </div>
       
       {/* Right Side - Form */}
-      <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col">
+      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col items-center justify-center">
         {/* Back to Home Link (Mobile Only) */}
         <div className="block md:hidden mb-8">
           <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
@@ -93,18 +92,18 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           </Link>
         </div>
       
-        <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-          {/* Logo - Updated to match home page logo with correct colors */}
+        <div className="max-w-md w-full flex-1 flex flex-col justify-center">
+          {/* Logo */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+              <span className="text-[#00c2cb]">Apo</span><span className="text-[#8a4fff]">Lead</span>
             </h2>
           </div>
 
           <h1 className="text-2xl font-bold mb-2 text-center">Get started</h1>
           <p className="text-gray-600 mb-8 text-center">Create your account now</p>
           
-          {/* Progress dots - fixed to remove the extra dot */}
+          {/* Progress dots */}
           <div className="flex justify-center mb-6 space-x-2">
             <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
             <div className="w-2 h-2 rounded-full bg-gray-300"></div>
@@ -119,7 +118,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
             </div>
           )}
           
-          {/* Google Signup Button - using a proper button element */}
+          {/* Google Signup Button */}
           <div className="mb-6">
             <button 
               type="button"
