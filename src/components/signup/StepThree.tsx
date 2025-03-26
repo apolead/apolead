@@ -4,14 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Link } from 'react-router-dom';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-const hoursOptions = [
-  { value: 'less-than-1', label: 'Less than 1 hour' },
-  { value: '1-5', label: '1-5 hours' },
-  { value: '5-10', label: '5-10 hours' },
-  { value: '10-plus', label: '10+ hours' }
-];
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   const [errorMessage, setErrorMessage] = useState('');
@@ -27,6 +20,20 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
     { id: 'friday', label: 'Friday' },
     { id: 'saturday', label: 'Saturday' },
     { id: 'sunday', label: 'Sunday' },
+  ];
+
+  const hoursOptions = [
+    { value: "< 1", label: "Less than 1 hour" },
+    { value: "1", label: "1 hour" },
+    { value: "2", label: "2 hours" },
+    { value: "3", label: "3 hours" },
+    { value: "4", label: "4 hours" },
+    { value: "5", label: "5 hours" },
+    { value: "6", label: "6 hours" },
+    { value: "7", label: "7 hours" },
+    { value: "8", label: "8 hours" },
+    { value: "9", label: "9 hours" },
+    { value: "10+", label: "10+ hours" }
   ];
   
   const handleDayToggle = (day) => {
@@ -58,19 +65,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
-    if (selectedDays.length === 0) {
-      setErrorMessage('Please select at least one day of availability');
-      return;
-    }
-    
-    // Check if all selected days have hours assigned
-    const missingHours = selectedDays.filter(day => !dayHours[day]);
-    if (missingHours.length > 0) {
-      setErrorMessage(`Please select hours for all chosen days: ${missingHours.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(', ')}`);
-      return;
-    }
-    
+    // Validate form - no need to validate days selection since it's optional
     if (!userData.meetObligation || !userData.loginDiscord || !userData.checkEmails || 
         !userData.solveProblems || !userData.completeTraining) {
       setErrorMessage('Please answer all the commitment questions');
@@ -103,7 +98,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
-        <div className="relative z-10 mt-8">
+        <div className="relative z-10">
           <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -129,11 +124,11 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
         </div>
       </div>
       
-      {/* Right Side - Form - Maintained at 2/3 width */}
+      {/* Right Side - Form */}
       <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
-            <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+            <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
           </h2>
         </div>
         
@@ -162,14 +157,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`px-4 py-2 rounded-md ${userData.meetObligation === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('meetObligation', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`px-4 py-2 rounded-md ${userData.meetObligation === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('meetObligation', false)}
                   >
                     NO
@@ -184,7 +179,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                     <button 
                       key={day.id}
                       type="button" 
-                      className={`w-full py-1.5 border rounded-md text-sm ${selectedDays.includes(day.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                      className={`w-full py-1.5 border rounded text-sm ${selectedDays.includes(day.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                       onClick={() => handleDayToggle(day.id)}
                     >
                       {day.label}
@@ -201,14 +196,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                       <div key={`hours-${day}`} className="flex items-center mb-2">
                         <span className="w-24 text-sm text-gray-700 capitalize">{day}:</span>
                         <Select
-                          value={dayHours[day] || ''}
+                          value={dayHours[day] || ""}
                           onValueChange={(value) => handleHoursChange(day, value)}
                         >
-                          <SelectTrigger className="flex-1">
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select hours" />
                           </SelectTrigger>
                           <SelectContent>
-                            {hoursOptions.map(option => (
+                            {hoursOptions.map((option) => (
                               <SelectItem key={option.value} value={option.value}>
                                 {option.label}
                               </SelectItem>
@@ -232,14 +227,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`px-4 py-2 rounded-md ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('loginDiscord', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`px-4 py-2 rounded-md ${userData.loginDiscord === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('loginDiscord', false)}
                   >
                     NO
@@ -252,14 +247,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`px-4 py-2 rounded-md ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('checkEmails', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`px-4 py-2 rounded-md ${userData.checkEmails === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('checkEmails', false)}
                   >
                     NO
@@ -272,14 +267,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`px-4 py-2 rounded-md ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('solveProblems', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`px-4 py-2 rounded-md ${userData.solveProblems === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('solveProblems', false)}
                   >
                     NO
@@ -292,14 +287,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                 <div className="flex space-x-3">
                   <button 
                     type="button" 
-                    className={`px-4 py-2 rounded-md ${userData.completeTraining === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('completeTraining', true)}
                   >
                     YES
                   </button>
                   <button 
                     type="button" 
-                    className={`px-4 py-2 rounded-md ${userData.completeTraining === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border border-gray-300'}`}
+                    className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
                     onClick={() => toggleYesNo('completeTraining', false)}
                   >
                     NO

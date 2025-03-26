@@ -85,16 +85,16 @@ const Login = () => {
           </Link>
 
           <h2 className="text-3xl font-bold mb-6 text-white">Welcome Back!</h2>
-          <p className="text-xl font-semibold mb-3 text-white">Let's Keep Your Sales Career Running</p>
-          <p className="text-white">Access your dashboard to manage clients, track commissions, and grow your agent business.</p>
+          <p className="text-xl font-semibold mb-3 text-white">Let's Keep Your Career Running</p>
+          <p className="text-white">Manage your call center work seamlessly - online, remote, and everywhere in between.</p>
         </div>
         
-        {/* Testimonial - moved up */}
-        <div className="relative z-10 mt-12 mb-auto">
-          <div className="bg-[#6E59A5] bg-opacity-90 rounded-lg p-5 mb-8">
-            <p className="text-sm italic mb-3 text-white">"I'm impressed with how quickly I've seen sales since starting to use this platform. I began receiving clients and earning commissions in the first week."</p>
+        {/* Testimonial */}
+        <div className="mt-auto relative z-10">
+          <div className="bg-indigo-800 bg-opacity-70 rounded-lg p-5 mb-8">
+            <p className="text-sm italic mb-3 text-white">"I'm impressed with how quickly I've seen sales since starting to use this platform. I began receiving clients and projects in the first week."</p>
             <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-[#8B5CF6] flex items-center justify-center text-white font-bold mr-2">
+              <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-2">
                 S
               </div>
               <div>
@@ -113,17 +113,17 @@ const Login = () => {
       </div>
       
       {/* Right Side - Form */}
-      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col items-center justify-center">
-        <div className="max-w-md w-full">
-          {/* Logo - Updated with correct colors */}
+      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+        <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
+          {/* Logo */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-[#9b87f5]">Lead</span>
+              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
             </h2>
           </div>
 
           <h1 className="text-2xl font-bold mb-2">Login to your account</h1>
-          <p className="text-gray-600 mb-8">Don't have an account? <Link to="/signup" className="text-[#9b87f5] hover:underline">Sign up</Link></p>
+          <p className="text-gray-600 mb-8">Don't have an account? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link></p>
           
           {/* Google Login */}
           <button 
@@ -178,7 +178,7 @@ const Login = () => {
               <button 
                 type="button" 
                 onClick={handleResetPassword}
-                className="text-[#9b87f5] hover:text-[#7E69AB] text-sm font-medium"
+                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
               >
                 Forgot password?
               </button>
@@ -186,7 +186,7 @@ const Login = () => {
             
             <Button 
               type="button" 
-              className="w-full bg-[#9b87f5] hover:bg-[#7E69AB] text-white py-2"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2"
             >
               Login
             </Button>
