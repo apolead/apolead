@@ -9,10 +9,15 @@ import StepTwo from '@/components/signup/StepTwo';
 import StepThree from '@/components/signup/StepThree';
 import ConfirmationScreen from '@/components/signup/ConfirmationScreen';
 
-// Create supabase client
+// Create supabase client with proper error handling
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Check if the required environment variables are available
+let supabase = null;
+if (supabaseUrl && supabaseKey) {
+  supabase = createClient(supabaseUrl, supabaseKey);
+}
 
 const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -54,6 +59,19 @@ const SignUp = () => {
   // Function to handle form submission
   const handleSubmit = async () => {
     try {
+      // Check if Supabase is configured
+      if (!supabase) {
+        toast({
+          title: "Configuration Error",
+          description: "Supabase is not properly configured. Please contact support.",
+          variant: "destructive",
+        });
+        console.error("Supabase configuration missing: URL or API key not provided");
+        // Still show confirmation screen for demo purposes
+        nextStep();
+        return;
+      }
+
       // 1. Create user account with Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
