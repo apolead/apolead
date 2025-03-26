@@ -121,7 +121,8 @@ BEGIN
     solve_problems,
     complete_training,
     personal_statement,
-    accepted_terms
+    accepted_terms,
+    application_status
   )
   VALUES (
     new.id,
@@ -154,7 +155,8 @@ BEGIN
     (new.raw_user_meta_data->>'solve_problems')::boolean,
     (new.raw_user_meta_data->>'complete_training')::boolean,
     new.raw_user_meta_data->>'personal_statement',
-    (new.raw_user_meta_data->>'accepted_terms')::boolean
+    (new.raw_user_meta_data->>'accepted_terms')::boolean,
+    coalesce(new.raw_user_meta_data->>'application_status', 'pending')
   );
   
   -- Also create a default role entry for the new user (agent)

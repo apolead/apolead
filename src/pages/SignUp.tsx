@@ -62,6 +62,18 @@ const SignUp = () => {
     setUserData({ ...userData, ...data });
   };
 
+  const checkAllCommitmentsAreTrue = () => {
+    const commitments = [
+      'meetObligation',
+      'loginDiscord',
+      'checkEmails',
+      'solveProblems',
+      'completeTraining'
+    ];
+    
+    return commitments.every(commitment => userData[commitment] === true);
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting) return;
     
@@ -113,6 +125,9 @@ const SignUp = () => {
         return;
       }
 
+      // Check if all commitment questions are answered "yes"
+      const passedAllCommitments = checkAllCommitmentsAreTrue();
+
       // Create user with all metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
@@ -146,8 +161,11 @@ const SignUp = () => {
             accepted_terms: userData.acceptedTerms || false,
             available_hours: userData.availableHours || [],
             available_days: userData.availableDays || [],
-            day_hours: userData.dayHours || {}
-          }
+            day_hours: userData.dayHours || {},
+            application_status: passedAllCommitments ? 'approved' : 'rejected'
+          },
+          // Only send a confirmation email if they passed all commitment checks
+          emailRedirectTo: passedAllCommitments ? `${window.location.origin}/login` : undefined,
         }
       });
 
@@ -159,13 +177,16 @@ const SignUp = () => {
 
       console.log("User created successfully:", authData.user.id);
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userData.email,
-        password: userData.password,
-      });
-      
-      if (signInError) {
-        console.error('Error signing in after registration:', signInError);
+      // Only sign in if they passed all commitment checks
+      if (passedAllCommitments) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: userData.email,
+          password: userData.password,
+        });
+        
+        if (signInError) {
+          console.error('Error signing in after registration:', signInError);
+        }
       }
 
       let govIdPath = null;
@@ -253,11 +274,20 @@ const SignUp = () => {
         }
       }
 
-      toast({
-        title: "Application submitted successfully",
-        description: "Your application has been received. We'll be in touch soon!",
-        variant: "default",
-      });
+      // Show appropriate toast message based on whether they passed
+      if (passedAllCommitments) {
+        toast({
+          title: "Application submitted successfully",
+          description: "Your application has been approved! Please check your email for confirmation.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Application received",
+          description: "We're unable to move forward with your application at this time based on your information.",
+          variant: "destructive",
+        });
+      }
       
       nextStep();
     } catch (error) {
