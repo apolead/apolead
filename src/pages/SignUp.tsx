@@ -124,6 +124,7 @@ const SignUp = () => {
             email: userData.email,
             birth_day: userData.birthDay || null,
             gov_id_number: userData.govIdNumber || null,
+            gov_id_image: null, // Will be updated after file upload
             cpu_type: userData.cpuType || null,
             ram_amount: userData.ramAmount || null,
             has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
@@ -183,6 +184,15 @@ const SignUp = () => {
             console.error('Error uploading government ID:', govIdError);
           } else {
             govIdPath = govIdData.path;
+            
+            // Update user metadata with file path
+            const { error: updateError } = await supabase.auth.updateUser({
+              data: { gov_id_image: govIdPath }
+            });
+            
+            if (updateError) {
+              console.error('Error updating user metadata with gov ID path:', updateError);
+            }
           }
         } catch (fileError) {
           console.error('Error in government ID upload:', fileError);
@@ -201,6 +211,15 @@ const SignUp = () => {
             console.error('Error uploading speed test:', speedTestError);
           } else {
             speedTestPath = speedTestData.path;
+            
+            // Update user metadata with file path
+            const { error: updateError } = await supabase.auth.updateUser({
+              data: { speed_test: speedTestPath }
+            });
+            
+            if (updateError) {
+              console.error('Error updating user metadata with speed test path:', updateError);
+            }
           }
         } catch (fileError) {
           console.error('Error in speed test upload:', fileError);
@@ -219,14 +238,20 @@ const SignUp = () => {
             console.error('Error uploading system settings:', systemSettingsError);
           } else {
             systemSettingsPath = systemSettingsData.path;
+            
+            // Update user metadata with file path
+            const { error: updateError } = await supabase.auth.updateUser({
+              data: { system_settings: systemSettingsPath }
+            });
+            
+            if (updateError) {
+              console.error('Error updating user metadata with system settings path:', updateError);
+            }
           }
         } catch (fileError) {
           console.error('Error in system settings upload:', fileError);
         }
       }
-
-      // We no longer need to insert into user_profiles manually as this is handled by the trigger
-      // The handle_new_user() function in Supabase will now handle this
 
       toast({
         title: "Application submitted successfully",
