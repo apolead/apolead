@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useToast } from '../hooks/use-toast';
 import { Link } from 'react-router-dom';
@@ -101,7 +102,7 @@ const CTA = () => {
                   />
                 </div>
                 
-                <button type="submit" className="btn btn-primary w-full">Start Your Application</button>
+                <button type="submit" className="btn btn-primary w-full hover:bg-[#00c2cb]">Start Your Application</button>
                 
                 <div className="mt-4 text-center">
                   <span className="text-dark">Or</span>{' '}

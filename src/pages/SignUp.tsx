@@ -152,7 +152,7 @@ const SignUp = () => {
         ];
         
         return commitments
-          .filter(commitment => userData[commitment.field] === undefined || userData[commitment.field] === null)
+          .filter(commitment => userData[commitment.field] === undefined || userData[commitment.field] === false)
           .map(commitment => commitment.label);
       };
       
@@ -192,40 +192,7 @@ const SignUp = () => {
         throw new Error('User creation failed. Please try again.');
       }
 
-      let govIdUrl = null;
-      let speedTestUrl = null;
-      let systemSettingsUrl = null;
-
-      if (userData.govIdImage) {
-        const govIdFileName = `${authData.user.id}_gov_id`;
-        const { data: govIdData, error: govIdError } = await supabase.storage
-          .from('user_documents')
-          .upload(govIdFileName, userData.govIdImage);
-        
-        if (govIdError) throw govIdError;
-        govIdUrl = govIdData.path;
-      }
-
-      if (userData.speedTest) {
-        const speedTestFileName = `${authData.user.id}_speed_test`;
-        const { data: speedTestData, error: speedTestError } = await supabase.storage
-          .from('user_documents')
-          .upload(speedTestFileName, userData.speedTest);
-        
-        if (speedTestError) throw speedTestError;
-        speedTestUrl = speedTestData.path;
-      }
-
-      if (userData.systemSettings) {
-        const systemSettingsFileName = `${authData.user.id}_system_settings`;
-        const { data: systemSettingsData, error: systemSettingsError } = await supabase.storage
-          .from('user_documents')
-          .upload(systemSettingsFileName, userData.systemSettings);
-        
-        if (systemSettingsError) throw systemSettingsError;
-        systemSettingsUrl = systemSettingsData.path;
-      }
-
+      // Create the user_profiles entry first
       const { error: userDataError } = await supabase
         .from('user_profiles')
         .insert([
@@ -236,16 +203,16 @@ const SignUp = () => {
             email: userData.email,
             birth_day: userData.birthDay,
             gov_id_number: userData.govIdNumber,
-            gov_id_image: govIdUrl,
+            gov_id_image: null, // We'll update this after upload
             cpu_type: userData.cpuType,
             ram_amount: userData.ramAmount,
             has_headset: userData.hasHeadset,
             has_quiet_place: userData.hasQuietPlace,
-            speed_test: speedTestUrl,
-            system_settings: systemSettingsUrl,
-            available_hours: userData.availableHours,
-            available_days: userData.availableDays,
-            day_hours: userData.dayHours,
+            speed_test: null, // We'll update this after upload
+            system_settings: null, // We'll update this after upload
+            available_hours: userData.availableHours || [],
+            available_days: userData.availableDays || [],
+            day_hours: userData.dayHours || {},
             sales_experience: userData.salesExperience,
             sales_months: userData.salesMonths,
             sales_company: userData.salesCompany,
@@ -269,6 +236,77 @@ const SignUp = () => {
       if (userDataError) {
         console.error('Error submitting profile data:', userDataError);
         throw userDataError;
+      }
+
+      // Now handle file uploads if needed, but don't stop the process if they fail
+      let govIdUrl = null;
+      let speedTestUrl = null;
+      let systemSettingsUrl = null;
+
+      if (userData.govIdImage) {
+        try {
+          const govIdFileName = `${authData.user.id}_gov_id`;
+          const { data: govIdData, error: govIdError } = await supabase.storage
+            .from('user_documents')
+            .upload(govIdFileName, userData.govIdImage);
+          
+          if (!govIdError) {
+            govIdUrl = govIdData.path;
+            // Update the user profile with the file path
+            await supabase
+              .from('user_profiles')
+              .update({ gov_id_image: govIdUrl })
+              .eq('user_id', authData.user.id);
+          } else {
+            console.error('Error uploading government ID:', govIdError);
+          }
+        } catch (fileError) {
+          console.error('Error in government ID upload:', fileError);
+        }
+      }
+
+      if (userData.speedTest) {
+        try {
+          const speedTestFileName = `${authData.user.id}_speed_test`;
+          const { data: speedTestData, error: speedTestError } = await supabase.storage
+            .from('user_documents')
+            .upload(speedTestFileName, userData.speedTest);
+          
+          if (!speedTestError) {
+            speedTestUrl = speedTestData.path;
+            // Update the user profile with the file path
+            await supabase
+              .from('user_profiles')
+              .update({ speed_test: speedTestUrl })
+              .eq('user_id', authData.user.id);
+          } else {
+            console.error('Error uploading speed test:', speedTestError);
+          }
+        } catch (fileError) {
+          console.error('Error in speed test upload:', fileError);
+        }
+      }
+
+      if (userData.systemSettings) {
+        try {
+          const systemSettingsFileName = `${authData.user.id}_system_settings`;
+          const { data: systemSettingsData, error: systemSettingsError } = await supabase.storage
+            .from('user_documents')
+            .upload(systemSettingsFileName, userData.systemSettings);
+          
+          if (!systemSettingsError) {
+            systemSettingsUrl = systemSettingsData.path;
+            // Update the user profile with the file path
+            await supabase
+              .from('user_profiles')
+              .update({ system_settings: systemSettingsUrl })
+              .eq('user_id', authData.user.id);
+          } else {
+            console.error('Error uploading system settings:', systemSettingsError);
+          }
+        } catch (fileError) {
+          console.error('Error in system settings upload:', fileError);
+        }
       }
 
       toast({

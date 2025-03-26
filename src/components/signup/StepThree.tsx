@@ -158,7 +158,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
           </div>
         )}
         
-        <ScrollArea className="h-[calc(100vh-240px)] pr-4">
+        <ScrollArea className="h-[calc(100vh-240px)] pr-4 overflow-y-auto">
           <form onSubmit={handleFormSubmit} className="space-y-6">
             <div className="border rounded-lg p-4 bg-gray-50">
               <h3 className="text-lg font-medium mb-4">Hours & Availability</h3>
@@ -213,10 +213,10 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                             value={dayHours[day] || ""}
                             onValueChange={(value) => handleHoursChange(day, value)}
                           >
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger className="w-full bg-white">
                               <SelectValue placeholder="Select hours" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white">
                               {hoursOptions.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}

@@ -14,6 +14,12 @@ ON storage.objects
 FOR INSERT 
 WITH CHECK (auth.uid() = SPLIT_PART(name, '_', 1)::uuid);
 
+-- Create anon users can upload policy
+CREATE POLICY "Anyone can upload documents" 
+ON storage.objects 
+FOR INSERT 
+WITH CHECK (bucket_id = 'user_documents');
+
 -- Create user profiles table
 CREATE TABLE IF NOT EXISTS public.user_profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
