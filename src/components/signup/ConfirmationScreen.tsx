@@ -7,7 +7,7 @@ const ConfirmationScreen = () => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/3 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
@@ -40,7 +40,7 @@ const ConfirmationScreen = () => {
       </div>
       
       {/* Right Side - Success content */}
-      <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col items-center justify-center">
+      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col items-center justify-center">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold inline">
             <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>

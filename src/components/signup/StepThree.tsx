@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Link } from 'react-router-dom';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   const [errorMessage, setErrorMessage] = useState('');
@@ -20,20 +19,6 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
     { id: 'friday', label: 'Friday' },
     { id: 'saturday', label: 'Saturday' },
     { id: 'sunday', label: 'Sunday' },
-  ];
-
-  const hoursOptions = [
-    { value: "< 1", label: "Less than 1 hour" },
-    { value: "1", label: "1 hour" },
-    { value: "2", label: "2 hours" },
-    { value: "3", label: "3 hours" },
-    { value: "4", label: "4 hours" },
-    { value: "5", label: "5 hours" },
-    { value: "6", label: "6 hours" },
-    { value: "7", label: "7 hours" },
-    { value: "8", label: "8 hours" },
-    { value: "9", label: "9 hours" },
-    { value: "10+", label: "10+ hours" }
   ];
   
   const handleDayToggle = (day) => {
@@ -65,7 +50,12 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form - no need to validate days selection since it's optional
+    // Validate form
+    if (selectedDays.length === 0) {
+      setErrorMessage('Please select at least one day of availability');
+      return;
+    }
+    
     if (!userData.meetObligation || !userData.loginDiscord || !userData.checkEmails || 
         !userData.solveProblems || !userData.completeTraining) {
       setErrorMessage('Please answer all the commitment questions');
@@ -92,7 +82,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/3 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
@@ -125,7 +115,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
       </div>
       
       {/* Right Side - Form */}
-      <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col">
+      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
             <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
@@ -195,21 +185,13 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                     {selectedDays.map(day => (
                       <div key={`hours-${day}`} className="flex items-center mb-2">
                         <span className="w-24 text-sm text-gray-700 capitalize">{day}:</span>
-                        <Select
-                          value={dayHours[day] || ""}
-                          onValueChange={(value) => handleHoursChange(day, value)}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select hours" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {hoursOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <input
+                          type="text"
+                          value={dayHours[day] || ''}
+                          onChange={(e) => handleHoursChange(day, e.target.value)}
+                          className="flex-1 h-9 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          placeholder="e.g., 9:00 AM - 12:00 PM"
+                        />
                       </div>
                     ))}
                   </div>

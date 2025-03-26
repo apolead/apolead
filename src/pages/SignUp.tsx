@@ -15,7 +15,6 @@ const SignUp = () => {
     firstName: '',
     lastName: '',
     email: '',
-    confirmEmail: '',
     birthDay: '',
     govIdNumber: '',
     govIdImage: null,
@@ -28,7 +27,6 @@ const SignUp = () => {
     availableHours: [],
     acceptedTerms: false,
     password: '',
-    confirmPassword: '',
     // New fields for call center experience
     salesExperience: false,
     salesMonths: '',
@@ -51,20 +49,10 @@ const SignUp = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Function to handle next step with added validations
+  // Function to handle next step
   const nextStep = () => {
     // Process full name into first/last before proceeding to step 1
-    if (currentStep === 0) {
-      // Validate full name is provided
-      if (!userData.firstName.trim()) {
-        toast({
-          title: "Missing information",
-          description: "Please enter your full name",
-          variant: "destructive",
-        });
-        return;
-      }
-      
+    if (currentStep === 0 && userData.firstName) {
       // Split full name into firstName and lastName if not already done
       const nameParts = userData.firstName.trim().split(' ');
       if (nameParts.length > 1 && !userData.lastName) {
@@ -75,56 +63,6 @@ const SignUp = () => {
           firstName,
           lastName
         }));
-      } else if (nameParts.length === 1 && !userData.lastName) {
-        // If they entered just one name, prompt for last name
-        toast({
-          title: "Missing information",
-          description: "Please enter your full name (first and last name)",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
-    // Email validation for step 1
-    if (currentStep === 1) {
-      if (userData.email !== userData.confirmEmail) {
-        toast({
-          title: "Email mismatch",
-          description: "The email addresses you entered don't match",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (userData.password !== userData.confirmPassword) {
-        toast({
-          title: "Password mismatch",
-          description: "The passwords you entered don't match",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(userData.email)) {
-        toast({
-          title: "Invalid email",
-          description: "Please enter a valid email address",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Basic password strength validation
-      if (userData.password.length < 8) {
-        toast({
-          title: "Weak password",
-          description: "Password should be at least 8 characters long",
-          variant: "destructive",
-        });
-        return;
       }
     }
     
