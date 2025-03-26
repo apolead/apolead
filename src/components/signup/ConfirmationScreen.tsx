@@ -43,7 +43,7 @@ const ConfirmationScreen = () => {
       <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col items-center justify-center">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold inline">
-            <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
+            <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
           </h2>
         </div>
       
