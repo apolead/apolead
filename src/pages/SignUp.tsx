@@ -85,7 +85,12 @@ const SignUp = () => {
       // Check Supabase URL and Key are available
       if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
         console.error('Supabase environment variables are missing or invalid');
-        throw new Error('Configuration error. Please contact support.');
+        toast({
+          title: "Configuration Error",
+          description: "Supabase credentials are missing. Please contact support.",
+          variant: "destructive",
+        });
+        return;
       }
 
       // 1. Create user account with Supabase auth

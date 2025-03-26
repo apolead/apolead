@@ -4,6 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Link } from 'react-router-dom';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const hoursOptions = [
+  { value: 'less-than-1', label: 'Less than 1 hour' },
+  { value: '1-5', label: '1-5 hours' },
+  { value: '5-10', label: '5-10 hours' },
+  { value: '10-plus', label: '10+ hours' }
+];
 
 const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   const [errorMessage, setErrorMessage] = useState('');
@@ -56,6 +64,13 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
       return;
     }
     
+    // Check if all selected days have hours assigned
+    const missingHours = selectedDays.filter(day => !dayHours[day]);
+    if (missingHours.length > 0) {
+      setErrorMessage(`Please select hours for all chosen days: ${missingHours.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(', ')}`);
+      return;
+    }
+    
     if (!userData.meetObligation || !userData.loginDiscord || !userData.checkEmails || 
         !userData.solveProblems || !userData.completeTraining) {
       setErrorMessage('Please answer all the commitment questions');
@@ -82,13 +97,13 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="w-full md:w-1/4 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
-        <div className="relative z-10">
+        <div className="relative z-10 mt-8">
           <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -114,8 +129,8 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
         </div>
       </div>
       
-      {/* Right Side - Form */}
-      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+      {/* Right Side - Form - Expanded to 3/4 width */}
+      <div className="w-full md:w-3/4 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
             <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
@@ -185,13 +200,21 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
                     {selectedDays.map(day => (
                       <div key={`hours-${day}`} className="flex items-center mb-2">
                         <span className="w-24 text-sm text-gray-700 capitalize">{day}:</span>
-                        <input
-                          type="text"
+                        <Select
                           value={dayHours[day] || ''}
-                          onChange={(e) => handleHoursChange(day, e.target.value)}
-                          className="flex-1 h-9 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          placeholder="e.g., 9:00 AM - 12:00 PM"
-                        />
+                          onValueChange={(value) => handleHoursChange(day, value)}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Select hours" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {hoursOptions.map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     ))}
                   </div>

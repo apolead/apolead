@@ -47,13 +47,13 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="w-full md:w-1/3 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes - adjusted to not overlap */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
-        <div className="relative z-10">
+        <div className="relative z-10 mt-12">
           <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -65,30 +65,24 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           <p className="text-white/80">Our registration process is quick and easy, taking no more than 10 minutes to complete.</p>
         </div>
         
-        {/* Testimonial */}
-        <div className="mt-auto relative z-10">
+        {/* Testimonial - moved up */}
+        <div className="mt-auto relative z-10 mb-12">
           <div className="bg-indigo-800 bg-opacity-70 rounded-lg p-5 mb-8">
             <p className="text-sm italic mb-3 text-white">"I'm impressed with how quickly I've seen progress since starting to use this platform. I began receiving clients and projects in the first week."</p>
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-2">
-                J
+                S
               </div>
               <div>
-                <p className="text-xs font-semibold text-white">James Kim</p>
+                <p className="text-xs font-semibold text-white">Sarah Johnson</p>
               </div>
             </div>
-          </div>
-          
-          {/* Bottom quote */}
-          <div className="border-t border-indigo-500 pt-4 text-sm italic">
-            <p className="text-white">"If you can build a great experience, customers will come back after their first call. Word of mouth is very powerful!"</p>
-            <p className="mt-2 font-semibold text-white">— Alex W.</p>
           </div>
         </div>
       </div>
       
       {/* Right Side - Form */}
-      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+      <div className="w-full md:w-2/3 bg-white p-8 md:p-16 flex flex-col">
         {/* Back to Home Link (Mobile Only) */}
         <div className="block md:hidden mb-8">
           <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
@@ -100,7 +94,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         </div>
       
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-          {/* Logo */}
+          {/* Logo - Fixed to match home page logo */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
               <span className="text-black">Apo</span><span className="text-indigo-600">Lead</span>
