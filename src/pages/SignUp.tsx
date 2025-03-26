@@ -21,8 +21,8 @@ const SignUp = () => {
     govIdImage: null,
     cpuType: '',
     ramAmount: '',
-    hasHeadset: false,
-    hasQuietPlace: false,
+    hasHeadset: null,
+    hasQuietPlace: null,
     speedTest: null,
     systemSettings: null,
     availableHours: [],
@@ -89,7 +89,6 @@ const SignUp = () => {
         return;
       }
       
-      // Move password validation from step 1 to step 0
       const emailRegex = /^[^\s@]+@gmail\.com$/i;
       if (!emailRegex.test(userData.email)) {
         toast({
@@ -100,7 +99,7 @@ const SignUp = () => {
         return;
       }
       
-      if (userData.password.length < 8) {
+      if (!userData.password || userData.password.length < 8) {
         toast({
           title: "Weak password",
           description: "Password should be at least 8 characters long",
@@ -204,6 +203,7 @@ const SignUp = () => {
         return;
       }
 
+      // Create the user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -221,60 +221,53 @@ const SignUp = () => {
         throw new Error('User creation failed. Please try again.');
       }
 
-      // Get session token
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      // Create the user_profiles entry first
+      console.log("User created successfully:", authData.user.id);
+
+      // Directly insert user profile data
       const { error: userDataError } = await supabase
         .from('user_profiles')
-        .insert([
-          {
-            user_id: authData.user.id,
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            email: userData.email,
-            birth_day: userData.birthDay,
-            gov_id_number: userData.govIdNumber,
-            gov_id_image: null, // We'll update this after upload
-            cpu_type: userData.cpuType,
-            ram_amount: userData.ramAmount,
-            has_headset: userData.hasHeadset,
-            has_quiet_place: userData.hasQuietPlace,
-            speed_test: null, // We'll update this after upload
-            system_settings: null, // We'll update this after upload
-            available_hours: userData.availableHours || [],
-            available_days: userData.availableDays || [],
-            day_hours: userData.dayHours || {},
-            sales_experience: userData.salesExperience,
-            sales_months: userData.salesMonths,
-            sales_company: userData.salesCompany,
-            sales_product: userData.salesProduct,
-            service_experience: userData.serviceExperience,
-            service_months: userData.serviceMonths,
-            service_company: userData.serviceCompany,
-            service_product: userData.serviceProduct,
-            meet_obligation: userData.meetObligation,
-            login_discord: userData.loginDiscord,
-            check_emails: userData.checkEmails,
-            solve_problems: userData.solveProblems,
-            complete_training: userData.completeTraining,
-            personal_statement: userData.personalStatement,
-            accepted_terms: userData.acceptedTerms,
-            application_date: new Date().toISOString(),
-            application_status: 'pending',
-          }
-        ]);
+        .insert({
+          user_id: authData.user.id,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          email: userData.email,
+          birth_day: userData.birthDay,
+          gov_id_number: userData.govIdNumber,
+          gov_id_image: null, // We'll update this after upload
+          cpu_type: userData.cpuType,
+          ram_amount: userData.ramAmount,
+          has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
+          has_quiet_place: userData.hasQuietPlace === null ? false : userData.hasQuietPlace,
+          speed_test: null, // We'll update this after upload
+          system_settings: null, // We'll update this after upload
+          available_hours: userData.availableHours || [],
+          available_days: userData.availableDays || [],
+          day_hours: userData.dayHours || {},
+          sales_experience: userData.salesExperience,
+          sales_months: userData.salesMonths,
+          sales_company: userData.salesCompany,
+          sales_product: userData.salesProduct,
+          service_experience: userData.serviceExperience,
+          service_months: userData.serviceMonths,
+          service_company: userData.serviceCompany,
+          service_product: userData.serviceProduct,
+          meet_obligation: userData.meetObligation === null ? false : userData.meetObligation,
+          login_discord: userData.loginDiscord === null ? false : userData.loginDiscord,
+          check_emails: userData.checkEmails === null ? false : userData.checkEmails,
+          solve_problems: userData.solveProblems === null ? false : userData.solveProblems,
+          complete_training: userData.completeTraining === null ? false : userData.completeTraining,
+          personal_statement: userData.personalStatement,
+          accepted_terms: userData.acceptedTerms,
+          application_date: new Date().toISOString(),
+          application_status: 'pending',
+        });
 
       if (userDataError) {
         console.error('Error submitting profile data:', userDataError);
         throw userDataError;
       }
 
-      // Now handle file uploads if needed, but don't stop the process if they fail
-      let govIdUrl = null;
-      let speedTestUrl = null;
-      let systemSettingsUrl = null;
-
+      // Now handle file uploads if needed
       if (userData.govIdImage) {
         try {
           const govIdFileName = `${authData.user.id}_gov_id`;
@@ -283,11 +276,10 @@ const SignUp = () => {
             .upload(govIdFileName, userData.govIdImage);
           
           if (!govIdError) {
-            govIdUrl = govIdData.path;
             // Update the user profile with the file path
             await supabase
               .from('user_profiles')
-              .update({ gov_id_image: govIdUrl })
+              .update({ gov_id_image: govIdData.path })
               .eq('user_id', authData.user.id);
           } else {
             console.error('Error uploading government ID:', govIdError);
@@ -305,11 +297,10 @@ const SignUp = () => {
             .upload(speedTestFileName, userData.speedTest);
           
           if (!speedTestError) {
-            speedTestUrl = speedTestData.path;
             // Update the user profile with the file path
             await supabase
               .from('user_profiles')
-              .update({ speed_test: speedTestUrl })
+              .update({ speed_test: speedTestData.path })
               .eq('user_id', authData.user.id);
           } else {
             console.error('Error uploading speed test:', speedTestError);
@@ -327,11 +318,10 @@ const SignUp = () => {
             .upload(systemSettingsFileName, userData.systemSettings);
           
           if (!systemSettingsError) {
-            systemSettingsUrl = systemSettingsData.path;
             // Update the user profile with the file path
             await supabase
               .from('user_profiles')
-              .update({ system_settings: systemSettingsUrl })
+              .update({ system_settings: systemSettingsData.path })
               .eq('user_id', authData.user.id);
           } else {
             console.error('Error uploading system settings:', systemSettingsError);

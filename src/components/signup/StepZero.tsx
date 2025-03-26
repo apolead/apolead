@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -50,6 +49,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
   };
   
   return (
+    
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">

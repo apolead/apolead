@@ -20,7 +20,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
     let hasUpdates = false;
     
     commitmentFields.forEach(field => {
-      if (userData[field] === undefined) {
+      if (userData[field] === undefined || userData[field] === null) {
         updates[field] = null;
         hasUpdates = true;
       }
