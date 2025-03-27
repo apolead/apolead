@@ -2,33 +2,65 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { X, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const ConfirmationScreen = () => {
-  const [isApproved, setIsApproved] = useState(true);
+  const [isApproved, setIsApproved] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check the session to determine if application was approved
     const checkApplicationStatus = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { data: userData } = await supabase
-          .from('user_profiles')
-          .select('application_status')
-          .eq('user_id', session.user.id)
-          .single();
+      setIsLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (userData && userData.application_status === 'rejected') {
-          setIsApproved(false);
+        if (session) {
+          const { data: userData } = await supabase
+            .from('user_profiles')
+            .select('application_status')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (userData && userData.application_status === 'rejected') {
+            setIsApproved(false);
+          } else {
+            setIsApproved(true);
+          }
+        } else {
+          // If no session found, redirect to homepage
+          navigate('/');
         }
+      } catch (error) {
+        console.error('Error checking application status:', error);
+        // Default to approved view if there's an error
+        setIsApproved(true);
+      } finally {
+        setIsLoading(false);
       }
     };
     
     checkApplicationStatus();
-  }, []);
+  }, [navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold inline">
+            <span className="text-[#00c2cb]">Apo</span>
+            <span className="text-indigo-600">Lead</span>
+          </h2>
+        </div>
+        <div className="flex flex-col items-center justify-center p-8">
+          <Loader2 className="h-12 w-12 text-indigo-600 animate-spin mb-4" />
+          <p className="text-lg font-medium text-gray-700">Loading your application status...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -184,45 +185,52 @@ const SignUp = () => {
       console.log("User data before creating account:", userData);
       console.log("Passed all commitments:", passedAllCommitments);
 
+      // Only add emailRedirectTo for approved applications to prevent confirmation emails for rejected ones
+      const signUpOptions = {
+        data: {
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          email: userData.email,
+          birth_day: userData.birthDay || null,
+          gov_id_number: userData.govIdNumber || null,
+          gov_id_image: null,
+          cpu_type: userData.cpuType || null,
+          ram_amount: userData.ramAmount || null,
+          has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
+          has_quiet_place: userData.hasQuietPlace === null ? false : userData.hasQuietPlace,
+          speed_test: null,
+          system_settings: null,
+          available_hours: userData.availableHours || [],
+          available_days: userData.availableDays || [],
+          day_hours: userData.dayHours || {},
+          sales_experience: userData.salesExperience || false,
+          sales_months: userData.salesMonths || null,
+          sales_company: userData.salesCompany || null,
+          sales_product: userData.salesProduct || null,
+          service_experience: userData.serviceExperience || false,
+          service_months: userData.serviceMonths || null,
+          service_company: userData.serviceCompany || null,
+          service_product: userData.serviceProduct || null,
+          meet_obligation: userData.meetObligation === null ? false : userData.meetObligation,
+          login_discord: userData.loginDiscord === null ? false : userData.loginDiscord,
+          check_emails: userData.checkEmails === null ? false : userData.checkEmails,
+          solve_problems: userData.solveProblems === null ? false : userData.solveProblems,
+          complete_training: userData.completeTraining === null ? false : userData.completeTraining,
+          personal_statement: userData.personalStatement || null,
+          accepted_terms: userData.acceptedTerms || false,
+          application_status: passedAllCommitments ? 'approved' : 'rejected'
+        }
+      };
+      
+      // Only add emailRedirectTo for approved applications
+      if (passedAllCommitments) {
+        signUpOptions.emailRedirectTo = `${window.location.origin}/login`;
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
-        options: {
-          data: {
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            email: userData.email,
-            birth_day: userData.birthDay || null,
-            gov_id_number: userData.govIdNumber || null,
-            gov_id_image: null,
-            cpu_type: userData.cpuType || null,
-            ram_amount: userData.ramAmount || null,
-            has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
-            has_quiet_place: userData.hasQuietPlace === null ? false : userData.hasQuietPlace,
-            speed_test: null,
-            system_settings: null,
-            available_hours: userData.availableHours || [],
-            available_days: userData.availableDays || [],
-            day_hours: userData.dayHours || {},
-            sales_experience: userData.salesExperience || false,
-            sales_months: userData.salesMonths || null,
-            sales_company: userData.salesCompany || null,
-            sales_product: userData.salesProduct || null,
-            service_experience: userData.serviceExperience || false,
-            service_months: userData.serviceMonths || null,
-            service_company: userData.serviceCompany || null,
-            service_product: userData.serviceProduct || null,
-            meet_obligation: userData.meetObligation === null ? false : userData.meetObligation,
-            login_discord: userData.loginDiscord === null ? false : userData.loginDiscord,
-            check_emails: userData.checkEmails === null ? false : userData.checkEmails,
-            solve_problems: userData.solveProblems === null ? false : userData.solveProblems,
-            complete_training: userData.completeTraining === null ? false : userData.completeTraining,
-            personal_statement: userData.personalStatement || null,
-            accepted_terms: userData.acceptedTerms || false,
-            application_status: passedAllCommitments ? 'approved' : 'rejected'
-          },
-          emailRedirectTo: passedAllCommitments ? `${window.location.origin}/login` : undefined,
-        }
+        options: signUpOptions
       });
 
       if (authError) throw authError;
@@ -244,7 +252,7 @@ const SignUp = () => {
         }
       }
 
-      const { error: profileError } = await supabase
+      const { error: userProfileError } = await supabase
         .from('user_profiles')
         .insert({
           user_id: authData.user.id,
@@ -281,8 +289,8 @@ const SignUp = () => {
           application_status: passedAllCommitments ? 'approved' : 'rejected'
         });
 
-      if (profileError) {
-        console.error('Error creating user profile:', profileError);
+      if (userProfileError) {
+        console.error('Error creating user profile:', userProfileError);
       } else {
         console.log('User profile created successfully');
       }
