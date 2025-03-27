@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingGovId, setIsCheckingGovId] = useState(false);
   const [userData, setUserData] = useState({
     firstName: '',
     lastName: '',
@@ -63,7 +64,34 @@ const SignUp = () => {
     checkSession();
   }, []);
   
-  const updateUserData = (newData) => {
+  const updateUserData = async (newData) => {
+    if (newData.govIdNumber && newData.govIdNumber !== userData.govIdNumber) {
+      setIsCheckingGovId(true);
+      try {
+        // Check if the government ID has been used before
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('gov_id_number')
+          .eq('gov_id_number', newData.govIdNumber)
+          .maybeSingle();
+          
+        if (error) throw error;
+        
+        if (data) {
+          toast({
+            title: "Government ID already used",
+            description: "This government ID has already been registered in our system.",
+            variant: "destructive",
+          });
+          setIsCheckingGovId(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking government ID:', error);
+      }
+      setIsCheckingGovId(false);
+    }
+    
     setUserData(prev => ({ ...prev, ...newData }));
   };
   

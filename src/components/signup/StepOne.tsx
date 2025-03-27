@@ -141,14 +141,13 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
           {/* Email and Birth Day */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="step1-email" className="block text-sm font-medium text-gray-700 mb-1">Confirm Email Address</label>
+              <label htmlFor="step1-email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
               <Input
                 type="email"
                 id="step1-email" 
                 value={userData.email}
-                onChange={(e) => updateUserData({ email: e.target.value })}
-                className="w-full"
-                placeholder="Confirm your email address"
+                readOnly
+                className="w-full bg-gray-100 cursor-not-allowed"
               />
             </div>
             
