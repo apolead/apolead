@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -188,7 +187,7 @@ const StepZero = ({
       
       // Get the URL of the current page for proper redirect
       const siteUrl = window.location.origin;
-      const currentPath = window.location.pathname;
+      const currentPath = '/signup'; // Always redirect back to signup page
       
       console.log("Current site URL:", siteUrl);
       console.log("Current path:", currentPath);

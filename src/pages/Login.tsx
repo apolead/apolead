@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,8 +24,24 @@ const Login = () => {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user && mounted) {
-          console.log("User already logged in, redirecting to dashboard");
-          navigate('/dashboard');
+          console.log("User already logged in, checking application status");
+          
+          // Check if profile exists and application is approved
+          const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('application_status')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+            
+          if (profile && profile.application_status === 'approved') {
+            // Approved user, redirect to dashboard
+            console.log("User is approved, redirecting to dashboard");
+            navigate('/dashboard');
+          } else {
+            // User exists but not approved, redirect to signup
+            console.log("User is not approved, redirecting to signup");
+            navigate('/signup');
+          }
         } else if (mounted) {
           setIsCheckingSession(false);
         }
@@ -40,16 +55,29 @@ const Login = () => {
     
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
-          // Redirect to dashboard on successful login
-          toast({
-            title: "Login successful",
-            description: "Welcome back!",
-          });
-          navigate('/dashboard');
+          // Check if profile exists and application is approved
+          const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('application_status')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+            
+          if (profile && profile.application_status === 'approved') {
+            // Approved user, redirect to dashboard
+            toast({
+              title: "Login successful",
+              description: "Welcome back!",
+            });
+            navigate('/dashboard');
+          } else {
+            // User exists but not approved, redirect to signup
+            console.log("User is not approved, redirecting to signup");
+            navigate('/signup');
+          }
         }
       }
     );
@@ -70,7 +98,7 @@ const Login = () => {
       
       // Get the URL of the current page for proper redirect
       const siteUrl = window.location.origin;
-      const currentPath = '/dashboard'; // Always redirect to dashboard after login
+      const currentPath = '/login'; // Always redirect back to login first for proper status checking
       
       console.log("Site URL:", siteUrl);
       console.log("Redirect path:", currentPath);
