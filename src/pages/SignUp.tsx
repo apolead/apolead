@@ -249,8 +249,7 @@ const SignUp = () => {
       case 2:
         return <StepTwo userData={userData} updateUserData={updateUserData} nextStep={nextStep} prevStep={prevStep} />;
       case 3:
-        // Fix: Changed nextStep to handleSubmit to match the component's expected props
-        return <StepThree userData={userData} updateUserData={updateUserData} handleSubmit={handleSubmit} prevStep={prevStep} isSubmitting={isSubmitting} />;
+        return <StepThree userData={userData} updateUserData={updateUserData} nextStep={handleSubmit} prevStep={prevStep} isSubmitting={isSubmitting} />;
       case 4:
         return <ConfirmationScreen />;
       default:
