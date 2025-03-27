@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -7,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitting }) => {
+const StepThree = ({ userData, updateUserData, prevStep, handleSubmit }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedDays, setSelectedDays] = useState(userData.availableDays || []);
@@ -391,9 +390,9 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
               <Button
                 type="submit"
                 className="bg-indigo-600 hover:bg-[#00c2cb] text-white"
-                disabled={isSubmitting || loading}
+                disabled={loading}
               >
-                {isSubmitting || loading ? "Submitting..." : "Submit Application"}
+                {loading ? "Submitting..." : "Submit Application"}
               </Button>
             </div>
           </form>
