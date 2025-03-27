@@ -118,11 +118,19 @@ const SignUp = () => {
       const fileName = `${userId}_${fileType}`;
       console.log(`Uploading ${fileType} for user ${userId}:`, fileName);
       
+      // Convert File object to ArrayBuffer for upload
+      const reader = new FileReader();
+      const fileBuffer = await new Promise((resolve) => {
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsArrayBuffer(file);
+      });
+      
       const { data, error } = await supabase.storage
         .from('user_documents')
-        .upload(fileName, file, {
+        .upload(fileName, fileBuffer, {
           cacheControl: '3600',
-          upsert: true
+          upsert: true,
+          contentType: file.type
         });
       
       if (error) {
@@ -131,6 +139,14 @@ const SignUp = () => {
       }
       
       console.log(`${fileType} uploaded successfully:`, data.path);
+      
+      // Get the public URL for the file
+      const { data: publicUrlData } = supabase.storage
+        .from('user_documents')
+        .getPublicUrl(fileName);
+        
+      console.log(`Public URL for ${fileType}:`, publicUrlData?.publicUrl);
+      
       return data.path;
     } catch (error) {
       console.error(`Exception in ${fileType} upload:`, error);
@@ -212,45 +228,53 @@ const SignUp = () => {
       console.log("User data before creating account:", userData);
       console.log("Passed all commitments:", passedAllCommitments);
 
+      // We use different options for approved vs rejected applications
+      // For rejected applications, we don't want to send confirmation emails
+      const authOptions = {
+        data: {
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          email: userData.email,
+          birth_day: userData.birthDay || null,
+          gov_id_number: userData.govIdNumber || null,
+          gov_id_image: null,
+          cpu_type: userData.cpuType || null,
+          ram_amount: userData.ramAmount || null,
+          has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
+          has_quiet_place: userData.hasQuietPlace === null ? false : userData.hasQuietPlace,
+          speed_test: null,
+          system_settings: null,
+          available_hours: userData.availableHours || [],
+          available_days: userData.availableDays || [],
+          day_hours: userData.dayHours || {},
+          sales_experience: userData.salesExperience || false,
+          sales_months: userData.salesMonths || null,
+          sales_company: userData.salesCompany || null,
+          sales_product: userData.salesProduct || null,
+          service_experience: userData.serviceExperience || false,
+          service_months: userData.serviceMonths || null,
+          service_company: userData.serviceCompany || null,
+          service_product: userData.serviceProduct || null,
+          meet_obligation: userData.meetObligation === null ? false : userData.meetObligation,
+          login_discord: userData.loginDiscord === null ? false : userData.loginDiscord,
+          check_emails: userData.checkEmails === null ? false : userData.checkEmails,
+          solve_problems: userData.solveProblems === null ? false : userData.solveProblems,
+          complete_training: userData.completeTraining === null ? false : userData.completeTraining,
+          personal_statement: userData.personalStatement || null,
+          accepted_terms: userData.acceptedTerms || false,
+          application_status: passedAllCommitments ? 'approved' : 'rejected'
+        }
+      };
+      
+      // Only add email redirect for approved applications
+      if (passedAllCommitments) {
+        authOptions.emailRedirectTo = `${window.location.origin}/login`;
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
-        options: {
-          data: {
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            email: userData.email,
-            birth_day: userData.birthDay || null,
-            gov_id_number: userData.govIdNumber || null,
-            gov_id_image: null,
-            cpu_type: userData.cpuType || null,
-            ram_amount: userData.ramAmount || null,
-            has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
-            has_quiet_place: userData.hasQuietPlace === null ? false : userData.hasQuietPlace,
-            speed_test: null,
-            system_settings: null,
-            available_hours: userData.availableHours || [],
-            available_days: userData.availableDays || [],
-            day_hours: userData.dayHours || {},
-            sales_experience: userData.salesExperience || false,
-            sales_months: userData.salesMonths || null,
-            sales_company: userData.salesCompany || null,
-            sales_product: userData.salesProduct || null,
-            service_experience: userData.serviceExperience || false,
-            service_months: userData.serviceMonths || null,
-            service_company: userData.serviceCompany || null,
-            service_product: userData.serviceProduct || null,
-            meet_obligation: userData.meetObligation === null ? false : userData.meetObligation,
-            login_discord: userData.loginDiscord === null ? false : userData.loginDiscord,
-            check_emails: userData.checkEmails === null ? false : userData.checkEmails,
-            solve_problems: userData.solveProblems === null ? false : userData.solveProblems,
-            complete_training: userData.completeTraining === null ? false : userData.completeTraining,
-            personal_statement: userData.personalStatement || null,
-            accepted_terms: userData.acceptedTerms || false,
-            application_status: passedAllCommitments ? 'approved' : 'rejected'
-          },
-          ...(passedAllCommitments ? { emailRedirectTo: `${window.location.origin}/login` } : {})
-        }
+        options: authOptions
       });
 
       if (authError) throw authError;
@@ -261,19 +285,20 @@ const SignUp = () => {
 
       console.log("User created successfully:", authData.user.id);
 
+      // Process file uploads and handle user profile data
       let session = null;
-      if (passedAllCommitments) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: userData.email,
-          password: userData.password,
-        });
-        
-        if (signInError) {
-          console.error('Error signing in after registration:', signInError);
-        } else {
-          session = signInData.session;
-          console.log("User signed in successfully for file uploads");
-        }
+      
+      // For both approved and rejected applications, we want to sign in to upload files
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: userData.email,
+        password: userData.password,
+      });
+      
+      if (signInError) {
+        console.error('Error signing in after registration:', signInError);
+      } else {
+        session = signInData.session;
+        console.log("User signed in successfully for file uploads");
       }
 
       const { error: userProfileError } = await supabase
@@ -362,6 +387,8 @@ const SignUp = () => {
         if (systemSettingsPath) updateData.system_settings = systemSettingsPath;
         
         if (Object.keys(updateData).length > 0) {
+          console.log("Updating user profile with file paths:", updateData);
+          
           const { error: updateError } = await supabase
             .from('user_profiles')
             .update(updateData)
@@ -375,6 +402,13 @@ const SignUp = () => {
         }
       } else {
         console.log('User not signed in, skipping file uploads');
+      }
+
+      // If application is rejected, we don't send a confirmation email
+      // We sign out the user to make sure they don't receive any email verification
+      if (!passedAllCommitments && session) {
+        console.log("Application rejected, signing out user to prevent confirmation email");
+        await supabase.auth.signOut();
       }
 
       if (passedAllCommitments) {
