@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
-const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
+const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId = false }) => {
   const [errorMessage, setErrorMessage] = useState('');
   
   const handleContinue = (e) => {
@@ -191,15 +192,25 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
           
           {/* Government ID Number */}
           <div>
-            <label htmlFor="step1-govIdNumber" className="block text-sm font-medium text-gray-700 mb-1">Government ID Number</label>
+            <label htmlFor="step1-govIdNumber" className="block text-sm font-medium text-gray-700 mb-1">
+              Government ID Number
+              {isCheckingGovId && (
+                <span className="ml-2 inline-flex items-center text-amber-500">
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  Validating...
+                </span>
+              )}
+            </label>
             <Input
               type="text"
               id="step1-govIdNumber" 
               value={userData.govIdNumber}
               onChange={(e) => updateUserData({ govIdNumber: e.target.value })}
-              className="w-full"
+              className={`w-full ${isCheckingGovId ? 'bg-gray-50' : ''}`}
               placeholder="Enter your ID number"
+              disabled={isCheckingGovId}
             />
+            <p className="mt-1 text-xs text-gray-500">This will be verified for uniqueness</p>
           </div>
           
           <div className="flex justify-between mt-8">
@@ -214,8 +225,14 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep }) => {
             <Button
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              disabled={isCheckingGovId}
             >
-              Continue
+              {isCheckingGovId ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Validating...
+                </>
+              ) : 'Continue'}
             </Button>
           </div>
         </form>

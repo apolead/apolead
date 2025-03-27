@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StepZero from '@/components/signup/StepZero';
@@ -68,16 +67,25 @@ const SignUp = () => {
     if (newData.govIdNumber && newData.govIdNumber !== userData.govIdNumber) {
       setIsCheckingGovId(true);
       try {
-        // Check if the government ID has been used before
-        const { data, error } = await supabase
+        // Check if the government ID has been used before in user_profiles
+        const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
           .select('gov_id_number')
           .eq('gov_id_number', newData.govIdNumber)
           .maybeSingle();
           
-        if (error) throw error;
+        if (profileError) throw profileError;
         
-        if (data) {
+        // Also check in user_applications table
+        const { data: applicationData, error: applicationError } = await supabase
+          .from('user_applications')
+          .select('gov_id_number')
+          .eq('gov_id_number', newData.govIdNumber)
+          .maybeSingle();
+          
+        if (applicationError) throw applicationError;
+        
+        if (profileData || applicationData) {
           toast({
             title: "Government ID already used",
             description: "This government ID has already been registered in our system.",
@@ -88,6 +96,13 @@ const SignUp = () => {
         }
       } catch (error) {
         console.error('Error checking government ID:', error);
+        toast({
+          title: "Validation error",
+          description: "Could not verify government ID. Please try again.",
+          variant: "destructive",
+        });
+        setIsCheckingGovId(false);
+        return;
       }
       setIsCheckingGovId(false);
     }
@@ -174,6 +189,38 @@ const SignUp = () => {
     try {
       setIsSubmitting(true);
       
+      // Verify government ID one more time before final submission
+      try {
+        // Check if the government ID has been used before
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('gov_id_number')
+          .eq('gov_id_number', userData.govIdNumber)
+          .maybeSingle();
+          
+        if (profileError) throw profileError;
+        
+        const { data: applicationData, error: applicationError } = await supabase
+          .from('user_applications')
+          .select('gov_id_number')
+          .eq('gov_id_number', userData.govIdNumber)
+          .maybeSingle();
+          
+        if (applicationError) throw applicationError;
+        
+        if (profileData || applicationData) {
+          toast({
+            title: "Government ID already used",
+            description: "This government ID has already been registered in our system.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error verifying government ID:', error);
+      }
+      
       // Check if user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -215,12 +262,12 @@ const SignUp = () => {
         day_hours: userData.dayHours,
         sales_experience: userData.salesExperience,
         sales_months: userData.salesMonths,
-        sales_company: userData.salesCompany,
-        sales_product: userData.salesProduct,
+        salesCompany: userData.salesCompany,
+        salesProduct: userData.salesProduct,
         service_experience: userData.serviceExperience,
         service_months: userData.serviceMonths,
-        service_company: userData.serviceCompany,
-        service_product: userData.serviceProduct,
+        serviceCompany: userData.serviceCompany,
+        serviceProduct: userData.serviceProduct,
         meet_obligation: userData.meetObligation,
         login_discord: userData.loginDiscord,
         check_emails: userData.checkEmails,
@@ -273,7 +320,13 @@ const SignUp = () => {
       case 0:
         return <StepZero userData={userData} updateUserData={updateUserData} nextStep={nextStep} />;
       case 1:
-        return <StepOne userData={userData} updateUserData={updateUserData} nextStep={nextStep} prevStep={prevStep} />;
+        return <StepOne 
+          userData={userData} 
+          updateUserData={updateUserData} 
+          nextStep={nextStep} 
+          prevStep={prevStep}
+          isCheckingGovId={isCheckingGovId}
+        />;
       case 2:
         return <StepTwo userData={userData} updateUserData={updateUserData} nextStep={nextStep} prevStep={prevStep} />;
       case 3:
