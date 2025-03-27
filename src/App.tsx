@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
@@ -20,7 +20,6 @@ const AuthRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
-  const navigate = useNavigate();
   
   useEffect(() => {
     let mounted = true;
@@ -30,12 +29,6 @@ const AuthRoute = ({ children }) => {
       console.log("Auth state changed in AuthRoute:", event, session?.user?.email);
       
       if (!mounted) return;
-      
-      // Redirect to home page on sign out
-      if (event === 'SIGNED_OUT') {
-        navigate('/');
-        return;
-      }
       
       if (session) {
         // Check application status in profile
@@ -110,7 +103,7 @@ const AuthRoute = ({ children }) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, []);
   
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
@@ -192,11 +185,6 @@ const App = () => {
     // This helps ensure the supabase client processes any auth tokens in the URL
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed in App:", event, session?.user?.email);
-      
-      // Redirect to home page on sign out
-      if (event === 'SIGNED_OUT') {
-        window.location.href = '/';
-      }
     });
     
     return () => {

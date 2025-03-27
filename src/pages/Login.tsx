@@ -10,7 +10,6 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const [hasAttemptedAuth, setHasAttemptedAuth] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -69,7 +68,6 @@ const Login = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
-        setHasAttemptedAuth(true);
         
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
           // Check if profile exists and application is approved
@@ -103,26 +101,19 @@ const Login = () => {
       }
     );
     
-    // Only check session if we haven't attempted auth yet
-    // This prevents the automatic re-authentication when clicking "Back to Home"
-    if (!hasAttemptedAuth) {
-      checkSession();
-    } else {
-      setIsCheckingSession(false);
-    }
+    checkSession();
     
     // Clean up
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [hasAttemptedAuth]);
+  }, [navigate]);
   
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
       setErrorMessage('');
-      setHasAttemptedAuth(true);
       
       // Get the URL of the current page for proper redirect
       const siteUrl = window.location.origin;
@@ -162,12 +153,6 @@ const Login = () => {
     }
   };
 
-  // Function to handle back to home without triggering authentication
-  const handleBackToHome = (e) => {
-    e.preventDefault();
-    navigate('/');
-  };
-
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
@@ -178,13 +163,12 @@ const Login = () => {
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
         <div className="relative z-10">
-          {/* Modified to use onClick handler instead of Link */}
-          <button onClick={handleBackToHome} className="inline-flex items-center text-white hover:text-white/80 mb-12 bg-transparent border-0">
+          <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
             Back to Home
-          </button>
+          </Link>
 
           <h2 className="text-3xl font-bold mb-6 text-white">Welcome back!</h2>
           <p className="text-white/80">Log in to access your dashboard and manage your calls.</p>
@@ -210,13 +194,12 @@ const Login = () => {
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         {/* Back to Home Link (Mobile Only) */}
         <div className="block md:hidden mb-8">
-          {/* Modified to use onClick handler instead of Link */}
-          <button onClick={handleBackToHome} className="text-indigo-600 hover:text-indigo-800 flex items-center bg-transparent border-0">
+          <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
             Back to Home
-          </button>
+          </Link>
         </div>
       
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
