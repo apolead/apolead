@@ -110,6 +110,33 @@ const SignUp = () => {
     return commitments.every(commitment => userData[commitment] === true);
   };
 
+  const uploadFile = async (userId, file, fileType) => {
+    if (!file) return null;
+    
+    try {
+      const fileName = `${userId}_${fileType}`;
+      console.log(`Uploading ${fileType} for user ${userId}:`, fileName);
+      
+      const { data, error } = await supabase.storage
+        .from('user_documents')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+      
+      if (error) {
+        console.error(`Error uploading ${fileType}:`, error);
+        return null;
+      }
+      
+      console.log(`${fileType} uploaded successfully:`, data.path);
+      return data.path;
+    } catch (error) {
+      console.error(`Exception in ${fileType} upload:`, error);
+      return null;
+    }
+  };
+
   const handleSubmit = async () => {
     if (isSubmitting) return;
     
@@ -233,14 +260,18 @@ const SignUp = () => {
 
       console.log("User created successfully:", authData.user.id);
 
+      let session = null;
       if (passedAllCommitments) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: userData.email,
           password: userData.password,
         });
         
         if (signInError) {
           console.error('Error signing in after registration:', signInError);
+        } else {
+          session = signInData.session;
+          console.log("User signed in successfully for file uploads");
         }
       }
 
@@ -304,88 +335,38 @@ const SignUp = () => {
       let speedTestPath = null;
       let systemSettingsPath = null;
 
-      if (userData.govIdImage) {
-        try {
-          const govIdFileName = `${authData.user.id}_gov_id`;
-          console.log('Uploading government ID image:', govIdFileName);
-          const { data: govIdData, error: govIdError } = await supabase.storage
-            .from('user_documents')
-            .upload(govIdFileName, userData.govIdImage);
-          
-          if (govIdError) {
-            console.error('Error uploading government ID:', govIdError);
-          } else {
-            govIdPath = govIdData.path;
-            console.log('Government ID uploaded successfully:', govIdPath);
-            
-            const { error: updateError } = await supabase
-              .from('user_profiles')
-              .update({ gov_id_image: govIdPath })
-              .eq('user_id', authData.user.id);
-            
-            if (updateError) {
-              console.error('Error updating user profile with gov ID path:', updateError);
-            }
-          }
-        } catch (fileError) {
-          console.error('Error in government ID upload:', fileError);
+      if (session) {
+        if (userData.govIdImage) {
+          govIdPath = await uploadFile(authData.user.id, userData.govIdImage, 'gov_id');
         }
-      }
-
-      if (userData.speedTest) {
-        try {
-          const speedTestFileName = `${authData.user.id}_speed_test`;
-          console.log('Uploading speed test:', speedTestFileName);
-          const { data: speedTestData, error: speedTestError } = await supabase.storage
-            .from('user_documents')
-            .upload(speedTestFileName, userData.speedTest);
-          
-          if (speedTestError) {
-            console.error('Error uploading speed test:', speedTestError);
-          } else {
-            speedTestPath = speedTestData.path;
-            console.log('Speed test uploaded successfully:', speedTestPath);
-            
-            const { error: updateError } = await supabase
-              .from('user_profiles')
-              .update({ speed_test: speedTestPath })
-              .eq('user_id', authData.user.id);
-            
-            if (updateError) {
-              console.error('Error updating user profile with speed test path:', updateError);
-            }
-          }
-        } catch (fileError) {
-          console.error('Error in speed test upload:', fileError);
+        
+        if (userData.speedTest) {
+          speedTestPath = await uploadFile(authData.user.id, userData.speedTest, 'speed_test');
         }
-      }
-
-      if (userData.systemSettings) {
-        try {
-          const systemSettingsFileName = `${authData.user.id}_system_settings`;
-          console.log('Uploading system settings:', systemSettingsFileName);
-          const { data: systemSettingsData, error: systemSettingsError } = await supabase.storage
-            .from('user_documents')
-            .upload(systemSettingsFileName, userData.systemSettings);
-          
-          if (systemSettingsError) {
-            console.error('Error uploading system settings:', systemSettingsError);
-          } else {
-            systemSettingsPath = systemSettingsData.path;
-            console.log('System settings uploaded successfully:', systemSettingsPath);
-            
-            const { error: updateError } = await supabase
-              .from('user_profiles')
-              .update({ system_settings: systemSettingsPath })
-              .eq('user_id', authData.user.id);
-            
-            if (updateError) {
-              console.error('Error updating user profile with system settings path:', updateError);
-            }
-          }
-        } catch (fileError) {
-          console.error('Error in system settings upload:', fileError);
+        
+        if (userData.systemSettings) {
+          systemSettingsPath = await uploadFile(authData.user.id, userData.systemSettings, 'system_settings');
         }
+        
+        const updateData = {};
+        if (govIdPath) updateData.gov_id_image = govIdPath;
+        if (speedTestPath) updateData.speed_test = speedTestPath;
+        if (systemSettingsPath) updateData.system_settings = systemSettingsPath;
+        
+        if (Object.keys(updateData).length > 0) {
+          const { error: updateError } = await supabase
+            .from('user_profiles')
+            .update(updateData)
+            .eq('user_id', authData.user.id);
+          
+          if (updateError) {
+            console.error('Error updating user profile with file paths:', updateError);
+          } else {
+            console.log('User profile updated with file paths successfully');
+          }
+        }
+      } else {
+        console.log('User not signed in, skipping file uploads');
       }
 
       if (passedAllCommitments) {
