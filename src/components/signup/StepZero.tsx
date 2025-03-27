@@ -19,74 +19,136 @@ const StepZero = ({
   
   // Check if user is already authenticated with Google
   useEffect(() => {
+    let mounted = true;
+    
     const checkSession = async () => {
       try {
+        if (!mounted) return;
         setIsCheckingSession(true);
         
         // Check if we have a session
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (session?.user) {
+        if (session?.user && mounted) {
           console.log("User is authenticated:", session.user);
           
-          // Update user data with information from the session
-          updateUserData({
-            email: session.user.email,
-            firstName: session.user.user_metadata?.given_name || 
-                       session.user.user_metadata?.name?.split(' ')[0] || 
-                       session.user.user_metadata?.full_name?.split(' ')[0] || '',
-            lastName: session.user.user_metadata?.family_name || 
+          // Check if user profile exists to determine if they need to complete signup
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('application_status, first_name')
+            .eq('user_id', session.user.id)
+            .single();
+            
+          if (profileError) {
+            // If no profile exists or error, consider this a new signup
+            console.log("Profile not found, continuing with signup flow");
+            
+            // Update user data with information from the session
+            updateUserData({
+              email: session.user.email,
+              firstName: session.user.user_metadata?.given_name || 
+                        session.user.user_metadata?.name?.split(' ')[0] || 
+                        session.user.user_metadata?.full_name?.split(' ')[0] || '',
+              lastName: session.user.user_metadata?.family_name || 
                       (session.user.user_metadata?.name?.split(' ').length > 1 ? 
-                       session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
+                        session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
                       (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
-                       session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
-          });
-          
-          // After updating the userData, proceed to next step
-          console.log("Proceeding to next step after auth");
-          setTimeout(() => {
-            nextStep();
-            setIsCheckingSession(false);
-          }, 500);
-        } else {
+                        session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
+            });
+            
+            // Proceed to next step of signup flow
+            setTimeout(() => {
+              if (mounted) {
+                nextStep();
+                setIsCheckingSession(false);
+              }
+            }, 500);
+          } else {
+            // Profile exists, check its status
+            console.log("Profile found:", profile);
+            
+            if (profile?.application_status === 'approved') {
+              // User is approved, redirect to dashboard
+              toast({
+                title: "Welcome back!",
+                description: "You've been redirected to your dashboard",
+              });
+              navigate('/dashboard');
+            } else if (profile?.first_name) {
+              // User has started the application but not completed it
+              // Proceed with signup flow
+              setTimeout(() => {
+                if (mounted) {
+                  nextStep();
+                  setIsCheckingSession(false);
+                }
+              }, 500);
+            } else {
+              // No name yet, treat as new signup
+              setTimeout(() => {
+                if (mounted) {
+                  nextStep();
+                  setIsCheckingSession(false);
+                }
+              }, 500);
+            }
+          }
+        } else if (mounted) {
           console.log("No authenticated user found");
           setIsCheckingSession(false);
         }
       } catch (error) {
         console.error("Error checking session:", error);
-        setIsCheckingSession(false);
+        if (mounted) {
+          setIsCheckingSession(false);
+        }
       }
     };
     
-    // Also set up an auth state change listener to handle redirects
+    // Set up an auth state change listener to handle redirects
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
-        if (event === 'SIGNED_IN' && session) {
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
+          // Check if user profile exists
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('application_status, first_name')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+            
           // Update user data
           updateUserData({
             email: session.user.email,
             firstName: session.user.user_metadata?.given_name || 
-                       session.user.user_metadata?.name?.split(' ')[0] || 
-                       session.user.user_metadata?.full_name?.split(' ')[0] || '',
+                      session.user.user_metadata?.name?.split(' ')[0] || 
+                      session.user.user_metadata?.full_name?.split(' ')[0] || '',
             lastName: session.user.user_metadata?.family_name || 
-                      (session.user.user_metadata?.name?.split(' ').length > 1 ? 
-                       session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
-                      (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
-                       session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
+                    (session.user.user_metadata?.name?.split(' ').length > 1 ? 
+                      session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
+                    (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
+                      session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
           });
           
-          // After updating the userData, proceed to next step
-          setTimeout(() => nextStep(), 500);
+          if (!profileError && profile?.application_status === 'approved') {
+            // Existing approved user, redirect to dashboard
+            navigate('/dashboard');
+          } else {
+            // New user or user with incomplete profile, continue signup flow
+            setTimeout(() => {
+              if (mounted) nextStep();
+            }, 500);
+          }
         }
       }
     );
     
     checkSession();
     
-    // Clean up subscription
+    // Clean up
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -96,15 +158,14 @@ const StepZero = ({
       setIsLoading(true);
       setErrorMessage('');
       
-      // Use the current URL as the base for the redirect
-      const currentUrl = window.location.href.split('?')[0]; // Remove any query params
-      const redirectTo = currentUrl;
-      console.log("Setting redirect URL to:", redirectTo);
+      // Use the current URL as the base for the redirect, stripping any query params
+      const currentUrl = window.location.origin + window.location.pathname;
+      console.log("Setting redirect URL to:", currentUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectTo,
+          redirectTo: currentUrl,
         },
       });
 

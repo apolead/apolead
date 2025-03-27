@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -9,18 +9,73 @@ import { useToast } from '@/hooks/use-toast';
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Check if user is already logged in
+  useEffect(() => {
+    let mounted = true;
+    
+    const checkSession = async () => {
+      try {
+        if (!mounted) return;
+        setIsCheckingSession(true);
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user && mounted) {
+          console.log("User already logged in, redirecting to dashboard");
+          navigate('/dashboard');
+        } else if (mounted) {
+          setIsCheckingSession(false);
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        if (mounted) {
+          setIsCheckingSession(false);
+        }
+      }
+    };
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.email);
+        
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
+          // Redirect to dashboard on successful login
+          toast({
+            title: "Login successful",
+            description: "Welcome back!",
+          });
+          navigate('/dashboard');
+        }
+      }
+    );
+    
+    checkSession();
+    
+    // Clean up
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+  
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
       setErrorMessage('');
       
+      // Use the current URL as the base for the redirect, replacing with dashboard path
+      const redirectTo = `${window.location.origin}/dashboard`;
+      console.log("Setting redirect URL to:", redirectTo);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: redirectTo,
         },
       });
 
