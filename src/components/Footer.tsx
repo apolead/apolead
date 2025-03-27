@@ -130,7 +130,11 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-white border-opacity-10 pt-8 text-center">
-          <p className="text-sm text-gray-400">&copy; 2025 ApoLead. All Rights Reserved. | Privacy Policy | Terms of Service</p>
+          <p className="text-sm text-gray-400">
+            &copy; {new Date().getFullYear()} ApoLead. All Rights Reserved. | 
+            <Link to="/privacy-policy" className="hover:text-white ml-1 mr-1">Privacy Policy</Link> | 
+            <Link to="/terms-of-service" className="hover:text-white ml-1">Terms of Service</Link>
+          </p>
         </div>
       </div>
     </footer>

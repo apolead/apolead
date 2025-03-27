@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,13 +8,14 @@ import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 
 const queryClient = new QueryClient();
 
-// Auth wrapper component to handle authenticated routes
 const AuthRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -24,14 +24,12 @@ const AuthRoute = ({ children }) => {
   useEffect(() => {
     let mounted = true;
     
-    // First set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed in AuthRoute:", event, session?.user?.email);
       
       if (!mounted) return;
       
       if (session) {
-        // Check application status in profile
         const { data: profile, error } = await supabase
           .from('user_profiles')
           .select('application_status')
@@ -44,11 +42,9 @@ const AuthRoute = ({ children }) => {
           setIsAuthenticated(true);
           setIsApproved(true);
         } else if (profile) {
-          // User exists but not approved
           setIsAuthenticated(true);
           setIsApproved(false);
         } else {
-          // New user, should complete signup
           setIsAuthenticated(true);
           setIsApproved(false);
         }
@@ -60,7 +56,6 @@ const AuthRoute = ({ children }) => {
       setIsLoading(false);
     });
     
-    // Then check if there's an existing session
     const checkAuth = async () => {
       if (!mounted) return;
       
@@ -68,7 +63,6 @@ const AuthRoute = ({ children }) => {
       console.log("Checking session in AuthRoute:", !!session);
       
       if (session) {
-        // Check application status in profile
         const { data: profile, error } = await supabase
           .from('user_profiles')
           .select('application_status')
@@ -81,11 +75,9 @@ const AuthRoute = ({ children }) => {
           setIsAuthenticated(true);
           setIsApproved(true);
         } else if (profile) {
-          // User exists but not approved
           setIsAuthenticated(true);
           setIsApproved(false);
         } else {
-          // New user, should complete signup
           setIsAuthenticated(true);
           setIsApproved(false);
         }
@@ -120,7 +112,6 @@ const AuthRoute = ({ children }) => {
   return children;
 };
 
-// Public route component - redirects to dashboard if user is authenticated and approved
 const PublicRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -135,7 +126,6 @@ const PublicRoute = ({ children }) => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        // Check application status in profile
         const { data: profile, error } = await supabase
           .from('user_profiles')
           .select('application_status')
@@ -180,9 +170,7 @@ const PublicRoute = ({ children }) => {
 };
 
 const App = () => {
-  // Handle URL fragment for auth
   useEffect(() => {
-    // This helps ensure the supabase client processes any auth tokens in the URL
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed in App:", event, session?.user?.email);
     });
@@ -212,7 +200,8 @@ const App = () => {
               </AuthRoute>
             } />
             <Route path="/confirmation" element={<ConfirmationScreen />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
