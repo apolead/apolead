@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +15,6 @@ const StepZero = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   
   // Check if user is already authenticated with Google
@@ -98,7 +96,9 @@ const StepZero = ({
       setIsLoading(true);
       setErrorMessage('');
       
-      const redirectTo = `${window.location.origin}/signup`;
+      // Use the current URL as the base for the redirect
+      const currentUrl = window.location.href.split('?')[0]; // Remove any query params
+      const redirectTo = currentUrl;
       console.log("Setting redirect URL to:", redirectTo);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
