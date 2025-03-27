@@ -75,13 +75,16 @@ const Login = () => {
       console.log("Site URL:", siteUrl);
       console.log("Redirect path:", currentPath);
       
+      // Force logout first to ensure Google auth prompt appears
+      await supabase.auth.signOut();
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${siteUrl}${currentPath}`,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            prompt: 'select_account consent', // Force Google to show account selection
           }
         },
       });
