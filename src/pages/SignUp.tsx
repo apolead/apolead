@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -49,13 +50,48 @@ const SignUp = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [session, setSession] = useState(null);
+  
+  // Check if user is already authenticated with Google
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setSession(session);
+        // Update userData with Google info
+        setUserData(prevData => ({
+          ...prevData,
+          email: session.user.email,
+          firstName: session.user.user_metadata?.name || session.user.user_metadata?.full_name || '',
+        }));
+      }
+    };
+    
+    checkAuth();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        setSession(newSession);
+        if (newSession) {
+          setUserData(prevData => ({
+            ...prevData,
+            email: newSession.user.email,
+            firstName: newSession.user.user_metadata?.name || newSession.user.user_metadata?.full_name || '',
+          }));
+        }
+      }
+    );
+    
+    return () => subscription.unsubscribe();
+  }, []);
 
   const nextStep = async () => {
     if (currentStep === 0) {
       if (!userData.email) {
         toast({
-          title: "Email required",
-          description: "Please enter an email address to continue",
+          title: "Google authentication required",
+          description: "Please sign in with Google to continue",
           variant: "destructive",
         });
         return;
@@ -198,13 +234,15 @@ const SignUp = () => {
         return;
       }
 
-      if (!userData.email.toLowerCase().endsWith('@gmail.com')) {
+      // Check if we have an active session from Google
+      if (!session) {
         toast({
-          title: "Invalid email",
-          description: "Only Gmail accounts are accepted at this time",
+          title: "Google authentication required",
+          description: "Please sign in with Google to continue",
           variant: "destructive",
         });
         setIsSubmitting(false);
+        setCurrentStep(0); // Go back to step 0 to authenticate
         return;
       }
 
@@ -228,86 +266,31 @@ const SignUp = () => {
 
       const passedAllCommitments = checkAllCommitmentsAreTrue();
 
-      console.log("User data before creating account:", userData);
+      console.log("User data before creating profile:", userData);
       console.log("Passed all commitments:", passedAllCommitments);
+      console.log("Google session user ID:", session.user.id);
 
-      // We use different options for approved vs rejected applications
-      // Define the auth options with the correct type structure
-      const authOptions: any = {
+      // No need to register with email/password since we're using Google Auth
+      // Update user metadata instead
+      
+      // Update the user's metadata with application data
+      const { error: updateError } = await supabase.auth.updateUser({
         data: {
           first_name: userData.firstName,
           last_name: userData.lastName,
-          email: userData.email,
           birth_day: userData.birthDay || null,
-          gov_id_number: userData.govIdNumber || null,
-          gov_id_image: null,
-          cpu_type: userData.cpuType || null,
-          ram_amount: userData.ramAmount || null,
-          has_headset: userData.hasHeadset === null ? false : userData.hasHeadset,
-          has_quiet_place: userData.hasQuietPlace === null ? false : userData.hasQuietPlace,
-          speed_test: null,
-          system_settings: null,
-          available_hours: userData.availableHours || [],
-          available_days: userData.availableDays || [],
-          day_hours: userData.dayHours || {},
-          sales_experience: userData.salesExperience || false,
-          sales_months: userData.salesMonths || null,
-          sales_company: userData.salesCompany || null,
-          sales_product: userData.salesProduct || null,
-          service_experience: userData.serviceExperience || false,
-          service_months: userData.serviceMonths || null,
-          service_company: userData.serviceCompany || null,
-          service_product: userData.serviceProduct || null,
-          meet_obligation: userData.meetObligation === null ? false : userData.meetObligation,
-          login_discord: userData.loginDiscord === null ? false : userData.loginDiscord,
-          check_emails: userData.checkEmails === null ? false : userData.checkEmails,
-          solve_problems: userData.solveProblems === null ? false : userData.solveProblems,
-          complete_training: userData.completeTraining === null ? false : userData.completeTraining,
-          personal_statement: userData.personalStatement || null,
-          accepted_terms: userData.acceptedTerms || false,
           application_status: passedAllCommitments ? 'approved' : 'rejected'
         }
-      };
-      
-      // Only add email redirect for approved applications
-      if (passedAllCommitments) {
-        authOptions.emailRedirectTo = `${window.location.origin}/login`;
-      }
-
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-        options: authOptions
-      });
-
-      if (authError) throw authError;
-
-      if (!authData.user) {
-        throw new Error('User creation failed. Please try again.');
-      }
-
-      console.log("User created successfully:", authData.user.id);
-
-      // Process file uploads and handle user profile data
-      let session = null;
-      
-      // For both approved and rejected applications, we want to sign in to upload files
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: userData.email,
-        password: userData.password,
       });
       
-      if (signInError) {
-        console.error('Error signing in after registration:', signInError);
-      } else {
-        session = signInData.session;
-        console.log("User signed in successfully for file uploads");
+      if (updateError) {
+        console.error('Error updating user metadata:', updateError);
       }
 
       const { error: userProfileError } = await supabase
         .from('user_profiles')
         .insert({
-          user_id: authData.user.id,
+          user_id: session.user.id,
           first_name: userData.firstName,
           last_name: userData.lastName,
           email: userData.email,
@@ -350,7 +333,7 @@ const SignUp = () => {
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
-          user_id: authData.user.id,
+          user_id: session.user.id,
           role: 'agent'
         });
 
@@ -364,74 +347,61 @@ const SignUp = () => {
       let speedTestPath = null;
       let systemSettingsPath = null;
 
-      if (session) {
-        if (userData.govIdImage) {
-          govIdPath = await uploadFile(authData.user.id, userData.govIdImage, 'gov_id');
-        }
+      if (userData.govIdImage) {
+        govIdPath = await uploadFile(session.user.id, userData.govIdImage, 'gov_id');
+      }
+      
+      if (userData.speedTest) {
+        speedTestPath = await uploadFile(session.user.id, userData.speedTest, 'speed_test');
+      }
+      
+      if (userData.systemSettings) {
+        systemSettingsPath = await uploadFile(session.user.id, userData.systemSettings, 'system_settings');
+      }
+      
+      // Define the type for updateData to fix the TypeScript errors
+      interface UpdateDataType {
+        gov_id_image?: string | null;
+        speed_test?: string | null;
+        system_settings?: string | null;
+      }
+      
+      const updateData: UpdateDataType = {};
+      if (govIdPath) updateData.gov_id_image = govIdPath;
+      if (speedTestPath) updateData.speed_test = speedTestPath;
+      if (systemSettingsPath) updateData.system_settings = systemSettingsPath;
+      
+      if (Object.keys(updateData).length > 0) {
+        console.log("Updating user profile with file paths:", updateData);
         
-        if (userData.speedTest) {
-          speedTestPath = await uploadFile(authData.user.id, userData.speedTest, 'speed_test');
-        }
+        const { error: updatePathsError } = await supabase
+          .from('user_profiles')
+          .update(updateData)
+          .eq('user_id', session.user.id);
         
-        if (userData.systemSettings) {
-          systemSettingsPath = await uploadFile(authData.user.id, userData.systemSettings, 'system_settings');
+        if (updatePathsError) {
+          console.error('Error updating user profile with file paths:', updatePathsError);
+        } else {
+          console.log('User profile updated with file paths successfully');
         }
-        
-        // Define the type for updateData to fix the TypeScript errors
-        interface UpdateDataType {
-          gov_id_image?: string | null;
-          speed_test?: string | null;
-          system_settings?: string | null;
-        }
-        
-        const updateData: UpdateDataType = {};
-        if (govIdPath) updateData.gov_id_image = govIdPath;
-        if (speedTestPath) updateData.speed_test = speedTestPath;
-        if (systemSettingsPath) updateData.system_settings = systemSettingsPath;
-        
-        if (Object.keys(updateData).length > 0) {
-          console.log("Updating user profile with file paths:", updateData);
-          
-          const { error: updateError } = await supabase
-            .from('user_profiles')
-            .update(updateData)
-            .eq('user_id', authData.user.id);
-          
-          if (updateError) {
-            console.error('Error updating user profile with file paths:', updateError);
-          } else {
-            console.log('User profile updated with file paths successfully');
-          }
-        }
-      } else {
-        console.log('User not signed in, skipping file uploads');
       }
 
-      // If application is rejected, we don't send a confirmation email
-      // We sign out the user to make sure they don't receive any email verification
-      if (!passedAllCommitments && session) {
-        console.log("Application rejected, signing out user to prevent confirmation email");
+      // If application is rejected, sign out the user
+      if (!passedAllCommitments) {
+        console.log("Application rejected, signing out user");
         await supabase.auth.signOut();
         
         // Navigate to confirmation screen with rejected status
-        setCurrentStep(4);
+        window.location.href = '/signup?status=rejected';
       } else {
-        if (passedAllCommitments) {
-          toast({
-            title: "Application submitted successfully",
-            description: "Your application has been approved! Please check your email for confirmation.",
-            variant: "default",
-          });
-        } else {
-          toast({
-            title: "Application received",
-            description: "We're unable to move forward with your application at this time based on your information.",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Application submitted successfully",
+          description: "Your application has been approved!",
+          variant: "default",
+        });
         
-        // Move to the confirmation screen regardless of approval status
-        setCurrentStep(4);
+        // Move to the confirmation screen with approved status
+        window.location.href = '/signup?status=approved';
       }
       
     } catch (error) {
