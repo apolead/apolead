@@ -65,21 +65,17 @@ const Dashboard = () => {
     
     if (startButton && modal && closeModal && beginTrainingBtn) {
       startButton.addEventListener('click', function() {
-        if (modal) {
-          modal.style.display = 'flex';
-          setTimeout(function() {
-            modal.classList.add('show');
-          }, 10);
-        }
+        modal.style.display = 'flex';
+        setTimeout(function() {
+          modal.classList.add('show');
+        }, 10);
       });
       
       closeModal.addEventListener('click', function() {
-        if (modal) {
-          modal.classList.remove('show');
-          setTimeout(function() {
-            modal.style.display = 'none';
-          }, 300);
-        }
+        modal.classList.remove('show');
+        setTimeout(function() {
+          modal.style.display = 'none';
+        }, 300);
       });
       
       beginTrainingBtn.addEventListener('click', function() {
@@ -354,8 +350,7 @@ const Dashboard = () => {
         </div>
         
         {/* Add custom keyframes for animations */}
-        <style>
-          {`
+        <style jsx>{`
           @keyframes pulse {
             0% { opacity: 0.3; }
             50% { opacity: 0.6; }
@@ -377,8 +372,7 @@ const Dashboard = () => {
           .animate-pulse::after {
             animation: pulse 1.5s infinite;
           }
-          `}
-        </style>
+        `}</style>
       </div>
       
       {/* Add Font Awesome */}

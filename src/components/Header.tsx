@@ -21,7 +21,7 @@ const Header = () => {
     
     // Change icon direction based on sidebar state
     const toggleIcon = document.querySelector('#sidebarToggle i');
-    if (toggleIcon instanceof HTMLElement) {
+    if (toggleIcon) {
       if (sidebar?.classList.contains('collapsed')) {
         toggleIcon.classList.remove('fa-angle-left');
         toggleIcon.classList.add('fa-angle-right');
@@ -35,13 +35,11 @@ const Header = () => {
     if (sidebar?.classList.contains('collapsed')) {
       // Hide spans
       document.querySelectorAll('.sidebar span').forEach(span => {
-        if (span instanceof HTMLElement) {
-          span.style.display = 'none';
-          span.style.width = '0';
-          span.style.height = '0';
-          span.style.position = 'absolute';
-          span.style.overflow = 'hidden';
-        }
+        span.style.display = 'none';
+        span.style.width = '0';
+        span.style.height = '0';
+        span.style.position = 'absolute';
+        span.style.overflow = 'hidden';
       });
       
       // Center icons
@@ -49,28 +47,24 @@ const Header = () => {
     } else {
       // Reset icon styling for expanded mode
       document.querySelectorAll('.sidebar .nav-item i:not(.menu-lock-icon)').forEach(icon => {
-        if (icon instanceof HTMLElement) {
-          icon.style.position = '';
-          icon.style.left = '';
-          icon.style.right = '';
-          icon.style.margin = '';
-          icon.style.display = '';
-          icon.style.justifyContent = '';
-          icon.style.alignItems = '';
-          icon.style.width = '';
-          icon.style.textAlign = '';
-        }
+        icon.style.position = '';
+        icon.style.left = '';
+        icon.style.right = '';
+        icon.style.margin = '';
+        icon.style.display = '';
+        icon.style.justifyContent = '';
+        icon.style.alignItems = '';
+        icon.style.width = '';
+        icon.style.textAlign = '';
       });
       
       // Show all spans again
       document.querySelectorAll('.sidebar span').forEach(span => {
-        if (span instanceof HTMLElement) {
-          span.style.display = '';
-          span.style.width = '';
-          span.style.height = '';
-          span.style.position = '';
-          span.style.overflow = '';
-        }
+        span.style.display = '';
+        span.style.width = '';
+        span.style.height = '';
+        span.style.position = '';
+        span.style.overflow = '';
       });
     }
   };
@@ -78,17 +72,15 @@ const Header = () => {
   // Function to forcefully center all icons in collapsed state
   const centerIcons = () => {
     document.querySelectorAll('.sidebar .nav-item i:not(.menu-lock-icon)').forEach(icon => {
-      if (icon instanceof HTMLElement) {
-        icon.style.position = 'relative';
-        icon.style.left = '0';
-        icon.style.right = '0';
-        icon.style.margin = '0 auto';
-        icon.style.display = 'flex';
-        icon.style.justifyContent = 'center';
-        icon.style.alignItems = 'center';
-        icon.style.width = '100%';
-        icon.style.textAlign = 'center';
-      }
+      icon.style.position = 'relative';
+      icon.style.left = '0';
+      icon.style.right = '0';
+      icon.style.margin = '0 auto';
+      icon.style.display = 'flex';
+      icon.style.justifyContent = 'center';
+      icon.style.alignItems = 'center';
+      icon.style.width = '100%';
+      icon.style.textAlign = 'center';
     });
   };
 
@@ -120,18 +112,16 @@ const Header = () => {
     
     if (sidebar && sidebarToggle) {
       // Adjust toggle button position
-      if (sidebarToggle instanceof HTMLElement) {
-        sidebarToggle.style.position = 'absolute';
-        sidebarToggle.style.right = '-15px';
-        sidebarToggle.style.top = '25px';
-      }
+      sidebarToggle.style.position = 'absolute';
+      sidebarToggle.style.right = '-15px';
+      sidebarToggle.style.top = '25px';
       
       // Add event listener to handle hover on locked menu items
       const lockedItems = document.querySelectorAll('.nav-item.locked');
       lockedItems.forEach(item => {
         item.addEventListener('mouseenter', () => {
           const lockIcon = item.querySelector('.menu-lock-icon');
-          if (lockIcon instanceof HTMLElement) {
+          if (lockIcon) {
             lockIcon.style.display = 'block';
           }
           item.classList.add('hovering');
@@ -139,7 +129,7 @@ const Header = () => {
         
         item.addEventListener('mouseleave', () => {
           const lockIcon = item.querySelector('.menu-lock-icon');
-          if (lockIcon instanceof HTMLElement) {
+          if (lockIcon) {
             lockIcon.style.display = 'none';
           }
           item.classList.remove('hovering');
