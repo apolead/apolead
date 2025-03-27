@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -55,6 +56,33 @@ const StepZero = ({
                       (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
                         session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
             });
+            
+            // Create a minimal user profile to start
+            if (mounted) {
+              try {
+                const { error: insertError } = await supabase
+                  .from('user_profiles')
+                  .upsert({
+                    user_id: session.user.id,
+                    email: session.user.email,
+                    first_name: session.user.user_metadata?.given_name || 
+                              session.user.user_metadata?.name?.split(' ')[0] || 
+                              session.user.user_metadata?.full_name?.split(' ')[0] || '',
+                    last_name: session.user.user_metadata?.family_name || 
+                            (session.user.user_metadata?.name?.split(' ').length > 1 ? 
+                              session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
+                            (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
+                              session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : ''),
+                    application_status: 'pending'
+                  });
+                  
+                if (insertError) {
+                  console.error("Error creating initial profile:", insertError);
+                }
+              } catch (err) {
+                console.error("Error in profile creation:", err);
+              }
+            }
             
             // Proceed to next step of signup flow
             setTimeout(() => {

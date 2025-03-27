@@ -15,6 +15,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'implicit' // Change to 'implicit' from 'pkce' to ensure Google auth prompts
+    flowType: 'implicit', // Using implicit flow for Google auth prompts
+    debug: true // Enable debugging for auth issues
   }
 });
+
