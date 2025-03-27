@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -348,7 +349,14 @@ const SignUp = () => {
           systemSettingsPath = await uploadFile(authData.user.id, userData.systemSettings, 'system_settings');
         }
         
-        const updateData = {};
+        // Define the type for updateData to fix the TypeScript errors
+        interface UpdateDataType {
+          gov_id_image?: string | null;
+          speed_test?: string | null;
+          system_settings?: string | null;
+        }
+        
+        const updateData: UpdateDataType = {};
         if (govIdPath) updateData.gov_id_image = govIdPath;
         if (speedTestPath) updateData.speed_test = speedTestPath;
         if (systemSettingsPath) updateData.system_settings = systemSettingsPath;
