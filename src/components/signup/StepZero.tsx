@@ -90,35 +90,39 @@ const StepZero = ({
                 setIsCheckingSession(false);
               }
             }, 500);
+          } else if (profile.application_status === 'rejected') {
+            // User was previously rejected, show notification and sign out
+            toast({
+              title: "Application Rejected",
+              description: "Unfortunately, your application didn't meet our qualifications.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
+            setIsCheckingSession(false);
+          } else if (profile?.application_status === 'approved') {
+            // User is approved, redirect to dashboard
+            toast({
+              title: "Welcome back!",
+              description: "You've been redirected to your dashboard",
+            });
+            navigate('/dashboard');
+          } else if (profile?.first_name) {
+            // User has started the application but not completed it
+            // Proceed with signup flow
+            setTimeout(() => {
+              if (mounted) {
+                nextStep();
+                setIsCheckingSession(false);
+              }
+            }, 500);
           } else {
-            // Profile exists, check its status
-            console.log("Profile found:", profile);
-            
-            if (profile?.application_status === 'approved') {
-              // User is approved, redirect to dashboard
-              toast({
-                title: "Welcome back!",
-                description: "You've been redirected to your dashboard",
-              });
-              navigate('/dashboard');
-            } else if (profile?.first_name) {
-              // User has started the application but not completed it
-              // Proceed with signup flow
-              setTimeout(() => {
-                if (mounted) {
-                  nextStep();
-                  setIsCheckingSession(false);
-                }
-              }, 500);
-            } else {
-              // No name yet, treat as new signup
-              setTimeout(() => {
-                if (mounted) {
-                  nextStep();
-                  setIsCheckingSession(false);
-                }
-              }, 500);
-            }
+            // No name yet, treat as new signup
+            setTimeout(() => {
+              if (mounted) {
+                nextStep();
+                setIsCheckingSession(false);
+              }
+            }, 500);
           }
         } else if (mounted) {
           console.log("No authenticated user found");
@@ -158,7 +162,16 @@ const StepZero = ({
                       session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
           });
           
-          if (!profileError && profile?.application_status === 'approved') {
+          if (!profileError && profile?.application_status === 'rejected') {
+            // User was previously rejected, show notification and sign out
+            toast({
+              title: "Application Rejected",
+              description: "Unfortunately, your application didn't meet our qualifications.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
+            if (mounted) setIsCheckingSession(false);
+          } else if (!profileError && profile?.application_status === 'approved') {
             // Existing approved user, redirect to dashboard
             navigate('/dashboard');
           } else {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,16 @@ const Login = () => {
             // Approved user, redirect to dashboard
             console.log("User is approved, redirecting to dashboard");
             navigate('/dashboard');
+          } else if (profile && profile.application_status === 'rejected') {
+            // Rejected user, show notification and sign out
+            console.log("User was rejected, showing notification");
+            toast({
+              title: "Application Rejected",
+              description: "Unfortunately, your application didn't meet our qualifications.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
+            setIsCheckingSession(false);
           } else {
             // User exists but not approved, redirect to signup
             console.log("User is not approved, redirecting to signup");
@@ -73,6 +84,14 @@ const Login = () => {
               description: "Welcome back!",
             });
             navigate('/dashboard');
+          } else if (profile && profile.application_status === 'rejected') {
+            // Rejected user, show notification and sign out
+            toast({
+              title: "Application Rejected",
+              description: "Unfortunately, your application didn't meet our qualifications.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
           } else {
             // User exists but not approved, redirect to signup
             console.log("User is not approved, redirecting to signup");
