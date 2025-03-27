@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -162,13 +161,13 @@ const SignUp = () => {
         return;
       }
 
-      const { data: existingProfiles, error: duplicateEmailError } = await supabase
+      const { data: existingProfiles, error: checkEmailError } = await supabase
         .from('user_profiles')
         .select('application_status')
         .eq('email', userData.email.toLowerCase())
         .in('application_status', ['rejected']);
       
-      if (duplicateEmailError) throw duplicateEmailError;
+      if (checkEmailError) throw checkEmailError;
       
       if (existingProfiles && existingProfiles.length > 0) {
         toast({
@@ -185,7 +184,6 @@ const SignUp = () => {
       console.log("User data before creating account:", userData);
       console.log("Passed all commitments:", passedAllCommitments);
 
-      // Only add emailRedirectTo for approved applications to prevent confirmation emails for rejected ones
       const signUpOptions = {
         data: {
           first_name: userData.firstName,
@@ -222,7 +220,6 @@ const SignUp = () => {
         }
       };
       
-      // Only add emailRedirectTo for approved applications
       if (passedAllCommitments) {
         signUpOptions.emailRedirectTo = `${window.location.origin}/login`;
       }
