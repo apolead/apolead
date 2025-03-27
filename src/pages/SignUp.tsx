@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -120,8 +119,12 @@ const SignUp = () => {
       
       // Convert File object to ArrayBuffer for upload
       const reader = new FileReader();
-      const fileBuffer = await new Promise((resolve) => {
-        reader.onload = e => resolve(e.target.result);
+      const fileBuffer = await new Promise<ArrayBuffer>((resolve) => {
+        reader.onload = e => {
+          if (e.target && e.target.result) {
+            resolve(e.target.result as ArrayBuffer);
+          }
+        };
         reader.readAsArrayBuffer(file);
       });
       
@@ -229,8 +232,8 @@ const SignUp = () => {
       console.log("Passed all commitments:", passedAllCommitments);
 
       // We use different options for approved vs rejected applications
-      // For rejected applications, we don't want to send confirmation emails
-      const authOptions = {
+      // Define the auth options with the correct type structure
+      const authOptions: any = {
         data: {
           first_name: userData.firstName,
           last_name: userData.lastName,
@@ -409,23 +412,28 @@ const SignUp = () => {
       if (!passedAllCommitments && session) {
         console.log("Application rejected, signing out user to prevent confirmation email");
         await supabase.auth.signOut();
-      }
-
-      if (passedAllCommitments) {
-        toast({
-          title: "Application submitted successfully",
-          description: "Your application has been approved! Please check your email for confirmation.",
-          variant: "default",
-        });
+        
+        // Navigate to confirmation screen with rejected status
+        setCurrentStep(4);
       } else {
-        toast({
-          title: "Application received",
-          description: "We're unable to move forward with your application at this time based on your information.",
-          variant: "destructive",
-        });
+        if (passedAllCommitments) {
+          toast({
+            title: "Application submitted successfully",
+            description: "Your application has been approved! Please check your email for confirmation.",
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: "Application received",
+            description: "We're unable to move forward with your application at this time based on your information.",
+            variant: "destructive",
+          });
+        }
+        
+        // Move to the confirmation screen regardless of approval status
+        setCurrentStep(4);
       }
       
-      nextStep();
     } catch (error) {
       console.error('Error submitting application:', error);
       toast({

@@ -6,7 +6,7 @@ import { X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const ConfirmationScreen = () => {
-  const [isApproved, setIsApproved] = useState(null);
+  const [isApproved, setIsApproved] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -30,8 +30,20 @@ const ConfirmationScreen = () => {
             setIsApproved(true);
           }
         } else {
-          // If no session found, redirect to homepage
-          navigate('/');
+          // If no session found, check URL param for status
+          const url = new URL(window.location.href);
+          const status = url.searchParams.get('status');
+          
+          if (status === 'rejected') {
+            setIsApproved(false);
+          } else if (status === 'approved') {
+            setIsApproved(true);
+          } else {
+            // Default to approved if no status found
+            setIsApproved(true);
+            // If no session or status param, redirect to homepage after a delay
+            setTimeout(() => navigate('/'), 5000);
+          }
         }
       } catch (error) {
         console.error('Error checking application status:', error);
