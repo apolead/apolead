@@ -68,20 +68,28 @@ const Login = () => {
       setIsLoading(true);
       setErrorMessage('');
       
-      // Use the current URL as the base for the redirect, replacing with dashboard path
-      const redirectTo = `${window.location.origin}/dashboard`;
-      console.log("Setting redirect URL to:", redirectTo);
+      // Get the URL of the current page for proper redirect
+      const siteUrl = window.location.origin;
+      const currentPath = '/dashboard'; // Always redirect to dashboard after login
+      
+      console.log("Site URL:", siteUrl);
+      console.log("Redirect path:", currentPath);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectTo,
+          redirectTo: `${siteUrl}${currentPath}`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         },
       });
 
       if (error) throw error;
       
-      // If successfully initiated OAuth flow, the page will redirect
+      console.log("OAuth flow initiated, awaiting redirect");
+      
     } catch (error) {
       console.error('Error signing in with Google:', error);
       setErrorMessage(error.message || 'Failed to sign in with Google');

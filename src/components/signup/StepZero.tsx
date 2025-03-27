@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -37,11 +38,11 @@ const StepZero = ({
             .from('user_profiles')
             .select('application_status, first_name')
             .eq('user_id', session.user.id)
-            .single();
+            .maybeSingle();
             
-          if (profileError) {
+          if (profileError || !profile) {
             // If no profile exists or error, consider this a new signup
-            console.log("Profile not found, continuing with signup flow");
+            console.log("Profile not found or error, continuing with signup flow");
             
             // Update user data with information from the session
             updateUserData({
@@ -158,20 +159,29 @@ const StepZero = ({
       setIsLoading(true);
       setErrorMessage('');
       
-      // Use the current URL as the base for the redirect, stripping any query params
-      const currentUrl = window.location.origin + window.location.pathname;
-      console.log("Setting redirect URL to:", currentUrl);
+      // Get the URL of the current page for proper redirect
+      const siteUrl = window.location.origin;
+      const currentPath = window.location.pathname;
+      
+      console.log("Current site URL:", siteUrl);
+      console.log("Current path:", currentPath);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: currentUrl,
+          redirectTo: `${siteUrl}${currentPath}`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         },
       });
 
       if (error) throw error;
       
       // If successfully initiated OAuth flow, the page will redirect
+      console.log("OAuth flow initiated, awaiting redirect");
+      
     } catch (error) {
       console.error('Error signing up with Google:', error);
       setErrorMessage(error.message || 'Failed to sign up with Google');
