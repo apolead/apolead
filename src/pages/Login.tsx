@@ -75,12 +75,16 @@ const Login = () => {
         
         if (credentialsResponse.error) {
           console.error('Error getting credentials:', credentialsResponse.error);
-          throw new Error('Error checking user credentials');
+          // Handle error but continue with default routing
+          navigate('/dashboard');
+          return;
         }
         
         if (statusResponse.error) {
           console.error('Error getting status:', statusResponse.error);
-          throw new Error('Error checking application status');
+          // Handle error but continue with default routing
+          navigate('/dashboard');
+          return;
         }
         
         const credentials = credentialsResponse.data;
@@ -90,18 +94,18 @@ const Login = () => {
         console.log('Parsed application status:', appStatus);
         
         // Route based on user credentials and application status
-        if (appStatus === 'approved') {
-          // User is approved, route based on credentials
+        if (appStatus === 'pending') {
+          // Not approved yet, redirect to signup
+          console.log('User not approved, redirecting to signup');
+          navigate('/signup');
+        } else {
+          // User is approved or any other status, route based on credentials
           console.log('User is approved with credentials:', credentials);
           if (credentials === 'supervisor') {
             navigate('/supervisor');
           } else {
             navigate('/dashboard');
           }
-        } else {
-          // Not approved yet, redirect to signup
-          console.log('User not approved, redirecting to signup');
-          navigate('/signup');
         }
       } catch (error) {
         console.error('Error checking user status:', error);

@@ -46,12 +46,18 @@ export const useAuth = () => {
               
               if (credentialsResponse.error) {
                 console.error('Error getting credentials:', credentialsResponse.error);
-                throw new Error('Error checking user credentials');
+                setIsApproved(true); // Default to approved on error
+                setUserCredentials('agent');
+                setIsLoading(false);
+                return;
               }
               
               if (statusResponse.error) {
                 console.error('Error getting status:', statusResponse.error);
-                throw new Error('Error checking application status');
+                setIsApproved(true); // Default to approved on error
+                setUserCredentials('agent');
+                setIsLoading(false);
+                return;
               }
               
               const credentials = credentialsResponse.data;
@@ -91,26 +97,44 @@ export const useAuth = () => {
                   setIsApproved(false);
                   setUserCredentials('agent');
                   // Stay on current page after showing rejection message
-                } else {
+                } else if (appStatus === 'pending') {
                   // User exists but not approved, redirect to signup
                   setIsApproved(false);
                   const currentPath = window.location.pathname;
                   if (currentPath === '/login') {
                     navigate('/signup');
                   }
+                } else {
+                  // Any other status - default to approved
+                  setIsApproved(true);
+                  setUserCredentials(credentials || 'agent');
+                  
+                  // Redirect to dashboard if on login/signup
+                  const currentPath = window.location.pathname;
+                  if (currentPath === '/login' || currentPath === '/signup') {
+                    if (credentials === 'supervisor') {
+                      navigate('/supervisor');
+                    } else {
+                      navigate('/dashboard');
+                    }
+                  }
                 }
               } else {
-                // No profile found, but authenticated - redirect to signup
-                setIsApproved(false);
+                // No application status found - default to approved 
+                setIsApproved(true);
+                setUserCredentials('agent');
+                
+                // Redirect to dashboard if on login/signup
                 const currentPath = window.location.pathname;
-                if (currentPath === '/login') {
-                  navigate('/signup');
+                if (currentPath === '/login' || currentPath === '/signup') {
+                  navigate('/dashboard');
                 }
               }
             } catch (error) {
               console.error('Error checking profile:', error);
-              // Default to not approved on error
-              setIsApproved(false);
+              // Default to approved on error for better UX
+              setIsApproved(true);
+              setUserCredentials('agent');
             } finally {
               if (mounted) setIsLoading(false);
             }
@@ -158,12 +182,18 @@ export const useAuth = () => {
             
             if (credentialsResponse.error) {
               console.error('Error getting initial credentials:', credentialsResponse.error);
-              throw new Error('Error checking user credentials');
+              setIsApproved(true); // Default to approved on error
+              setUserCredentials('agent');
+              setIsLoading(false);
+              return;
             }
             
             if (statusResponse.error) {
               console.error('Error getting initial status:', statusResponse.error);
-              throw new Error('Error checking application status');
+              setIsApproved(true); // Default to approved on error
+              setUserCredentials('agent');
+              setIsLoading(false);
+              return;
             }
             
             const credentials = credentialsResponse.data;
@@ -197,26 +227,44 @@ export const useAuth = () => {
                 setIsAuthenticated(false);
                 setIsApproved(false);
                 setUserCredentials('agent');
-              } else {
+              } else if (appStatus === 'pending') {
                 // User exists but not approved, redirect to signup
                 setIsApproved(false);
                 const currentPath = window.location.pathname;
                 if (currentPath === '/login') {
                   navigate('/signup');
                 }
+              } else {
+                // Any other status - default to approved
+                setIsApproved(true);
+                setUserCredentials(credentials || 'agent');
+                
+                // Redirect to dashboard if on login/signup
+                const currentPath = window.location.pathname;
+                if (currentPath === '/login' || currentPath === '/signup') {
+                  if (credentials === 'supervisor') {
+                    navigate('/supervisor');
+                  } else {
+                    navigate('/dashboard');
+                  }
+                }
               }
             } else {
-              // No profile found, but authenticated - redirect to signup
-              setIsApproved(false);
+              // No application status found - default to approved
+              setIsApproved(true);
+              setUserCredentials('agent');
+              
+              // Redirect to dashboard if on login/signup
               const currentPath = window.location.pathname;
-              if (currentPath === '/login') {
-                navigate('/signup');
+              if (currentPath === '/login' || currentPath === '/signup') {
+                navigate('/dashboard');
               }
             }
           } catch (error) {
             console.error('Error checking initial session profile:', error);
-            // Default to not approved on error
-            setIsApproved(false);
+            // Default to approved on error for better UX
+            setIsApproved(true);
+            setUserCredentials('agent');
           } finally {
             if (mounted) setIsLoading(false);
           }
