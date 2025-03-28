@@ -202,9 +202,57 @@ const SignUp = () => {
         // Continue anyway
       }
       
+      // Get current session
       const { data: { session } } = await supabase.auth.getSession();
       
+      // If no session, need to sign up the user first
       if (!session) {
+        try {
+          console.log('No session found, creating user account with email:', userData.email);
+          
+          // Create the user account
+          const { data, error } = await supabase.auth.signUp({
+            email: userData.email,
+            password: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2), // Generate a random secure password
+            options: {
+              data: {
+                first_name: userData.firstName,
+                last_name: userData.lastName,
+              },
+            },
+          });
+          
+          if (error) throw error;
+          
+          console.log('User created successfully:', data);
+          
+          // Wait for session to be established
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Get the new session
+          const { data: { session: newSession } } = await supabase.auth.getSession();
+          
+          if (!newSession) {
+            throw new Error('Failed to establish session after signup');
+          }
+          
+          console.log('New session established:', newSession);
+        } catch (error) {
+          console.error('Error creating user account:', error);
+          toast({
+            title: "Authentication failed",
+            description: error.message || "Failed to create user account",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
+      // Get the current session again (could be new or existing)
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession) {
         toast({
           title: "Authentication required",
           description: "Please sign in to complete your application",
@@ -276,13 +324,43 @@ const SignUp = () => {
       
       console.log('Updating user profile with data:', data);
       
-      const { error: updateError } = await supabase
+      // First check if profile exists
+      const { data: existingProfile, error: profileCheckError } = await supabase
         .from('user_profiles')
-        .update(data)
-        .eq('user_id', session.user.id);
+        .select('id')
+        .eq('user_id', currentSession.user.id)
+        .maybeSingle();
+        
+      if (profileCheckError) {
+        console.error('Error checking for existing profile:', profileCheckError);
+      }
+      
+      let updateError;
+      
+      if (existingProfile) {
+        // Update existing profile
+        console.log('Updating existing profile for user:', currentSession.user.id);
+        const { error } = await supabase
+          .from('user_profiles')
+          .update(data)
+          .eq('user_id', currentSession.user.id);
+          
+        updateError = error;
+      } else {
+        // Insert new profile
+        console.log('Creating new profile for user:', currentSession.user.id);
+        const { error } = await supabase
+          .from('user_profiles')
+          .insert({
+            ...data,
+            user_id: currentSession.user.id
+          });
+          
+        updateError = error;
+      }
       
       if (updateError) {
-        console.error('Error updating user profile:', updateError);
+        console.error('Error updating/inserting user profile:', updateError);
         throw updateError;
       }
       
