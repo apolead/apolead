@@ -196,7 +196,11 @@ export const useAuth = () => {
   const logout = async () => {
     try {
       await supabase.auth.signOut();
-      navigate('/');
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+      navigate('/'); // Redirect to home page after logout
     } catch (error) {
       console.error('Error signing out:', error);
       toast({

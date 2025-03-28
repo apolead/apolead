@@ -52,15 +52,31 @@ const Login = () => {
 
       if (error) throw error;
 
-      // Successful login - useAuth hook will handle redirects
+      // Successful login - now route based on credentials
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('credentials, application_status')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
       toast({
         title: "Login successful",
         description: "Welcome back!"
       });
 
-      // We'll let the useAuth hook handle redirects based on credentials
-      // This prevents duplicate queries that can cause infinite recursion
-      console.log("Login successful, useAuth hook will handle redirects");
+      // Route based on user credentials
+      if (profileData && profileData.application_status === 'approved') {
+        if (profileData.credentials === 'supervisor') {
+          navigate('/supervisor');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        // Not approved yet, redirect to signup
+        navigate('/signup');
+      }
     } catch (error) {
       console.error('Login error:', error);
       toast({
