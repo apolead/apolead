@@ -43,12 +43,8 @@ serve(async (req) => {
 
     console.log('Edge Function: Getting credentials for user_id:', user_id);
 
-    // Get the user credentials from the user_profiles table with fully qualified column name
-    const { data, error } = await supabaseClient
-      .from('user_profiles')
-      .select('credentials')
-      .eq('user_id', user_id)
-      .single();
+    // Call the database function directly to avoid RLS issues
+    const { data, error } = await supabaseClient.rpc('get_user_credentials', { user_id });
 
     if (error) {
       console.error('Error fetching user credentials:', error);
@@ -62,11 +58,11 @@ serve(async (req) => {
     }
 
     // Log the data being returned
-    console.log('Edge Function: Credentials found:', data?.credentials);
+    console.log('Edge Function: Credentials found:', data);
 
     // Return the credentials or 'agent' as default
     return new Response(
-      JSON.stringify(data?.credentials || 'agent'),
+      JSON.stringify(data || 'agent'),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200

@@ -44,8 +44,15 @@ export const useAuth = () => {
               console.log('Credentials response:', credentialsResponse);
               console.log('Status response:', statusResponse);
               
-              if (credentialsResponse.error) throw credentialsResponse.error;
-              if (statusResponse.error) throw statusResponse.error;
+              if (credentialsResponse.error) {
+                console.error('Error getting credentials:', credentialsResponse.error);
+                throw new Error('Error checking user credentials');
+              }
+              
+              if (statusResponse.error) {
+                console.error('Error getting status:', statusResponse.error);
+                throw new Error('Error checking application status');
+              }
               
               const credentials = credentialsResponse.data;
               const appStatus = statusResponse.data;
@@ -96,13 +103,14 @@ export const useAuth = () => {
                 // No profile found, but authenticated - redirect to signup
                 setIsApproved(false);
                 const currentPath = window.location.pathname;
-                if (currentPath === '/login' || currentPath === '/') {
+                if (currentPath === '/login') {
                   navigate('/signup');
                 }
               }
             } catch (error) {
               console.error('Error checking profile:', error);
-              // In case of error, we'll still set loading to false
+              // Default to not approved on error
+              setIsApproved(false);
             } finally {
               if (mounted) setIsLoading(false);
             }
@@ -148,8 +156,15 @@ export const useAuth = () => {
             console.log('Initial credentials response:', credentialsResponse);
             console.log('Initial status response:', statusResponse);
             
-            if (credentialsResponse.error) throw credentialsResponse.error;
-            if (statusResponse.error) throw statusResponse.error;
+            if (credentialsResponse.error) {
+              console.error('Error getting initial credentials:', credentialsResponse.error);
+              throw new Error('Error checking user credentials');
+            }
+            
+            if (statusResponse.error) {
+              console.error('Error getting initial status:', statusResponse.error);
+              throw new Error('Error checking application status');
+            }
             
             const credentials = credentialsResponse.data;
             const appStatus = statusResponse.data;
@@ -200,6 +215,10 @@ export const useAuth = () => {
             }
           } catch (error) {
             console.error('Error checking initial session profile:', error);
+            // Default to not approved on error
+            setIsApproved(false);
+          } finally {
+            if (mounted) setIsLoading(false);
           }
         } else {
           // Not authenticated
@@ -207,11 +226,11 @@ export const useAuth = () => {
           setIsAuthenticated(false);
           setIsApproved(false);
           setUserCredentials('agent');
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('Error checking session:', error);
-      } finally {
-        if (mounted) setIsLoading(false);
+        setIsLoading(false);
       }
     };
     

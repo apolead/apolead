@@ -37,8 +37,6 @@ const Hero = () => {
           </div>
         )}
       </div>
-      
-      {/* Removed duplicate login button that was here */}
     </section>
   );
 };

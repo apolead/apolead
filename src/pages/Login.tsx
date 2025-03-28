@@ -70,14 +70,24 @@ const Login = () => {
           body: { user_id: data.user.id }
         });
         
-        if (credentialsResponse.error) throw credentialsResponse.error;
-        if (statusResponse.error) throw statusResponse.error;
-        
         console.log('Credentials response:', credentialsResponse);
         console.log('Status response:', statusResponse);
         
+        if (credentialsResponse.error) {
+          console.error('Error getting credentials:', credentialsResponse.error);
+          throw new Error('Error checking user credentials');
+        }
+        
+        if (statusResponse.error) {
+          console.error('Error getting status:', statusResponse.error);
+          throw new Error('Error checking application status');
+        }
+        
         const credentials = credentialsResponse.data;
         const appStatus = statusResponse.data;
+        
+        console.log('Parsed credentials:', credentials);
+        console.log('Parsed application status:', appStatus);
         
         // Route based on user credentials and application status
         if (appStatus === 'approved') {
@@ -89,12 +99,17 @@ const Login = () => {
             navigate('/dashboard');
           }
         } else {
-          // Not approved yet or no profile, redirect to signup
-          console.log('User not approved or no profile, redirecting to signup');
+          // Not approved yet, redirect to signup
+          console.log('User not approved, redirecting to signup');
           navigate('/signup');
         }
       } catch (error) {
         console.error('Error checking user status:', error);
+        toast({
+          title: "Error checking profile",
+          description: "There was an error checking your profile status. Redirecting to dashboard.",
+          variant: "destructive"
+        });
         // Default to dashboard if there's an error checking status
         navigate('/dashboard');
       }

@@ -43,12 +43,8 @@ serve(async (req) => {
 
     console.log('Edge Function: Getting application status for user_id:', user_id);
 
-    // Get the application status from the user_profiles table
-    const { data, error } = await supabaseClient
-      .from('user_profiles')
-      .select('application_status')
-      .eq('user_id', user_id)
-      .single();
+    // Call the database function directly to avoid RLS issues
+    const { data, error } = await supabaseClient.rpc('get_application_status', { user_id });
 
     if (error) {
       console.error('Error fetching application status:', error);
@@ -61,11 +57,11 @@ serve(async (req) => {
       );
     }
 
-    console.log('Edge Function: Application status found:', data?.application_status);
+    console.log('Edge Function: Application status found:', data);
 
     // Return the application status or 'pending' as default
     return new Response(
-      JSON.stringify(data?.application_status || 'pending'),
+      JSON.stringify(data || 'pending'),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
