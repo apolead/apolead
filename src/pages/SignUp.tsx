@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -52,18 +51,15 @@ const SignUp = () => {
   const { toast } = useToast();
   
   useEffect(() => {
-    // Check if user is authenticated
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        // Update the form data with their details
         setUserData(prev => ({
           ...prev,
           email: session.user.email || '',
         }));
         
-        // Check if they have started the application process
         const { data: profile } = await supabase
           .from('user_profiles')
           .select('application_status')
@@ -90,7 +86,6 @@ const SignUp = () => {
           }
         }
         
-        // If they're authenticated, move to step 1
         if (currentStep === 0) {
           setTimeout(() => {
             setCurrentStep(1);
@@ -189,15 +184,7 @@ const SignUp = () => {
           
         if (profileError) throw profileError;
         
-        const { data: applicationData, error: applicationError } = await supabase
-          .from('user_applications')
-          .select('gov_id_number')
-          .eq('gov_id_number', userData.govIdNumber)
-          .maybeSingle();
-          
-        if (applicationError) throw applicationError;
-        
-        if (profileData || applicationData) {
+        if (profileData) {
           toast({
             title: "Government ID already used",
             description: "This government ID has already been registered in our system.",
@@ -227,6 +214,16 @@ const SignUp = () => {
         govIdImageUrl = await uploadFile(userData.govIdImage);
       }
       
+      let speedTestUrl = null;
+      if (userData.speedTest) {
+        speedTestUrl = await uploadFile(userData.speedTest);
+      }
+      
+      let systemSettingsUrl = null;
+      if (userData.systemSettings) {
+        systemSettingsUrl = await uploadFile(userData.systemSettings);
+      }
+      
       const applicationStatus = determineApplicationStatus();
       
       const data = {
@@ -240,8 +237,8 @@ const SignUp = () => {
         ram_amount: userData.ramAmount,
         has_headset: userData.hasHeadset,
         has_quiet_place: userData.hasQuietPlace,
-        speed_test: userData.speedTest,
-        system_settings: userData.systemSettings,
+        speed_test: speedTestUrl,
+        system_settings: systemSettingsUrl,
         available_hours: userData.availableHours,
         available_days: userData.availableDays,
         day_hours: userData.dayHours,
@@ -294,7 +291,6 @@ const SignUp = () => {
   };
   
   const renderStep = () => {
-    // Show loading indicator if we're checking authentication
     if (currentStep === 0) {
       return <StepZero userData={userData} updateUserData={updateUserData} nextStep={nextStep} />;
     }
