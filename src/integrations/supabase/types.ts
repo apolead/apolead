@@ -174,6 +174,7 @@ export type Database = {
           complete_training: boolean | null
           cpu_type: string | null
           created_at: string | null
+          credentials: string | null
           day_hours: Json | null
           email: string
           first_name: string
@@ -212,6 +213,7 @@ export type Database = {
           complete_training?: boolean | null
           cpu_type?: string | null
           created_at?: string | null
+          credentials?: string | null
           day_hours?: Json | null
           email: string
           first_name: string
@@ -250,6 +252,7 @@ export type Database = {
           complete_training?: boolean | null
           cpu_type?: string | null
           created_at?: string | null
+          credentials?: string | null
           day_hours?: Json | null
           email?: string
           first_name?: string

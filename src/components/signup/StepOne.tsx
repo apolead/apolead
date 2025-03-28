@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -11,6 +10,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
   const [errorMessage, setErrorMessage] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const validateGovId = async (govIdNumber) => {
     if (!govIdNumber || !govIdNumber.trim()) {
@@ -61,6 +61,11 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
     }
   };
   
+  const handleBackToHome = async () => {
+    await supabase.auth.signOut();
+    navigate('/signup');
+  };
+  
   const handleContinue = async (e) => {
     e.preventDefault();
     setErrorMessage('');
@@ -96,7 +101,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       return;
     }
     
-    // Validate government ID against database
+    // Validate government ID against database - now only happens on Continue
     const isValid = await validateGovId(userData.govIdNumber);
     if (!isValid) {
       return;
@@ -123,12 +128,15 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
         <div className="relative z-10">
-          <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
+          <button 
+            onClick={handleBackToHome} 
+            className="inline-flex items-center text-white hover:text-white/80 mb-12"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
             Back to Home
-          </Link>
+          </button>
 
           <h2 className="text-2xl font-bold mb-6">Step 1 of 4: Personal Details</h2>
           <p className="text-white/80 mb-6">We need your basic personal information to get started with your application.</p>
@@ -253,7 +261,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
           <div>
             <label htmlFor="step1-govIdNumber" className="block text-sm font-medium text-gray-700 mb-1">
               Government ID Number
-              {(isCheckingGovId || isValidating) && (
+              {isValidating && (
                 <span className="ml-2 inline-flex items-center text-amber-500">
                   <Loader2 className="h-3 w-3 animate-spin mr-1" />
                   Validating...
@@ -265,9 +273,9 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
               id="step1-govIdNumber" 
               value={userData.govIdNumber}
               onChange={(e) => updateUserData({ govIdNumber: e.target.value })}
-              className={`w-full ${(isCheckingGovId || isValidating) ? 'bg-gray-50' : ''}`}
+              className={`w-full ${isValidating ? 'bg-gray-50' : ''}`}
               placeholder="Enter your ID number"
-              disabled={isCheckingGovId || isValidating}
+              disabled={isValidating}
             />
             <p className="mt-1 text-xs text-gray-500">This will be verified when you click continue</p>
           </div>
@@ -284,9 +292,9 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
             <Button
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              disabled={isCheckingGovId || isValidating}
+              disabled={isValidating}
             >
-              {(isCheckingGovId || isValidating) ? (
+              {isValidating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Validating...
