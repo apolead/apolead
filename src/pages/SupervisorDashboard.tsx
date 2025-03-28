@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,16 +10,6 @@ import {
   TableHeader,
   TableRow 
 } from '@/components/ui/table';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter,
-  DialogClose
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface UserProfile {
@@ -34,12 +25,6 @@ interface UserProfile {
   sales_experience: boolean;
   service_experience: boolean;
   application_status: string;
-  credentials: string;
-  agent_standing?: string;
-  supervisor_notes?: string;
-  agent_id?: string;
-  lead_source?: string;
-  start_date?: string;
 }
 
 const SupervisorDashboard = () => {
@@ -50,19 +35,6 @@ const SupervisorDashboard = () => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [currentImage, setCurrentImage] = useState('');
   const [imageType, setImageType] = useState('');
-  const [currentUser, setCurrentUser] = useState<{first_name: string, last_name: string}>({
-    first_name: '',
-    last_name: ''
-  });
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
-  const [editForm, setEditForm] = useState({
-    agent_id: '',
-    supervisor_notes: '',
-    agent_standing: 'Active',
-    lead_source: '',
-    start_date: ''
-  });
   
   useEffect(() => {
     const checkUserRole = async () => {
@@ -71,37 +43,27 @@ const SupervisorDashboard = () => {
       if (session) {
         const { data: profile } = await supabase
           .from('user_profiles')
-          .select('credentials, first_name, last_name')
+          .select('credentials')
           .eq('user_id', session.user.id)
           .single();
           
         if (!profile || profile.credentials !== 'supervisor') {
           // Redirect to appropriate dashboard based on role
           navigate('/dashboard');
-          return;
         }
-        
-        // Set current user information
-        setCurrentUser({
-          first_name: profile.first_name || '',
-          last_name: profile.last_name || ''
-        });
       } else {
         navigate('/login');
       }
     };
     
     const getUserProfiles = async () => {
-      // Get all agents (non-supervisors)
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('credentials', 'agent')
         .order('application_date', { ascending: false });
       
       if (data) {
         setUserProfiles(data);
-        console.log('Fetched profiles:', data);
       }
       
       if (error) {
@@ -140,10 +102,6 @@ const SupervisorDashboard = () => {
   };
   
   const openPhotoModal = (type: string, imageUrl: string) => {
-    if (!imageUrl) {
-      console.log('No image URL provided');
-      return;
-    }
     setImageType(type);
     setCurrentImage(imageUrl);
     setShowImageModal(true);
@@ -151,69 +109,6 @@ const SupervisorDashboard = () => {
   
   const closeModal = () => {
     setShowImageModal(false);
-  };
-
-  const openEditDialog = (profile: UserProfile) => {
-    setSelectedProfile(profile);
-    setEditForm({
-      agent_id: profile.agent_id || '',
-      supervisor_notes: profile.supervisor_notes || '',
-      agent_standing: profile.agent_standing || 'Active',
-      lead_source: profile.lead_source || '',
-      start_date: profile.start_date || ''
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setEditForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async () => {
-    if (!selectedProfile) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .update({
-          agent_id: editForm.agent_id,
-          supervisor_notes: editForm.supervisor_notes,
-          agent_standing: editForm.agent_standing,
-          lead_source: editForm.lead_source,
-          start_date: editForm.start_date
-        })
-        .eq('id', selectedProfile.id)
-        .select();
-
-      if (error) {
-        console.error('Error updating profile:', error);
-        return;
-      }
-
-      // Update the user profiles list
-      setUserProfiles(prevProfiles => 
-        prevProfiles.map(profile => 
-          profile.id === selectedProfile.id 
-            ? { 
-                ...profile, 
-                agent_id: editForm.agent_id,
-                supervisor_notes: editForm.supervisor_notes,
-                agent_standing: editForm.agent_standing,
-                lead_source: editForm.lead_source,
-                start_date: editForm.start_date
-              } 
-            : profile
-        )
-      );
-
-      setIsEditDialogOpen(false);
-    } catch (error) {
-      console.error('Error:', error);
-    }
   };
   
   const filteredProfiles = userProfiles.filter(profile => {
@@ -226,8 +121,26 @@ const SupervisorDashboard = () => {
       profile.application_status?.toLowerCase().includes(searchLower)
     );
   });
-
-  // Format date for display
+  
+  // Generate user initials for avatar
+  const getUserInitials = () => {
+    const { data: { user } } = supabase.auth.getUser() as any;
+    if (!user) return "SJ";
+    
+    const { data: profile } = supabase
+      .from('user_profiles')
+      .select('first_name, last_name')
+      .eq('user_id', user.id)
+      .single() as any;
+    
+    if (!profile) return "SJ";
+    
+    const firstInitial = profile.first_name?.charAt(0) || "S";
+    const lastInitial = profile.last_name?.charAt(0) || "J";
+    
+    return `${firstInitial}${lastInitial}`;
+  };
+  
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     
@@ -239,7 +152,6 @@ const SupervisorDashboard = () => {
     }).format(date);
   };
   
-  // CSS classes for status display
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'approved':
@@ -254,7 +166,6 @@ const SupervisorDashboard = () => {
     }
   };
   
-  // Status icon display
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
@@ -341,7 +252,6 @@ const SupervisorDashboard = () => {
             <i className={`fas fa-angle-${sidebarCollapsed ? 'right' : 'left'}`}></i>
           </div>
         </div>
-        
         <div className="nav-menu" style={{
           display: 'flex',
           flexDirection: 'column',
@@ -738,7 +648,7 @@ const SupervisorDashboard = () => {
         {/* Header */}
         <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
           <div className="welcome" style={{ fontSize: '26px', fontWeight: 600, color: '#1e293b' }}>
-            Welcome, <span style={{ color: '#4f46e5', position: 'relative' }}>{currentUser.first_name}</span>
+            Welcome, <span style={{ color: '#4f46e5', position: 'relative' }}>Sarah</span>
             <style>{`
               .welcome span::after {
                 content: '';
@@ -841,11 +751,9 @@ const SupervisorDashboard = () => {
                 fontWeight: 600,
                 fontSize: '16px'
               }}>
-                {currentUser.first_name.charAt(0)}{currentUser.last_name.charAt(0)}
+                SJ
               </div>
-              <div className="user-name" style={{ fontWeight: 500, color: '#1e293b' }}>
-                {currentUser.first_name} {currentUser.last_name}
-              </div>
+              <div className="user-name" style={{ fontWeight: 500, color: '#1e293b' }}>Sarah Johnson</div>
               <i className="fas fa-chevron-down dropdown-icon" style={{ marginLeft: '8px', color: '#64748b' }}></i>
             </div>
           </div>
@@ -1246,6 +1154,7 @@ const SupervisorDashboard = () => {
                 <TableHead>Interview Date</TableHead>
                 <TableHead>Sales Skills</TableHead>
                 <TableHead>Communication</TableHead>
+                <TableHead>Interview Process</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -1291,16 +1200,8 @@ const SupervisorDashboard = () => {
                         ''
                       )}
                     </TableCell>
-                    <TableCell>
-                      {profile.service_experience !== undefined ? (
-                        <span className={`badge ${profile.service_experience ? 'badge-success' : 'badge-warning'}`}>
-                          <i className={`fas ${profile.service_experience ? 'fa-check' : 'fa-times'}`}></i>
-                          {profile.service_experience ? ' Good' : ' Average'}
-                        </span>
-                      ) : (
-                        ''
-                      )}
-                    </TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
                     <TableCell>
                       {profile.application_status && (
                         <span className={`status ${getStatusClass(profile.application_status)}`}>
@@ -1310,18 +1211,14 @@ const SupervisorDashboard = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <button 
-                        className="action-btn" 
-                        onClick={() => openEditDialog(profile)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#64748b',
-                          cursor: 'pointer',
-                          fontSize: '16px',
-                          transition: 'all 0.3s'
-                        }}
-                      >
+                      <button className="action-btn" style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#64748b',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        transition: 'all 0.3s'
+                      }}>
                         <i className="fas fa-edit"></i>
                       </button>
                     </TableCell>
@@ -1555,214 +1452,6 @@ const SupervisorDashboard = () => {
             </div>
           </div>
         )}
-
-        {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <i className="fas fa-user-edit" style={{ marginRight: '10px', color: '#4f46e5' }}></i>
-                  Edit Agent Information
-                </div>
-              </DialogTitle>
-            </DialogHeader>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-                  Agent Name
-                </label>
-                <input 
-                  type="text" 
-                  value={selectedProfile ? `${selectedProfile.first_name} ${selectedProfile.last_name}` : ''}
-                  disabled
-                  style={{
-                    padding: '10px 15px',
-                    width: '100%',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '10px',
-                    backgroundColor: '#f8fafc',
-                    cursor: 'not-allowed'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-                  Agent ID
-                </label>
-                <input 
-                  type="text" 
-                  name="agent_id"
-                  value={editForm.agent_id} 
-                  onChange={handleInputChange}
-                  placeholder="e.g., AG-12345"
-                  style={{
-                    padding: '10px 15px',
-                    width: '100%',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '10px'
-                  }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-                  Start Date
-                </label>
-                <input 
-                  type="date" 
-                  name="start_date"
-                  value={editForm.start_date || ''} 
-                  onChange={handleInputChange}
-                  style={{
-                    padding: '10px 15px',
-                    width: '100%',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '10px'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-                  Supervisor
-                </label>
-                <input 
-                  type="text" 
-                  value={currentUser.first_name + ' ' + currentUser.last_name}
-                  disabled
-                  style={{
-                    padding: '10px 15px',
-                    width: '100%',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '10px',
-                    backgroundColor: '#f8fafc',
-                    cursor: 'not-allowed'
-                  }}
-                />
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-                Agent Standing
-              </label>
-              <div style={{ display: 'flex', gap: '15px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <input 
-                    type="radio" 
-                    name="agent_standing"
-                    value="Active" 
-                    checked={editForm.agent_standing === 'Active'}
-                    onChange={handleInputChange}
-                    style={{ marginRight: '8px' }}
-                  />
-                  Active
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <input 
-                    type="radio" 
-                    name="agent_standing"
-                    value="Probation" 
-                    checked={editForm.agent_standing === 'Probation'}
-                    onChange={handleInputChange}
-                    style={{ marginRight: '8px' }}
-                  />
-                  Probation
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <input 
-                    type="radio" 
-                    name="agent_standing"
-                    value="Warning" 
-                    checked={editForm.agent_standing === 'Warning'}
-                    onChange={handleInputChange}
-                    style={{ marginRight: '8px' }}
-                  />
-                  Warning
-                </label>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-                Email Address
-              </label>
-              <input 
-                type="email" 
-                value={selectedProfile?.email || ''}
-                disabled
-                style={{
-                  padding: '10px 15px',
-                  width: '100%',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  backgroundColor: '#f8fafc',
-                  cursor: 'not-allowed'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-                Lead Source
-              </label>
-              <select 
-                name="lead_source"
-                value={editForm.lead_source || ''}
-                onChange={handleInputChange}
-                style={{
-                  padding: '10px 15px',
-                  width: '100%',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  backgroundColor: 'white'
-                }}
-              >
-                <option value="">Select Source</option>
-                <option value="ApexCredit">ApexCredit</option>
-                <option value="WebAds">Web Ads</option>
-                <option value="Referral">Referral</option>
-                <option value="JobBoard">Job Board</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-                Supervisor Notes
-              </label>
-              <textarea 
-                name="supervisor_notes"
-                value={editForm.supervisor_notes || ''}
-                onChange={handleInputChange}
-                placeholder="Enter notes about this agent..."
-                style={{
-                  padding: '10px 15px',
-                  width: '100%',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  minHeight: '120px',
-                  resize: 'vertical'
-                }}
-              />
-            </div>
-
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button onClick={handleSubmit}>
-                <i className="fas fa-save" style={{ marginRight: '8px' }}></i>
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
