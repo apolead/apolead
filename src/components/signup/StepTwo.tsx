@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +61,7 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
   const handleFileChange = (fieldName, e) => {
     const file = e.target.files[0];
     if (file) {
+      console.log(`Uploading ${fieldName} file:`, file.name);
       updateUserData({ [fieldName]: file });
     }
   };
