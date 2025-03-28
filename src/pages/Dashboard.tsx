@@ -12,15 +12,18 @@ const Dashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [moduleProgress, setModuleProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   
   useEffect(() => {
     const getUserProfile = async () => {
       setIsLoading(true);
       try {
+        // Fix: use await with getUser() to properly handle the Promise
         const { data: { user } } = await supabase.auth.getUser();
         console.log("Current authenticated user:", user);
         
         if (user) {
+          setCurrentUser(user);
           const { data, error } = await supabase
             .from('user_profiles')
             .select('*')
@@ -102,10 +105,9 @@ const Dashboard = () => {
   // Generate user initials
   const getUserInitials = () => {
     if (!userProfile?.first_name && !userProfile?.last_name) {
-      // If we don't have a profile yet but have a user, get initials from email
-      const { data: { user } } = supabase.auth.getUser();
-      if (user?.email) {
-        return user.email.substring(0, 2).toUpperCase();
+      // Fix: get email from currentUser state instead of making another call
+      if (currentUser?.email) {
+        return currentUser.email.substring(0, 2).toUpperCase();
       }
       return "NA";
     }
@@ -126,8 +128,7 @@ const Dashboard = () => {
     }
     
     // Fallback to email if profile not loaded
-    const { data: { user } } = supabase.auth.getUser();
-    return user?.email || "User";
+    return currentUser?.email || "User";
   };
   
   return (
