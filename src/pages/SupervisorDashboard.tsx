@@ -76,12 +76,10 @@ const SupervisorDashboard = () => {
           .single();
           
         if (!profile || profile.credentials !== 'supervisor') {
-          // Redirect to appropriate dashboard based on role
           navigate('/dashboard');
           return;
         }
         
-        // Set current user information
         setCurrentUser({
           first_name: profile.first_name || '',
           last_name: profile.last_name || ''
@@ -92,12 +90,10 @@ const SupervisorDashboard = () => {
     };
     
     const getUserProfiles = async () => {
-      // Get all profiles that are not supervisors
-      // Removed the 'credentials' filter to fetch all profiles
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .neq('credentials', 'supervisor') // Only exclude supervisors
+        .neq('credentials', 'supervisor')
         .order('application_date', { ascending: false });
       
       if (data) {
@@ -113,13 +109,11 @@ const SupervisorDashboard = () => {
     checkUserRole();
     getUserProfiles();
 
-    // Add Font Awesome
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css';
     document.head.appendChild(link);
 
-    // Add Poppins font
     const fontLink = document.createElement('link');
     fontLink.rel = 'stylesheet';
     fontLink.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap';
@@ -195,7 +189,6 @@ const SupervisorDashboard = () => {
         return;
       }
 
-      // Update the user profiles list
       setUserProfiles(prevProfiles => 
         prevProfiles.map(profile => 
           profile.id === selectedProfile.id 
@@ -229,7 +222,6 @@ const SupervisorDashboard = () => {
     );
   });
 
-  // Format date for display
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     
@@ -241,7 +233,6 @@ const SupervisorDashboard = () => {
     }).format(date);
   };
   
-  // CSS classes for status display
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'approved':
@@ -256,7 +247,6 @@ const SupervisorDashboard = () => {
     }
   };
   
-  // Status icon display
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
@@ -273,7 +263,6 @@ const SupervisorDashboard = () => {
   
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-      {/* Sidebar */}
       <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} id="sidebar" style={{
         width: sidebarCollapsed ? '60px' : '240px',
         backgroundColor: 'white',
@@ -735,9 +724,7 @@ const SupervisorDashboard = () => {
         </div>
       </div>
       
-      {/* Main Content */}
       <div className="main-content" style={{ flex: 1, padding: '20px 30px' }}>
-        {/* Header */}
         <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
           <div className="welcome" style={{ fontSize: '26px', fontWeight: 600, color: '#1e293b' }}>
             Welcome, <span style={{ color: '#4f46e5', position: 'relative' }}>{currentUser.first_name}</span>
@@ -836,3 +823,325 @@ const SupervisorDashboard = () => {
                 borderRadius: '50%',
                 marginRight: '10px',
                 background: 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '15px'
+              }}>
+                {currentUser.first_name && currentUser.first_name.charAt(0)}
+              </div>
+              <div className="user-name" style={{ fontSize: '15px', fontWeight: 500, color: '#334155' }}>
+                {currentUser.first_name} {currentUser.last_name}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="content">
+          <div style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1e293b' }}>
+              Agent Applications
+            </h1>
+            <div style={{ position: 'relative' }}>
+              <input 
+                type="text" 
+                placeholder="Search agents..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '8px 15px',
+                  paddingLeft: '35px',
+                  width: '240px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                  transition: 'all 0.3s'
+                }}
+              />
+              <div style={{ position: 'absolute', left: '12px', top: '9px', color: '#94a3b8' }}>
+                <i className="fas fa-search"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div className="data-table" style={{ backgroundColor: 'white', borderRadius: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead style={{ padding: '15px' }}>Name</TableHead>
+                  <TableHead style={{ padding: '15px' }}>Email</TableHead>
+                  <TableHead style={{ padding: '15px' }}>Application Date</TableHead>
+                  <TableHead style={{ padding: '15px' }}>Status</TableHead>
+                  <TableHead style={{ padding: '15px' }}>Documents</TableHead>
+                  <TableHead style={{ padding: '15px' }}>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProfiles.length > 0 ? (
+                  filteredProfiles.map((profile) => (
+                    <TableRow key={profile.id}>
+                      <TableCell style={{ padding: '15px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <div style={{ 
+                            width: '36px', 
+                            height: '36px', 
+                            borderRadius: '50%', 
+                            background: 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontWeight: 600,
+                            marginRight: '10px',
+                            fontSize: '15px'
+                          }}>
+                            {profile.first_name && profile.first_name.charAt(0)}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 500 }}>{profile.first_name} {profile.last_name}</div>
+                            <div style={{ fontSize: '13px', color: '#64748b' }}>
+                              {profile.agent_id ? `#${profile.agent_id}` : 'No Agent ID'}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell style={{ padding: '15px' }}>{profile.email}</TableCell>
+                      <TableCell style={{ padding: '15px' }}>{formatDate(profile.application_date)}</TableCell>
+                      <TableCell style={{ padding: '15px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <div className={getStatusClass(profile.application_status)} style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '4px 10px',
+                            borderRadius: '8px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            backgroundColor: 
+                              profile.application_status === 'approved' ? 'rgba(34, 197, 94, 0.1)' :
+                              profile.application_status === 'rejected' ? 'rgba(239, 68, 68, 0.1)' :
+                              'rgba(234, 179, 8, 0.1)',
+                            color: 
+                              profile.application_status === 'approved' ? '#16a34a' :
+                              profile.application_status === 'rejected' ? '#dc2626' :
+                              '#b45309'
+                          }}>
+                            <i className={`fas ${getStatusIcon(profile.application_status)}`} style={{ marginRight: '5px' }}></i>
+                            {profile.application_status.charAt(0).toUpperCase() + profile.application_status.slice(1)}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell style={{ padding: '15px' }}>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => openPhotoModal('ID Document', profile.gov_id_image)}
+                            disabled={!profile.gov_id_image}
+                          >
+                            <i className="fas fa-id-card" style={{ marginRight: '5px' }}></i> 
+                            ID
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => openPhotoModal('Speed Test', profile.speed_test)}
+                            disabled={!profile.speed_test}
+                          >
+                            <i className="fas fa-tachometer-alt" style={{ marginRight: '5px' }}></i> 
+                            Speed
+                          </Button>
+                        </div>
+                      </TableCell>
+                      <TableCell style={{ padding: '15px' }}>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <i className="fas fa-eye" style={{ marginRight: '5px' }}></i> 
+                                View
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                              <div className="space-y-2">
+                                <h4 className="font-semibold">Application Details</h4>
+                                <div className="text-sm">
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="text-muted-foreground">Gov ID:</div>
+                                    <div>{profile.gov_id_number || 'Not provided'}</div>
+                                    
+                                    <div className="text-muted-foreground">Sales Experience:</div>
+                                    <div>{profile.sales_experience ? 'Yes' : 'No'}</div>
+                                    
+                                    <div className="text-muted-foreground">Service Experience:</div>
+                                    <div>{profile.service_experience ? 'Yes' : 'No'}</div>
+                                    
+                                    <div className="text-muted-foreground">Applied:</div>
+                                    <div>{formatDate(profile.application_date)}</div>
+                                    
+                                    <div className="text-muted-foreground">Lead Source:</div>
+                                    <div>{profile.lead_source || 'Not specified'}</div>
+                                    
+                                    <div className="text-muted-foreground">Standing:</div>
+                                    <div>{profile.agent_standing || 'Not set'}</div>
+                                    
+                                    {profile.supervisor_notes && (
+                                      <>
+                                        <div className="text-muted-foreground">Notes:</div>
+                                        <div className="col-span-2 border rounded p-1 text-xs">
+                                          {profile.supervisor_notes}
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                          
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => openEditDialog(profile)}
+                          >
+                            <i className="fas fa-edit" style={{ marginRight: '5px' }}></i> 
+                            Edit
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No agents found matching your search criteria.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
+      
+      <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{imageType}</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-4">
+            {currentImage ? (
+              <img 
+                src={currentImage} 
+                alt={imageType} 
+                style={{ maxWidth: '100%', maxHeight: '500px', objectFit: 'contain' }} 
+              />
+            ) : (
+              <div className="text-center p-8 text-muted-foreground">
+                No image available
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">
+                Close
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Agent Information</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="agent_id" className="text-right text-sm">
+                Agent ID
+              </label>
+              <input
+                id="agent_id"
+                name="agent_id"
+                value={editForm.agent_id}
+                onChange={handleInputChange}
+                className="col-span-3 p-2 border rounded"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="lead_source" className="text-right text-sm">
+                Lead Source
+              </label>
+              <input
+                id="lead_source"
+                name="lead_source"
+                value={editForm.lead_source}
+                onChange={handleInputChange}
+                className="col-span-3 p-2 border rounded"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="start_date" className="text-right text-sm">
+                Start Date
+              </label>
+              <input
+                id="start_date"
+                name="start_date"
+                type="date"
+                value={editForm.start_date}
+                onChange={handleInputChange}
+                className="col-span-3 p-2 border rounded"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="agent_standing" className="text-right text-sm">
+                Standing
+              </label>
+              <select
+                id="agent_standing"
+                name="agent_standing"
+                value={editForm.agent_standing}
+                onChange={handleInputChange}
+                className="col-span-3 p-2 border rounded"
+              >
+                <option value="Active">Active</option>
+                <option value="Probation">Probation</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Terminated">Terminated</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="supervisor_notes" className="text-right text-sm">
+                Notes
+              </label>
+              <textarea
+                id="supervisor_notes"
+                name="supervisor_notes"
+                value={editForm.supervisor_notes}
+                onChange={handleInputChange}
+                className="col-span-3 p-2 border rounded"
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSubmit}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default SupervisorDashboard;
