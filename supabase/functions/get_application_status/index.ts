@@ -41,6 +41,8 @@ serve(async (req) => {
       );
     }
 
+    console.log('Edge Function: Getting application status for user_id:', user_id);
+
     // Get the application status from the user_profiles table
     const { data, error } = await supabaseClient
       .from('user_profiles')
@@ -58,6 +60,8 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log('Edge Function: Application status found:', data?.application_status);
 
     // Return the application status or 'pending' as default
     return new Response(

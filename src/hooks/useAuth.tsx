@@ -41,11 +41,17 @@ export const useAuth = () => {
                 body: { user_id: session.user.id }
               });
               
+              console.log('Credentials response:', credentialsResponse);
+              console.log('Status response:', statusResponse);
+              
               if (credentialsResponse.error) throw credentialsResponse.error;
               if (statusResponse.error) throw statusResponse.error;
               
               const credentials = credentialsResponse.data;
               const appStatus = statusResponse.data;
+              
+              console.log('Parsed credentials:', credentials);
+              console.log('Parsed application status:', appStatus);
               
               if (appStatus) {
                 if (appStatus === 'approved') {
@@ -96,6 +102,7 @@ export const useAuth = () => {
               }
             } catch (error) {
               console.error('Error checking profile:', error);
+              // In case of error, we'll still set loading to false
             } finally {
               if (mounted) setIsLoading(false);
             }
@@ -129,60 +136,70 @@ export const useAuth = () => {
           setIsAuthenticated(true);
           
           // Use edge functions to get user data
-          const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
-            body: { user_id: session.user.id }
-          });
-          
-          const statusResponse = await supabase.functions.invoke('get_application_status', {
-            body: { user_id: session.user.id }
-          });
-          
-          if (credentialsResponse.error) throw credentialsResponse.error;
-          if (statusResponse.error) throw statusResponse.error;
-          
-          const credentials = credentialsResponse.data;
-          const appStatus = statusResponse.data;
-          
-          if (appStatus) {
-            if (appStatus === 'approved') {
-              setIsApproved(true);
-              setUserCredentials(credentials || 'agent');
-              
-              // Redirect to dashboard if currently on login or signup
-              const currentPath = window.location.pathname;
-              if (currentPath === '/login' || currentPath === '/signup') {
-                // Route based on credentials
-                if (credentials === 'supervisor') {
-                  navigate('/supervisor');
-                } else {
-                  navigate('/dashboard');
+          try {
+            const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
+              body: { user_id: session.user.id }
+            });
+            
+            const statusResponse = await supabase.functions.invoke('get_application_status', {
+              body: { user_id: session.user.id }
+            });
+            
+            console.log('Initial credentials response:', credentialsResponse);
+            console.log('Initial status response:', statusResponse);
+            
+            if (credentialsResponse.error) throw credentialsResponse.error;
+            if (statusResponse.error) throw statusResponse.error;
+            
+            const credentials = credentialsResponse.data;
+            const appStatus = statusResponse.data;
+            
+            console.log('Initial parsed credentials:', credentials);
+            console.log('Initial parsed application status:', appStatus);
+            
+            if (appStatus) {
+              if (appStatus === 'approved') {
+                setIsApproved(true);
+                setUserCredentials(credentials || 'agent');
+                
+                // Redirect to dashboard if currently on login or signup
+                const currentPath = window.location.pathname;
+                if (currentPath === '/login' || currentPath === '/signup') {
+                  // Route based on credentials
+                  if (credentials === 'supervisor') {
+                    navigate('/supervisor');
+                  } else {
+                    navigate('/dashboard');
+                  }
+                }
+              } else if (appStatus === 'rejected') {
+                toast({
+                  title: "Application Rejected",
+                  description: "Unfortunately, your application didn't meet our qualifications.",
+                  variant: "destructive",
+                });
+                await supabase.auth.signOut();
+                setIsAuthenticated(false);
+                setIsApproved(false);
+                setUserCredentials('agent');
+              } else {
+                // User exists but not approved, redirect to signup
+                setIsApproved(false);
+                const currentPath = window.location.pathname;
+                if (currentPath === '/login') {
+                  navigate('/signup');
                 }
               }
-            } else if (appStatus === 'rejected') {
-              toast({
-                title: "Application Rejected",
-                description: "Unfortunately, your application didn't meet our qualifications.",
-                variant: "destructive",
-              });
-              await supabase.auth.signOut();
-              setIsAuthenticated(false);
-              setIsApproved(false);
-              setUserCredentials('agent');
             } else {
-              // User exists but not approved, redirect to signup
+              // No profile found, but authenticated - redirect to signup
               setIsApproved(false);
               const currentPath = window.location.pathname;
               if (currentPath === '/login') {
                 navigate('/signup');
               }
             }
-          } else {
-            // No profile found, but authenticated - redirect to signup
-            setIsApproved(false);
-            const currentPath = window.location.pathname;
-            if (currentPath === '/login') {
-              navigate('/signup');
-            }
+          } catch (error) {
+            console.error('Error checking initial session profile:', error);
           }
         } else {
           // Not authenticated

@@ -38,15 +38,7 @@ const Hero = () => {
         )}
       </div>
       
-      {/* Login button in top right */}
-      <div className="absolute top-4 right-8 z-10">
-        <Link 
-          to="/login" 
-          className="bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-md shadow-sm font-medium transition-colors"
-        >
-          Log In
-        </Link>
-      </div>
+      {/* Removed duplicate login button that was here */}
     </section>
   );
 };
