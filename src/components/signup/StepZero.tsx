@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { idToString, profileExists, safelyAccessProfile, forceSignOut } from '@/utils/supabaseHelpers';
 
 const StepZero = ({
   userData,
@@ -17,41 +16,11 @@ const StepZero = ({
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const initialCheckDone = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Add safety timeout to prevent UI from being stuck in "checking" state
-  useEffect(() => {
-    if (isCheckingSession) {
-      // Clear any existing timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      
-      // Set a new timeout
-      timeoutRef.current = setTimeout(() => {
-        console.log("Safety timeout in StepZero: forcing isCheckingSession to false");
-        setIsCheckingSession(false);
-      }, 5000); // 5 seconds timeout
-    } else if (timeoutRef.current) {
-      // Clear timeout when not checking
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    
-    // Clean up on unmount
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
-  }, [isCheckingSession]);
   
   const handleBackToHome = async (e) => {
     e.preventDefault();
     try {
-      await forceSignOut();
+      await supabase.auth.signOut();
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -64,104 +33,100 @@ const StepZero = ({
     const checkSession = async () => {
       try {
         if (!mounted) return;
-        
-        console.log("Starting session check in StepZero");
         setIsCheckingSession(true);
         
         const { data: { session } } = await supabase.auth.getSession();
-        console.log("StepZero checkSession - Session:", !!session, session?.user?.email);
         
         if (session?.user && mounted) {
-          console.log("User is authenticated in StepZero:", session.user.email);
+          console.log("User is authenticated:", session.user);
           
-          updateUserData({
-            email: session.user.email,
-            firstName: session.user.user_metadata?.given_name || 
-                      session.user.user_metadata?.name?.split(' ')[0] || 
-                      session.user.user_metadata?.full_name?.split(' ')[0] || '',
-            lastName: session.user.user_metadata?.family_name || 
-                    (session.user.user_metadata?.name?.split(' ').length > 1 ? 
-                      session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
-                    (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
-                      session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
-          });
-
-          // Use setTimeout to avoid potential deadlocks
-          setTimeout(async () => {
-            if (!mounted) return;
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('application_status, first_name')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
             
-            try {
-              const { data: profile, error: profileError } = await supabase
-                .from('user_profiles')
-                .select('application_status, first_name, credentials')
-                .eq('user_id', idToString(session.user.id))
-                .maybeSingle();
-                
-              console.log("Profile check in StepZero:", profile, profileError);
-              
-              if (profileError) {
-                console.error("Error checking profile in StepZero:", profileError);
-                if (mounted) {
-                  setIsCheckingSession(false);
-                  nextStep();
+          if (profileError || !profile) {
+            setErrorMessage('Profile not found or error, continuing with signup flow');
+            updateUserData({
+              email: session.user.email,
+              firstName: session.user.user_metadata?.given_name || 
+                        session.user.user_metadata?.name?.split(' ')[0] || 
+                        session.user.user_metadata?.full_name?.split(' ')[0] || '',
+              lastName: session.user.user_metadata?.family_name || 
+                      (session.user.user_metadata?.name?.split(' ').length > 1 ? 
+                        session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
+                      (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
+                        session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
+            });
+            
+            if (mounted) {
+              try {
+                const { error: insertError } = await supabase
+                  .from('user_profiles')
+                  .upsert({
+                    user_id: session.user.id,
+                    email: session.user.email,
+                    first_name: session.user.user_metadata?.given_name || 
+                              session.user.user_metadata?.name?.split(' ')[0] || 
+                              session.user.user_metadata?.full_name?.split(' ')[0] || '',
+                    last_name: session.user.user_metadata?.family_name || 
+                            (session.user.user_metadata?.name?.split(' ').length > 1 ? 
+                              session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
+                            (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
+                              session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : ''),
+                    application_status: 'pending'
+                  });
+                  
+                if (insertError) {
+                  console.error("Error creating initial profile:", insertError);
                 }
-                return;
-              }
-              
-              if (!profileExists(profile)) {
-                console.log("Profile not found, continuing with signup flow");
-                if (mounted) {
-                  setIsCheckingSession(false);
-                  nextStep();
-                }
-                return;
-              }
-              
-              const appStatus = safelyAccessProfile(profile, 'application_status');
-              console.log("Application status in StepZero:", appStatus);
-              
-              if (appStatus === 'rejected') {
-                toast({
-                  title: "Application Rejected",
-                  description: "Unfortunately, your application didn't meet our qualifications.",
-                  variant: "destructive",
-                });
-                await forceSignOut();
-                if (mounted) setIsCheckingSession(false);
-              } else if (appStatus === 'approved') {
-                toast({
-                  title: "Welcome back!",
-                  description: "You've been redirected to your dashboard",
-                });
-                const credentials = safelyAccessProfile(profile, 'credentials');
-                console.log("User approved with credentials:", credentials);
-                if (credentials === 'supervisor') {
-                  navigate('/supervisor');
-                } else {
-                  navigate('/dashboard');
-                }
-              } else {
-                if (mounted) {
-                  setIsCheckingSession(false);
-                  nextStep();
-                }
-              }
-            } catch (error) {
-              console.error("Error checking profile:", error);
-              if (mounted) {
-                setIsCheckingSession(false);
-                nextStep();
+              } catch (err) {
+                console.error("Error in profile creation:", err);
               }
             }
-          }, 0);
-        } else {
-          console.log("No authenticated user found in StepZero");
-          if (mounted) {
+            
+            setTimeout(() => {
+              if (mounted) {
+                nextStep();
+                setIsCheckingSession(false);
+              }
+            }, 500);
+          } else if (profile.application_status === 'rejected') {
+            toast({
+              title: "Application Rejected",
+              description: "Unfortunately, your application didn't meet our qualifications.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
             setIsCheckingSession(false);
+          } else if (profile?.application_status === 'approved') {
+            toast({
+              title: "Welcome back!",
+              description: "You've been redirected to your dashboard",
+            });
+            navigate('/dashboard');
+          } else if (profile?.first_name) {
+            setTimeout(() => {
+              if (mounted) {
+                nextStep();
+                setIsCheckingSession(false);
+              }
+            }, 500);
+          } else {
+            setTimeout(() => {
+              if (mounted) {
+                nextStep();
+                setIsCheckingSession(false);
+              }
+            }, 500);
           }
+        } else if (mounted) {
+          console.log("No authenticated user found");
+          setIsCheckingSession(false);
         }
       } catch (error) {
-        console.error("Error checking session in StepZero:", error);
+        console.error("Error checking session:", error);
         if (mounted) {
           setIsCheckingSession(false);
         }
@@ -170,16 +135,15 @@ const StepZero = ({
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state changed in StepZero:", event, session?.user?.email);
+        console.log("Auth state changed:", event, session?.user?.email);
         
-        if (!mounted) return;
-        
-        if (event === 'SIGNED_OUT') {
-          if (mounted) setIsCheckingSession(false);
-          return;
-        }
-        
-        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('application_status, first_name')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+            
           updateUserData({
             email: session.user.email,
             firstName: session.user.user_metadata?.given_name || 
@@ -192,42 +156,32 @@ const StepZero = ({
                       session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
           });
           
-          // Use setTimeout to prevent potential deadlocks
-          setTimeout(async () => {
-            if (!mounted) return;
-            
-            try {
-              // Reuse the checkSession function to avoid duplicate code
-              checkSession();
-            } catch (error) {
-              console.error("Error in auth state change handler:", error);
-              if (mounted) {
-                setIsCheckingSession(false);
-                nextStep();
-              }
-            }
-          }, 0);
+          if (!profileError && profile?.application_status === 'rejected') {
+            toast({
+              title: "Application Rejected",
+              description: "Unfortunately, your application didn't meet our qualifications.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
+            if (mounted) setIsCheckingSession(false);
+          } else if (!profileError && profile?.application_status === 'approved') {
+            navigate('/dashboard');
+          } else {
+            setTimeout(() => {
+              if (mounted) nextStep();
+            }, 500);
+          }
         }
       }
     );
     
-    // Only run the initial check once
-    if (!initialCheckDone.current) {
-      console.log("Running initial auth check in StepZero");
-      initialCheckDone.current = true;
-      checkSession();
-    } else {
-      console.log("Skipping redundant initial auth check in StepZero");
-      setIsCheckingSession(false);
-    }
+    checkSession();
     
-    // Clean up
     return () => {
-      console.log("StepZero component unmounting, cleaning up");
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate, nextStep, toast, updateUserData]);
+  }, []);
   
   const handleGoogleSignUp = async () => {
     try {
@@ -240,8 +194,7 @@ const StepZero = ({
       console.log("Current site URL:", siteUrl);
       console.log("Current path:", currentPath);
       
-      // Force logout first to ensure Google auth prompt appears
-      await forceSignOut();
+      await supabase.auth.signOut();
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -258,7 +211,7 @@ const StepZero = ({
       
       console.log("OAuth flow initiated, awaiting redirect");
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error signing up with Google:', error);
       setErrorMessage(error.message || 'Failed to sign up with Google');
       toast({
@@ -266,15 +219,14 @@ const StepZero = ({
         description: error.message || "Failed to sign up with Google",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
-      {/* Left Side - Visual */}
-      <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
-        {/* Geometric shapes - adjusted to not overlap */}
+      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -315,7 +267,6 @@ const StepZero = ({
         </div>
       </div>
       
-      {/* Right Side - Form */}
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         <div className="block md:hidden mb-8">
           <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
@@ -336,18 +287,14 @@ const StepZero = ({
           <h1 className="text-2xl font-bold mb-2 text-center">Get started</h1>
           <p className="text-gray-600 mb-8 text-center">Create your account now</p>
           
-          {isCheckingSession ? (
+          {isCheckingSession && (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
               <p className="text-gray-600">Checking login status...</p>
-              <button 
-                onClick={() => setIsCheckingSession(false)}
-                className="mt-4 text-sm text-indigo-600 hover:underline"
-              >
-                Cancel and continue to signup
-              </button>
             </div>
-          ) : (
+          )}
+          
+          {!isCheckingSession && (
             <>
               {errorMessage && (
                 <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6">
