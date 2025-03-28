@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -287,7 +288,7 @@ const SignUp = () => {
             
             // Create user_profiles record with service role
             const profileData = {
-              user_id: data.user.id,
+              user_id: data.user.id, // Critical: Include the user_id field
               first_name: userData.firstName,
               last_name: userData.lastName,
               email: userData.email,
@@ -359,7 +360,11 @@ const SignUp = () => {
         console.log('No session available, but continuing with form submission');
       }
       
+      const userId = currentSession?.user?.id;
+      
+      // Always include user_id in the data object
       const data = {
+        user_id: userId, // Fix: Adding the required user_id field
         first_name: userData.firstName,
         last_name: userData.lastName,
         email: userData.email,
@@ -396,7 +401,6 @@ const SignUp = () => {
       console.log('Updating user profile with data:', data);
       
       let updateError = null;
-      const userId = currentSession?.user?.id;
       
       if (userId) {
         // First check if profile exists
@@ -424,22 +428,20 @@ const SignUp = () => {
           console.log('Creating new profile for user:', userId);
           const { error } = await supabase
             .from('user_profiles')
-            .insert({
-              ...data,
-              user_id: userId
-            });
+            .insert(data);
             
           updateError = error;
         }
       } else {
-        // If we don't have a user ID, create a new record without a user_id
-        // This is a fallback that shouldn't normally happen
-        console.log('No user ID available, creating profile without user_id');
-        const { error } = await supabase
-          .from('user_profiles')
-          .insert(data);
-          
-        updateError = error;
+        // If we somehow don't have a user ID at this point, show an error
+        console.error('No user ID available for profile creation');
+        toast({
+          title: "Error creating profile",
+          description: "Could not determine user ID for profile creation",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
       }
       
       if (updateError) {
