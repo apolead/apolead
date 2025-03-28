@@ -95,8 +95,10 @@ const SignUp = () => {
       const fileName = `${userId}_${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${userId}/${fileName}`;
       
+      // Convert file to ArrayBuffer for upload
       const fileArrayBuffer = await file.arrayBuffer();
       
+      // Upload file to Supabase Storage
       const { data, error } = await supabase.storage
         .from('user_documents')
         .upload(filePath, fileArrayBuffer, {
@@ -109,6 +111,7 @@ const SignUp = () => {
         throw error;
       }
       
+      // Get public URL for the uploaded file
       const { data: { publicUrl } } = supabase.storage
         .from('user_documents')
         .getPublicUrl(filePath);
@@ -140,6 +143,7 @@ const SignUp = () => {
     try {
       setIsSubmitting(true);
       
+      // Verify government ID isn't already in use
       try {
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
@@ -182,9 +186,28 @@ const SignUp = () => {
         return;
       }
       
+      // Upload government ID image
       let govIdImageUrl = null;
       if (userData.govIdImage) {
+        console.log("Uploading government ID image...");
         govIdImageUrl = await uploadFile(userData.govIdImage);
+        console.log("Government ID image uploaded:", govIdImageUrl);
+      }
+      
+      // Upload speed test image
+      let speedTestUrl = null;
+      if (userData.speedTest) {
+        console.log("Uploading speed test image...");
+        speedTestUrl = await uploadFile(userData.speedTest);
+        console.log("Speed test image uploaded:", speedTestUrl);
+      }
+      
+      // Upload system settings image
+      let systemSettingsUrl = null;
+      if (userData.systemSettings) {
+        console.log("Uploading system settings image...");
+        systemSettingsUrl = await uploadFile(userData.systemSettings);
+        console.log("System settings image uploaded:", systemSettingsUrl);
       }
       
       const applicationStatus = determineApplicationStatus();
@@ -200,19 +223,19 @@ const SignUp = () => {
         ram_amount: userData.ramAmount,
         has_headset: userData.hasHeadset,
         has_quiet_place: userData.hasQuietPlace,
-        speed_test: userData.speedTest,
-        system_settings: userData.systemSettings,
+        speed_test: speedTestUrl,
+        system_settings: systemSettingsUrl,
         available_hours: userData.availableHours,
         available_days: userData.availableDays,
         day_hours: userData.dayHours,
         sales_experience: userData.salesExperience,
         sales_months: userData.salesMonths,
-        sales_company: userData.salesCompany,  // This should match the DB column name
-        sales_product: userData.salesProduct,
+        salesCompany: userData.salesCompany,
+        salesProduct: userData.salesProduct,
         service_experience: userData.serviceExperience,
         service_months: userData.serviceMonths,
-        service_company: userData.serviceCompany,  // This should match the DB column name
-        service_product: userData.serviceProduct,
+        serviceCompany: userData.serviceCompany,
+        serviceProduct: userData.serviceProduct,
         meet_obligation: userData.meetObligation,
         login_discord: userData.loginDiscord,
         check_emails: userData.checkEmails,
