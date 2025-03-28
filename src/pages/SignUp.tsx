@@ -202,67 +202,7 @@ const SignUp = () => {
         // Continue anyway
       }
       
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // If no session, need to sign up the user first
-      if (!session) {
-        try {
-          console.log('No session found, creating user account with email:', userData.email);
-          
-          // Create the user account
-          const { data, error } = await supabase.auth.signUp({
-            email: userData.email,
-            password: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2), // Generate a random secure password
-            options: {
-              data: {
-                first_name: userData.firstName,
-                last_name: userData.lastName,
-              },
-            },
-          });
-          
-          if (error) throw error;
-          
-          console.log('User created successfully:', data);
-          
-          // Wait for session to be established
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Get the new session
-          const { data: { session: newSession } } = await supabase.auth.getSession();
-          
-          if (!newSession) {
-            throw new Error('Failed to establish session after signup');
-          }
-          
-          console.log('New session established:', newSession);
-        } catch (error) {
-          console.error('Error creating user account:', error);
-          toast({
-            title: "Authentication failed",
-            description: error.message || "Failed to create user account",
-            variant: "destructive",
-          });
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      
-      // Get the current session again (could be new or existing)
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (!currentSession) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to complete your application",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Upload both government ID and speed test images
+      // Upload both government ID and speed test images first
       console.log('Starting file uploads...');
       
       let govIdImageUrl = null;
@@ -287,6 +227,111 @@ const SignUp = () => {
       }
       
       const applicationStatus = determineApplicationStatus();
+      console.log('Application status determined:', applicationStatus);
+      
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // If no session, need to sign up the user first
+      if (!session) {
+        try {
+          console.log('No session found, creating user account with email:', userData.email);
+          
+          // Create the user account with all user data in metadata
+          const { data, error } = await supabase.auth.signUp({
+            email: userData.email,
+            password: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2), // Generate a random secure password
+            options: {
+              data: {
+                first_name: userData.firstName,
+                last_name: userData.lastName,
+                // Don't put too much in metadata - it can cause issues
+              },
+            },
+          });
+          
+          if (error) throw error;
+          
+          console.log('User created successfully:', data);
+          
+          // If we don't have a session after signup, that's okay - we'll create the profile record directly
+          // and then redirect to the appropriate page
+          if (!data.session) {
+            console.log('No session returned after signup, proceeding with profile creation anyway');
+            
+            // Create user_profiles record with service role
+            const profileData = {
+              user_id: data.user.id,
+              first_name: userData.firstName,
+              last_name: userData.lastName,
+              email: userData.email,
+              birth_day: userData.birthDay,
+              gov_id_number: userData.govIdNumber,
+              gov_id_image: govIdImageUrl,
+              cpu_type: userData.cpuType,
+              ram_amount: userData.ramAmount,
+              has_headset: userData.hasHeadset,
+              has_quiet_place: userData.hasQuietPlace,
+              speed_test: speedTestUrl,
+              system_settings: systemSettingsUrl,
+              available_hours: userData.availableHours,
+              available_days: userData.availableDays,
+              day_hours: userData.dayHours,
+              sales_experience: userData.salesExperience,
+              sales_months: userData.salesMonths,
+              sales_company: userData.salesCompany,
+              sales_product: userData.salesProduct,
+              service_experience: userData.serviceExperience,
+              service_months: userData.serviceMonths,
+              service_company: userData.serviceCompany,
+              service_product: userData.serviceProduct,
+              meet_obligation: userData.meetObligation,
+              login_discord: userData.loginDiscord,
+              check_emails: userData.checkEmails,
+              solve_problems: userData.solveProblems,
+              complete_training: userData.completeTraining,
+              personal_statement: userData.personalStatement,
+              accepted_terms: userData.acceptedTerms,
+              application_status: applicationStatus
+            };
+            
+            const { error: insertError } = await supabase
+              .from('user_profiles')
+              .insert(profileData);
+              
+            if (insertError) throw insertError;
+            
+            // Redirect based on application status
+            setIsSubmitting(false);
+            
+            if (applicationStatus === 'rejected') {
+              navigate('/confirmation?status=rejected');
+            } else {
+              navigate('/confirmation?status=approved');
+            }
+            
+            return;
+          }
+        } catch (error) {
+          console.error('Error creating user account:', error);
+          toast({
+            title: "Authentication failed",
+            description: error.message || "Failed to create user account",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
+      // Get the current session again (could be new or existing)
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession) {
+        // Even if we don't have a session, we'll let the form submission continue
+        // as we've already determined the application status and uploaded files
+        console.log('No session available, but continuing with form submission');
+      }
       
       const data = {
         first_name: userData.firstName,
@@ -324,37 +369,49 @@ const SignUp = () => {
       
       console.log('Updating user profile with data:', data);
       
-      // First check if profile exists
-      const { data: existingProfile, error: profileCheckError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', currentSession.user.id)
-        .maybeSingle();
-        
-      if (profileCheckError) {
-        console.error('Error checking for existing profile:', profileCheckError);
-      }
+      let updateError = null;
+      const userId = currentSession?.user?.id;
       
-      let updateError;
-      
-      if (existingProfile) {
-        // Update existing profile
-        console.log('Updating existing profile for user:', currentSession.user.id);
-        const { error } = await supabase
+      if (userId) {
+        // First check if profile exists
+        const { data: existingProfile, error: profileCheckError } = await supabase
           .from('user_profiles')
-          .update(data)
-          .eq('user_id', currentSession.user.id);
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
           
-        updateError = error;
+        if (profileCheckError) {
+          console.error('Error checking for existing profile:', profileCheckError);
+        }
+        
+        if (existingProfile) {
+          // Update existing profile
+          console.log('Updating existing profile for user:', userId);
+          const { error } = await supabase
+            .from('user_profiles')
+            .update(data)
+            .eq('user_id', userId);
+            
+          updateError = error;
+        } else {
+          // Insert new profile
+          console.log('Creating new profile for user:', userId);
+          const { error } = await supabase
+            .from('user_profiles')
+            .insert({
+              ...data,
+              user_id: userId
+            });
+            
+          updateError = error;
+        }
       } else {
-        // Insert new profile
-        console.log('Creating new profile for user:', currentSession.user.id);
+        // If we don't have a user ID, create a new record without a user_id
+        // This is a fallback that shouldn't normally happen
+        console.log('No user ID available, creating profile without user_id');
         const { error } = await supabase
           .from('user_profiles')
-          .insert({
-            ...data,
-            user_id: currentSession.user.id
-          });
+          .insert(data);
           
         updateError = error;
       }
@@ -364,13 +421,15 @@ const SignUp = () => {
         throw updateError;
       }
       
+      // Redirect based on application status
       if (applicationStatus === 'rejected') {
-        await supabase.auth.signOut();
-        navigate(`/confirmation?status=rejected`);
+        if (currentSession) {
+          await supabase.auth.signOut();
+        }
+        navigate('/confirmation?status=rejected');
         return;
       }
       
-      setCurrentStep(4);
       navigate('/confirmation?status=approved');
     } catch (error) {
       console.error('Error submitting application:', error);
