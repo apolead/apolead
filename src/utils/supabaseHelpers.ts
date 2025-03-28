@@ -20,7 +20,7 @@ export function safelyAccessProfile<T extends Record<string, any>>(
 }
 
 // Helper to type-safely check if a profile exists
-export function profileExists<T>(
+export function profileExists<T extends Record<string, any>>(
   profileResult: T | { error: PostgrestError } | null
 ): profileResult is T {
   return !!profileResult && !('error' in profileResult);
