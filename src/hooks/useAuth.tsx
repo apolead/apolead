@@ -174,44 +174,6 @@ export const useAuth = () => {
     };
   }, [navigate]);
 
-  const handleGoogleAuth = async (redirectPath = '/signup') => {
-    try {
-      setIsLoading(true);
-      
-      const siteUrl = window.location.origin;
-      
-      console.log("Site URL for Google auth:", siteUrl);
-      console.log("Redirect path:", redirectPath);
-      
-      // Force logout first to ensure Google auth prompt appears
-      await supabase.auth.signOut();
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${siteUrl}${redirectPath}`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account consent',
-          }
-        },
-      });
-
-      if (error) throw error;
-      
-      console.log("OAuth flow initiated, awaiting redirect");
-      
-    } catch (error) {
-      console.error('Error with Google authentication:', error);
-      toast({
-        title: "Authentication failed",
-        description: error.message || "Failed to authenticate with Google",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
-  };
-
   const logout = async () => {
     try {
       await supabase.auth.signOut();
@@ -231,7 +193,6 @@ export const useAuth = () => {
     isAuthenticated, 
     isApproved, 
     user,
-    handleGoogleAuth,
     logout
   };
 };

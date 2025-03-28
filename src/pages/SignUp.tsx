@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react'; // Add this import
+import { Loader2 } from 'lucide-react';
 import StepZero from '@/components/signup/StepZero';
 import StepOne from '@/components/signup/StepOne';
 import StepTwo from '@/components/signup/StepTwo';
@@ -9,7 +9,6 @@ import StepThree from '@/components/signup/StepThree';
 import ConfirmationScreen from '@/components/signup/ConfirmationScreen';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
 
 const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -51,32 +50,57 @@ const SignUp = () => {
   
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isLoading, isAuthenticated, user } = useAuth();
   
   useEffect(() => {
-    // If user is authenticated, update the form data with their details
-    if (user) {
-      setUserData(prev => ({
-        ...prev,
-        email: user.email,
-        firstName: user.user_metadata?.given_name || 
-                  user.user_metadata?.name?.split(' ')[0] || 
-                  user.user_metadata?.full_name?.split(' ')[0] || '',
-        lastName: user.user_metadata?.family_name || 
-                (user.user_metadata?.name?.split(' ').length > 1 ? 
-                  user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
-                (user.user_metadata?.full_name?.split(' ').length > 1 ? 
-                  user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
-      }));
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // Move to Step 1 after authentication
-      if (currentStep === 0 && !isLoading) {
-        setTimeout(() => {
-          setCurrentStep(1);
-        }, 500);
+      if (session) {
+        // Update the form data with their details
+        setUserData(prev => ({
+          ...prev,
+          email: session.user.email || '',
+        }));
+        
+        // Check if they have started the application process
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('application_status')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+          
+        if (profile) {
+          if (profile.application_status === 'approved') {
+            toast({
+              title: "Already approved",
+              description: "Your application has already been approved",
+            });
+            navigate('/dashboard');
+            return;
+          } else if (profile.application_status === 'rejected') {
+            toast({
+              title: "Application rejected",
+              description: "Your application has been rejected",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
+            navigate('/login');
+            return;
+          }
+        }
+        
+        // If they're authenticated, move to step 1
+        if (currentStep === 0) {
+          setTimeout(() => {
+            setCurrentStep(1);
+          }, 500);
+        }
       }
-    }
-  }, [user, isLoading, currentStep]);
+    };
+    
+    checkAuth();
+  }, [navigate, currentStep, toast]);
   
   const updateUserData = async (newData) => {
     setUserData(prev => ({ ...prev, ...newData }));
@@ -191,7 +215,7 @@ const SignUp = () => {
       if (!session) {
         toast({
           title: "Authentication required",
-          description: "Please sign in with Google to complete your application",
+          description: "Please sign in to complete your application",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -271,18 +295,11 @@ const SignUp = () => {
   
   const renderStep = () => {
     // Show loading indicator if we're checking authentication
-    if (isLoading && currentStep === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
-          <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mb-4" />
-          <p className="text-gray-600">Checking authentication status...</p>
-        </div>
-      );
+    if (currentStep === 0) {
+      return <StepZero userData={userData} updateUserData={updateUserData} nextStep={nextStep} />;
     }
     
     switch (currentStep) {
-      case 0:
-        return <StepZero userData={userData} updateUserData={updateUserData} nextStep={nextStep} />;
       case 1:
         return <StepOne 
           userData={userData} 
