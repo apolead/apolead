@@ -134,11 +134,27 @@ export const useAuth = () => {
             setIsApproved(false);
             setUserCredentials('agent');
             navigate('/login');
+          } else {
+            // User is authenticated and not rejected, redirect to appropriate dashboard
+            const currentPath = window.location.pathname;
+            if (currentPath === '/login' || currentPath === '/signup') {
+              if (userCredentials === 'supervisor') {
+                navigate('/supervisor');
+              } else {
+                navigate('/dashboard');
+              }
+            }
           }
           
         } catch (error) {
           console.error('Error checking initial session profile:', error);
           // Just log error, don't change default approved status
+          
+          // Still redirect to dashboard if we're on login page
+          const currentPath = window.location.pathname;
+          if (currentPath === '/login' || currentPath === '/signup') {
+            navigate('/dashboard');
+          }
         }
       } else {
         // Not authenticated

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,22 @@ const Login = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate('/dashboard');
+        // Check user credentials to determine which dashboard to redirect to
+        try {
+          const { data: credentialsData, error: credentialsError } = await supabase.functions.invoke('get_user_credentials', {
+            body: { user_id: session.user.id }
+          });
+          
+          if (!credentialsError && credentialsData === 'supervisor') {
+            navigate('/supervisor');
+          } else {
+            navigate('/dashboard');
+          }
+        } catch (error) {
+          console.error('Error checking credentials:', error);
+          // Default to agent dashboard
+          navigate('/dashboard');
+        }
       }
     };
     
@@ -73,7 +89,22 @@ const Login = () => {
       
       setIsRedirecting(true);
       
-      navigate('/dashboard');
+      // Check user credentials to determine which dashboard to redirect to
+      try {
+        const { data: credentialsData, error: credentialsError } = await supabase.functions.invoke('get_user_credentials', {
+          body: { user_id: data.user.id }
+        });
+        
+        if (!credentialsError && credentialsData === 'supervisor') {
+          navigate('/supervisor');
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error('Error checking credentials:', error);
+        // Default to agent dashboard
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Login error:', error);
       toast({
