@@ -54,47 +54,43 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       return;
     }
     
-    // Verify government ID number against user_profiles table ONLY
+    // Verify government ID number against database
     try {
-      console.log('Checking government ID:', userData.govIdNumber);
-      
-      // Check ONLY if the government ID has been used before in user_profiles
+      // Check if the government ID has been used before in user_profiles
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('gov_id_number')
         .eq('gov_id_number', userData.govIdNumber)
         .maybeSingle();
         
-      console.log('Profile check result:', { profileData, profileError });
-        
-      if (profileError) {
-        console.error('Error checking government ID in profiles:', profileError);
-        // Continue anyway - don't block the user for database errors
-        nextStep();
-        return;
-      }
+      if (profileError) throw profileError;
       
-      // If we found a matching gov ID in profiles, show error
-      if (profileData && profileData.gov_id_number === userData.govIdNumber) {
+      // Also check in user_applications table
+      const { data: applicationData, error: applicationError } = await supabase
+        .from('user_applications')
+        .select('gov_id_number')
+        .eq('gov_id_number', userData.govIdNumber)
+        .maybeSingle();
+        
+      if (applicationError) throw applicationError;
+      
+      if (profileData || applicationData) {
         setErrorMessage('This government ID has already been registered in our system.');
         return;
       }
-      
-      // No matching gov ID was found, continue to next step
-      console.log('Government ID verified successfully, proceeding to next step');
-      nextStep();
     } catch (error) {
       console.error('Error checking government ID:', error);
-      // Continue anyway - don't block the user for errors
-      nextStep();
+      setErrorMessage('Could not verify government ID. Please try again.');
       return;
     }
+    
+    // Continue to next step
+    nextStep();
   };
   
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      console.log('Government ID file selected:', file.name);
       updateUserData({ govIdImage: file });
     }
   };

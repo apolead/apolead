@@ -15,17 +15,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce'
-  },
-  // Add global error handling and logging
-  global: {
-    fetch: (...args) => {
-      // Fix: Explicitly type the arguments and properly pass them to fetch
-      const [url, options, ...rest] = args;
-      return fetch(url, options).catch(err => {
-        console.error('Supabase fetch error:', err);
-        throw err;
-      });
-    }
+    flowType: 'pkce', // Changed from 'implicit' to 'pkce' for more secure flow
+    debug: true // Enable debugging for auth issues
   }
 });
