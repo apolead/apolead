@@ -3,10 +3,10 @@ import { PostgrestError } from '@supabase/supabase-js';
 
 // Helper for safely accessing profile data properties
 export function safelyAccessProfile<T extends Record<string, any>>(
-  profileResult: T | PostgrestError | null,
+  profileResult: T | null | { error: PostgrestError },
   key: keyof T
 ): any {
-  if (!profileResult || 'error' in profileResult || profileResult.error) {
+  if (!profileResult || 'error' in profileResult) {
     console.error("Error in profile result:", profileResult);
     return null;
   }
@@ -16,7 +16,7 @@ export function safelyAccessProfile<T extends Record<string, any>>(
 
 // Helper to type-safely check if a profile exists
 export function profileExists<T>(
-  profileResult: T | PostgrestError | null
+  profileResult: T | null | { error: PostgrestError }
 ): profileResult is T {
   return !!profileResult && !('error' in profileResult);
 }
