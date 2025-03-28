@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -62,6 +63,8 @@ const Login = () => {
         const status = safelyAccessProfile(data, 'application_status');
         const credentials = safelyAccessProfile(data, 'credentials');
         
+        console.log("Application status:", status, "Credentials:", credentials);
+        
         if (status === 'approved') {
           console.log("User is approved with credentials:", credentials);
           // Redirect to appropriate dashboard based on credentials
@@ -81,7 +84,7 @@ const Login = () => {
           if (mounted) setIsCheckingSession(false);
         } else {
           // Application pending or other status, redirect to signup
-          console.log("User application is pending or incomplete");
+          console.log("User application is pending or incomplete, status:", status);
           navigate('/signup');
         }
       } else {

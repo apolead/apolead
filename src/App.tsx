@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,6 +27,48 @@ const AuthRoute = ({ children }) => {
   useEffect(() => {
     let mounted = true;
     
+    // First set up the auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed in AuthRoute:", event, session?.user?.email);
+      
+      if (!mounted) return;
+      
+      if (session) {
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('application_status, credentials')
+          .eq('user_id', idToString(session.user.id))
+          .maybeSingle();
+          
+        console.log("User profile check:", profile, error);
+        
+        if (profileExists(profile)) {
+          setIsAuthenticated(true);
+          
+          const status = safelyAccessProfile(profile, 'application_status');
+          if (status === 'approved') {
+            setIsApproved(true);
+            const credentials = safelyAccessProfile(profile, 'credentials') || "agent";
+            setUserCredentials(credentials);
+          } else {
+            setIsApproved(false);
+            setUserCredentials("agent");
+          }
+        } else {
+          setIsAuthenticated(true);
+          setIsApproved(false);
+          setUserCredentials("agent");
+        }
+      } else {
+        setIsAuthenticated(false);
+        setIsApproved(false);
+        setUserCredentials("agent");
+      }
+      
+      setIsLoading(false);
+    });
+    
+    // Then check the initial auth state
     const checkAuth = async () => {
       if (!mounted) return;
       
@@ -74,48 +115,6 @@ const AuthRoute = ({ children }) => {
       }
     };
     
-    // First set up the auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed in AuthRoute:", event, session?.user?.email);
-      
-      if (!mounted) return;
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('application_status, credentials')
-          .eq('user_id', idToString(session.user.id))
-          .maybeSingle();
-          
-        console.log("User profile check:", profile, error);
-        
-        if (profileExists(profile)) {
-          setIsAuthenticated(true);
-          
-          const status = safelyAccessProfile(profile, 'application_status');
-          if (status === 'approved') {
-            setIsApproved(true);
-            const credentials = safelyAccessProfile(profile, 'credentials') || "agent";
-            setUserCredentials(credentials);
-          } else {
-            setIsApproved(false);
-            setUserCredentials("agent");
-          }
-        } else {
-          setIsAuthenticated(true);
-          setIsApproved(false);
-          setUserCredentials("agent");
-        }
-      } else {
-        setIsAuthenticated(false);
-        setIsApproved(false);
-        setUserCredentials("agent");
-      }
-      
-      setIsLoading(false);
-    });
-    
-    // Then check the initial auth state
     checkAuth();
     
     return () => {
@@ -228,7 +227,6 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-// Custom route component for supervisor access
 const SupervisorRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSupervisor, setIsSupervisor] = useState(false);

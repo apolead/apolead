@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -99,6 +100,8 @@ const StepZero = ({
           } else {
             const appStatus = safelyAccessProfile(profile, 'application_status');
             
+            console.log("Application status in StepZero:", appStatus);
+            
             if (appStatus === 'rejected') {
               toast({
                 title: "Application Rejected",
@@ -113,6 +116,7 @@ const StepZero = ({
                 description: "You've been redirected to your dashboard",
               });
               const credentials = safelyAccessProfile(profile, 'credentials');
+              console.log("User approved with credentials:", credentials);
               if (credentials === 'supervisor') {
                 navigate('/supervisor');
               } else {
@@ -173,6 +177,7 @@ const StepZero = ({
           
           if (!profileError && profileExists(profile)) {
             const appStatus = safelyAccessProfile(profile, 'application_status');
+            console.log("Profile exists with status:", appStatus);
             if (appStatus === 'rejected') {
               toast({
                 title: "Application Rejected",
@@ -183,6 +188,7 @@ const StepZero = ({
               if (mounted) setIsCheckingSession(false);
             } else if (appStatus === 'approved') {
               const credentials = safelyAccessProfile(profile, 'credentials');
+              console.log("User approved with credentials:", credentials);
               if (credentials === 'supervisor') {
                 navigate('/supervisor');
               } else {
