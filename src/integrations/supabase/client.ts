@@ -15,7 +15,18 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce', // Changed from 'implicit' to 'pkce' for more secure flow
-    debug: true // Enable debugging for auth issues
+    flowType: 'pkce', // PKCE flow for more secure authentication
+    debug: import.meta.env.DEV // Only enable debug in development
   }
 });
+
+// Helper function to force sign out (clears all session data)
+export const forceSignOut = async () => {
+  try {
+    await supabase.auth.signOut({ scope: 'global' });
+    localStorage.removeItem('supabase.auth.token');
+    window.location.href = '/login'; // Redirect to login page
+  } catch (error) {
+    console.error('Error during force sign out:', error);
+  }
+};
