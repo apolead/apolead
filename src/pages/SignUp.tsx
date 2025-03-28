@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StepZero from '@/components/signup/StepZero';
@@ -50,13 +49,11 @@ const SignUp = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Check if user is already authenticated
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        // If already authenticated, update userData with email
         setUserData(prev => ({ ...prev, email: session.user.email }));
       }
     };
@@ -65,18 +62,14 @@ const SignUp = () => {
   }, []);
   
   const updateUserData = async (newData) => {
-    // Update user data immediately without validation for normal fields
     if (!newData.govIdNumber) {
       setUserData(prev => ({ ...prev, ...newData }));
       return;
     }
     
-    // Only validate government ID if it's being updated and different from current
     if (newData.govIdNumber && newData.govIdNumber !== userData.govIdNumber) {
-      // No need to immediately validate - let StepOne handle this when continuing
       setUserData(prev => ({ ...prev, ...newData }));
     } else {
-      // Just update the data normally
       setUserData(prev => ({ ...prev, ...newData }));
     }
   };
@@ -110,7 +103,6 @@ const SignUp = () => {
       const fileName = `${userId}_${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${userId}/${fileName}`;
       
-      // Convert file to ArrayBuffer for upload
       const fileArrayBuffer = await file.arrayBuffer();
       
       const { data, error } = await supabase.storage
@@ -125,7 +117,6 @@ const SignUp = () => {
         throw error;
       }
       
-      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('user_documents')
         .getPublicUrl(filePath);
@@ -140,19 +131,16 @@ const SignUp = () => {
   };
   
   const determineApplicationStatus = () => {
-    // Check minimum requirements
     if (!userData.hasHeadset || !userData.hasQuietPlace) {
       return 'rejected';
     }
     
-    // Check if they can meet the obligations
     if (!userData.meetObligation || !userData.loginDiscord || 
         !userData.checkEmails || !userData.solveProblems || 
         !userData.completeTraining) {
       return 'rejected';
     }
     
-    // Default to approved if they pass the checks
     return 'approved';
   };
   
@@ -160,10 +148,8 @@ const SignUp = () => {
     try {
       setIsSubmitting(true);
       
-      // Verify government ID one more time before final submission
       try {
         setIsCheckingGovId(true);
-        // Check if the government ID has been used before
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
           .select('gov_id_number')
@@ -194,10 +180,8 @@ const SignUp = () => {
       } catch (error) {
         console.error('Error verifying government ID:', error);
         setIsCheckingGovId(false);
-        // Continue with submission despite error checking ID
       }
       
-      // Check if user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -210,16 +194,13 @@ const SignUp = () => {
         return;
       }
       
-      // Upload ID image if provided
       let govIdImageUrl = null;
       if (userData.govIdImage) {
         govIdImageUrl = await uploadFile(userData.govIdImage);
       }
       
-      // Determine if the application should be approved or rejected
       const applicationStatus = determineApplicationStatus();
       
-      // Prepare data for submission
       const data = {
         first_name: userData.firstName,
         last_name: userData.lastName,
@@ -238,12 +219,12 @@ const SignUp = () => {
         day_hours: userData.dayHours,
         sales_experience: userData.salesExperience,
         sales_months: userData.salesMonths,
-        salesCompany: userData.salesCompany,
-        salesProduct: userData.salesProduct,
+        sales_company: userData.salesCompany,
+        sales_product: userData.salesProduct,
         service_experience: userData.serviceExperience,
         service_months: userData.serviceMonths,
-        serviceCompany: userData.serviceCompany,
-        serviceProduct: userData.serviceProduct,
+        service_company: userData.serviceCompany,
+        service_product: userData.serviceProduct,
         meet_obligation: userData.meetObligation,
         login_discord: userData.loginDiscord,
         check_emails: userData.checkEmails,
@@ -254,7 +235,6 @@ const SignUp = () => {
         application_status: applicationStatus
       };
       
-      // Update user profile in database
       const { error: updateError } = await supabase
         .from('user_profiles')
         .update(data)
@@ -265,16 +245,12 @@ const SignUp = () => {
         throw updateError;
       }
       
-      // For rejected applications, sign out the user
       if (applicationStatus === 'rejected') {
         await supabase.auth.signOut();
         navigate(`/confirmation?status=rejected`);
         return;
       }
       
-      // For approved applications, continue to confirmation screen
-      // Include email redirect for approved applications only
-      // The confirmation screen might require login for some views
       setCurrentStep(4);
       navigate('/confirmation?status=approved');
       
@@ -290,7 +266,6 @@ const SignUp = () => {
     }
   };
   
-  // Render steps
   const renderStep = () => {
     switch (currentStep) {
       case 0:
