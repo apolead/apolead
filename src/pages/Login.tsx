@@ -58,27 +58,45 @@ const Login = () => {
         description: "Welcome back!"
       });
 
-      // Get user credentials and application status using security definer functions
-      const { data: credentials, error: credentialsError } = await supabase
-        .rpc('get_user_credentials', { user_id: data.user.id });
+      console.log('Login successful, user ID:', data.user.id);
+      
+      try {
+        // Get user credentials and application status using edge functions
+        const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
+          body: { user_id: data.user.id }
+        });
         
-      const { data: applicationStatus, error: statusError } = await supabase
-        .rpc('get_application_status', { user_id: data.user.id });
-
-      if (credentialsError) throw credentialsError;
-      if (statusError) throw statusError;
-
-      // Route based on user credentials and application status
-      if (applicationStatus === 'approved') {
-        // User is approved, route based on credentials
-        if (credentials === 'supervisor') {
-          navigate('/supervisor');
+        const statusResponse = await supabase.functions.invoke('get_application_status', {
+          body: { user_id: data.user.id }
+        });
+        
+        if (credentialsResponse.error) throw credentialsResponse.error;
+        if (statusResponse.error) throw statusResponse.error;
+        
+        console.log('Credentials response:', credentialsResponse);
+        console.log('Status response:', statusResponse);
+        
+        const credentials = credentialsResponse.data;
+        const appStatus = statusResponse.data;
+        
+        // Route based on user credentials and application status
+        if (appStatus === 'approved') {
+          // User is approved, route based on credentials
+          console.log('User is approved with credentials:', credentials);
+          if (credentials === 'supervisor') {
+            navigate('/supervisor');
+          } else {
+            navigate('/dashboard');
+          }
         } else {
-          navigate('/dashboard');
+          // Not approved yet or no profile, redirect to signup
+          console.log('User not approved or no profile, redirecting to signup');
+          navigate('/signup');
         }
-      } else {
-        // Not approved yet or no profile, redirect to signup
-        navigate('/signup');
+      } catch (error) {
+        console.error('Error checking user status:', error);
+        // Default to dashboard if there's an error checking status
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error('Login error:', error);

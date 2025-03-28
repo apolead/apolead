@@ -41,7 +41,9 @@ serve(async (req) => {
       );
     }
 
-    // Get the user credentials from the user_profiles table
+    console.log('Edge Function: Getting credentials for user_id:', user_id);
+
+    // Get the user credentials from the user_profiles table with fully qualified column name
     const { data, error } = await supabaseClient
       .from('user_profiles')
       .select('credentials')
@@ -58,6 +60,9 @@ serve(async (req) => {
         }
       );
     }
+
+    // Log the data being returned
+    console.log('Edge Function: Credentials found:', data?.credentials);
 
     // Return the credentials or 'agent' as default
     return new Response(
