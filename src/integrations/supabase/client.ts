@@ -27,4 +27,10 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
   db: {
     schema: 'public',
   },
+  debug: {
+    // Enable logging for database operations to help diagnose issues
+    logPostgRESTErrors: true,
+    logQueryParameters: true,
+    logSql: true
+  },
 });
