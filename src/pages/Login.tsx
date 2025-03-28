@@ -1,214 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { supabase, forceSignOut } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useAuthFlow } from '@/hooks/useAuthFlow';
 
 const Login = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const [sessionCheckTimedOut, setSessionCheckTimedOut] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const handleCancelSessionCheck = () => {
-    setSessionCheckTimedOut(true);
-    setIsCheckingSession(false);
-  };
-
-  // Check if user is already logged in
-  useEffect(() => {
-    let mounted = true;
-    let sessionCheckTimeout;
-    
-    const checkSession = async () => {
-      try {
-        if (!mounted) return;
-        
-        // Set a timeout to prevent hanging on session check
-        sessionCheckTimeout = setTimeout(() => {
-          if (mounted && isCheckingSession) {
-            console.log("Session check timed out");
-            setSessionCheckTimedOut(true);
-            setIsCheckingSession(false);
-          }
-        }, 10000); // 10 second timeout
-        
-        console.log("Checking for existing session...");
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        // Clear timeout since we got a response
-        clearTimeout(sessionCheckTimeout);
-        
-        if (session?.user && mounted) {
-          console.log("User already logged in, checking application status");
-          
-          // Check if profile exists and application is approved
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('application_status, credentials')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-          
-          console.log("Profile check results:", profile, error);
-            
-          if (profile && profile.application_status === 'approved') {
-            // Approved user, redirect to appropriate dashboard
-            console.log("User is approved, redirecting to dashboard");
-            
-            // Redirect based on credentials
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
-            }
-          } else if (profile && profile.application_status === 'rejected') {
-            // Rejected user, show notification and sign out
-            console.log("User was rejected, showing notification");
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await forceSignOut();
-            setIsCheckingSession(false);
-          } else {
-            // User exists but application is pending or other status
-            console.log("User exists but application is pending, redirecting to signup");
-            navigate('/signup');
-          }
-        } else if (mounted) {
-          console.log("No authenticated user found");
-          setIsCheckingSession(false);
-        }
-      } catch (error) {
-        // Clear timeout if there's an error
-        clearTimeout(sessionCheckTimeout);
-        
-        console.error("Error checking session:", error);
-        if (mounted) {
-          setIsCheckingSession(false);
-        }
-      }
-    };
-    
-    checkSession();
-    
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed in Login:", event, session?.user?.email);
-        
-        if (!mounted) return;
-        
-        // Clear timeout when auth state changes
-        clearTimeout(sessionCheckTimeout);
-        
-        // Defer Supabase calls with setTimeout to avoid deadlocks
-        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
-          setTimeout(async () => {
-            if (!mounted) return;
-            
-            try {
-              // User has signed in, check their profile status
-              const { data: profile, error } = await supabase
-                .from('user_profiles')
-                .select('application_status, credentials')
-                .eq('user_id', session.user.id)
-                .maybeSingle();
-              
-              console.log("Auth change profile check:", profile, error);
-                
-              if (profile && profile.application_status === 'approved') {
-                // Approved user, redirect to dashboard
-                toast({
-                  title: "Login successful",
-                  description: "Welcome back!",
-                });
-                
-                // Redirect based on credentials
-                if (profile.credentials === 'supervisor') {
-                  navigate('/supervisor');
-                } else {
-                  navigate('/dashboard');
-                }
-              } else if (profile && profile.application_status === 'rejected') {
-                // Rejected user, show notification and sign out
-                toast({
-                  title: "Application Rejected",
-                  description: "Unfortunately, your application didn't meet our qualifications.",
-                  variant: "destructive",
-                });
-                await forceSignOut();
-              } else {
-                // User exists but not approved or no profile yet, redirect to signup
-                console.log("User not approved or no profile, redirecting to signup");
-                navigate('/signup');
-              }
-            } catch (error) {
-              console.error('Error checking profile after auth state change:', error);
-            }
-          }, 0);
-        }
-      }
-    );
-    
-    // Clean up
-    return () => {
-      mounted = false;
-      clearTimeout(sessionCheckTimeout);
-      subscription.unsubscribe();
-    };
-  }, [navigate, toast, isCheckingSession]);
-  
-  const handleGoogleLogin = async () => {
-    try {
-      setIsLoading(true);
-      setErrorMessage('');
-      
-      // Get the URL of the current page for proper redirect
-      const siteUrl = window.location.origin;
-      
-      console.log("Starting Google login flow");
-      console.log("Site URL:", siteUrl);
-      
-      // Force logout first to ensure Google auth prompt appears
-      await supabase.auth.signOut();
-      
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${siteUrl}/login`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account consent', // Force Google to show account selection
-          }
-        },
-      });
-
-      if (error) throw error;
-      
-      console.log("OAuth flow initiated, awaiting redirect");
-      
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-      setErrorMessage(error.message || 'Failed to sign in with Google');
-      toast({
-        title: "Login failed",
-        description: error.message || "Failed to sign in with Google",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-    }
-  };
+  const { 
+    isLoading, 
+    isCheckingSession, 
+    sessionCheckTimedOut, 
+    handleCancelSessionCheck, 
+    handleGoogleSignIn 
+  } = useAuthFlow();
 
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
-      {/* Left Side - Visual */}
-      <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
-        {/* Geometric shapes - adjusted to not overlap */}
+      {/* Left side - Visual */}
+      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -221,29 +30,17 @@ const Login = () => {
             Back to Home
           </Link>
 
-          <h2 className="text-3xl font-bold mb-6 text-white">Welcome back!</h2>
-          <p className="text-white/80">Log in to access your dashboard and manage your calls.</p>
+          <h2 className="text-3xl font-bold mb-6 text-white">Welcome back to ApoLead</h2>
+          <p className="text-white/80 mb-4">Sign in to access your dashboard and continue your work.</p>
         </div>
         
-        {/* Testimonial */}
-        <div className="mt-auto relative z-10">
-          <div className="bg-indigo-800 bg-opacity-70 rounded-lg p-5 mb-8">
-            <p className="text-sm italic mb-3 text-white">"The platform has transformed my career as a call center agent. The tools and resources provided make handling calls much more efficient."</p>
-            <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-2">
-                S
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-white">Sarah Johnson</p>
-              </div>
-            </div>
-          </div>
+        <div className="mt-auto pt-4 text-sm opacity-75">
+          <p>For assistance, please contact support@apolead.com</p>
         </div>
       </div>
       
-      {/* Right Side - Form */}
+      {/* Right side - Form */}
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
-        {/* Back to Home Link (Mobile Only) */}
         <div className="block md:hidden mb-8">
           <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -254,17 +51,16 @@ const Login = () => {
         </div>
       
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-          {/* Logo */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
               <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
             </h2>
           </div>
 
-          <h1 className="text-2xl font-bold mb-2 text-center">Sign in</h1>
-          <p className="text-gray-600 mb-8 text-center">Sign in to your account</p>
+          <h1 className="text-2xl font-bold mb-2 text-center">Sign In</h1>
+          <p className="text-gray-600 mb-8 text-center">Access your account</p>
           
-          {isCheckingSession ? (
+          {isCheckingSession && (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
               <p className="text-gray-600 mb-2">Checking login status...</p>
@@ -279,26 +75,13 @@ const Login = () => {
                 Cancel
               </Button>
             </div>
-          ) : (
+          )}
+          
+          {!isCheckingSession && (
             <>
-              {/* Form error - ENHANCED: make error more visible */}
-              {errorMessage && <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm">{errorMessage}</p>
-                    </div>
-                  </div>
-                </div>}
-              
-              {/* Google Login Button */}
               <Button 
                 className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 transition py-6 mb-6"
-                onClick={handleGoogleLogin}
+                onClick={handleGoogleSignIn}
                 disabled={isLoading}
               >
                 {isLoading ? (
