@@ -17,5 +17,14 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     detectSessionInUrl: true,
     flowType: 'pkce', // Changed from 'implicit' to 'pkce' for more secure flow
     debug: true // Enable debugging for auth issues
+  },
+  global: {
+    fetch: (...args) => {
+      const [url, options = {}] = args;
+      if (typeof url === 'string' && url.includes('/auth/v1/token')) {
+        console.log('[Supabase Auth] Refreshing token');
+      }
+      return fetch(...args);
+    }
   }
 });

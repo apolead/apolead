@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { toast } from "sonner";
 
 interface UserProfile {
   id: string;
@@ -93,21 +93,37 @@ const SupervisorDashboard = () => {
     };
     
     const getUserProfiles = async () => {
-      // Get all profiles that are not supervisors
-      // Removed the 'credentials' filter to fetch all profiles
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .neq('credentials', 'supervisor') // Only exclude supervisors
-        .order('application_date', { ascending: false });
-      
-      if (data) {
-        setUserProfiles(data);
-        console.log('Fetched profiles:', data);
-      }
-      
-      if (error) {
-        console.error('Error fetching user profiles:', error);
+      try {
+        // Debug log to see if we're attempting to fetch
+        console.log('Attempting to fetch user profiles');
+        
+        // Get all profiles, including those with null credentials
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .order('application_date', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching user profiles:', error);
+          toast.error('Failed to load profiles');
+          return;
+        }
+        
+        if (data) {
+          // Debug log to see what we're getting back
+          console.log('Fetched profiles raw data:', data);
+          
+          // Filter out supervisor profiles in the client code
+          const nonSupervisorProfiles = data.filter(profile => 
+            profile.credentials !== 'supervisor'
+          );
+          
+          console.log('Filtered non-supervisor profiles:', nonSupervisorProfiles);
+          setUserProfiles(nonSupervisorProfiles);
+        }
+      } catch (error) {
+        console.error('Exception when fetching profiles:', error);
+        toast.error('Failed to load profiles');
       }
     };
     
@@ -193,8 +209,11 @@ const SupervisorDashboard = () => {
 
       if (error) {
         console.error('Error updating profile:', error);
+        toast.error('Failed to update profile');
         return;
       }
+
+      toast.success('Profile updated successfully');
 
       // Update the user profiles list
       setUserProfiles(prevProfiles => 
@@ -215,18 +234,21 @@ const SupervisorDashboard = () => {
       setIsEditDialogOpen(false);
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Something went wrong');
     }
   };
   
   const filteredProfiles = userProfiles.filter(profile => {
+    if (!searchTerm.trim()) return true;
+    
     const fullName = `${profile.first_name} ${profile.last_name}`.toLowerCase();
     const searchLower = searchTerm.toLowerCase();
     
     return (
       fullName.includes(searchLower) || 
-      profile.gov_id_number?.toLowerCase().includes(searchLower) ||
-      profile.application_status?.toLowerCase().includes(searchLower) ||
-      profile.email?.toLowerCase().includes(searchLower)
+      (profile.gov_id_number && profile.gov_id_number.toLowerCase().includes(searchLower)) ||
+      (profile.application_status && profile.application_status.toLowerCase().includes(searchLower)) ||
+      (profile.email && profile.email.toLowerCase().includes(searchLower))
     );
   });
 
@@ -244,7 +266,9 @@ const SupervisorDashboard = () => {
   
   // CSS classes for status display
   const getStatusClass = (status: string) => {
-    switch (status) {
+    if (!status) return '';
+    
+    switch (status.toLowerCase()) {
       case 'approved':
         return 'status-approved';
       case 'rejected':
@@ -259,7 +283,9 @@ const SupervisorDashboard = () => {
   
   // Status icon display
   const getStatusIcon = (status: string) => {
-    switch (status) {
+    if (!status) return 'fa-question-circle';
+    
+    switch (status.toLowerCase()) {
       case 'approved':
         return 'fa-check-circle';
       case 'rejected':
@@ -270,6 +296,12 @@ const SupervisorDashboard = () => {
       default:
         return 'fa-question-circle';
     }
+  };
+
+  // Image handler with fallback
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    console.log('Image failed to load');
+    e.currentTarget.src = 'https://placehold.co/600x400?text=Image+Not+Available';
   };
   
   return (
@@ -1020,10 +1052,7 @@ const SupervisorDashboard = () => {
                 src={currentImage} 
                 alt={`${imageType} document`} 
                 style={{ maxWidth: '100%', maxHeight: '500px', borderRadius: '8px' }}
-                onError={(e) => {
-                  console.error('Image failed to load');
-                  e.currentTarget.src = 'https://placehold.co/600x400?text=Image+Not+Available';
-                }}
+                onError={handleImageError}
               />
             ) : (
               <div style={{ padding: '40px', backgroundColor: '#f8fafc', borderRadius: '8px', color: '#64748b' }}>
