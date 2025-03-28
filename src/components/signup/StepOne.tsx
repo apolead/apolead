@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -130,7 +129,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
         </div>
       </div>
       
-      <TermsDialog open={isTermsDialogOpen} onOpenChange={setIsTermsDialogOpen} />
+      <TermsDialog isOpen={isTermsDialogOpen} onClose={closeTermsDialog} />
     </div>
   );
 };
