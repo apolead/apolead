@@ -33,7 +33,7 @@ serve(async (req) => {
 
     if (!user_id) {
       console.log('Edge Function: Missing user_id parameter');
-      // Return "approved" even when user_id is missing
+      // Always return "approved" when user_id is missing
       return new Response(
         JSON.stringify("approved"),
         { 
@@ -55,7 +55,7 @@ serve(async (req) => {
 
       if (error) {
         console.error('Error fetching application status directly:', error);
-        // Return "approved" as default in case of error
+        // Always return "approved" in case of error
         return new Response(
           JSON.stringify("approved"),
           { 
@@ -77,7 +77,7 @@ serve(async (req) => {
       );
     } catch (innerError) {
       console.error('Error in direct database query:', innerError);
-      // Return "approved" as default in case of any error
+      // Always return "approved" in case of any error
       return new Response(
         JSON.stringify("approved"),
         { 
@@ -88,7 +88,7 @@ serve(async (req) => {
     }
   } catch (error) {
     console.error('Server error:', error);
-    // Return "approved" as default in case of error to ensure users can access the dashboard
+    // Always return "approved" in case of error to ensure users can access the dashboard
     return new Response(
       JSON.stringify("approved"),
       { 

@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isApproved, setIsApproved] = useState(false);
+  const [isApproved, setIsApproved] = useState(true); // Default to true to prevent login issues
   const [userCredentials, setUserCredentials] = useState('agent');
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
@@ -15,170 +15,149 @@ export const useAuth = () => {
 
   useEffect(() => {
     let mounted = true;
+    let authSubscription = null;
     
-    // Set up the auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        
-        if (!mounted) return;
-        
-        if (session) {
-          setUser(session.user);
-          setIsAuthenticated(true);
+    const initializeAuth = async () => {
+      // Set up the auth state listener first
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          console.log('Auth state changed:', event, session?.user?.email);
           
-          // DEFAULT TO APPROVED STATUS - even before checking
-          setIsApproved(true);
+          if (!mounted) return;
           
-          // Avoid Supabase deadlocks with setTimeout
-          setTimeout(async () => {
-            if (!mounted) return;
+          if (session) {
+            setUser(session.user);
+            setIsAuthenticated(true);
+            setIsApproved(true); // Default to approved to ensure dashboard access
             
-            try {
-              // Use the edge functions to get user data
-              const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
-                body: { user_id: session.user.id }
-              });
+            // Avoid Supabase deadlocks with setTimeout
+            setTimeout(async () => {
+              if (!mounted) return;
               
-              const statusResponse = await supabase.functions.invoke('get_application_status', {
-                body: { user_id: session.user.id }
-              });
-              
-              console.log('Credentials response:', credentialsResponse);
-              console.log('Status response:', statusResponse);
-              
-              // If there's a credentials error, we default to agent and approved
-              if (credentialsResponse.error) {
-                console.error('Error getting credentials:', credentialsResponse.error);
-                setUserCredentials('agent');
-                setIsLoading(false);
-                return;
-              }
-              
-              // If there's a status error, we default to approved
-              if (statusResponse.error) {
-                console.error('Error getting status:', statusResponse.error);
-                setUserCredentials(credentialsResponse.data || 'agent');
-                setIsLoading(false);
-                return;
-              }
-              
-              const credentials = credentialsResponse.data;
-              const appStatus = statusResponse.data;
-              
-              console.log('Parsed credentials:', credentials);
-              console.log('Parsed application status:', appStatus);
-              
-              // Set user credentials
-              setUserCredentials(credentials || 'agent');
-              
-              // Only handle the rejected status specifically
-              if (appStatus === 'rejected') {
-                toast({
-                  title: "Application Rejected",
-                  description: "Unfortunately, your application didn't meet our qualifications.",
-                  variant: "destructive",
+              try {
+                // Use the edge functions to get user data
+                const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
+                  body: { user_id: session.user.id }
                 });
-                await supabase.auth.signOut();
-                setIsAuthenticated(false);
-                setIsApproved(false);
-                setUserCredentials('agent');
+                
+                const statusResponse = await supabase.functions.invoke('get_application_status', {
+                  body: { user_id: session.user.id }
+                });
+                
+                console.log('Credentials response:', credentialsResponse);
+                console.log('Status response:', statusResponse);
+                
+                // If there's a credentials error, we default to agent and approved
+                if (credentialsResponse.error) {
+                  console.error('Error getting credentials:', credentialsResponse.error);
+                  setUserCredentials('agent');
+                  setIsLoading(false);
+                  return;
+                }
+                
+                // Set user credentials
+                setUserCredentials(credentialsResponse.data || 'agent');
+                
+                // Only handle the rejected status specifically
+                if (statusResponse.data === 'rejected') {
+                  toast({
+                    title: "Application Rejected",
+                    description: "Unfortunately, your application didn't meet our qualifications.",
+                    variant: "destructive",
+                  });
+                  await supabase.auth.signOut();
+                  setIsAuthenticated(false);
+                  setIsApproved(false);
+                  setUserCredentials('agent');
+                  navigate('/login');
+                }
+                
+                // For all other statuses (approved, pending, null, etc), allow access to the dashboard
+                
+              } catch (error) {
+                console.error('Error checking profile:', error);
+                // Default to approved on error for better UX
+              } finally {
+                if (mounted) setIsLoading(false);
               }
-              
-              // For all other statuses (approved, pending, null, etc), allow access to the dashboard
-              
-            } catch (error) {
-              console.error('Error checking profile:', error);
-              // Default to approved on error for better UX
-            } finally {
-              if (mounted) setIsLoading(false);
+            }, 0);
+          } else {
+            // Not authenticated
+            setUser(null);
+            setIsAuthenticated(false);
+            setIsApproved(false);
+            setUserCredentials('agent');
+            setIsLoading(false);
+            
+            // Check if on protected route and redirect if needed
+            const currentPath = window.location.pathname;
+            if (currentPath.startsWith('/dashboard') || currentPath.startsWith('/supervisor')) {
+              navigate('/login');
             }
-          }, 0);
-        } else {
-          // Not authenticated
-          setUser(null);
-          setIsAuthenticated(false);
-          setIsApproved(false);
-          setUserCredentials('agent');
-          setIsLoading(false);
+          }
+        }
+      );
+      
+      authSubscription = subscription;
+
+      // Then check for existing session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        setUser(session.user);
+        setIsAuthenticated(true);
+        setIsApproved(true); // DEFAULT TO APPROVED STATUS
+        
+        try {
+          const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
+            body: { user_id: session.user.id }
+          });
           
-          // Check if on protected route and redirect if needed
-          const currentPath = window.location.pathname;
-          if (currentPath === '/dashboard' || currentPath === '/supervisor') {
+          // Set credentials if available
+          if (!credentialsResponse.error) {
+            setUserCredentials(credentialsResponse.data || 'agent');
+          }
+          
+          // Only check for rejected status
+          const statusResponse = await supabase.functions.invoke('get_application_status', {
+            body: { user_id: session.user.id }
+          });
+          
+          if (!statusResponse.error && statusResponse.data === 'rejected') {
+            toast({
+              title: "Application Rejected",
+              description: "Unfortunately, your application didn't meet our qualifications.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
+            setIsAuthenticated(false);
+            setIsApproved(false);
+            setUserCredentials('agent');
             navigate('/login');
           }
+          
+        } catch (error) {
+          console.error('Error checking initial session profile:', error);
+          // Just log error, don't change default approved status
         }
+      } else {
+        // Not authenticated
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsApproved(false);
+        setUserCredentials('agent');
       }
-    );
-
-    // Then check for existing session
-    const checkSession = async () => {
-      if (!mounted) return;
       
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          setUser(session.user);
-          setIsAuthenticated(true);
-          
-          // DEFAULT TO APPROVED STATUS - even before checking
-          setIsApproved(true);
-          
-          // The rest is for tracking purposes only
-          try {
-            const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
-              body: { user_id: session.user.id }
-            });
-            
-            const statusResponse = await supabase.functions.invoke('get_application_status', {
-              body: { user_id: session.user.id }
-            });
-            
-            console.log('Initial credentials response:', credentialsResponse);
-            console.log('Initial status response:', statusResponse);
-            
-            // Set credentials if available
-            if (!credentialsResponse.error) {
-              setUserCredentials(credentialsResponse.data || 'agent');
-            }
-            
-            // Only check for rejected status
-            if (!statusResponse.error && statusResponse.data === 'rejected') {
-              toast({
-                title: "Application Rejected",
-                description: "Unfortunately, your application didn't meet our qualifications.",
-                variant: "destructive",
-              });
-              await supabase.auth.signOut();
-              setIsAuthenticated(false);
-              setIsApproved(false);
-              setUserCredentials('agent');
-            }
-            
-          } catch (error) {
-            console.error('Error checking initial session profile:', error);
-            // Just log error, don't change default approved status
-          }
-        } else {
-          // Not authenticated
-          setUser(null);
-          setIsAuthenticated(false);
-          setIsApproved(false);
-          setUserCredentials('agent');
-        }
-      } catch (error) {
-        console.error('Error checking session:', error);
-      } finally {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     };
     
-    checkSession();
+    initializeAuth();
     
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, [navigate, toast]);
 

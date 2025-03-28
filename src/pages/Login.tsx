@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +11,20 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/dashboard');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
 
   const handleEmailChange = e => {
     setEmail(e.target.value);
@@ -32,7 +44,6 @@ const Login = () => {
   const handleLogin = async e => {
     e.preventDefault();
 
-    // Validate email domain
     const emailError = validateEmail(email);
     if (emailError) {
       toast({
@@ -44,6 +55,7 @@ const Login = () => {
     }
 
     setIsLoading(true);
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -59,27 +71,9 @@ const Login = () => {
 
       console.log('Login successful, user ID:', data.user.id);
       
-      // Immediately navigate to dashboard - don't wait for status checks
-      // We'll default to the dashboard and let the route protection handle redirections if needed
-      navigate('/dashboard');
+      setIsRedirecting(true);
       
-      // The rest of this code is just for logging purposes but doesn't affect navigation
-      try {
-        // Get user credentials and application status using edge functions
-        const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
-          body: { user_id: data.user.id }
-        });
-        
-        const statusResponse = await supabase.functions.invoke('get_application_status', {
-          body: { user_id: data.user.id }
-        });
-        
-        console.log('Credentials response:', credentialsResponse);
-        console.log('Status response:', statusResponse);
-      } catch (error) {
-        console.error('Error checking user status:', error);
-        // Error is just logged, not affecting navigation
-      }
+      navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
       toast({
@@ -87,15 +81,12 @@ const Login = () => {
         description: error.message || "An error occurred during login",
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
   };
 
   return <div className="flex flex-col md:flex-row w-full h-screen">
-      {/* Left Side - Visual */}
       <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
-        {/* Geometric shapes - adjusted to not overlap */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -112,7 +103,6 @@ const Login = () => {
           <p className="text-white/80">Log in to access your dashboard and manage your calls.</p>
         </div>
         
-        {/* Testimonial */}
         <div className="mt-auto relative z-10">
           <div className="bg-indigo-800 bg-opacity-70 rounded-lg p-5 mb-8">
             <p className="text-sm italic mb-3 text-white">"The platform has transformed my career as a call center agent. The tools and resources provided make handling calls much more efficient."</p>
@@ -128,9 +118,7 @@ const Login = () => {
         </div>
       </div>
       
-      {/* Right Side - Form */}
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
-        {/* Back to Home Link (Mobile Only) */}
         <div className="block md:hidden mb-8">
           <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -141,7 +129,6 @@ const Login = () => {
         </div>
       
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-          {/* Logo */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
               <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
@@ -162,7 +149,7 @@ const Login = () => {
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={handlePasswordChange} required />
             </div>
             
-            <Button type="submit" disabled={isLoading} className="w-full py-6 text-neutral-50">
+            <Button type="submit" disabled={isLoading || isRedirecting} className="w-full py-6 text-neutral-50">
               {isLoading ? <div className="flex items-center justify-center">
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Signing in...
