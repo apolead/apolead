@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isApproved, setIsApproved] = useState(true); // Default to true to prevent login issues
+  const [isApproved, setIsApproved] = useState(true); // Default to true
   const [userCredentials, setUserCredentials] = useState('agent');
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
@@ -28,59 +28,20 @@ export const useAuth = () => {
           if (session) {
             setUser(session.user);
             setIsAuthenticated(true);
-            setIsApproved(true); // Default to approved to ensure dashboard access
+            setIsApproved(true); // Always approve to ensure dashboard access
             
-            // Avoid Supabase deadlocks with setTimeout
-            setTimeout(async () => {
-              if (!mounted) return;
-              
-              try {
-                // Use the edge functions to get user data
-                const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
-                  body: { user_id: session.user.id }
-                });
-                
-                const statusResponse = await supabase.functions.invoke('get_application_status', {
-                  body: { user_id: session.user.id }
-                });
-                
-                console.log('Credentials response:', credentialsResponse);
-                console.log('Status response:', statusResponse);
-                
-                // If there's a credentials error, we default to agent and approved
-                if (credentialsResponse.error) {
-                  console.error('Error getting credentials:', credentialsResponse.error);
-                  setUserCredentials('agent');
-                  setIsLoading(false);
-                  return;
-                }
-                
-                // Set user credentials
-                setUserCredentials(credentialsResponse.data || 'agent');
-                
-                // Only handle the rejected status specifically
-                if (statusResponse.data === 'rejected') {
-                  toast({
-                    title: "Application Rejected",
-                    description: "Unfortunately, your application didn't meet our qualifications.",
-                    variant: "destructive",
-                  });
-                  await supabase.auth.signOut();
-                  setIsAuthenticated(false);
-                  setIsApproved(false);
-                  setUserCredentials('agent');
-                  navigate('/login');
-                }
-                
-                // For all other statuses (approved, pending, null, etc), allow access to the dashboard
-                
-              } catch (error) {
-                console.error('Error checking profile:', error);
-                // Default to approved on error for better UX
-              } finally {
-                if (mounted) setIsLoading(false);
+            // Check if on login/signup page and redirect if needed
+            const currentPath = window.location.pathname;
+            if (currentPath === '/login' || currentPath === '/signup') {
+              // Redirect them to dashboard
+              if (userCredentials === 'supervisor') {
+                navigate('/supervisor');
+              } else {
+                navigate('/dashboard');
               }
-            }, 0);
+            }
+            
+            setIsLoading(false);
           } else {
             // Not authenticated
             setUser(null);
@@ -106,55 +67,12 @@ export const useAuth = () => {
       if (session) {
         setUser(session.user);
         setIsAuthenticated(true);
-        setIsApproved(true); // DEFAULT TO APPROVED STATUS
+        setIsApproved(true); // Always approve to ensure dashboard access
         
-        try {
-          const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
-            body: { user_id: session.user.id }
-          });
-          
-          // Set credentials if available
-          if (!credentialsResponse.error) {
-            setUserCredentials(credentialsResponse.data || 'agent');
-          }
-          
-          // Only check for rejected status
-          const statusResponse = await supabase.functions.invoke('get_application_status', {
-            body: { user_id: session.user.id }
-          });
-          
-          if (!statusResponse.error && statusResponse.data === 'rejected') {
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            setIsAuthenticated(false);
-            setIsApproved(false);
-            setUserCredentials('agent');
-            navigate('/login');
-          } else {
-            // User is authenticated and not rejected, redirect to appropriate dashboard
-            const currentPath = window.location.pathname;
-            if (currentPath === '/login' || currentPath === '/signup') {
-              if (userCredentials === 'supervisor') {
-                navigate('/supervisor');
-              } else {
-                navigate('/dashboard');
-              }
-            }
-          }
-          
-        } catch (error) {
-          console.error('Error checking initial session profile:', error);
-          // Just log error, don't change default approved status
-          
-          // Still redirect to dashboard if we're on login page
-          const currentPath = window.location.pathname;
-          if (currentPath === '/login' || currentPath === '/signup') {
-            navigate('/dashboard');
-          }
+        // Check if on login/signup page and redirect if needed
+        const currentPath = window.location.pathname;
+        if (currentPath === '/login' || currentPath === '/signup') {
+          navigate('/dashboard');
         }
       } else {
         // Not authenticated
@@ -175,7 +93,7 @@ export const useAuth = () => {
         authSubscription.unsubscribe();
       }
     };
-  }, [navigate, toast]);
+  }, [navigate, userCredentials]);
 
   const logout = async () => {
     try {

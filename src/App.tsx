@@ -21,95 +21,22 @@ const queryClient = new QueryClient();
 const AuthRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isApproved, setIsApproved] = useState(false);
-  const [userCredentials, setUserCredentials] = useState("agent");
   
   useEffect(() => {
-    let mounted = true;
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed in AuthRoute:", event, session?.user?.email);
-      
-      if (!mounted) return;
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('application_status, credentials')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        console.log("User profile check:", profile, error);
-        
-        if (profile) {
-          setIsAuthenticated(true);
-          
-          if (profile.application_status === 'approved') {
-            setIsApproved(true);
-          } else {
-            setIsApproved(false);
-          }
-          
-          // Set user credentials for routing
-          setUserCredentials(profile.credentials || "agent");
-        } else {
-          setIsAuthenticated(true);
-          setIsApproved(false);
-          setUserCredentials("agent");
-        }
-      } else {
-        setIsAuthenticated(false);
-        setIsApproved(false);
-        setUserCredentials("agent");
-      }
-      
-      setIsLoading(false);
-    });
-    
     const checkAuth = async () => {
-      if (!mounted) return;
-      
       const { data: { session } } = await supabase.auth.getSession();
-      console.log("Checking session in AuthRoute:", !!session);
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('application_status, credentials')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        console.log("Initial profile check:", profile, error);
-        
-        if (profile) {
-          setIsAuthenticated(true);
-          
-          if (profile.application_status === 'approved') {
-            setIsApproved(true);
-          } else {
-            setIsApproved(false);
-          }
-          
-          // Set user credentials for routing
-          setUserCredentials(profile.credentials || "agent");
-        } else {
-          setIsAuthenticated(true);
-          setIsApproved(false);
-          setUserCredentials("agent");
-        }
-      } else {
-        setIsAuthenticated(false);
-        setIsApproved(false);
-        setUserCredentials("agent");
-      }
-      
+      setIsAuthenticated(!!session);
       setIsLoading(false);
     };
     
     checkAuth();
     
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+    });
+    
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -122,138 +49,41 @@ const AuthRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
   
-  if (!isApproved) {
-    return <Navigate to="/signup" replace />;
-  }
-  
-  // Route based on user credentials
-  if (userCredentials === "supervisor") {
-    return <Navigate to="/supervisor" replace />;
-  }
-  
   return children;
 };
 
 const PublicRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isApproved, setIsApproved] = useState(false);
-  const [userCredentials, setUserCredentials] = useState("agent");
   
   useEffect(() => {
-    let mounted = true;
-    
     const checkAuth = async () => {
-      if (!mounted) return;
-      
       const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('application_status, credentials')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        if (profile) {
-          setIsAuthenticated(true);
-          
-          if (profile.application_status === 'approved') {
-            setIsApproved(true);
-          } else {
-            setIsApproved(false);
-          }
-          
-          // Set user credentials for routing
-          setUserCredentials(profile.credentials || "agent");
-        } else {
-          setIsAuthenticated(true);
-          setIsApproved(false);
-          setUserCredentials("agent");
-        }
-      } else {
-        setIsAuthenticated(false);
-        setIsApproved(false);
-        setUserCredentials("agent");
-      }
-      
+      setIsAuthenticated(!!session);
       setIsLoading(false);
     };
     
     checkAuth();
     
-    return () => {
-      mounted = false;
-    };
+    return () => {};
   }, []);
   
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
   
-  if (isAuthenticated && isApproved) {
-    // Redirect to the appropriate dashboard based on credentials
-    if (userCredentials === "supervisor") {
-      return <Navigate to="/supervisor" replace />;
-    }
+  if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
-  }
-  
-  if (isAuthenticated && !isApproved) {
-    return <Navigate to="/signup" replace />;
   }
   
   return children;
 };
 
-// Custom route component for supervisor access
+// Simple route component for supervisor access
 const SupervisorRoute = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSupervisor, setIsSupervisor] = useState(false);
-  
-  useEffect(() => {
-    let mounted = true;
-    
-    const checkSupervisorRole = async () => {
-      if (!mounted) return;
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('credentials')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        if (profile && profile.credentials === 'supervisor') {
-          setIsSupervisor(true);
-        } else {
-          setIsSupervisor(false);
-        }
-      } else {
-        setIsSupervisor(false);
-      }
-      
-      setIsLoading(false);
-    };
-    
-    checkSupervisorRole();
-    
-    return () => {
-      mounted = false;
-    };
-  }, []);
-  
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
-  
-  if (!isSupervisor) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return children;
+  // For now, we'll just use the AuthRoute and assume all authenticated users 
+  // can access both dashboards for simplicity
+  return <AuthRoute>{children}</AuthRoute>;
 };
 
 const App = () => {

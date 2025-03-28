@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,6 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -20,22 +18,8 @@ const Login = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // Check user credentials to determine which dashboard to redirect to
-        try {
-          const { data: credentialsData, error: credentialsError } = await supabase.functions.invoke('get_user_credentials', {
-            body: { user_id: session.user.id }
-          });
-          
-          if (!credentialsError && credentialsData === 'supervisor') {
-            navigate('/supervisor');
-          } else {
-            navigate('/dashboard');
-          }
-        } catch (error) {
-          console.error('Error checking credentials:', error);
-          // Default to agent dashboard
-          navigate('/dashboard');
-        }
+        // If already logged in, redirect to dashboard
+        navigate('/dashboard');
       }
     };
     
@@ -85,26 +69,8 @@ const Login = () => {
         description: "Welcome back!"
       });
 
-      console.log('Login successful, user ID:', data.user.id);
-      
-      setIsRedirecting(true);
-      
-      // Check user credentials to determine which dashboard to redirect to
-      try {
-        const { data: credentialsData, error: credentialsError } = await supabase.functions.invoke('get_user_credentials', {
-          body: { user_id: data.user.id }
-        });
-        
-        if (!credentialsError && credentialsData === 'supervisor') {
-          navigate('/supervisor');
-        } else {
-          navigate('/dashboard');
-        }
-      } catch (error) {
-        console.error('Error checking credentials:', error);
-        // Default to agent dashboard
-        navigate('/dashboard');
-      }
+      // Simplified redirect - always go to dashboard
+      navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
       toast({
@@ -180,7 +146,7 @@ const Login = () => {
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={handlePasswordChange} required />
             </div>
             
-            <Button type="submit" disabled={isLoading || isRedirecting} className="w-full py-6 text-neutral-50">
+            <Button type="submit" disabled={isLoading} className="w-full py-6 text-neutral-50">
               {isLoading ? <div className="flex items-center justify-center">
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Signing in...
