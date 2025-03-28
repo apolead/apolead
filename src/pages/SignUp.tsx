@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import StepZero from '@/components/signup/StepZero';
 import StepOne from '@/components/signup/StepOne';
 import StepTwo from '@/components/signup/StepTwo';
@@ -266,20 +266,10 @@ const SignUp = () => {
     }
   };
   
-  const handleBackToHome = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
-  };
-  
   const renderStep = () => {
     switch (currentStep) {
       case 0:
-        return <StepZero 
-          userData={userData} 
-          updateUserData={updateUserData} 
-          nextStep={nextStep} 
-          handleBackToHome={handleBackToHome} 
-        />;
+        return <StepZero userData={userData} updateUserData={updateUserData} nextStep={nextStep} />;
       case 1:
         return <StepOne 
           userData={userData} 
@@ -287,34 +277,15 @@ const SignUp = () => {
           nextStep={nextStep} 
           prevStep={prevStep}
           isCheckingGovId={isCheckingGovId}
-          handleBackToHome={handleBackToHome}
         />;
       case 2:
-        return <StepTwo 
-          userData={userData} 
-          updateUserData={updateUserData} 
-          nextStep={nextStep} 
-          prevStep={prevStep} 
-          handleBackToHome={handleBackToHome}
-        />;
+        return <StepTwo userData={userData} updateUserData={updateUserData} nextStep={nextStep} prevStep={prevStep} />;
       case 3:
-        return <StepThree 
-          userData={userData} 
-          updateUserData={updateUserData} 
-          handleSubmit={handleSubmit} 
-          prevStep={prevStep} 
-          isSubmitting={isSubmitting} 
-          handleBackToHome={handleBackToHome}
-        />;
+        return <StepThree userData={userData} updateUserData={updateUserData} handleSubmit={handleSubmit} prevStep={prevStep} isSubmitting={isSubmitting} />;
       case 4:
         return <ConfirmationScreen />;
       default:
-        return <StepZero 
-          userData={userData} 
-          updateUserData={updateUserData} 
-          nextStep={nextStep} 
-          handleBackToHome={handleBackToHome}
-        />;
+        return <StepZero userData={userData} updateUserData={updateUserData} nextStep={nextStep} />;
     }
   };
   
