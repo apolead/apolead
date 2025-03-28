@@ -49,10 +49,10 @@ serve(async (req) => {
     if (error) {
       console.error('Error fetching user credentials:', error);
       return new Response(
-        JSON.stringify({ error: error.message }),
+        JSON.stringify("agent"),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
+          status: 200
         }
       );
     }
@@ -71,10 +71,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Server error:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify("agent"),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
+        status: 200
       }
     );
   }
