@@ -1,11 +1,10 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { idToString, profileExists, safelyAccessProfile } from '@/utils/supabaseHelpers';
+import { idToString, profileExists, safelyAccessProfile, forceSignOut } from '@/utils/supabaseHelpers';
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,132 +12,162 @@ const Login = () => {
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const initialCheckDone = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Check if user is already logged in
+  useEffect(() => {
+    if (isCheckingSession) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      timeoutRef.current = setTimeout(() => {
+        console.log("Safety timeout triggered in Login: forcing isCheckingSession to false");
+        setIsCheckingSession(false);
+      }, 5000);
+    } else if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [isCheckingSession]);
+
   useEffect(() => {
     let mounted = true;
     
     const checkSession = async () => {
       try {
-        if (!mounted) return;
+        console.log("Starting initial session check in Login");
+        setIsCheckingSession(true);
+        
+        if (!mounted) {
+          console.log("Component unmounted before session check completed");
+          return;
+        }
         
         const { data: { session } } = await supabase.auth.getSession();
-        console.log("Initial session check:", !!session, session?.user?.email);
+        console.log("Initial session check in Login:", !!session, session?.user?.email);
         
         if (session?.user && mounted) {
           console.log("User already logged in, checking application status");
-          // Use setTimeout to prevent potential deadlocks in Supabase client
-          setTimeout(() => {
-            if (mounted) {
-              handleUserAuthentication(session);
+          
+          setTimeout(async () => {
+            if (!mounted) return;
+            
+            try {
+              const { data, error } = await supabase
+                .from('user_profiles')
+                .select('application_status, credentials')
+                .eq('user_id', idToString(session.user.id))
+                .maybeSingle();
+              
+              console.log("Profile check result in Login:", data, error);
+              
+              if (error) {
+                console.error("Error checking profile in Login:", error);
+                if (mounted) {
+                  setErrorMessage("Error fetching user profile: " + error.message);
+                  setIsCheckingSession(false);
+                }
+                return;
+              }
+              
+              if (!profileExists(data)) {
+                console.log("No profile found, redirecting to signup flow");
+                if (mounted) navigate('/signup');
+                return;
+              }
+              
+              const status = safelyAccessProfile(data, 'application_status');
+              const credentials = safelyAccessProfile(data, 'credentials');
+              
+              console.log("Application status in Login:", status, "Credentials:", credentials);
+              
+              if (status === 'approved') {
+                console.log("User is approved with credentials:", credentials);
+                if (credentials === 'supervisor') {
+                  navigate('/supervisor');
+                } else {
+                  navigate('/dashboard');
+                }
+              } else if (status === 'rejected') {
+                console.log("User application was rejected");
+                toast({
+                  title: "Application Rejected",
+                  description: "Unfortunately, your application didn't meet our qualifications.",
+                  variant: "destructive",
+                });
+                await forceSignOut();
+                if (mounted) setIsCheckingSession(false);
+              } else {
+                console.log("User application is pending or incomplete, redirecting to signup");
+                if (mounted) navigate('/signup');
+              }
+            } catch (authError) {
+              console.error("Error in handleUserAuthentication:", authError);
+              if (mounted) {
+                setIsCheckingSession(false);
+              }
             }
           }, 0);
-        } else if (mounted) {
-          console.log("No active session found");
-          setIsCheckingSession(false);
-        }
-      } catch (error) {
-        console.error("Error checking session:", error);
-        if (mounted) {
-          setIsCheckingSession(false);
-        }
-      }
-    };
-    
-    // Helper function to handle user authentication and profile checking
-    const handleUserAuthentication = async (session) => {
-      console.log("Handling user authentication for:", session.user.email);
-      
-      try {
-        if (!mounted) return;
-        
-        // First check if user profile exists
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('application_status, credentials')
-          .eq('user_id', idToString(session.user.id))
-          .maybeSingle();
-        
-        console.log("Profile check result:", data, error);
-        
-        if (error) {
-          console.error("Error checking profile:", error);
+        } else {
+          console.log("No active session found in Login");
           if (mounted) {
-            setErrorMessage("Error fetching user profile: " + error.message);
             setIsCheckingSession(false);
           }
-          return;
         }
-        
-        if (!profileExists(data)) {
-          // If no profile exists, we need to redirect to signup
-          console.log("No profile found for user, redirecting to signup flow");
-          navigate('/signup');
-          return;
-        }
-        
-        // Profile exists, check application status
-        const status = safelyAccessProfile(data, 'application_status');
-        const credentials = safelyAccessProfile(data, 'credentials');
-        
-        console.log("Application status:", status, "Credentials:", credentials);
-        
-        if (status === 'approved') {
-          console.log("User is approved with credentials:", credentials);
-          // Redirect to appropriate dashboard based on credentials
-          if (credentials === 'supervisor') {
-            navigate('/supervisor');
-          } else {
-            navigate('/dashboard');
-          }
-        } else if (status === 'rejected') {
-          console.log("User application was rejected");
-          toast({
-            title: "Application Rejected",
-            description: "Unfortunately, your application didn't meet our qualifications.",
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
-          if (mounted) setIsCheckingSession(false);
-        } else {
-          // Application pending or other status, redirect to signup
-          console.log("User application is pending or incomplete, status:", status);
-          navigate('/signup');
-        }
-      } catch (authError) {
-        console.error("Error in handleUserAuthentication:", authError);
+      } catch (error) {
+        console.error("Error checking session in Login:", error);
         if (mounted) {
           setIsCheckingSession(false);
         }
       }
     };
     
-    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.email);
+        console.log("Auth state changed in Login:", event, session?.user?.email);
         
         if (!mounted) return;
         
         if (event === 'SIGNED_OUT') {
-          setIsCheckingSession(false);
+          if (mounted) setIsCheckingSession(false);
           return;
         }
         
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
-          // Use setTimeout to prevent deadlocks in Supabase client
+          setIsCheckingSession(true);
           setTimeout(() => {
-            if (mounted) handleUserAuthentication(session);
+            if (!mounted) return;
+            
+            try {
+              checkSession();
+            } catch (error) {
+              console.error("Error in auth state change handler:", error);
+              if (mounted) setIsCheckingSession(false);
+            }
           }, 0);
         }
       }
     );
     
-    // Initial check
-    checkSession();
+    if (!initialCheckDone.current) {
+      console.log("Running initial auth check in Login");
+      initialCheckDone.current = true;
+      checkSession();
+    } else {
+      console.log("Skipping redundant initial auth check in Login");
+      setIsCheckingSession(false);
+    }
     
-    // Clean up
     return () => {
+      console.log("Login component unmounting, cleaning up");
       mounted = false;
       subscription.unsubscribe();
     };
@@ -149,15 +178,13 @@ const Login = () => {
       setIsLoading(true);
       setErrorMessage('');
       
-      // Get the URL of the current page for proper redirect
       const siteUrl = window.location.origin;
-      const currentPath = '/login'; // Always redirect back to login first for proper status checking
+      const currentPath = '/login';
       
       console.log("Site URL:", siteUrl);
       console.log("Redirect path:", currentPath);
       
-      // Force logout first to ensure Google auth prompt appears
-      await supabase.auth.signOut();
+      await forceSignOut();
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -165,7 +192,7 @@ const Login = () => {
           redirectTo: `${siteUrl}${currentPath}`,
           queryParams: {
             access_type: 'offline',
-            prompt: 'select_account consent', // Force Google to show account selection
+            prompt: 'select_account consent',
           }
         },
       });
@@ -174,7 +201,7 @@ const Login = () => {
       
       console.log("OAuth flow initiated, awaiting redirect");
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing in with Google:', error);
       setErrorMessage(error.message || 'Failed to sign in with Google');
       toast({
@@ -185,24 +212,10 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-  
-  // Add safety timeout to prevent UI from being stuck in "checking" state
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (isCheckingSession) {
-        console.log("Safety timeout: forcing isCheckingSession to false");
-        setIsCheckingSession(false);
-      }
-    }, 5000); // 5 seconds timeout
-    
-    return () => clearTimeout(timeoutId);
-  }, [isCheckingSession]);
 
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
-      {/* Left Side - Visual */}
       <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
-        {/* Geometric shapes - adjusted to not overlap */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -219,7 +232,6 @@ const Login = () => {
           <p className="text-white/80">Log in to access your dashboard and manage your calls.</p>
         </div>
         
-        {/* Testimonial */}
         <div className="mt-auto relative z-10">
           <div className="bg-indigo-800 bg-opacity-70 rounded-lg p-5 mb-8">
             <p className="text-sm italic mb-3 text-white">"The platform has transformed my career as a call center agent. The tools and resources provided make handling calls much more efficient."</p>
@@ -235,9 +247,7 @@ const Login = () => {
         </div>
       </div>
       
-      {/* Right Side - Form */}
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
-        {/* Back to Home Link (Mobile Only) */}
         <div className="block md:hidden mb-8">
           <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -248,7 +258,6 @@ const Login = () => {
         </div>
       
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-          {/* Logo */}
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
               <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
@@ -258,7 +267,6 @@ const Login = () => {
           <h1 className="text-2xl font-bold mb-2 text-center">Sign in</h1>
           <p className="text-gray-600 mb-8 text-center">Sign in to your account</p>
           
-          {/* Form error */}
           {errorMessage && <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -276,9 +284,14 @@ const Login = () => {
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
               <p className="text-gray-600">Checking login status...</p>
+              <button 
+                onClick={() => setIsCheckingSession(false)}
+                className="mt-4 text-sm text-indigo-600 hover:underline"
+              >
+                Cancel and continue to login
+              </button>
             </div>
           ) : (
-            /* Google Login Button */
             <Button 
               className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 transition py-6 mb-6"
               onClick={handleGoogleLogin}
