@@ -46,6 +46,11 @@ interface UserProfile {
   service_experience: boolean;
   application_status: string;
   credentials: string;
+  agent_id?: string;
+  start_date?: string;
+  agent_standing?: string;
+  lead_source?: string;
+  supervisor_notes?: string;
 }
 
 const SupervisorDashboard = () => {
@@ -73,6 +78,10 @@ const SupervisorDashboard = () => {
   const [agentId, setAgentId] = useState('');
   const [startDate, setStartDate] = useState('');
   const [supervisorName, setSupervisorName] = useState('');
+  const [salesSkills, setSalesSkills] = useState('');
+  const [communication, setCommunication] = useState('');
+  const [interviewProcess, setInterviewProcess] = useState('');
+  const [finalDecision, setFinalDecision] = useState('');
 
   // Fetch all user profiles that are not supervisors or admins
   useEffect(() => {
@@ -82,8 +91,8 @@ const SupervisorDashboard = () => {
         const { data, error } = await supabase
           .from('user_profiles')
           .select('*')
-          .neq('credentials', 'supervisor')
-          .neq('credentials', 'admin');
+          .not('credentials', 'eq', 'supervisor')
+          .not('credentials', 'eq', 'admin');
         
         if (error) {
           throw error;
@@ -118,9 +127,9 @@ const SupervisorDashboard = () => {
     
     const lowercaseQuery = searchQuery.toLowerCase();
     const filtered = userProfiles.filter(profile => 
-      profile.first_name.toLowerCase().includes(lowercaseQuery) || 
-      profile.last_name.toLowerCase().includes(lowercaseQuery) ||
-      profile.email.toLowerCase().includes(lowercaseQuery) ||
+      profile.first_name?.toLowerCase().includes(lowercaseQuery) || 
+      profile.last_name?.toLowerCase().includes(lowercaseQuery) ||
+      profile.email?.toLowerCase().includes(lowercaseQuery) ||
       profile.gov_id_number?.toLowerCase().includes(lowercaseQuery) ||
       profile.application_status?.toLowerCase().includes(lowercaseQuery)
     );
@@ -139,8 +148,15 @@ const SupervisorDashboard = () => {
   // Function to open edit modal
   const openEditModal = (profile: UserProfile) => {
     setSelectedProfile(profile);
-    setAgentId(`AG-${Math.floor(10000 + Math.random() * 90000)}`);
-    setStartDate(format(new Date(), 'yyyy-MM-dd'));
+    setAgentId(profile.agent_id || `AG-${Math.floor(10000 + Math.random() * 90000)}`);
+    setStartDate(profile.start_date || format(new Date(), 'yyyy-MM-dd'));
+    setAgentStanding(profile.agent_standing || 'active');
+    setLeadSource(profile.lead_source || '');
+    setSupervisorNotes(profile.supervisor_notes || '');
+    setSalesSkills(profile.sales_experience ? 'Yes' : 'No');
+    setCommunication('Good'); // Default value
+    setInterviewProcess('Good'); // Default value
+    setFinalDecision(profile.application_status || 'pending');
     setSupervisorName('Sarah Johnson'); // Current logged in supervisor
     setIsEditModalOpen(true);
   };
@@ -159,6 +175,7 @@ const SupervisorDashboard = () => {
           agent_standing: agentStanding,
           agent_id: agentId,
           start_date: startDate,
+          application_status: finalDecision,
         })
         .eq('id', selectedProfile.id);
       
@@ -175,8 +192,8 @@ const SupervisorDashboard = () => {
       const { data } = await supabase
         .from('user_profiles')
         .select('*')
-        .neq('credentials', 'supervisor')
-        .neq('credentials', 'admin');
+        .not('credentials', 'eq', 'supervisor')
+        .not('credentials', 'eq', 'admin');
       
       if (data) {
         setUserProfiles(data);
@@ -311,7 +328,7 @@ const SupervisorDashboard = () => {
                         className="gap-1"
                         onClick={() => openPhotoModal('id', profile.gov_id_image, `${profile.first_name} ${profile.last_name}`)}
                       >
-                        <i className="fas fa-id-card"></i> View
+                        View ID
                       </Button>
                     </TableCell>
                     <TableCell>
@@ -321,7 +338,7 @@ const SupervisorDashboard = () => {
                         className="gap-1"
                         onClick={() => openPhotoModal('speed', profile.speed_test, `${profile.first_name} ${profile.last_name}`)}
                       >
-                        <i className="fas fa-tachometer-alt"></i> View
+                        View Test
                       </Button>
                     </TableCell>
                     <TableCell>{formatDate(profile.application_date)}</TableCell>
@@ -424,7 +441,7 @@ const SupervisorDashboard = () => {
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-teal-500 text-white p-4 -mx-6 -mt-6 rounded-t-lg">
               <User className="h-5 w-5" />
-              Edit Agent Information
+              Edit Interview Evaluation
             </DialogTitle>
           </DialogHeader>
           
@@ -449,47 +466,70 @@ const SupervisorDashboard = () => {
                 </div>
                 
                 <div>
-                  <label className="block font-medium mb-1">Agent Standing</label>
+                  <label className="block font-medium mb-1">Sales Skills Assessment</label>
                   <div className="flex gap-4 items-center mt-2">
                     <div className="flex items-center">
                       <input 
                         type="radio" 
-                        id="active" 
-                        name="standing" 
+                        id="sales-yes" 
+                        name="sales-skills" 
                         className="mr-2" 
-                        checked={agentStanding === 'active'} 
-                        onChange={() => setAgentStanding('active')}
+                        checked={salesSkills === 'Yes'} 
+                        onChange={() => setSalesSkills('Yes')}
                       />
-                      <label htmlFor="active">Active</label>
+                      <label htmlFor="sales-yes">Yes</label>
                     </div>
                     <div className="flex items-center">
                       <input 
                         type="radio" 
-                        id="probation" 
-                        name="standing" 
+                        id="sales-no" 
+                        name="sales-skills" 
                         className="mr-2" 
-                        checked={agentStanding === 'probation'} 
-                        onChange={() => setAgentStanding('probation')}
+                        checked={salesSkills === 'No'} 
+                        onChange={() => setSalesSkills('No')}
                       />
-                      <label htmlFor="probation">Probation</label>
-                    </div>
-                    <div className="flex items-center">
-                      <input 
-                        type="radio" 
-                        id="warning" 
-                        name="standing" 
-                        className="mr-2" 
-                        checked={agentStanding === 'warning'} 
-                        onChange={() => setAgentStanding('warning')}
-                      />
-                      <label htmlFor="warning">Warning</label>
+                      <label htmlFor="sales-no">No</label>
                     </div>
                   </div>
                 </div>
                 
                 <div>
-                  <label className="block font-medium mb-1">Email Address</label>
-                  <Input value={selectedProfile.email} readOnly />
+                  <label className="block font-medium mb-1">Communication Quality</label>
+                  <div className="flex gap-4 items-center mt-2">
+                    <div className="flex items-center">
+                      <input 
+                        type="radio" 
+                        id="comm-good" 
+                        name="communication" 
+                        className="mr-2" 
+                        checked={communication === 'Good'} 
+                        onChange={() => setCommunication('Good')}
+                      />
+                      <label htmlFor="comm-good">Good</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input 
+                        type="radio" 
+                        id="comm-average" 
+                        name="communication" 
+                        className="mr-2" 
+                        checked={communication === 'Average'} 
+                        onChange={() => setCommunication('Average')}
+                      />
+                      <label htmlFor="comm-average">Average</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input 
+                        type="radio" 
+                        id="comm-poor" 
+                        name="communication" 
+                        className="mr-2" 
+                        checked={communication === 'Poor'} 
+                        onChange={() => setCommunication('Poor')}
+                      />
+                      <label htmlFor="comm-poor">Poor</label>
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -503,9 +543,126 @@ const SupervisorDashboard = () => {
                   <label className="block font-medium mb-1">Supervisor</label>
                   <Input value={supervisorName} readOnly />
                 </div>
+                
+                <div>
+                  <label className="block font-medium mb-1">Interview Process</label>
+                  <div className="flex gap-4 items-center mt-2">
+                    <div className="flex items-center">
+                      <input 
+                        type="radio" 
+                        id="process-good" 
+                        name="interview-process" 
+                        className="mr-2" 
+                        checked={interviewProcess === 'Good'} 
+                        onChange={() => setInterviewProcess('Good')}
+                      />
+                      <label htmlFor="process-good">Good</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input 
+                        type="radio" 
+                        id="process-average" 
+                        name="interview-process" 
+                        className="mr-2" 
+                        checked={interviewProcess === 'Average'} 
+                        onChange={() => setInterviewProcess('Average')}
+                      />
+                      <label htmlFor="process-average">Average</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input 
+                        type="radio" 
+                        id="process-poor" 
+                        name="interview-process" 
+                        className="mr-2" 
+                        checked={interviewProcess === 'Poor'} 
+                        onChange={() => setInterviewProcess('Poor')}
+                      />
+                      <label htmlFor="process-poor">Poor</label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block font-medium mb-1">Final Decision</label>
+                  <div className="flex gap-4 items-center mt-2">
+                    <div className="flex items-center">
+                      <input 
+                        type="radio" 
+                        id="decision-approved" 
+                        name="final-decision" 
+                        className="mr-2" 
+                        checked={finalDecision === 'approved'} 
+                        onChange={() => setFinalDecision('approved')}
+                      />
+                      <label htmlFor="decision-approved">Approved</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input 
+                        type="radio" 
+                        id="decision-waitlist" 
+                        name="final-decision" 
+                        className="mr-2" 
+                        checked={finalDecision === 'waitlist'} 
+                        onChange={() => setFinalDecision('waitlist')}
+                      />
+                      <label htmlFor="decision-waitlist">Waitlist</label>
+                    </div>
+                    <div className="flex items-center">
+                      <input 
+                        type="radio" 
+                        id="decision-rejected" 
+                        name="final-decision" 
+                        className="mr-2" 
+                        checked={finalDecision === 'rejected'} 
+                        onChange={() => setFinalDecision('rejected')}
+                      />
+                      <label htmlFor="decision-rejected">Rejected</label>
+                    </div>
+                  </div>
+                </div>
               </div>
               
-              <div className="col-span-2">
+              <div>
+                <label className="block font-medium mb-1">Agent Standing</label>
+                <div className="flex gap-4 items-center mt-2">
+                  <div className="flex items-center">
+                    <input 
+                      type="radio" 
+                      id="active" 
+                      name="standing" 
+                      className="mr-2" 
+                      checked={agentStanding === 'active'} 
+                      onChange={() => setAgentStanding('active')}
+                    />
+                    <label htmlFor="active">Active</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input 
+                      type="radio" 
+                      id="probation" 
+                      name="standing" 
+                      className="mr-2" 
+                      checked={agentStanding === 'probation'} 
+                      onChange={() => setAgentStanding('probation')}
+                    />
+                    <label htmlFor="probation">Probation</label>
+                  </div>
+                  <div className="flex items-center">
+                    <input 
+                      type="radio" 
+                      id="warning" 
+                      name="standing" 
+                      className="mr-2" 
+                      checked={agentStanding === 'warning'} 
+                      onChange={() => setAgentStanding('warning')}
+                    />
+                    <label htmlFor="warning">Warning</label>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
                 <label className="block font-medium mb-1">Lead Source</label>
                 <Select value={leadSource} onValueChange={setLeadSource}>
                   <SelectTrigger>
