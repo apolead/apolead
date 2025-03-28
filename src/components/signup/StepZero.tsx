@@ -58,7 +58,7 @@ const StepZero = ({
           
           const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
-            .select('application_status, first_name, credentials')
+            .select('application_status, first_name, last_name, credentials')
             .eq('user_id', session.user.id)
             .maybeSingle();
           
@@ -167,7 +167,7 @@ const StepZero = ({
           
           const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
-            .select('application_status, first_name, credentials')
+            .select('application_status, first_name, last_name, credentials')
             .eq('user_id', session.user.id)
             .maybeSingle();
             

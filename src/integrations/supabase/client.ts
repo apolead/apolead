@@ -24,7 +24,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 export const forceSignOut = async () => {
   try {
     await supabase.auth.signOut({ scope: 'global' });
-    localStorage.removeItem('supabase.auth.token');
+    // Clear any potentially remaining tokens
+    localStorage.removeItem('sb-didvmdhyxltjjnxlbmxy-auth-token');
     window.location.href = '/login'; // Redirect to login page
   } catch (error) {
     console.error('Error during force sign out:', error);
