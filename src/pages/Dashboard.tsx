@@ -1,29 +1,26 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, logout } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [moduleProgress, setModuleProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   
   useEffect(() => {
     const getUserProfile = async () => {
       setIsLoading(true);
       try {
-        // Fix: use await with getUser() to properly handle the Promise
-        const { data: { user } } = await supabase.auth.getUser();
-        console.log("Current authenticated user:", user);
-        
         if (user) {
-          setCurrentUser(user);
+          console.log("Current authenticated user:", user);
+          
           const { data, error } = await supabase
             .from('user_profiles')
             .select('*')
@@ -51,7 +48,9 @@ const Dashboard = () => {
       }
     };
     
-    getUserProfile();
+    if (user) {
+      getUserProfile();
+    }
 
     // Add Font Awesome
     const link = document.createElement('link');
@@ -69,11 +68,10 @@ const Dashboard = () => {
       document.head.removeChild(link);
       document.head.removeChild(fontLink);
     };
-  }, [toast]);
+  }, [toast, user]);
   
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+    await logout();
   };
   
   const toggleSidebar = () => {
@@ -105,9 +103,8 @@ const Dashboard = () => {
   // Generate user initials
   const getUserInitials = () => {
     if (!userProfile?.first_name && !userProfile?.last_name) {
-      // Fix: get email from currentUser state instead of making another call
-      if (currentUser?.email) {
-        return currentUser.email.substring(0, 2).toUpperCase();
+      if (user?.email) {
+        return user.email.substring(0, 2).toUpperCase();
       }
       return "NA";
     }
@@ -127,8 +124,7 @@ const Dashboard = () => {
       return `${userProfile?.first_name || ""} ${userProfile?.last_name || ""}`.trim();
     }
     
-    // Fallback to email if profile not loaded
-    return currentUser?.email || "User";
+    return user?.email || "User";
   };
   
   return (
