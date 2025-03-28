@@ -19,27 +19,3 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     debug: true // Enable debugging for auth issues
   }
 });
-
-// Initialize the user_documents bucket if it doesn't exist
-// Note: This is just a check, you need to create the bucket in Supabase dashboard
-const initStorage = async () => {
-  try {
-    // Check if the bucket exists
-    const { data: buckets, error } = await supabase.storage.listBuckets();
-    
-    if (error) {
-      console.error('Error checking storage buckets:', error);
-      return;
-    }
-    
-    const userDocumentsBucketExists = buckets.some(bucket => bucket.name === 'user_documents');
-    
-    if (!userDocumentsBucketExists) {
-      console.warn('The "user_documents" bucket does not exist in Supabase storage. Please create it in the Supabase dashboard.');
-    }
-  } catch (error) {
-    console.error('Error initializing storage:', error);
-  }
-};
-
-initStorage();
