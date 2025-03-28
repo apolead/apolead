@@ -16,5 +16,14 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'pkce'
+  },
+  // Add global error handling and logging
+  global: {
+    fetch: (...args) => {
+      return fetch(...args).catch(err => {
+        console.error('Supabase fetch error:', err);
+        throw err;
+      });
+    }
   }
 });

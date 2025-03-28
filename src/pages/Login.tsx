@@ -6,26 +6,29 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   const handleEmailChange = e => {
     setEmail(e.target.value);
   };
+
   const handlePasswordChange = e => {
     setPassword(e.target.value);
   };
+
   const validateEmail = email => {
     if (!email.endsWith('@gmail.com')) {
       return 'Only Gmail accounts are allowed';
     }
     return null;
   };
+
   const handleLogin = async e => {
     e.preventDefault();
 
@@ -39,52 +42,25 @@ const Login = () => {
       });
       return;
     }
+
     setIsLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
+
       if (error) throw error;
 
-      // Successful login
+      // Successful login - useAuth hook will handle redirects
       toast({
         title: "Login successful",
         description: "Welcome back!"
       });
 
-      // Check if user is approved
-      const {
-        data: profile,
-        error: profileError
-      } = await supabase.from('user_profiles').select('application_status, credentials').eq('user_id', data.user.id).maybeSingle();
-      if (profileError) throw profileError;
-      if (profile) {
-        if (profile.application_status === 'approved') {
-          // Redirect based on credentials
-          if (profile.credentials === 'supervisor') {
-            navigate('/supervisor');
-          } else {
-            navigate('/dashboard');
-          }
-        } else if (profile.application_status === 'rejected') {
-          toast({
-            title: "Account rejected",
-            description: "Your application has been rejected.",
-            variant: "destructive"
-          });
-          await supabase.auth.signOut();
-        } else {
-          // Pending application
-          navigate('/signup');
-        }
-      } else {
-        // No profile, redirect to signup
-        navigate('/signup');
-      }
+      // We'll let the useAuth hook handle redirects based on credentials
+      // This prevents duplicate queries that can cause infinite recursion
+      console.log("Login successful, useAuth hook will handle redirects");
     } catch (error) {
       console.error('Login error:', error);
       toast({
@@ -96,6 +72,7 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
   return <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
       <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
@@ -191,4 +168,5 @@ const Login = () => {
       </div>
     </div>;
 };
+
 export default Login;

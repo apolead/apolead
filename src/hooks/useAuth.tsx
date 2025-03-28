@@ -8,6 +8,7 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
+  const [userCredentials, setUserCredentials] = useState('agent');
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -17,7 +18,7 @@ export const useAuth = () => {
     
     // Set up the auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         
         if (!mounted) return;
@@ -31,9 +32,10 @@ export const useAuth = () => {
             if (!mounted) return;
             
             try {
+              // Simplified query - we don't need to use RLS here as we're only querying our own profile
               const { data: profile, error } = await supabase
                 .from('user_profiles')
-                .select('application_status')
+                .select('application_status, credentials')
                 .eq('user_id', session.user.id)
                 .maybeSingle();
               
@@ -42,6 +44,7 @@ export const useAuth = () => {
               if (profile) {
                 if (profile.application_status === 'approved') {
                   setIsApproved(true);
+                  setUserCredentials(profile.credentials || 'agent');
                   
                   // Redirect to dashboard if currently on login or signup
                   const currentPath = window.location.pathname;
@@ -50,7 +53,13 @@ export const useAuth = () => {
                       title: "Welcome back!",
                       description: "You've been logged in successfully.",
                     });
-                    navigate('/dashboard');
+                    
+                    // Route based on credentials
+                    if (profile.credentials === 'supervisor') {
+                      navigate('/supervisor');
+                    } else {
+                      navigate('/dashboard');
+                    }
                   }
                 } else if (profile.application_status === 'rejected') {
                   toast({
@@ -61,6 +70,7 @@ export const useAuth = () => {
                   await supabase.auth.signOut();
                   setIsAuthenticated(false);
                   setIsApproved(false);
+                  setUserCredentials('agent');
                   // Stay on current page after showing rejection message
                 } else {
                   // User exists but not approved, redirect to signup
@@ -89,6 +99,7 @@ export const useAuth = () => {
           setUser(null);
           setIsAuthenticated(false);
           setIsApproved(false);
+          setUserCredentials('agent');
           setIsLoading(false);
           
           // Check if on protected route and redirect if needed
@@ -113,7 +124,7 @@ export const useAuth = () => {
           
           const { data: profile, error } = await supabase
             .from('user_profiles')
-            .select('application_status')
+            .select('application_status, credentials')
             .eq('user_id', session.user.id)
             .maybeSingle();
           
@@ -122,11 +133,17 @@ export const useAuth = () => {
           if (profile) {
             if (profile.application_status === 'approved') {
               setIsApproved(true);
+              setUserCredentials(profile.credentials || 'agent');
               
               // Redirect to dashboard if currently on login or signup
               const currentPath = window.location.pathname;
               if (currentPath === '/login' || currentPath === '/signup') {
-                navigate('/dashboard');
+                // Route based on credentials
+                if (profile.credentials === 'supervisor') {
+                  navigate('/supervisor');
+                } else {
+                  navigate('/dashboard');
+                }
               }
             } else if (profile.application_status === 'rejected') {
               toast({
@@ -137,6 +154,7 @@ export const useAuth = () => {
               await supabase.auth.signOut();
               setIsAuthenticated(false);
               setIsApproved(false);
+              setUserCredentials('agent');
             } else {
               // User exists but not approved, redirect to signup
               setIsApproved(false);
@@ -158,6 +176,7 @@ export const useAuth = () => {
           setUser(null);
           setIsAuthenticated(false);
           setIsApproved(false);
+          setUserCredentials('agent');
         }
       } catch (error) {
         console.error('Error checking session:', error);
@@ -172,7 +191,7 @@ export const useAuth = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, toast]);
 
   const logout = async () => {
     try {
@@ -192,6 +211,7 @@ export const useAuth = () => {
     isLoading, 
     isAuthenticated, 
     isApproved, 
+    userCredentials,
     user,
     logout
   };
