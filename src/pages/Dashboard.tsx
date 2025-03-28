@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -784,3 +785,9 @@ const Dashboard = () => {
             borderLeft: '2px solid #e2e8f0'
           }}>Complete all steps to start earning</div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
