@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +24,7 @@ interface UserProfile {
   sales_experience: boolean;
   service_experience: boolean;
   application_status: string;
+  credentials: string;
 }
 
 const SupervisorDashboard = () => {
@@ -35,6 +35,10 @@ const SupervisorDashboard = () => {
   const [showImageModal, setShowImageModal] = useState(false);
   const [currentImage, setCurrentImage] = useState('');
   const [imageType, setImageType] = useState('');
+  const [currentUser, setCurrentUser] = useState<{first_name: string, last_name: string}>({
+    first_name: '',
+    last_name: ''
+  });
   
   useEffect(() => {
     const checkUserRole = async () => {
@@ -43,14 +47,21 @@ const SupervisorDashboard = () => {
       if (session) {
         const { data: profile } = await supabase
           .from('user_profiles')
-          .select('credentials')
+          .select('credentials, first_name, last_name')
           .eq('user_id', session.user.id)
           .single();
           
         if (!profile || profile.credentials !== 'supervisor') {
           // Redirect to appropriate dashboard based on role
           navigate('/dashboard');
+          return;
         }
+        
+        // Set current user information
+        setCurrentUser({
+          first_name: profile.first_name || '',
+          last_name: profile.last_name || ''
+        });
       } else {
         navigate('/login');
       }
@@ -60,6 +71,7 @@ const SupervisorDashboard = () => {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
+        .eq('credentials', 'agent')
         .order('application_date', { ascending: false });
       
       if (data) {
@@ -102,6 +114,10 @@ const SupervisorDashboard = () => {
   };
   
   const openPhotoModal = (type: string, imageUrl: string) => {
+    if (!imageUrl) {
+      console.log('No image URL provided');
+      return;
+    }
     setImageType(type);
     setCurrentImage(imageUrl);
     setShowImageModal(true);
@@ -121,26 +137,8 @@ const SupervisorDashboard = () => {
       profile.application_status?.toLowerCase().includes(searchLower)
     );
   });
-  
-  // Generate user initials for avatar
-  const getUserInitials = () => {
-    const { data: { user } } = supabase.auth.getUser() as any;
-    if (!user) return "SJ";
-    
-    const { data: profile } = supabase
-      .from('user_profiles')
-      .select('first_name, last_name')
-      .eq('user_id', user.id)
-      .single() as any;
-    
-    if (!profile) return "SJ";
-    
-    const firstInitial = profile.first_name?.charAt(0) || "S";
-    const lastInitial = profile.last_name?.charAt(0) || "J";
-    
-    return `${firstInitial}${lastInitial}`;
-  };
-  
+
+  // Format date for display
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     
@@ -152,6 +150,7 @@ const SupervisorDashboard = () => {
     }).format(date);
   };
   
+  // CSS classes for status display
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'approved':
@@ -166,6 +165,7 @@ const SupervisorDashboard = () => {
     }
   };
   
+  // Status icon display
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
@@ -252,6 +252,7 @@ const SupervisorDashboard = () => {
             <i className={`fas fa-angle-${sidebarCollapsed ? 'right' : 'left'}`}></i>
           </div>
         </div>
+        
         <div className="nav-menu" style={{
           display: 'flex',
           flexDirection: 'column',
@@ -648,7 +649,7 @@ const SupervisorDashboard = () => {
         {/* Header */}
         <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
           <div className="welcome" style={{ fontSize: '26px', fontWeight: 600, color: '#1e293b' }}>
-            Welcome, <span style={{ color: '#4f46e5', position: 'relative' }}>Sarah</span>
+            Welcome, <span style={{ color: '#4f46e5', position: 'relative' }}>{currentUser.first_name}</span>
             <style>{`
               .welcome span::after {
                 content: '';
@@ -751,9 +752,11 @@ const SupervisorDashboard = () => {
                 fontWeight: 600,
                 fontSize: '16px'
               }}>
-                SJ
+                {currentUser.first_name.charAt(0)}{currentUser.last_name.charAt(0)}
               </div>
-              <div className="user-name" style={{ fontWeight: 500, color: '#1e293b' }}>Sarah Johnson</div>
+              <div className="user-name" style={{ fontWeight: 500, color: '#1e293b' }}>
+                {currentUser.first_name} {currentUser.last_name}
+              </div>
               <i className="fas fa-chevron-down dropdown-icon" style={{ marginLeft: '8px', color: '#64748b' }}></i>
             </div>
           </div>
