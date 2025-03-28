@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,6 @@ const Login = () => {
   // Check if user is already logged in
   useEffect(() => {
     let mounted = true;
-    let authSubscription: { unsubscribe: () => void } | null = null;
     
     const checkSession = async () => {
       try {
@@ -29,7 +27,10 @@ const Login = () => {
         
         if (session?.user && mounted) {
           console.log("User already logged in, checking application status");
-          await handleUserAuthentication(session);
+          // Use setTimeout to avoid potential deadlocks with Supabase client
+          setTimeout(() => {
+            if (mounted) handleUserAuthentication(session);
+          }, 0);
         } else if (mounted) {
           console.log("No active session found");
           setIsCheckingSession(false);
@@ -95,37 +96,9 @@ const Login = () => {
             navigate('/signup');
           }
         } else {
-          // If no profile exists, we need to create one and redirect to signup
-          console.log("No profile found for user, creating initial profile");
-          
-          try {
-            const { error: insertError } = await supabase
-              .from('user_profiles')
-              .insert({
-                email: session.user.email,
-                first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
-                last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-                application_status: 'pending',
-                credentials: 'agent',
-                user_id: session.user.id
-              });
-            
-            if (insertError) {
-              console.error("Error creating initial profile:", insertError);
-              toast({
-                title: "Profile Creation Failed",
-                description: "There was an error creating your profile. Please try again.",
-                variant: "destructive",
-              });
-              if (mounted) setIsCheckingSession(false);
-            } else {
-              console.log("Created initial profile, redirecting to signup");
-              navigate('/signup');
-            }
-          } catch (createError) {
-            console.error("Error in profile creation:", createError);
-            if (mounted) setIsCheckingSession(false);
-          }
+          // If no profile exists, we need to redirect to signup
+          console.log("No profile found for user, redirecting to signup flow");
+          navigate('/signup');
         }
       } catch (authError) {
         console.error("Error in handleUserAuthentication:", authError);
@@ -134,31 +107,27 @@ const Login = () => {
     };
     
     // Set up auth state change listener
-    authSubscription = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
-          setTimeout(async () => {
-            // Use setTimeout to prevent deadlocks in Supabase client
-            if (mounted) {
-              await handleUserAuthentication(session);
-            }
+          // Use setTimeout to prevent deadlocks in Supabase client
+          setTimeout(() => {
+            if (mounted) handleUserAuthentication(session);
           }, 0);
         } else if (event === 'SIGNED_OUT' && mounted) {
           setIsCheckingSession(false);
         }
       }
-    ).data.subscription;
+    );
     
     checkSession();
     
     // Clean up
     return () => {
       mounted = false;
-      if (authSubscription) {
-        authSubscription.unsubscribe();
-      }
+      subscription.unsubscribe();
     };
   }, [navigate, toast]);
   
