@@ -397,9 +397,10 @@ const SupervisorDashboard = () => {
               src={selectedImage} 
               alt={selectedImageType} 
               className="max-h-[70vh] object-contain"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Available";
+              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                const imgElement = e.currentTarget as HTMLImageElement;
+                imgElement.onerror = null;
+                imgElement.src = "https://via.placeholder.com/400x300?text=Image+Not+Available";
               }}
             />
           </div>
