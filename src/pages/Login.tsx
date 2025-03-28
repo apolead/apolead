@@ -30,27 +30,40 @@ const Login = () => {
           // Check if profile exists and application is approved
           const { data: profile, error } = await supabase
             .from('user_profiles')
-            .select('application_status')
+            .select('application_status, credentials')
             .eq('user_id', session.user.id)
             .maybeSingle();
             
-          if (profile && profile.application_status === 'approved') {
-            // Approved user, redirect to dashboard
-            console.log("User is approved, redirecting to dashboard");
-            navigate('/dashboard');
-          } else if (profile && profile.application_status === 'rejected') {
-            // Rejected user, show notification and sign out
-            console.log("User was rejected, showing notification");
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            setIsCheckingSession(false);
+          console.log("Profile data:", profile);
+          console.log("Profile error:", error);
+            
+          if (profile) {
+            if (profile.application_status === 'approved') {
+              // Approved user, redirect to the appropriate dashboard
+              console.log("User is approved, redirecting to the appropriate dashboard");
+              if (profile.credentials === 'supervisor') {
+                navigate('/supervisor');
+              } else {
+                navigate('/dashboard');
+              }
+            } else if (profile.application_status === 'rejected') {
+              // Rejected user, show notification and sign out
+              console.log("User was rejected, showing notification");
+              toast({
+                title: "Application Rejected",
+                description: "Unfortunately, your application didn't meet our qualifications.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+              setIsCheckingSession(false);
+            } else {
+              // User exists but not approved, redirect to signup
+              console.log("User is not approved, redirecting to signup");
+              navigate('/signup');
+            }
           } else {
-            // User exists but not approved, redirect to signup
-            console.log("User is not approved, redirecting to signup");
+            // No profile found, redirect to signup
+            console.log("No profile found, redirecting to signup");
             navigate('/signup');
           }
         } else if (mounted) {
@@ -73,28 +86,41 @@ const Login = () => {
           // Check if profile exists and application is approved
           const { data: profile, error } = await supabase
             .from('user_profiles')
-            .select('application_status')
+            .select('application_status, credentials')
             .eq('user_id', session.user.id)
             .maybeSingle();
             
-          if (profile && profile.application_status === 'approved') {
-            // Approved user, redirect to dashboard
-            toast({
-              title: "Login successful",
-              description: "Welcome back!",
-            });
-            navigate('/dashboard');
-          } else if (profile && profile.application_status === 'rejected') {
-            // Rejected user, show notification and sign out
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
+          console.log("Auth state change profile:", profile);
+          console.log("Auth state change error:", error);
+            
+          if (profile) {
+            if (profile.application_status === 'approved') {
+              // Approved user, redirect to the appropriate dashboard
+              toast({
+                title: "Login successful",
+                description: "Welcome back!",
+              });
+              if (profile.credentials === 'supervisor') {
+                navigate('/supervisor');
+              } else {
+                navigate('/dashboard');
+              }
+            } else if (profile.application_status === 'rejected') {
+              // Rejected user, show notification and sign out
+              toast({
+                title: "Application Rejected",
+                description: "Unfortunately, your application didn't meet our qualifications.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+            } else {
+              // User exists but not approved, redirect to signup
+              console.log("User is not approved, redirecting to signup");
+              navigate('/signup');
+            }
           } else {
-            // User exists but not approved, redirect to signup
-            console.log("User is not approved, redirecting to signup");
+            // No profile found, redirect to signup
+            console.log("No profile found after login, redirecting to signup");
             navigate('/signup');
           }
         }

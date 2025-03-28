@@ -127,8 +127,12 @@ const AuthRoute = ({ children }) => {
   }
   
   // Route based on user credentials
-  if (userCredentials === "supervisor") {
+  if (userCredentials === "supervisor" && window.location.pathname !== "/supervisor") {
     return <Navigate to="/supervisor" replace />;
+  }
+  
+  if (userCredentials === "agent" && window.location.pathname === "/supervisor") {
+    return <Navigate to="/dashboard" replace />;
   }
   
   return children;
@@ -147,13 +151,16 @@ const PublicRoute = ({ children }) => {
       if (!mounted) return;
       
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("PublicRoute checking session:", !!session);
       
       if (session) {
-        const { data: profile, error } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('application_status, credentials')
           .eq('user_id', session.user.id)
           .maybeSingle();
+          
+        console.log("PublicRoute profile check:", profile, profileError);
           
         if (profile) {
           setIsAuthenticated(true);
@@ -218,15 +225,18 @@ const SupervisorRoute = ({ children }) => {
       if (!mounted) return;
       
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("SupervisorRoute checking session:", !!session);
       
       if (session) {
         const { data: profile, error } = await supabase
           .from('user_profiles')
-          .select('credentials')
+          .select('credentials, application_status')
           .eq('user_id', session.user.id)
           .maybeSingle();
           
-        if (profile && profile.credentials === 'supervisor') {
+        console.log("SupervisorRoute profile check:", profile, error);
+          
+        if (profile && profile.credentials === 'supervisor' && profile.application_status === 'approved') {
           setIsSupervisor(true);
         } else {
           setIsSupervisor(false);
@@ -250,7 +260,7 @@ const SupervisorRoute = ({ children }) => {
   }
   
   if (!isSupervisor) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   return children;
