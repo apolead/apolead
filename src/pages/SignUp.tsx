@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StepZero from '@/components/signup/StepZero';
@@ -64,50 +65,20 @@ const SignUp = () => {
   }, []);
   
   const updateUserData = async (newData) => {
-    if (newData.govIdNumber && newData.govIdNumber !== userData.govIdNumber) {
-      setIsCheckingGovId(true);
-      try {
-        // Check if the government ID has been used before in user_profiles
-        const { data: profileData, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('gov_id_number')
-          .eq('gov_id_number', newData.govIdNumber)
-          .maybeSingle();
-          
-        if (profileError) throw profileError;
-        
-        // Also check in user_applications table
-        const { data: applicationData, error: applicationError } = await supabase
-          .from('user_applications')
-          .select('gov_id_number')
-          .eq('gov_id_number', newData.govIdNumber)
-          .maybeSingle();
-          
-        if (applicationError) throw applicationError;
-        
-        if (profileData || applicationData) {
-          toast({
-            title: "Government ID already used",
-            description: "This government ID has already been registered in our system.",
-            variant: "destructive",
-          });
-          setIsCheckingGovId(false);
-          return;
-        }
-      } catch (error) {
-        console.error('Error checking government ID:', error);
-        toast({
-          title: "Validation error",
-          description: "Could not verify government ID. Please try again.",
-          variant: "destructive",
-        });
-        setIsCheckingGovId(false);
-        return;
-      }
-      setIsCheckingGovId(false);
+    // Update user data immediately without validation for normal fields
+    if (!newData.govIdNumber) {
+      setUserData(prev => ({ ...prev, ...newData }));
+      return;
     }
     
-    setUserData(prev => ({ ...prev, ...newData }));
+    // Only validate government ID if it's being updated and different from current
+    if (newData.govIdNumber && newData.govIdNumber !== userData.govIdNumber) {
+      // No need to immediately validate - let StepOne handle this when continuing
+      setUserData(prev => ({ ...prev, ...newData }));
+    } else {
+      // Just update the data normally
+      setUserData(prev => ({ ...prev, ...newData }));
+    }
   };
   
   const nextStep = () => {
@@ -191,6 +162,7 @@ const SignUp = () => {
       
       // Verify government ID one more time before final submission
       try {
+        setIsCheckingGovId(true);
         // Check if the government ID has been used before
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
@@ -215,10 +187,14 @@ const SignUp = () => {
             variant: "destructive",
           });
           setIsSubmitting(false);
+          setIsCheckingGovId(false);
           return;
         }
+        setIsCheckingGovId(false);
       } catch (error) {
         console.error('Error verifying government ID:', error);
+        setIsCheckingGovId(false);
+        // Continue with submission despite error checking ID
       }
       
       // Check if user is authenticated
@@ -330,7 +306,6 @@ const SignUp = () => {
       case 2:
         return <StepTwo userData={userData} updateUserData={updateUserData} nextStep={nextStep} prevStep={prevStep} />;
       case 3:
-        // Fix: Changed nextStep to handleSubmit to match the component's expected props
         return <StepThree userData={userData} updateUserData={updateUserData} handleSubmit={handleSubmit} prevStep={prevStep} isSubmitting={isSubmitting} />;
       case 4:
         return <ConfirmationScreen />;

@@ -4,11 +4,64 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId = false }) => {
   const [errorMessage, setErrorMessage] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+  const { toast } = useToast();
   
-  const handleContinue = (e) => {
+  const validateGovId = async (govIdNumber) => {
+    if (!govIdNumber || !govIdNumber.trim()) {
+      return false; // No need to validate empty ID
+    }
+    
+    setIsValidating(true);
+    try {
+      // Check if the government ID has been used before in user_profiles
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('gov_id_number')
+        .eq('gov_id_number', govIdNumber)
+        .maybeSingle();
+        
+      if (profileError) throw profileError;
+      
+      // Also check in user_applications table
+      const { data: applicationData, error: applicationError } = await supabase
+        .from('user_applications')
+        .select('gov_id_number')
+        .eq('gov_id_number', govIdNumber)
+        .maybeSingle();
+        
+      if (applicationError) throw applicationError;
+      
+      if (profileData || applicationData) {
+        toast({
+          title: "Government ID already used",
+          description: "This government ID has already been registered in our system.",
+          variant: "destructive",
+        });
+        setIsValidating(false);
+        return false;
+      }
+      
+      return true; // ID is valid and not used
+    } catch (error) {
+      console.error('Error checking government ID:', error);
+      toast({
+        title: "Validation error",
+        description: "Could not verify government ID. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsValidating(false);
+    }
+  };
+  
+  const handleContinue = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     
@@ -40,6 +93,12 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
     
     if (!userData.govIdNumber || !userData.govIdNumber.trim()) {
       setErrorMessage('Please enter your government ID number');
+      return;
+    }
+    
+    // Validate government ID against database
+    const isValid = await validateGovId(userData.govIdNumber);
+    if (!isValid) {
       return;
     }
     
@@ -194,7 +253,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
           <div>
             <label htmlFor="step1-govIdNumber" className="block text-sm font-medium text-gray-700 mb-1">
               Government ID Number
-              {isCheckingGovId && (
+              {(isCheckingGovId || isValidating) && (
                 <span className="ml-2 inline-flex items-center text-amber-500">
                   <Loader2 className="h-3 w-3 animate-spin mr-1" />
                   Validating...
@@ -206,11 +265,11 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
               id="step1-govIdNumber" 
               value={userData.govIdNumber}
               onChange={(e) => updateUserData({ govIdNumber: e.target.value })}
-              className={`w-full ${isCheckingGovId ? 'bg-gray-50' : ''}`}
+              className={`w-full ${(isCheckingGovId || isValidating) ? 'bg-gray-50' : ''}`}
               placeholder="Enter your ID number"
-              disabled={isCheckingGovId}
+              disabled={isCheckingGovId || isValidating}
             />
-            <p className="mt-1 text-xs text-gray-500">This will be verified for uniqueness</p>
+            <p className="mt-1 text-xs text-gray-500">This will be verified when you click continue</p>
           </div>
           
           <div className="flex justify-between mt-8">
@@ -225,9 +284,9 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
             <Button
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              disabled={isCheckingGovId}
+              disabled={isCheckingGovId || isValidating}
             >
-              {isCheckingGovId ? (
+              {(isCheckingGovId || isValidating) ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Validating...
