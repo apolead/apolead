@@ -32,15 +32,20 @@ export const useAuth = () => {
             if (!mounted) return;
             
             try {
-              // Use security definer functions to prevent infinite recursion
-              const { data: credentials, error: credError } = await supabase
-                .rpc('get_user_credentials', { user_id: session.user.id });
-                
-              const { data: appStatus, error: statusError } = await supabase
-                .rpc('get_application_status', { user_id: session.user.id });
+              // Use the edge functions to get user data
+              const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
+                body: { user_id: session.user.id }
+              });
               
-              if (credError) throw credError;
-              if (statusError) throw statusError;
+              const statusResponse = await supabase.functions.invoke('get_application_status', {
+                body: { user_id: session.user.id }
+              });
+              
+              if (credentialsResponse.error) throw credentialsResponse.error;
+              if (statusResponse.error) throw statusResponse.error;
+              
+              const credentials = credentialsResponse.data;
+              const appStatus = statusResponse.data;
               
               if (appStatus) {
                 if (appStatus === 'approved') {
@@ -123,15 +128,20 @@ export const useAuth = () => {
           setUser(session.user);
           setIsAuthenticated(true);
           
-          // Use security definer functions to prevent infinite recursion
-          const { data: credentials, error: credError } = await supabase
-            .rpc('get_user_credentials', { user_id: session.user.id });
-            
-          const { data: appStatus, error: statusError } = await supabase
-            .rpc('get_application_status', { user_id: session.user.id });
+          // Use edge functions to get user data
+          const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
+            body: { user_id: session.user.id }
+          });
           
-          if (credError) throw credError;
-          if (statusError) throw statusError;
+          const statusResponse = await supabase.functions.invoke('get_application_status', {
+            body: { user_id: session.user.id }
+          });
+          
+          if (credentialsResponse.error) throw credentialsResponse.error;
+          if (statusResponse.error) throw statusResponse.error;
+          
+          const credentials = credentialsResponse.data;
+          const appStatus = statusResponse.data;
           
           if (appStatus) {
             if (appStatus === 'approved') {

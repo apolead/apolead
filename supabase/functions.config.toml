@@ -1,0 +1,8 @@
+
+project_id = "didvmdhyxltjjnxlbmxy"
+
+[get_user_credentials]
+verify_jwt = true
+
+[get_application_status]
+verify_jwt = true

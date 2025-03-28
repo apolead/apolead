@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -57,28 +58,26 @@ const Login = () => {
         description: "Welcome back!"
       });
 
-      // Get user profile using security definer function to avoid RLS recursion
-      const { data: profileData, error: profileError } = await supabase
+      // Get user credentials and application status using security definer functions
+      const { data: credentials, error: credentialsError } = await supabase
         .rpc('get_user_credentials', { user_id: data.user.id });
         
-      const { data: statusData, error: statusError } = await supabase
+      const { data: applicationStatus, error: statusError } = await supabase
         .rpc('get_application_status', { user_id: data.user.id });
 
-      if (profileError) throw profileError;
+      if (credentialsError) throw credentialsError;
       if (statusError) throw statusError;
 
-      // Route based on user credentials
-      const isApproved = statusData === 'approved';
-      const credentials = profileData || 'agent';
-
-      if (isApproved) {
+      // Route based on user credentials and application status
+      if (applicationStatus === 'approved') {
+        // User is approved, route based on credentials
         if (credentials === 'supervisor') {
           navigate('/supervisor');
         } else {
           navigate('/dashboard');
         }
       } else {
-        // Not approved yet, redirect to signup
+        // Not approved yet or no profile, redirect to signup
         navigate('/signup');
       }
     } catch (error) {
