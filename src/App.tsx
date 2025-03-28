@@ -22,6 +22,7 @@ const AuthRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
+  const [userCredentials, setUserCredentials] = useState("agent");
   
   useEffect(() => {
     let mounted = true;
@@ -34,25 +35,32 @@ const AuthRoute = ({ children }) => {
       if (session) {
         const { data: profile, error } = await supabase
           .from('user_profiles')
-          .select('application_status')
+          .select('application_status, credentials')
           .eq('user_id', session.user.id)
           .maybeSingle();
           
         console.log("User profile check:", profile, error);
         
-        if (profile && profile.application_status === 'approved') {
+        if (profile) {
           setIsAuthenticated(true);
-          setIsApproved(true);
-        } else if (profile) {
-          setIsAuthenticated(true);
-          setIsApproved(false);
+          
+          if (profile.application_status === 'approved') {
+            setIsApproved(true);
+          } else {
+            setIsApproved(false);
+          }
+          
+          // Set user credentials for routing
+          setUserCredentials(profile.credentials || "agent");
         } else {
           setIsAuthenticated(true);
           setIsApproved(false);
+          setUserCredentials("agent");
         }
       } else {
         setIsAuthenticated(false);
         setIsApproved(false);
+        setUserCredentials("agent");
       }
       
       setIsLoading(false);
@@ -67,25 +75,32 @@ const AuthRoute = ({ children }) => {
       if (session) {
         const { data: profile, error } = await supabase
           .from('user_profiles')
-          .select('application_status')
+          .select('application_status, credentials')
           .eq('user_id', session.user.id)
           .maybeSingle();
           
         console.log("Initial profile check:", profile, error);
         
-        if (profile && profile.application_status === 'approved') {
+        if (profile) {
           setIsAuthenticated(true);
-          setIsApproved(true);
-        } else if (profile) {
-          setIsAuthenticated(true);
-          setIsApproved(false);
+          
+          if (profile.application_status === 'approved') {
+            setIsApproved(true);
+          } else {
+            setIsApproved(false);
+          }
+          
+          // Set user credentials for routing
+          setUserCredentials(profile.credentials || "agent");
         } else {
           setIsAuthenticated(true);
           setIsApproved(false);
+          setUserCredentials("agent");
         }
       } else {
         setIsAuthenticated(false);
         setIsApproved(false);
+        setUserCredentials("agent");
       }
       
       setIsLoading(false);
@@ -111,6 +126,11 @@ const AuthRoute = ({ children }) => {
     return <Navigate to="/signup" replace />;
   }
   
+  // Route based on user credentials
+  if (userCredentials === "supervisor") {
+    return <Navigate to="/supervisor" replace />;
+  }
+  
   return children;
 };
 
@@ -118,6 +138,7 @@ const PublicRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
+  const [userCredentials, setUserCredentials] = useState("agent");
   
   useEffect(() => {
     let mounted = true;
@@ -130,20 +151,30 @@ const PublicRoute = ({ children }) => {
       if (session) {
         const { data: profile, error } = await supabase
           .from('user_profiles')
-          .select('application_status')
+          .select('application_status, credentials')
           .eq('user_id', session.user.id)
           .maybeSingle();
           
-        if (profile && profile.application_status === 'approved') {
+        if (profile) {
           setIsAuthenticated(true);
-          setIsApproved(true);
+          
+          if (profile.application_status === 'approved') {
+            setIsApproved(true);
+          } else {
+            setIsApproved(false);
+          }
+          
+          // Set user credentials for routing
+          setUserCredentials(profile.credentials || "agent");
         } else {
           setIsAuthenticated(true);
           setIsApproved(false);
+          setUserCredentials("agent");
         }
       } else {
         setIsAuthenticated(false);
         setIsApproved(false);
+        setUserCredentials("agent");
       }
       
       setIsLoading(false);
@@ -161,11 +192,65 @@ const PublicRoute = ({ children }) => {
   }
   
   if (isAuthenticated && isApproved) {
+    // Redirect to the appropriate dashboard based on credentials
+    if (userCredentials === "supervisor") {
+      return <Navigate to="/supervisor" replace />;
+    }
     return <Navigate to="/dashboard" replace />;
   }
   
   if (isAuthenticated && !isApproved) {
     return <Navigate to="/signup" replace />;
+  }
+  
+  return children;
+};
+
+// Custom route component for supervisor access
+const SupervisorRoute = ({ children }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSupervisor, setIsSupervisor] = useState(false);
+  
+  useEffect(() => {
+    let mounted = true;
+    
+    const checkSupervisorRole = async () => {
+      if (!mounted) return;
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('credentials')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+          
+        if (profile && profile.credentials === 'supervisor') {
+          setIsSupervisor(true);
+        } else {
+          setIsSupervisor(false);
+        }
+      } else {
+        setIsSupervisor(false);
+      }
+      
+      setIsLoading(false);
+    };
+    
+    checkSupervisorRole();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []);
+  
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  if (!isSupervisor) {
+    return <Navigate to="/dashboard" replace />;
   }
   
   return children;
@@ -202,9 +287,9 @@ const App = () => {
               </AuthRoute>
             } />
             <Route path="/supervisor" element={
-              <AuthRoute>
+              <SupervisorRoute>
                 <SupervisorDashboard />
-              </AuthRoute>
+              </SupervisorRoute>
             } />
             <Route path="/confirmation" element={<ConfirmationScreen />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
