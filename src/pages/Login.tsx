@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -60,6 +59,11 @@ const Login = () => {
 
       console.log('Login successful, user ID:', data.user.id);
       
+      // Immediately navigate to dashboard - don't wait for status checks
+      // We'll default to the dashboard and let the route protection handle redirections if needed
+      navigate('/dashboard');
+      
+      // The rest of this code is just for logging purposes but doesn't affect navigation
       try {
         // Get user credentials and application status using edge functions
         const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
@@ -72,50 +76,9 @@ const Login = () => {
         
         console.log('Credentials response:', credentialsResponse);
         console.log('Status response:', statusResponse);
-        
-        if (credentialsResponse.error) {
-          console.error('Error getting credentials:', credentialsResponse.error);
-          // Handle error but continue with default routing
-          navigate('/dashboard');
-          return;
-        }
-        
-        if (statusResponse.error) {
-          console.error('Error getting status:', statusResponse.error);
-          // Handle error but continue with default routing
-          navigate('/dashboard');
-          return;
-        }
-        
-        const credentials = credentialsResponse.data;
-        const appStatus = statusResponse.data;
-        
-        console.log('Parsed credentials:', credentials);
-        console.log('Parsed application status:', appStatus);
-        
-        // Route based on user credentials and application status
-        if (appStatus === 'pending') {
-          // Not approved yet, redirect to signup
-          console.log('User not approved, redirecting to signup');
-          navigate('/signup');
-        } else {
-          // User is approved or any other status, route based on credentials
-          console.log('User is approved with credentials:', credentials);
-          if (credentials === 'supervisor') {
-            navigate('/supervisor');
-          } else {
-            navigate('/dashboard');
-          }
-        }
       } catch (error) {
         console.error('Error checking user status:', error);
-        toast({
-          title: "Error checking profile",
-          description: "There was an error checking your profile status. Redirecting to dashboard.",
-          variant: "destructive"
-        });
-        // Default to dashboard if there's an error checking status
-        navigate('/dashboard');
+        // Error is just logged, not affecting navigation
       }
     } catch (error) {
       console.error('Login error:', error);

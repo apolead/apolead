@@ -27,6 +27,9 @@ export const useAuth = () => {
           setUser(session.user);
           setIsAuthenticated(true);
           
+          // DEFAULT TO APPROVED STATUS - even before checking
+          setIsApproved(true);
+          
           // Avoid Supabase deadlocks with setTimeout
           setTimeout(async () => {
             if (!mounted) return;
@@ -44,18 +47,18 @@ export const useAuth = () => {
               console.log('Credentials response:', credentialsResponse);
               console.log('Status response:', statusResponse);
               
+              // If there's a credentials error, we default to agent and approved
               if (credentialsResponse.error) {
                 console.error('Error getting credentials:', credentialsResponse.error);
-                setIsApproved(true); // Default to approved on error
                 setUserCredentials('agent');
                 setIsLoading(false);
                 return;
               }
               
+              // If there's a status error, we default to approved
               if (statusResponse.error) {
                 console.error('Error getting status:', statusResponse.error);
-                setIsApproved(true); // Default to approved on error
-                setUserCredentials('agent');
+                setUserCredentials(credentialsResponse.data || 'agent');
                 setIsLoading(false);
                 return;
               }
@@ -66,75 +69,27 @@ export const useAuth = () => {
               console.log('Parsed credentials:', credentials);
               console.log('Parsed application status:', appStatus);
               
-              if (appStatus) {
-                if (appStatus === 'approved') {
-                  setIsApproved(true);
-                  setUserCredentials(credentials || 'agent');
-                  
-                  // Redirect to dashboard if currently on login or signup
-                  const currentPath = window.location.pathname;
-                  if (currentPath === '/login' || currentPath === '/signup') {
-                    toast({
-                      title: "Welcome back!",
-                      description: "You've been logged in successfully.",
-                    });
-                    
-                    // Route based on credentials
-                    if (credentials === 'supervisor') {
-                      navigate('/supervisor');
-                    } else {
-                      navigate('/dashboard');
-                    }
-                  }
-                } else if (appStatus === 'rejected') {
-                  toast({
-                    title: "Application Rejected",
-                    description: "Unfortunately, your application didn't meet our qualifications.",
-                    variant: "destructive",
-                  });
-                  await supabase.auth.signOut();
-                  setIsAuthenticated(false);
-                  setIsApproved(false);
-                  setUserCredentials('agent');
-                  // Stay on current page after showing rejection message
-                } else if (appStatus === 'pending') {
-                  // User exists but not approved, redirect to signup
-                  setIsApproved(false);
-                  const currentPath = window.location.pathname;
-                  if (currentPath === '/login') {
-                    navigate('/signup');
-                  }
-                } else {
-                  // Any other status - default to approved
-                  setIsApproved(true);
-                  setUserCredentials(credentials || 'agent');
-                  
-                  // Redirect to dashboard if on login/signup
-                  const currentPath = window.location.pathname;
-                  if (currentPath === '/login' || currentPath === '/signup') {
-                    if (credentials === 'supervisor') {
-                      navigate('/supervisor');
-                    } else {
-                      navigate('/dashboard');
-                    }
-                  }
-                }
-              } else {
-                // No application status found - default to approved 
-                setIsApproved(true);
+              // Set user credentials
+              setUserCredentials(credentials || 'agent');
+              
+              // Only handle the rejected status specifically
+              if (appStatus === 'rejected') {
+                toast({
+                  title: "Application Rejected",
+                  description: "Unfortunately, your application didn't meet our qualifications.",
+                  variant: "destructive",
+                });
+                await supabase.auth.signOut();
+                setIsAuthenticated(false);
+                setIsApproved(false);
                 setUserCredentials('agent');
-                
-                // Redirect to dashboard if on login/signup
-                const currentPath = window.location.pathname;
-                if (currentPath === '/login' || currentPath === '/signup') {
-                  navigate('/dashboard');
-                }
               }
+              
+              // For all other statuses (approved, pending, null, etc), allow access to the dashboard
+              
             } catch (error) {
               console.error('Error checking profile:', error);
               // Default to approved on error for better UX
-              setIsApproved(true);
-              setUserCredentials('agent');
             } finally {
               if (mounted) setIsLoading(false);
             }
@@ -167,7 +122,10 @@ export const useAuth = () => {
           setUser(session.user);
           setIsAuthenticated(true);
           
-          // Use edge functions to get user data
+          // DEFAULT TO APPROVED STATUS - even before checking
+          setIsApproved(true);
+          
+          // The rest is for tracking purposes only
           try {
             const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
               body: { user_id: session.user.id }
@@ -180,93 +138,27 @@ export const useAuth = () => {
             console.log('Initial credentials response:', credentialsResponse);
             console.log('Initial status response:', statusResponse);
             
-            if (credentialsResponse.error) {
-              console.error('Error getting initial credentials:', credentialsResponse.error);
-              setIsApproved(true); // Default to approved on error
-              setUserCredentials('agent');
-              setIsLoading(false);
-              return;
+            // Set credentials if available
+            if (!credentialsResponse.error) {
+              setUserCredentials(credentialsResponse.data || 'agent');
             }
             
-            if (statusResponse.error) {
-              console.error('Error getting initial status:', statusResponse.error);
-              setIsApproved(true); // Default to approved on error
+            // Only check for rejected status
+            if (!statusResponse.error && statusResponse.data === 'rejected') {
+              toast({
+                title: "Application Rejected",
+                description: "Unfortunately, your application didn't meet our qualifications.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+              setIsAuthenticated(false);
+              setIsApproved(false);
               setUserCredentials('agent');
-              setIsLoading(false);
-              return;
             }
             
-            const credentials = credentialsResponse.data;
-            const appStatus = statusResponse.data;
-            
-            console.log('Initial parsed credentials:', credentials);
-            console.log('Initial parsed application status:', appStatus);
-            
-            if (appStatus) {
-              if (appStatus === 'approved') {
-                setIsApproved(true);
-                setUserCredentials(credentials || 'agent');
-                
-                // Redirect to dashboard if currently on login or signup
-                const currentPath = window.location.pathname;
-                if (currentPath === '/login' || currentPath === '/signup') {
-                  // Route based on credentials
-                  if (credentials === 'supervisor') {
-                    navigate('/supervisor');
-                  } else {
-                    navigate('/dashboard');
-                  }
-                }
-              } else if (appStatus === 'rejected') {
-                toast({
-                  title: "Application Rejected",
-                  description: "Unfortunately, your application didn't meet our qualifications.",
-                  variant: "destructive",
-                });
-                await supabase.auth.signOut();
-                setIsAuthenticated(false);
-                setIsApproved(false);
-                setUserCredentials('agent');
-              } else if (appStatus === 'pending') {
-                // User exists but not approved, redirect to signup
-                setIsApproved(false);
-                const currentPath = window.location.pathname;
-                if (currentPath === '/login') {
-                  navigate('/signup');
-                }
-              } else {
-                // Any other status - default to approved
-                setIsApproved(true);
-                setUserCredentials(credentials || 'agent');
-                
-                // Redirect to dashboard if on login/signup
-                const currentPath = window.location.pathname;
-                if (currentPath === '/login' || currentPath === '/signup') {
-                  if (credentials === 'supervisor') {
-                    navigate('/supervisor');
-                  } else {
-                    navigate('/dashboard');
-                  }
-                }
-              }
-            } else {
-              // No application status found - default to approved
-              setIsApproved(true);
-              setUserCredentials('agent');
-              
-              // Redirect to dashboard if on login/signup
-              const currentPath = window.location.pathname;
-              if (currentPath === '/login' || currentPath === '/signup') {
-                navigate('/dashboard');
-              }
-            }
           } catch (error) {
             console.error('Error checking initial session profile:', error);
-            // Default to approved on error for better UX
-            setIsApproved(true);
-            setUserCredentials('agent');
-          } finally {
-            if (mounted) setIsLoading(false);
+            // Just log error, don't change default approved status
           }
         } else {
           // Not authenticated
@@ -274,10 +166,10 @@ export const useAuth = () => {
           setIsAuthenticated(false);
           setIsApproved(false);
           setUserCredentials('agent');
-          setIsLoading(false);
         }
       } catch (error) {
         console.error('Error checking session:', error);
+      } finally {
         setIsLoading(false);
       }
     };
