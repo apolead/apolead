@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -52,23 +53,35 @@ const Login = () => {
 
       if (error) throw error;
 
-      // Successful login - now route based on credentials
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('credentials, application_status')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
-
-      if (profileError) throw profileError;
-
       toast({
         title: "Login successful",
         description: "Welcome back!"
       });
 
+      // Get user profile using security definer function to avoid RLS recursion
+      const { data: profileData, error: profileError } = await supabase
+        .rpc('get_user_credentials', { user_id: data.user.id })
+        .then(result => ({ 
+          data: result.data ? { credentials: result.data } : null, 
+          error: result.error 
+        }));
+        
+      const { data: statusData, error: statusError } = await supabase
+        .rpc('get_application_status', { user_id: data.user.id })
+        .then(result => ({ 
+          data: result.data ? { application_status: result.data } : null, 
+          error: result.error 
+        }));
+
+      if (profileError) throw profileError;
+      if (statusError) throw statusError;
+
       // Route based on user credentials
-      if (profileData && profileData.application_status === 'approved') {
-        if (profileData.credentials === 'supervisor') {
+      const isApproved = statusData?.application_status === 'approved';
+      const credentials = profileData?.credentials || 'agent';
+
+      if (isApproved) {
+        if (credentials === 'supervisor') {
           navigate('/supervisor');
         } else {
           navigate('/dashboard');

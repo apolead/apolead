@@ -32,19 +32,20 @@ export const useAuth = () => {
             if (!mounted) return;
             
             try {
-              // Simplified query - we don't need to use RLS here as we're only querying our own profile
-              const { data: profile, error } = await supabase
-                .from('user_profiles')
-                .select('application_status, credentials')
-                .eq('user_id', session.user.id)
-                .maybeSingle();
+              // Use security definer functions to prevent infinite recursion
+              const { data: credentials, error: credError } = await supabase
+                .rpc('get_user_credentials', { user_id: session.user.id });
+                
+              const { data: appStatus, error: statusError } = await supabase
+                .rpc('get_application_status', { user_id: session.user.id });
               
-              if (error) throw error;
+              if (credError) throw credError;
+              if (statusError) throw statusError;
               
-              if (profile) {
-                if (profile.application_status === 'approved') {
+              if (appStatus) {
+                if (appStatus === 'approved') {
                   setIsApproved(true);
-                  setUserCredentials(profile.credentials || 'agent');
+                  setUserCredentials(credentials || 'agent');
                   
                   // Redirect to dashboard if currently on login or signup
                   const currentPath = window.location.pathname;
@@ -55,13 +56,13 @@ export const useAuth = () => {
                     });
                     
                     // Route based on credentials
-                    if (profile.credentials === 'supervisor') {
+                    if (credentials === 'supervisor') {
                       navigate('/supervisor');
                     } else {
                       navigate('/dashboard');
                     }
                   }
-                } else if (profile.application_status === 'rejected') {
+                } else if (appStatus === 'rejected') {
                   toast({
                     title: "Application Rejected",
                     description: "Unfortunately, your application didn't meet our qualifications.",
@@ -122,30 +123,32 @@ export const useAuth = () => {
           setUser(session.user);
           setIsAuthenticated(true);
           
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('application_status, credentials')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
+          // Use security definer functions to prevent infinite recursion
+          const { data: credentials, error: credError } = await supabase
+            .rpc('get_user_credentials', { user_id: session.user.id });
+            
+          const { data: appStatus, error: statusError } = await supabase
+            .rpc('get_application_status', { user_id: session.user.id });
           
-          if (error) throw error;
+          if (credError) throw credError;
+          if (statusError) throw statusError;
           
-          if (profile) {
-            if (profile.application_status === 'approved') {
+          if (appStatus) {
+            if (appStatus === 'approved') {
               setIsApproved(true);
-              setUserCredentials(profile.credentials || 'agent');
+              setUserCredentials(credentials || 'agent');
               
               // Redirect to dashboard if currently on login or signup
               const currentPath = window.location.pathname;
               if (currentPath === '/login' || currentPath === '/signup') {
                 // Route based on credentials
-                if (profile.credentials === 'supervisor') {
+                if (credentials === 'supervisor') {
                   navigate('/supervisor');
                 } else {
                   navigate('/dashboard');
                 }
               }
-            } else if (profile.application_status === 'rejected') {
+            } else if (appStatus === 'rejected') {
               toast({
                 title: "Application Rejected",
                 description: "Unfortunately, your application didn't meet our qualifications.",
