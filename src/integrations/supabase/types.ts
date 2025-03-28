@@ -174,6 +174,7 @@ export type Database = {
           complete_training: boolean | null
           cpu_type: string | null
           created_at: string | null
+          credentials: string | null
           day_hours: Json | null
           email: string
           first_name: string
@@ -212,6 +213,7 @@ export type Database = {
           complete_training?: boolean | null
           cpu_type?: string | null
           created_at?: string | null
+          credentials?: string | null
           day_hours?: Json | null
           email: string
           first_name: string
@@ -250,6 +252,7 @@ export type Database = {
           complete_training?: boolean | null
           cpu_type?: string | null
           created_at?: string | null
+          credentials?: string | null
           day_hours?: Json | null
           email?: string
           first_name?: string
@@ -275,27 +278,6 @@ export type Database = {
           speed_test?: string | null
           system_settings?: string | null
           updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string | null
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []

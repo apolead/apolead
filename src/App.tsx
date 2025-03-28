@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import SupervisorDashboard from "./pages/SupervisorDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
@@ -197,6 +199,11 @@ const App = () => {
             <Route path="/dashboard" element={
               <AuthRoute>
                 <Dashboard />
+              </AuthRoute>
+            } />
+            <Route path="/supervisor" element={
+              <AuthRoute>
+                <SupervisorDashboard />
               </AuthRoute>
             } />
             <Route path="/confirmation" element={<ConfirmationScreen />} />
