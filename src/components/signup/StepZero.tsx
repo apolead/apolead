@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { idToString, profileExists, safelyAccessProfile } from '@/utils/supabaseHelpers';
 
 const StepZero = ({
   userData,
@@ -44,12 +44,12 @@ const StepZero = ({
           const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
             .select('application_status, first_name, credentials')
-            .eq('user_id', session.user.id)
+            .eq('user_id', idToString(session.user.id))
             .maybeSingle();
             
           console.log("Profile check in StepZero:", profile, profileError);
             
-          if (profileError || !profile) {
+          if (profileError || !profileExists(profile)) {
             console.log("Profile not found or error, continuing with signup flow");
             updateUserData({
               email: session.user.email,
@@ -67,8 +67,7 @@ const StepZero = ({
               try {
                 const { error: insertError } = await supabase
                   .from('user_profiles')
-                  .upsert({
-                    user_id: session.user.id,
+                  .insert({
                     email: session.user.email,
                     first_name: session.user.user_metadata?.given_name || 
                               session.user.user_metadata?.name?.split(' ')[0] || 
@@ -79,7 +78,8 @@ const StepZero = ({
                             (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
                               session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : ''),
                     application_status: 'pending',
-                    credentials: 'agent'
+                    credentials: 'agent',
+                    user_id: session.user.id
                   });
                   
                 if (insertError) {
@@ -96,7 +96,7 @@ const StepZero = ({
                 setIsCheckingSession(false);
               }
             }, 500);
-          } else if (profile.application_status === 'rejected') {
+          } else if (safelyAccessProfile(profile, 'application_status') === 'rejected') {
             toast({
               title: "Application Rejected",
               description: "Unfortunately, your application didn't meet our qualifications.",
@@ -104,17 +104,17 @@ const StepZero = ({
             });
             await supabase.auth.signOut();
             setIsCheckingSession(false);
-          } else if (profile?.application_status === 'approved') {
+          } else if (safelyAccessProfile(profile, 'application_status') === 'approved') {
             toast({
               title: "Welcome back!",
               description: "You've been redirected to your dashboard",
             });
-            if (profile.credentials === 'supervisor') {
+            if (safelyAccessProfile(profile, 'credentials') === 'supervisor') {
               navigate('/supervisor');
             } else {
               navigate('/dashboard');
             }
-          } else if (profile?.first_name) {
+          } else if (safelyAccessProfile(profile, 'first_name')) {
             setTimeout(() => {
               if (mounted) {
                 nextStep();
@@ -149,7 +149,7 @@ const StepZero = ({
           const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
             .select('application_status, first_name, credentials')
-            .eq('user_id', session.user.id)
+            .eq('user_id', idToString(session.user.id))
             .maybeSingle();
             
           console.log("Auth state change profile in StepZero:", profile, profileError);
@@ -166,7 +166,7 @@ const StepZero = ({
                       session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
           });
           
-          if (!profileError && profile?.application_status === 'rejected') {
+          if (!profileError && profileExists(profile) && safelyAccessProfile(profile, 'application_status') === 'rejected') {
             toast({
               title: "Application Rejected",
               description: "Unfortunately, your application didn't meet our qualifications.",
@@ -174,8 +174,8 @@ const StepZero = ({
             });
             await supabase.auth.signOut();
             if (mounted) setIsCheckingSession(false);
-          } else if (!profileError && profile?.application_status === 'approved') {
-            if (profile.credentials === 'supervisor') {
+          } else if (!profileError && profileExists(profile) && safelyAccessProfile(profile, 'application_status') === 'approved') {
+            if (safelyAccessProfile(profile, 'credentials') === 'supervisor') {
               navigate('/supervisor');
             } else {
               navigate('/dashboard');
@@ -195,7 +195,7 @@ const StepZero = ({
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate, nextStep, toast, updateUserData]);
   
   const handleGoogleSignUp = async () => {
     try {

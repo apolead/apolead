@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +14,7 @@ import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
+import { idToString, profileExists, safelyAccessProfile } from "./utils/supabaseHelpers";
 
 const queryClient = new QueryClient();
 
@@ -36,18 +36,18 @@ const AuthRoute = ({ children }) => {
         const { data: profile, error } = await supabase
           .from('user_profiles')
           .select('application_status, credentials')
-          .eq('user_id', session.user.id)
+          .eq('user_id', idToString(session.user.id))
           .maybeSingle();
           
         console.log("User profile check:", profile, error);
         
-        if (profile) {
+        if (profileExists(profile)) {
           setIsAuthenticated(true);
           
-          if (profile.application_status === 'approved') {
+          if (safelyAccessProfile(profile, 'application_status') === 'approved') {
             setIsApproved(true);
             // Set user credentials for routing
-            setUserCredentials(profile.credentials || "agent");
+            setUserCredentials(safelyAccessProfile(profile, 'credentials') || "agent");
           } else {
             setIsApproved(false);
             setUserCredentials("agent");
@@ -76,18 +76,18 @@ const AuthRoute = ({ children }) => {
         const { data: profile, error } = await supabase
           .from('user_profiles')
           .select('application_status, credentials')
-          .eq('user_id', session.user.id)
+          .eq('user_id', idToString(session.user.id))
           .maybeSingle();
           
         console.log("Initial profile check:", profile, error);
         
-        if (profile) {
+        if (profileExists(profile)) {
           setIsAuthenticated(true);
           
-          if (profile.application_status === 'approved') {
+          if (safelyAccessProfile(profile, 'application_status') === 'approved') {
             setIsApproved(true);
             // Set user credentials for routing
-            setUserCredentials(profile.credentials || "agent");
+            setUserCredentials(safelyAccessProfile(profile, 'credentials') || "agent");
           } else {
             setIsApproved(false);
             setUserCredentials("agent");
@@ -158,18 +158,18 @@ const PublicRoute = ({ children }) => {
           const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
             .select('application_status, credentials')
-            .eq('user_id', session.user.id)
+            .eq('user_id', idToString(session.user.id))
             .maybeSingle();
             
           console.log("PublicRoute profile check:", profile, profileError);
             
-          if (profile) {
+          if (profileExists(profile)) {
             setIsAuthenticated(true);
             
-            if (profile.application_status === 'approved') {
+            if (safelyAccessProfile(profile, 'application_status') === 'approved') {
               setIsApproved(true);
               // Set user credentials for routing
-              setUserCredentials(profile.credentials || "agent");
+              setUserCredentials(safelyAccessProfile(profile, 'credentials') || "agent");
             } else {
               setIsApproved(false);
               setUserCredentials("agent");
@@ -237,12 +237,14 @@ const SupervisorRoute = ({ children }) => {
           const { data: profile, error } = await supabase
             .from('user_profiles')
             .select('credentials, application_status')
-            .eq('user_id', session.user.id)
+            .eq('user_id', idToString(session.user.id))
             .maybeSingle();
             
           console.log("SupervisorRoute profile check:", profile, error);
             
-          if (profile && profile.credentials === 'supervisor' && profile.application_status === 'approved') {
+          if (profileExists(profile) && 
+              safelyAccessProfile(profile, 'credentials') === 'supervisor' && 
+              safelyAccessProfile(profile, 'application_status') === 'approved') {
             setIsSupervisor(true);
           } else {
             setIsSupervisor(false);

@@ -42,31 +42,31 @@ const Login = () => {
       console.log("Handling user authentication for:", session.user.email);
       
       // First check if user profile exists
-      const { data: profile, error: profileError } = await supabase
+      const { data, error } = await supabase
         .from('user_profiles')
         .select('application_status, credentials')
         .eq('user_id', session.user.id)
         .maybeSingle();
       
-      console.log("Profile check result:", profile, profileError);
+      console.log("Profile check result:", data, error);
       
-      if (profileError) {
-        console.error("Error checking profile:", profileError);
+      if (error) {
+        console.error("Error checking profile:", error);
         if (mounted) setIsCheckingSession(false);
         return;
       }
       
-      if (profile) {
+      if (data) {
         // Profile exists, check application status
-        if (profile.application_status === 'approved') {
-          console.log("User is approved with credentials:", profile.credentials);
+        if (data.application_status === 'approved') {
+          console.log("User is approved with credentials:", data.credentials);
           // Redirect to appropriate dashboard based on credentials
-          if (profile.credentials === 'supervisor') {
+          if (data.credentials === 'supervisor') {
             navigate('/supervisor');
           } else {
             navigate('/dashboard');
           }
-        } else if (profile.application_status === 'rejected') {
+        } else if (data.application_status === 'rejected') {
           console.log("User application was rejected");
           toast({
             title: "Application Rejected",
@@ -85,17 +85,16 @@ const Login = () => {
         console.log("No profile found for user, creating initial profile");
         
         try {
-          const { data: newProfile, error: insertError } = await supabase
+          const { error: insertError } = await supabase
             .from('user_profiles')
             .insert({
-              user_id: session.user.id,
+              email: session.user.email,
               first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
               last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-              email: session.user.email,
-              application_status: 'pending'
-            })
-            .select()
-            .single();
+              application_status: 'pending',
+              credentials: 'agent',
+              user_id: session.user.id
+            });
           
           if (insertError) {
             console.error("Error creating initial profile:", insertError);

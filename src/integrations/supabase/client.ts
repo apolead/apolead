@@ -27,10 +27,13 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
   db: {
     schema: 'public',
   },
-  debug: {
-    // Enable logging for database operations to help diagnose issues
-    logPostgRESTErrors: true,
-    logQueryParameters: true,
-    logSql: true
-  },
 });
+
+// Helper for safely handling Supabase query results
+export function handleQueryResult<T>(result: any): T | null {
+  if (result && !result.error && result.data) {
+    return result.data as T;
+  }
+  console.error("Query error:", result?.error);
+  return null;
+}

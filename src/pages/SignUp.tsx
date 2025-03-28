@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StepZero from '@/components/signup/StepZero';
@@ -8,6 +7,7 @@ import StepThree from '@/components/signup/StepThree';
 import ConfirmationScreen from '@/components/signup/ConfirmationScreen';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { idToString } from '@/utils/supabaseHelpers';
 
 const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -143,16 +143,16 @@ const SignUp = () => {
       try {
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
-          .select('gov_id_number')
-          .eq('gov_id_number', userData.govIdNumber)
+          .select('*')
+          .filter('gov_id_number', 'eq', userData.govIdNumber)
           .maybeSingle();
           
         if (profileError) throw profileError;
         
         const { data: applicationData, error: applicationError } = await supabase
           .from('user_applications')
-          .select('gov_id_number')
-          .eq('gov_id_number', userData.govIdNumber)
+          .select('*')
+          .filter('gov_id_number', 'eq', userData.govIdNumber)
           .maybeSingle();
           
         if (applicationError) throw applicationError;
@@ -189,44 +189,42 @@ const SignUp = () => {
       
       const applicationStatus = determineApplicationStatus();
       
-      const data = {
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        email: userData.email,
-        birth_day: userData.birthDay,
-        gov_id_number: userData.govIdNumber,
-        gov_id_image: govIdImageUrl,
-        cpu_type: userData.cpuType,
-        ram_amount: userData.ramAmount,
-        has_headset: userData.hasHeadset,
-        has_quiet_place: userData.hasQuietPlace,
-        speed_test: userData.speedTest,
-        system_settings: userData.systemSettings,
-        available_hours: userData.availableHours,
-        available_days: userData.availableDays,
-        day_hours: userData.dayHours,
-        sales_experience: userData.salesExperience,
-        sales_months: userData.salesMonths,
-        sales_company: userData.salesCompany,  // This should match the DB column name
-        sales_product: userData.salesProduct,
-        service_experience: userData.serviceExperience,
-        service_months: userData.serviceMonths,
-        service_company: userData.serviceCompany,  // This should match the DB column name
-        service_product: userData.serviceProduct,
-        meet_obligation: userData.meetObligation,
-        login_discord: userData.loginDiscord,
-        check_emails: userData.checkEmails,
-        solve_problems: userData.solveProblems,
-        complete_training: userData.completeTraining,
-        personal_statement: userData.personalStatement,
-        accepted_terms: userData.acceptedTerms,
-        application_status: applicationStatus
-      };
-      
       const { error: updateError } = await supabase
         .from('user_profiles')
-        .update(data)
-        .eq('user_id', session.user.id);
+        .update({
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          email: userData.email,
+          birth_day: userData.birthDay,
+          gov_id_number: userData.govIdNumber,
+          gov_id_image: govIdImageUrl,
+          cpu_type: userData.cpuType,
+          ram_amount: userData.ramAmount,
+          has_headset: userData.hasHeadset,
+          has_quiet_place: userData.hasQuietPlace,
+          speed_test: userData.speedTest,
+          system_settings: userData.systemSettings,
+          available_hours: userData.availableHours,
+          available_days: userData.availableDays,
+          day_hours: userData.dayHours,
+          sales_experience: userData.salesExperience,
+          sales_months: userData.salesMonths,
+          sales_company: userData.salesCompany,
+          sales_product: userData.salesProduct,
+          service_experience: userData.serviceExperience,
+          service_months: userData.serviceMonths,
+          service_company: userData.serviceCompany,
+          service_product: userData.serviceProduct,
+          meet_obligation: userData.meetObligation,
+          login_discord: userData.loginDiscord,
+          check_emails: userData.checkEmails,
+          solve_problems: userData.solveProblems,
+          complete_training: userData.completeTraining,
+          personal_statement: userData.personalStatement,
+          accepted_terms: userData.acceptedTerms,
+          application_status: applicationStatus
+        })
+        .filter('user_id', 'eq', idToString(session.user.id));
       
       if (updateError) {
         console.error('Error updating user profile:', updateError);
