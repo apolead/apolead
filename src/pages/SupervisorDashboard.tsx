@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,21 +24,29 @@ const SupervisorDashboard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        console.log('No user found, redirecting to login');
         navigate('/login');
         return;
       }
       
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
+      // Check if the user is a supervisor based on their user_profiles entry
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('credentials')
         .eq('user_id', user.id)
         .single();
       
-      if (error || !data || (data.role !== 'supervisor' && data.role !== 'admin')) {
-        console.error('Not authorized as supervisor:', error);
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        navigate('/dashboard');
+        return;
+      }
+      
+      if (!profileData || (profileData.credentials !== 'supervisor' && profileData.credentials !== 'admin')) {
+        console.error('Not authorized as supervisor:', profileData?.credentials);
         navigate('/dashboard');
       } else {
-        console.log('User is authorized as:', data.role);
+        console.log('User is authorized as:', profileData.credentials);
       }
     };
     
