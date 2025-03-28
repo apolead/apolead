@@ -1,153 +1,126 @@
-
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Check, X, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { Loader2, Check, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { idToString, profileExists, safelyAccessProfile } from '@/utils/supabaseHelpers';
 
 const ConfirmationScreen = () => {
-  const [isApproved, setIsApproved] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
   const navigate = useNavigate();
-
+  const [status, setStatus] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  
   useEffect(() => {
-    const checkApplicationStatus = async () => {
-      try {
-        setIsLoading(true);
-        
-        // First check URL parameters for status
-        const url = new URL(window.location.href);
-        const status = url.searchParams.get('status');
-        
-        if (status === 'rejected') {
-          setIsApproved(false);
-          setIsLoading(false);
-          return;
-        } else if (status === 'approved') {
-          setIsApproved(true);
-          setIsLoading(false);
-          return;
-        }
-        
-        // If no status in URL, check session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          // Check application status in user_profiles
-          const { data: profiles, error } = await supabase
-            .from('user_profiles')
-            .select('application_status')
-            .eq('user_id', session.user.id)
-            .single();
-          
-          if (error) throw error;
-          
-          if (profiles && profiles.application_status === 'rejected') {
-            setIsApproved(false);
-          } else {
-            setIsApproved(true);
-          }
-        } else {
-          // If no session found, default to approved (should not happen)
-          console.warn("No session found and no status in URL, defaulting to approved");
-          setIsApproved(true);
-          // If no session or status param, redirect to homepage after a delay
-          setTimeout(() => navigate('/'), 5000);
-        }
-      } catch (error) {
-        console.error('Error checking application status:', error);
-        // Default to approved on error
-        setIsApproved(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const queryParams = new URLSearchParams(location.search);
+    const statusParam = queryParams.get('status');
     
-    checkApplicationStatus();
-  }, [navigate]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto text-indigo-600 mb-4" />
-          <h2 className="text-2xl font-bold mb-4">Loading your application status...</h2>
-          <p className="text-gray-600">Please wait while we check your application status.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className={`max-w-md w-full ${isApproved ? 'bg-white' : 'bg-red-50'} rounded-lg shadow-md p-8 text-center`}>
-        <div className={`h-16 w-16 rounded-full ${isApproved ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center mx-auto mb-6`}>
-          {isApproved ? (
-            <Check className={`h-8 w-8 text-green-600`} />
-          ) : (
-            <X className={`h-8 w-8 text-red-600`} />
-          )}
-        </div>
-        
-        {isApproved ? (
-          <>
-            <h2 className="text-2xl font-bold mb-4">Application Submitted Successfully!</h2>
-            <p className="text-gray-600 mb-6">
-              Thank you for applying to join our team. Your information has been received and will be reviewed by our team.
-            </p>
-            <div className="space-y-4 mb-8">
-              <div className="p-4 bg-blue-50 rounded-md text-left">
-                <h3 className="font-semibold text-blue-800 mb-2">What happens next?</h3>
-                <p className="text-sm text-blue-700">
-                  1. Check your Gmail inbox for a confirmation email<br />
-                  2. Complete any verification steps in the email<br />
-                  3. Our team will review your application<br />
-                  4. You'll receive instructions for onboarding if approved
-                </p>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <h2 className="text-2xl font-bold mb-4 text-red-800">Unable to Proceed with Your Application</h2>
-            <p className="text-gray-700 mb-6">
-              We appreciate your interest in joining our team. However, based on the information you've provided, we're unable to move forward with your application at this time.
-            </p>
-            <div className="space-y-4 mb-8">
-              <div className="p-4 bg-red-100 rounded-md text-left">
-                <h3 className="font-semibold text-red-800 mb-2">Common reasons for this outcome:</h3>
-                <p className="text-sm text-red-700">
-                  • Unable to meet the minimum time commitment<br />
-                  • Missing necessary equipment or workspace requirements<br />
-                  • Unable to fulfill all job requirements<br />
-                  • Geographic restrictions based on your location
-                </p>
-              </div>
-            </div>
-          </>
-        )}
-        
-        <div className="space-x-4">
-          <Button 
-            asChild
-            className={isApproved ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"}
-          >
-            <Link to="/">Return to Homepage</Link>
-          </Button>
-          
-          {isApproved && (
-            <Button 
-              asChild
-              variant="outline"
-            >
-              <Link to="/login">Go to Login</Link>
-            </Button>
-          )}
-        </div>
-      </div>
+    if (statusParam) {
+      setStatus(statusParam);
+      setIsLoading(false);
+    } else {
+      checkApplicationStatus();
+    }
+  }, [location]);
+  
+  const checkApplicationStatus = async () => {
+    setIsLoading(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
       
-      <div className="mt-8 text-center text-sm text-gray-500">
-        <p>© 2025 ApoLead. All rights reserved.</p>
+      if (session?.user) {
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('application_status')
+          .eq('user_id', idToString(session.user.id))
+          .maybeSingle();
+          
+        if (error) {
+          console.error('Error fetching profile:', error);
+        } else if (profileExists(profile)) {
+          setStatus(safelyAccessProfile(profile, 'application_status') || 'pending');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking application status:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center p-8">
+          <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mb-4" />
+          <h2 className="text-xl font-medium">Checking application status...</h2>
+        </div>
+      );
+    }
+    
+    switch (status) {
+      case 'approved':
+        return (
+          <div className="text-center p-8">
+            <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
+              <Check className="h-10 w-10 text-green-500" />
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Application Approved!</h2>
+            <p className="text-gray-600 mb-6">
+              Congratulations! Your application has been approved. You can now log in to your dashboard to start working with us.
+            </p>
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => navigate('/dashboard')}>
+              Go to Dashboard
+            </Button>
+          </div>
+        );
+      case 'rejected':
+        return (
+          <div className="text-center p-8">
+            <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+              <X className="h-10 w-10 text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Application Not Approved</h2>
+            <p className="text-gray-600 mb-6">
+              We're sorry, but your application didn't meet our qualifications at this time. You may apply again after 30 days.
+            </p>
+            <Link to="/">
+              <Button className="bg-gray-100 hover:bg-gray-200 text-gray-800">
+                Return to Home
+              </Button>
+            </Link>
+          </div>
+        );
+      case 'pending':
+      default:
+        return (
+          <div className="text-center p-8">
+            <div className="w-20 h-20 rounded-full bg-yellow-50 flex items-center justify-center mx-auto mb-4">
+              <svg className="h-10 w-10 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Application Under Review</h2>
+            <p className="text-gray-600 mb-6">
+              Your application is being reviewed by our team. This process typically takes 1-2 business days. We'll notify you by email once a decision has been made.
+            </p>
+            <Link to="/">
+              <Button className="bg-gray-100 hover:bg-gray-200 text-gray-800">
+                Return to Home
+              </Button>
+            </Link>
+          </div>
+        );
+    }
+  };
+  
+  return (
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
+      <div className="max-w-md w-full mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="px-4 py-5 sm:p-6">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );

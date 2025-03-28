@@ -10,7 +10,18 @@ import {
   TableHeader,
   TableRow 
 } from '@/components/ui/table';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogClose
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserProfile {
   id: string;
@@ -25,54 +36,124 @@ interface UserProfile {
   sales_experience: boolean;
   service_experience: boolean;
   application_status: string;
+  credentials: string;
+  agent_standing?: string;
+  supervisor_notes?: string;
+  agent_id?: string;
+  lead_source?: string;
+  start_date?: string;
 }
 
 const SupervisorDashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
   const [currentImage, setCurrentImage] = useState('');
   const [imageType, setImageType] = useState('');
+  const [currentUser, setCurrentUser] = useState<{first_name: string, last_name: string}>({
+    first_name: '',
+    last_name: ''
+  });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
+  const [editForm, setEditForm] = useState({
+    agent_id: '',
+    supervisor_notes: '',
+    agent_standing: 'Active',
+    lead_source: '',
+    start_date: ''
+  });
   
   useEffect(() => {
     const checkUserRole = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { data: profile } = await supabase
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.log("No session found, redirecting to login");
+          navigate('/login');
+          return;
+        }
+        
+        console.log("Session found, checking supervisor credentials");
+        
+        const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
-          .select('credentials')
+          .select('credentials, first_name, last_name')
           .eq('user_id', session.user.id)
           .single();
           
-        if (!profile || profile.credentials !== 'supervisor') {
-          // Redirect to appropriate dashboard based on role
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          toast({
+            title: "Error",
+            description: "Could not verify your credentials",
+            variant: "destructive"
+          });
           navigate('/dashboard');
+          return;
         }
-      } else {
+          
+        if (!profile || profile.credentials !== 'supervisor') {
+          console.log("User is not a supervisor, redirecting to dashboard");
+          toast({
+            title: "Access Denied",
+            description: "You don't have supervisor permissions",
+            variant: "destructive"
+          });
+          navigate('/dashboard');
+          return;
+        }
+        
+        // Set current user information
+        setCurrentUser({
+          first_name: profile.first_name || '',
+          last_name: profile.last_name || ''
+        });
+        
+        // User is a supervisor, proceed to fetch all profiles
+        getUserProfiles();
+      } catch (error) {
+        console.error("Error in checkUserRole:", error);
         navigate('/login');
       }
     };
     
     const getUserProfiles = async () => {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('application_date', { ascending: false });
-      
-      if (data) {
-        setUserProfiles(data);
-      }
-      
-      if (error) {
-        console.error('Error fetching user profiles:', error);
+      try {
+        console.log("Fetching all user profiles");
+        // Get all user profiles without filtering
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .order('application_date', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching user profiles:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load user profiles",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        if (data) {
+          console.log('Successfully fetched profiles:', data);
+          setUserProfiles(data);
+        } else {
+          console.log('No profiles returned from query');
+          setUserProfiles([]);
+        }
+      } catch (err) {
+        console.error('Exception in getUserProfiles:', err);
       }
     };
     
     checkUserRole();
-    getUserProfiles();
 
     // Add Font Awesome
     const link = document.createElement('link');
@@ -90,7 +171,7 @@ const SupervisorDashboard = () => {
       document.head.removeChild(link);
       document.head.removeChild(fontLink);
     };
-  }, [navigate]);
+  }, [navigate, toast]);
   
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -102,6 +183,10 @@ const SupervisorDashboard = () => {
   };
   
   const openPhotoModal = (type: string, imageUrl: string) => {
+    if (!imageUrl) {
+      console.log('No image URL provided');
+      return;
+    }
     setImageType(type);
     setCurrentImage(imageUrl);
     setShowImageModal(true);
@@ -111,7 +196,72 @@ const SupervisorDashboard = () => {
     setShowImageModal(false);
   };
   
+  const openEditDialog = (profile: UserProfile) => {
+    setSelectedProfile(profile);
+    setEditForm({
+      agent_id: profile.agent_id || '',
+      supervisor_notes: profile.supervisor_notes || '',
+      agent_standing: profile.agent_standing || 'Active',
+      lead_source: profile.lead_source || '',
+      start_date: profile.start_date || ''
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedProfile) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({
+          agent_id: editForm.agent_id,
+          supervisor_notes: editForm.supervisor_notes,
+          agent_standing: editForm.agent_standing,
+          lead_source: editForm.lead_source,
+          start_date: editForm.start_date
+        })
+        .eq('id', selectedProfile.id)
+        .select();
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        return;
+      }
+
+      // Update the user profiles list
+      setUserProfiles(prevProfiles => 
+        prevProfiles.map(profile => 
+          profile.id === selectedProfile.id 
+            ? { 
+                ...profile, 
+                agent_id: editForm.agent_id,
+                supervisor_notes: editForm.supervisor_notes,
+                agent_standing: editForm.agent_standing,
+                lead_source: editForm.lead_source,
+                start_date: editForm.start_date
+              } 
+            : profile
+        )
+      );
+
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+  
   const filteredProfiles = userProfiles.filter(profile => {
+    if (!searchTerm) return true;
+    
     const fullName = `${profile.first_name} ${profile.last_name}`.toLowerCase();
     const searchLower = searchTerm.toLowerCase();
     
@@ -121,26 +271,8 @@ const SupervisorDashboard = () => {
       profile.application_status?.toLowerCase().includes(searchLower)
     );
   });
-  
-  // Generate user initials for avatar
-  const getUserInitials = () => {
-    const { data: { user } } = supabase.auth.getUser() as any;
-    if (!user) return "SJ";
-    
-    const { data: profile } = supabase
-      .from('user_profiles')
-      .select('first_name, last_name')
-      .eq('user_id', user.id)
-      .single() as any;
-    
-    if (!profile) return "SJ";
-    
-    const firstInitial = profile.first_name?.charAt(0) || "S";
-    const lastInitial = profile.last_name?.charAt(0) || "J";
-    
-    return `${firstInitial}${lastInitial}`;
-  };
-  
+
+  // Format date for display
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     
@@ -152,6 +284,7 @@ const SupervisorDashboard = () => {
     }).format(date);
   };
   
+  // CSS classes for status display
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'approved':
@@ -166,6 +299,7 @@ const SupervisorDashboard = () => {
     }
   };
   
+  // Status icon display
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
@@ -252,6 +386,7 @@ const SupervisorDashboard = () => {
             <i className={`fas fa-angle-${sidebarCollapsed ? 'right' : 'left'}`}></i>
           </div>
         </div>
+        
         <div className="nav-menu" style={{
           display: 'flex',
           flexDirection: 'column',
@@ -648,7 +783,7 @@ const SupervisorDashboard = () => {
         {/* Header */}
         <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
           <div className="welcome" style={{ fontSize: '26px', fontWeight: 600, color: '#1e293b' }}>
-            Welcome, <span style={{ color: '#4f46e5', position: 'relative' }}>Sarah</span>
+            Welcome, <span style={{ color: '#4f46e5', position: 'relative' }}>{currentUser.first_name}</span>
             <style>{`
               .welcome span::after {
                 content: '';
@@ -728,731 +863,380 @@ const SupervisorDashboard = () => {
               </div>
             </div>
             
-            <div className="user-profile" style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: 'white',
-              padding: '8px 15px 8px 8px',
-              borderRadius: '50px',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-              cursor: 'pointer',
-              transition: 'all 0.3s'
-            }}>
-              <div className="user-avatar" style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                marginRight: '10px',
-                background: 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 600,
-                fontSize: '16px'
-              }}>
-                SJ
-              </div>
-              <div className="user-name" style={{ fontWeight: 500, color: '#1e293b' }}>Sarah Johnson</div>
-              <i className="fas fa-chevron-down dropdown-icon" style={{ marginLeft: '8px', color: '#64748b' }}></i>
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="user-avatar" style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  backgroundColor: '#4f46e5',
+                  color: 'white',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)',
+                  fontSize: '16px'
+                }}>
+                  {currentUser.first_name.charAt(0).toUpperCase()}
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2">
+                <div className="grid gap-1">
+                  <div className="px-2 py-1.5 text-sm font-medium">
+                    {currentUser.first_name} {currentUser.last_name}
+                  </div>
+                  <div className="h-px bg-gray-200 my-1"></div>
+                  <a href="#" className="flex items-center px-2 py-1.5 text-sm hover:bg-gray-100 rounded">
+                    <i className="fas fa-user-circle mr-2"></i> My Profile
+                  </a>
+                  <a href="#" className="flex items-center px-2 py-1.5 text-sm hover:bg-gray-100 rounded">
+                    <i className="fas fa-cog mr-2"></i> Settings
+                  </a>
+                  <div className="h-px bg-gray-200 my-1"></div>
+                  <button 
+                    onClick={handleLogout}
+                    className="flex items-center px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded w-full text-left"
+                  >
+                    <i className="fas fa-sign-out-alt mr-2"></i> Log Out
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
         
-        {/* Page Title */}
-        <div className="page-title" style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', position: 'relative' }}>
-          <h2 style={{ fontSize: '24px', color: '#1e293b', display: 'flex', alignItems: 'center' }}>
-            <div className="page-title-icon" style={{
-              marginRight: '12px',
-              background: 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
-              color: 'white',
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '16px'
+        {/* Dashboard Content */}
+        <div className="dashboard-content">
+          {/* Search and Filter Row */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="search-bar" style={{
+              position: 'relative',
+              width: '320px'
             }}>
-              <i className="fas fa-user-friends"></i>
+              <i className="fas fa-search" style={{
+                position: 'absolute',
+                left: '16px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#94a3b8',
+                fontSize: '14px'
+              }}></i>
+              <input 
+                type="text" 
+                placeholder="Search applicants by name or ID..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '12px 16px 12px 42px',
+                  width: '100%',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                  outline: 'none',
+                  fontSize: '14px'
+                }}
+              />
             </div>
-            Interview Management
-          </h2>
-          <div className="page-subtitle" style={{
-            color: '#64748b',
-            marginLeft: '15px',
-            fontSize: '14px',
-            paddingLeft: '15px',
-            borderLeft: '2px solid #e2e8f0'
-          }}>Evaluate and manage agent interviews</div>
-        </div>
-        
-        {/* Stats Section */}
-        <div className="stats" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '25px',
-          marginBottom: '25px'
-        }}>
-          <div className="stat-card" style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '25px',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-            transition: 'all 0.3s ease',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div className="stat-icon" style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: '20px',
-              background: 'linear-gradient(135deg, rgba(79,70,229,0.1) 0%, rgba(0,194,203,0.1) 100%)',
-              color: '#4f46e5',
-              fontSize: '24px',
-              position: 'relative'
-            }}>
-              <i className="fas fa-users"></i>
-              <style>{`
-                .stat-card::before {
-                  content: '';
-                  position: absolute;
-                  top: 0;
-                  right: 0;
-                  width: 100px;
-                  height: 100px;
-                  background: radial-gradient(circle, rgba(79,70,229,0.1) 0%, rgba(79,70,229,0) 70%);
-                  border-radius: 0 0 0 70%;
-                }
-                .stat-icon::after {
-                  content: '';
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                  width: 100%;
-                  height: 100%;
-                  background: linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%);
-                  border-radius: 16px;
-                  opacity: 0.2;
-                }
-              `}</style>
-            </div>
-            <div className="stat-info">
-              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>{userProfiles.length}</h3>
-              <p style={{ color: '#64748b', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
-                <i className="fas fa-arrow-up" style={{ color: '#4f46e5', marginRight: '5px', fontSize: '12px' }}></i> Total Interviews
-              </p>
-            </div>
-          </div>
-          
-          <div className="stat-card" style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '25px',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-            transition: 'all 0.3s ease',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div className="stat-icon" style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: '20px',
-              background: 'linear-gradient(135deg, rgba(79,70,229,0.1) 0%, rgba(0,194,203,0.1) 100%)',
-              color: '#4f46e5',
-              fontSize: '24px',
-              position: 'relative'
-            }}>
-              <i className="fas fa-check-circle"></i>
-            </div>
-            <div className="stat-info">
-              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>
-                {userProfiles.filter(p => p.application_status === 'approved').length}
-              </h3>
-              <p style={{ color: '#64748b', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
-                <i className="fas fa-check" style={{ color: '#4f46e5', marginRight: '5px', fontSize: '12px' }}></i> Approved
-              </p>
-            </div>
-          </div>
-          
-          <div className="stat-card" style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '25px',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-            transition: 'all 0.3s ease',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div className="stat-icon" style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: '20px',
-              background: 'linear-gradient(135deg, rgba(79,70,229,0.1) 0%, rgba(0,194,203,0.1) 100%)',
-              color: '#4f46e5',
-              fontSize: '24px',
-              position: 'relative'
-            }}>
-              <i className="fas fa-times-circle"></i>
-            </div>
-            <div className="stat-info">
-              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>
-                {userProfiles.filter(p => p.application_status === 'rejected').length}
-              </h3>
-              <p style={{ color: '#64748b', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
-                <i className="fas fa-times" style={{ color: '#4f46e5', marginRight: '5px', fontSize: '12px' }}></i> Rejected
-              </p>
-            </div>
-          </div>
-          
-          <div className="stat-card" style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '25px',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-            transition: 'all 0.3s ease',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div className="stat-icon" style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: '20px',
-              background: 'linear-gradient(135deg, rgba(79,70,229,0.1) 0%, rgba(0,194,203,0.1) 100%)',
-              color: '#4f46e5',
-              fontSize: '24px',
-              position: 'relative'
-            }}>
-              <i className="fas fa-calendar-check"></i>
-            </div>
-            <div className="stat-info">
-              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>5</h3>
-              <p style={{ color: '#64748b', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
-                <i className="fas fa-hourglass-half" style={{ color: '#4f46e5', marginRight: '5px', fontSize: '12px' }}></i> Scheduled Today
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        {/* Table Container */}
-        <div className="table-container" style={{
-          backgroundColor: 'white',
-          borderRadius: '20px',
-          padding: '30px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-          marginBottom: '40px',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <style>{`
-            .table-container::before {
-              content: '';
-              position: absolute;
-              bottom: 0;
-              right: 0;
-              width: 200px;
-              height: 200px;
-              background: radial-gradient(circle, rgba(79,70,229,0.05) 0%, rgba(79,70,229,0) 70%);
-              border-radius: 0;
-            }
             
-            .status {
-              display: inline-flex;
-              align-items: center;
-              padding: 6px 12px;
-              border-radius: 50px;
-              font-size: 12px;
-              font-weight: 500;
-            }
+            <style>{`
+              .status-approved {
+                color: #10b981;
+                background-color: rgba(16, 185, 129, 0.1);
+              }
+              .status-rejected {
+                color: #ef4444;
+                background-color: rgba(239, 68, 68, 0.1);
+              }
+              .status-pending {
+                color: #f59e0b;
+                background-color: rgba(245, 158, 11, 0.1);
+              }
+              .image-popover {
+                width: 24px;
+                height: 24px;
+                border-radius: 6px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                margin-right: 8px;
+                background-color: #f1f5f9;
+                color: #64748b;
+                transition: all 0.2s;
+              }
+              .image-popover:hover {
+                background-color: #e2e8f0;
+                color: #475569;
+              }
+              .edit-button {
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                background-color: #f1f5f9;
+                color: #64748b;
+                transition: all 0.2s;
+                border: none;
+                outline: none;
+              }
+              .edit-button:hover {
+                background-color: #e2e8f0;
+                color: #475569;
+              }
+            `}</style>
             
-            .status-approved {
-              background-color: rgba(16, 185, 129, 0.1);
-              color: #10B981;
-            }
-            
-            .status-rejected {
-              background-color: rgba(239, 68, 68, 0.1);
-              color: #EF4444;
-            }
-            
-            .status-pending {
-              background-color: rgba(245, 158, 11, 0.1);
-              color: #F59E0B;
-            }
-            
-            .badge {
-              display: inline-flex;
-              align-items: center;
-              padding: 5px 10px;
-              border-radius: 50px;
-              font-size: 12px;
-              font-weight: 500;
-            }
-            
-            .badge-success {
-              background-color: rgba(16, 185, 129, 0.1);
-              color: #10B981;
-            }
-            
-            .badge-warning {
-              background-color: rgba(245, 158, 11, 0.1);
-              color: #F59E0B;
-            }
-            
-            .badge-danger {
-              background-color: rgba(239, 68, 68, 0.1);
-              color: #EF4444;
-            }
-            
-            .btn {
-              padding: 12px 24px;
-              border-radius: 10px;
-              font-weight: 500;
-              cursor: pointer;
-              transition: all 0.3s;
-              border: none;
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 14px;
-            }
-            
-            .btn i {
-              margin-right: 8px;
-            }
-            
-            .btn-outline {
-              background: white;
-              border: 1px solid #e2e8f0;
-              color: #64748b;
-            }
-            
-            .btn-sm {
-              padding: 5px 10px;
-              font-size: 12px;
-              border-radius: 6px;
-            }
-            
-            .btn-outline:hover {
-              border-color: #4f46e5;
-              color: #4f46e5;
-            }
-          `}</style>
-          
-          <div className="table-header" style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '25px'
-          }}>
-            <h2 className="table-title" style={{
-              fontSize: '20px',
-              color: '#1e293b',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
-              <i className="fas fa-user-friends" style={{ marginRight: '10px', color: '#4f46e5' }}></i>
-              Interview Candidates
-            </h2>
-            <div style={{ display: 'flex' }}>
-              <div className="search-container" style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: '#f8fafc',
+            <div className="filter-actions flex gap-3">
+              <Button variant="outline" style={{
                 borderRadius: '10px',
-                padding: '10px 15px',
-                width: '300px',
-                transition: 'all 0.3s',
-                border: '1px solid #e2e8f0'
-              }}>
-                <i className="fas fa-search" style={{ color: '#64748b', marginRight: '10px' }}></i>
-                <input 
-                  type="text" 
-                  className="search-input" 
-                  placeholder="Search by name, ID, or status..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    border: 'none',
-                    background: 'none',
-                    outline: 'none',
-                    width: '100%',
-                    fontSize: '14px',
-                    color: '#1e293b'
-                  }}
-                />
-              </div>
-              <button className="filter-button" style={{
-                display: 'flex',
+                padding: '0 16px',
+                height: '42px',
+                display: 'inline-flex',
                 alignItems: 'center',
-                background: 'white',
-                border: '1px solid #e2e8f0',
-                borderRadius: '10px',
-                padding: '10px 15px',
-                color: '#64748b',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                marginLeft: '15px'
+                gap: '8px',
+                fontWeight: 500
               }}>
-                <i className="fas fa-filter" style={{ marginRight: '8px' }}></i>
+                <i className="fas fa-filter"></i>
                 Filter
-              </button>
-              <button className="filter-button" style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)',
-                color: 'white',
-                border: 'none',
+              </Button>
+              
+              <Button style={{
                 borderRadius: '10px',
-                padding: '10px 15px',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                marginLeft: '15px'
+                padding: '0 16px',
+                height: '42px',
+                backgroundColor: '#4f46e5',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontWeight: 500
               }}>
-                <i className="fas fa-plus" style={{ marginRight: '8px' }}></i>
-                New Interview
-              </button>
+                <i className="fas fa-download"></i>
+                Export
+              </Button>
             </div>
           </div>
           
-          {/* Data Table */}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Agent Name</TableHead>
-                <TableHead>Government ID</TableHead>
-                <TableHead>Gov Photo</TableHead>
-                <TableHead>Speed Test</TableHead>
-                <TableHead>Interview Date</TableHead>
-                <TableHead>Sales Skills</TableHead>
-                <TableHead>Communication</TableHead>
-                <TableHead>Interview Process</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProfiles.length > 0 ? (
-                filteredProfiles.map((profile) => (
-                  <TableRow key={profile.id}>
-                    <TableCell>{`${profile.first_name} ${profile.last_name}`}</TableCell>
-                    <TableCell>{profile.gov_id_number || 'N/A'}</TableCell>
-                    <TableCell>
-                      {profile.gov_id_image ? (
-                        <button 
-                          className="btn btn-outline btn-sm"
-                          onClick={() => openPhotoModal('id', profile.gov_id_image)}
-                        >
-                          <i className="fas fa-id-card"></i> View
-                        </button>
-                      ) : (
-                        'N/A'
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {profile.speed_test ? (
-                        <button 
-                          className="btn btn-outline btn-sm"
-                          onClick={() => openPhotoModal('speed', profile.speed_test)}
-                        >
-                          <i className="fas fa-tachometer-alt"></i> View
-                        </button>
-                      ) : (
-                        'N/A'
-                      )}
-                    </TableCell>
-                    <TableCell>{formatDate(profile.application_date)}</TableCell>
-                    <TableCell>
-                      {profile.sales_experience !== undefined ? (
-                        <span className={`badge ${profile.sales_experience ? 'badge-success' : 'badge-warning'}`}>
-                          <i className={`fas ${profile.sales_experience ? 'fa-check' : 'fa-times'}`}></i>
-                          {profile.sales_experience ? ' Yes' : ' No'}
-                        </span>
-                      ) : (
-                        ''
-                      )}
-                    </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell>
-                      {profile.application_status && (
-                        <span className={`status ${getStatusClass(profile.application_status)}`}>
-                          <i className={`fas ${getStatusIcon(profile.application_status)}`}></i>
-                          {' '}{profile.application_status.charAt(0).toUpperCase() + profile.application_status.slice(1)}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <button className="action-btn" style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#64748b',
-                        cursor: 'pointer',
-                        fontSize: '16px',
-                        transition: 'all 0.3s'
-                      }}>
-                        <i className="fas fa-edit"></i>
-                      </button>
+          {/* Applicants Table */}
+          <div className="applicants-table bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 mb-6">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="font-semibold text-gray-600">Applicant</TableHead>
+                  <TableHead className="font-semibold text-gray-600">Contact</TableHead>
+                  <TableHead className="font-semibold text-gray-600">Gov ID</TableHead>
+                  <TableHead className="font-semibold text-gray-600">Experience</TableHead>
+                  <TableHead className="font-semibold text-gray-600">Application Date</TableHead>
+                  <TableHead className="font-semibold text-gray-600">Status</TableHead>
+                  <TableHead className="font-semibold text-gray-600">Agent ID</TableHead>
+                  <TableHead className="font-semibold text-gray-600 text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProfiles.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                      {searchTerm ? 'No applicants match your search criteria' : 'No applicant data available yet'}
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={10} style={{ textAlign: 'center', padding: '40px 0' }}>
-                    <div style={{ color: '#94a3b8', fontSize: '16px' }}>
-                      <i className="fas fa-search" style={{ fontSize: '24px', marginBottom: '10px', display: 'block' }}></i>
-                      No candidates found
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          
-          {/* Pagination */}
-          <div className="pagination" style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '25px',
-            color: '#64748b',
-            fontSize: '14px'
-          }}>
-            <div className="pagination-info" style={{ display: 'flex', alignItems: 'center' }}>
-              Showing 1 to {Math.min(filteredProfiles.length, 7)} of {filteredProfiles.length} entries
-              <div className="per-page" style={{ display: 'flex', alignItems: 'center', marginLeft: '20px' }}>
-                <span>Show</span>
-                <select style={{
-                  margin: '0 10px',
-                  padding: '5px 10px',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  backgroundColor: 'white',
-                  color: '#1e293b',
-                  outline: 'none'
-                }}>
-                  <option>7</option>
-                  <option>10</option>
-                  <option>25</option>
-                  <option>50</option>
-                </select>
-                <span>entries</span>
-              </div>
-            </div>
-            <div className="pagination-controls" style={{ display: 'flex', alignItems: 'center' }}>
-              <button className="pagination-button" style={{
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                backgroundColor: 'white',
-                color: '#64748b',
-                margin: '0 5px',
-                cursor: 'pointer',
-                transition: 'all 0.3s'
-              }}>
-                <i className="fas fa-chevron-left"></i>
-              </button>
-              <button className="pagination-button active" style={{
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                backgroundColor: '#4f46e5',
-                color: 'white',
-                margin: '0 5px',
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                borderColor: '#4f46e5'
-              }}>1</button>
-              <button className="pagination-button" style={{
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                backgroundColor: 'white',
-                color: '#64748b',
-                margin: '0 5px',
-                cursor: 'pointer',
-                transition: 'all 0.3s'
-              }}>2</button>
-              <button className="pagination-button" style={{
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                backgroundColor: 'white',
-                color: '#64748b',
-                margin: '0 5px',
-                cursor: 'pointer',
-                transition: 'all 0.3s'
-              }}>3</button>
-              <button className="pagination-button" style={{
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                backgroundColor: 'white',
-                color: '#64748b',
-                margin: '0 5px',
-                cursor: 'pointer',
-                transition: 'all 0.3s'
-              }}>4</button>
-              <button className="pagination-button" style={{
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                backgroundColor: 'white',
-                color: '#64748b',
-                margin: '0 5px',
-                cursor: 'pointer',
-                transition: 'all 0.3s'
-              }}>
-                <i className="fas fa-chevron-right"></i>
-              </button>
-            </div>
+                ) : (
+                  filteredProfiles.map((profile) => (
+                    <TableRow key={profile.id}>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <div className="user-avatar-small" style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '10px',
+                            backgroundColor: '#4f46e5',
+                            color: 'white',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginRight: '12px',
+                            fontSize: '14px'
+                          }}>
+                            {profile.first_name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-medium">{profile.first_name} {profile.last_name}</div>
+                            <div className="text-sm text-gray-500">Lead Source: {profile.lead_source || 'N/A'}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{profile.email}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <div 
+                            className="image-popover" 
+                            onClick={() => openPhotoModal('Government ID', profile.gov_id_image)}
+                            title="View ID Image"
+                          >
+                            <i className="fas fa-id-card"></i>
+                          </div>
+                          <div className="text-sm">{profile.gov_id_number || 'Not provided'}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {profile.sales_experience ? <span className="text-green-600"><i className="fas fa-check-circle mr-1"></i>Sales</span> : <span className="text-gray-400"><i className="fas fa-times-circle mr-1"></i>Sales</span>}
+                          <br />
+                          {profile.service_experience ? <span className="text-green-600"><i className="fas fa-check-circle mr-1"></i>Service</span> : <span className="text-gray-400"><i className="fas fa-times-circle mr-1"></i>Service</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{formatDate(profile.application_date)}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className={`${getStatusClass(profile.application_status)} text-xs font-medium px-2.5 py-0.5 rounded-full inline-flex items-center`}>
+                          <i className={`fas ${getStatusIcon(profile.application_status)} mr-1`}></i>
+                          {profile.application_status ? profile.application_status.charAt(0).toUpperCase() + profile.application_status.slice(1) : 'Unknown'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{profile.agent_id || 'Not assigned'}</div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <button 
+                          className="edit-button ml-2"
+                          onClick={() => openEditDialog(profile)}
+                          title="Edit Profile"
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
         </div>
-        
-        {/* Image Modal */}
-        {showImageModal && (
-          <div
-            className="modal show"
-            onClick={closeModal}
-            style={{
-              display: 'flex',
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              zIndex: 1000,
-              justifyContent: 'center',
-              alignItems: 'center',
-              opacity: 1
-            }}
-          >
-            <div
-              className="modal-content"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                backgroundColor: 'white',
-                width: '100%',
-                maxWidth: '700px',
-                borderRadius: '16px',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
-                overflow: 'hidden',
-                transform: 'translateY(0)',
-                maxHeight: '90vh',
-                overflowY: 'auto'
-              }}
-            >
-              <div className="modal-header" style={{
-                padding: '20px 25px',
-                borderBottom: '1px solid #eaeaea',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: 'linear-gradient(to right, #4f46e5, #00c2cb)',
-                color: 'white',
-                position: 'sticky',
-                top: 0,
-                zIndex: 10
-              }}>
-                <h2 style={{ 
-                  fontSize: '20px', 
-                  fontWeight: 600, 
-                  margin: 0, 
-                  display: 'flex', 
-                  alignItems: 'center' 
-                }}>
-                  <i className={`fas fa-${imageType === 'id' ? 'id-card' : 'tachometer-alt'}`} style={{ marginRight: '10px' }}></i>
-                  {imageType === 'id' ? 'Government ID' : 'Speed Test Result'}
-                </h2>
-                <button
-                  className="close-modal"
-                  onClick={closeModal}
-                  style={{
-                    fontSize: '24px',
-                    cursor: 'pointer',
-                    color: 'white',
-                    opacity: 0.8,
-                    transition: 'opacity 0.3s',
-                    background: 'none',
-                    border: 'none',
-                    padding: 0
-                  }}
-                >
-                  &times;
-                </button>
-              </div>
-              <div className="modal-body" style={{ padding: '25px' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <img 
-                    src={currentImage} 
-                    alt={imageType === 'id' ? 'Government ID' : 'Speed Test Result'} 
-                    style={{ 
-                      maxWidth: '100%', 
-                      maxHeight: '70vh',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-                    }} 
-                  />
-                </div>
-              </div>
+      </div>
+      
+      {/* Edit Profile Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Applicant Profile</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="agent_id" className="text-right text-sm font-medium">
+                Agent ID
+              </label>
+              <input
+                id="agent_id"
+                name="agent_id"
+                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                value={editForm.agent_id}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="agent_standing" className="text-right text-sm font-medium">
+                Standing
+              </label>
+              <select
+                id="agent_standing"
+                name="agent_standing"
+                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                value={editForm.agent_standing}
+                onChange={handleInputChange}
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Probation">Probation</option>
+                <option value="Suspended">Suspended</option>
+                <option value="Terminated">Terminated</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="lead_source" className="text-right text-sm font-medium">
+                Lead Source
+              </label>
+              <input
+                id="lead_source"
+                name="lead_source"
+                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                value={editForm.lead_source}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <label htmlFor="start_date" className="text-right text-sm font-medium">
+                Start Date
+              </label>
+              <input
+                id="start_date"
+                name="start_date"
+                type="date"
+                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                value={editForm.start_date}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <label htmlFor="supervisor_notes" className="text-right text-sm font-medium pt-2">
+                Notes
+              </label>
+              <textarea
+                id="supervisor_notes"
+                name="supervisor_notes"
+                className="col-span-3 flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                value={editForm.supervisor_notes}
+                onChange={handleInputChange}
+              />
             </div>
           </div>
-        )}
-      </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type="button" onClick={handleSubmit}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Image Preview Modal */}
+      <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{imageType}</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-4">
+            {currentImage ? (
+              <img 
+                src={currentImage} 
+                alt={imageType} 
+                className="max-w-full max-h-[60vh] object-contain rounded-md" 
+              />
+            ) : (
+              <div className="text-center text-gray-500 p-12">
+                <i className="fas fa-image text-4xl mb-4"></i>
+                <p>No image available</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={closeModal}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
     </div>
   );
 };

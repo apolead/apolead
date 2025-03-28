@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +14,7 @@ import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
+import { idToString, profileExists, safelyAccessProfile } from "./utils/supabaseHelpers";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +27,7 @@ const AuthRoute = ({ children }) => {
   useEffect(() => {
     let mounted = true;
     
+    // First set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed in AuthRoute:", event, session?.user?.email);
       
@@ -36,22 +37,23 @@ const AuthRoute = ({ children }) => {
         const { data: profile, error } = await supabase
           .from('user_profiles')
           .select('application_status, credentials')
-          .eq('user_id', session.user.id)
+          .eq('user_id', idToString(session.user.id))
           .maybeSingle();
           
         console.log("User profile check:", profile, error);
         
-        if (profile) {
+        if (profileExists(profile)) {
           setIsAuthenticated(true);
           
-          if (profile.application_status === 'approved') {
+          const status = safelyAccessProfile(profile, 'application_status');
+          if (status === 'approved') {
             setIsApproved(true);
+            const credentials = safelyAccessProfile(profile, 'credentials') || "agent";
+            setUserCredentials(credentials);
           } else {
             setIsApproved(false);
+            setUserCredentials("agent");
           }
-          
-          // Set user credentials for routing
-          setUserCredentials(profile.credentials || "agent");
         } else {
           setIsAuthenticated(true);
           setIsApproved(false);
@@ -66,44 +68,51 @@ const AuthRoute = ({ children }) => {
       setIsLoading(false);
     });
     
+    // Then check the initial auth state
     const checkAuth = async () => {
       if (!mounted) return;
       
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("Checking session in AuthRoute:", !!session);
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('application_status, credentials')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        console.log("Initial profile check:", profile, error);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Checking session in AuthRoute:", !!session);
         
-        if (profile) {
-          setIsAuthenticated(true);
+        if (session) {
+          const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('application_status, credentials')
+            .eq('user_id', idToString(session.user.id))
+            .maybeSingle();
+            
+          console.log("Initial profile check:", profile, error);
           
-          if (profile.application_status === 'approved') {
-            setIsApproved(true);
+          if (profileExists(profile)) {
+            setIsAuthenticated(true);
+            
+            const status = safelyAccessProfile(profile, 'application_status');
+            if (status === 'approved') {
+              setIsApproved(true);
+              const credentials = safelyAccessProfile(profile, 'credentials') || "agent";
+              setUserCredentials(credentials);
+            } else {
+              setIsApproved(false);
+              setUserCredentials("agent");
+            }
           } else {
+            setIsAuthenticated(true);
             setIsApproved(false);
+            setUserCredentials("agent");
           }
-          
-          // Set user credentials for routing
-          setUserCredentials(profile.credentials || "agent");
         } else {
-          setIsAuthenticated(true);
+          setIsAuthenticated(false);
           setIsApproved(false);
           setUserCredentials("agent");
         }
-      } else {
-        setIsAuthenticated(false);
-        setIsApproved(false);
-        setUserCredentials("agent");
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error in AuthRoute checkAuth:", error);
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
     
     checkAuth();
@@ -127,8 +136,12 @@ const AuthRoute = ({ children }) => {
   }
   
   // Route based on user credentials
-  if (userCredentials === "supervisor") {
+  if (userCredentials === "supervisor" && window.location.pathname !== "/supervisor") {
     return <Navigate to="/supervisor" replace />;
+  }
+  
+  if (userCredentials === "agent" && window.location.pathname === "/supervisor") {
+    return <Navigate to="/dashboard" replace />;
   }
   
   return children;
@@ -146,38 +159,46 @@ const PublicRoute = ({ children }) => {
     const checkAuth = async () => {
       if (!mounted) return;
       
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('application_status, credentials')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        if (profile) {
-          setIsAuthenticated(true);
-          
-          if (profile.application_status === 'approved') {
-            setIsApproved(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("PublicRoute checking session:", !!session);
+        
+        if (session) {
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('application_status, credentials')
+            .eq('user_id', idToString(session.user.id))
+            .maybeSingle();
+            
+          console.log("PublicRoute profile check:", profile, profileError);
+            
+          if (profileExists(profile)) {
+            setIsAuthenticated(true);
+            
+            if (safelyAccessProfile(profile, 'application_status') === 'approved') {
+              setIsApproved(true);
+              // Set user credentials for routing
+              setUserCredentials(safelyAccessProfile(profile, 'credentials') || "agent");
+            } else {
+              setIsApproved(false);
+              setUserCredentials("agent");
+            }
           } else {
+            setIsAuthenticated(true);
             setIsApproved(false);
+            setUserCredentials("agent");
           }
-          
-          // Set user credentials for routing
-          setUserCredentials(profile.credentials || "agent");
         } else {
-          setIsAuthenticated(true);
+          setIsAuthenticated(false);
           setIsApproved(false);
           setUserCredentials("agent");
         }
-      } else {
-        setIsAuthenticated(false);
-        setIsApproved(false);
-        setUserCredentials("agent");
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error in PublicRoute checkAuth:", error);
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
     
     checkAuth();
@@ -206,7 +227,6 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-// Custom route component for supervisor access
 const SupervisorRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSupervisor, setIsSupervisor] = useState(false);
@@ -217,25 +237,35 @@ const SupervisorRoute = ({ children }) => {
     const checkSupervisorRole = async () => {
       if (!mounted) return;
       
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('credentials')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        if (profile && profile.credentials === 'supervisor') {
-          setIsSupervisor(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("SupervisorRoute checking session:", !!session);
+        
+        if (session) {
+          const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('credentials, application_status')
+            .eq('user_id', idToString(session.user.id))
+            .maybeSingle();
+            
+          console.log("SupervisorRoute profile check:", profile, error);
+            
+          if (profileExists(profile) && 
+              safelyAccessProfile(profile, 'credentials') === 'supervisor' && 
+              safelyAccessProfile(profile, 'application_status') === 'approved') {
+            setIsSupervisor(true);
+          } else {
+            setIsSupervisor(false);
+          }
         } else {
           setIsSupervisor(false);
         }
-      } else {
-        setIsSupervisor(false);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error in SupervisorRoute:", error);
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
     
     checkSupervisorRole();
@@ -250,7 +280,7 @@ const SupervisorRoute = ({ children }) => {
   }
   
   if (!isSupervisor) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   return children;
