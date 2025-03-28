@@ -1,509 +1,838 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogClose
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tables } from '@/integrations/supabase/types';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from '@/components/ui/sheet';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-interface UserProfile extends Tables<'user_profiles'> {}
+interface UserProfile {
+  id: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  gov_id_number: string;
+  gov_id_image: string;
+  speed_test: string;
+  application_date: string;
+  sales_experience: boolean;
+  service_experience: boolean;
+  application_status: string;
+  credentials: string;
+  agent_standing?: string;
+  supervisor_notes?: string;
+  agent_id?: string;
+  lead_source?: string;
+  start_date?: string;
+}
 
 const SupervisorDashboard = () => {
   const navigate = useNavigate();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userProfiles, setUserProfiles] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [currentImage, setCurrentImage] = useState('');
+  const [imageType, setImageType] = useState('');
+  const [currentUser, setCurrentUser] = useState<{first_name: string, last_name: string}>({
+    first_name: '',
+    last_name: ''
+  });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
+  const [editForm, setEditForm] = useState({
+    agent_id: '',
+    supervisor_notes: '',
+    agent_standing: 'Active',
+    lead_source: '',
+    start_date: ''
+  });
+  
   useEffect(() => {
     const checkUserRole = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          console.log('No user found, redirecting to login');
-          navigate('/login');
-          return;
-        }
-        
-        // Check if the user is a supervisor based on their user_profiles entry
-        const { data: profileData, error: profileError } = await supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        const { data: profile } = await supabase
           .from('user_profiles')
-          .select('credentials')
-          .eq('user_id', user.id)
+          .select('credentials, first_name, last_name')
+          .eq('user_id', session.user.id)
           .single();
-        
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
+          
+        if (!profile || profile.credentials !== 'supervisor') {
+          // Redirect to appropriate dashboard based on role
           navigate('/dashboard');
           return;
         }
         
-        if (!profileData || (profileData.credentials !== 'supervisor' && profileData.credentials !== 'admin')) {
-          console.error('Not authorized as supervisor:', profileData?.credentials);
-          navigate('/dashboard');
-        } else {
-          console.log('User is authorized as:', profileData.credentials);
-        }
-      } catch (error) {
-        console.error('Error checking user role:', error);
-        navigate('/dashboard');
+        // Set current user information
+        setCurrentUser({
+          first_name: profile.first_name || '',
+          last_name: profile.last_name || ''
+        });
+      } else {
+        navigate('/login');
       }
     };
     
     const getUserProfiles = async () => {
-      try {
-        console.log('Fetching user profiles...');
-        
-        // Get all profiles that are not supervisors or admins and are approved
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('credentials', 'agent')
-          .eq('application_status', 'approved')
-          .order('application_date', { ascending: false });
-        
-        if (error) {
-          console.error('Error fetching user profiles:', error);
-          return;
-        }
-        
-        if (data) {
-          console.log('Fetched profiles:', data);
-          console.log('Number of profiles fetched:', data.length);
-          setUserProfiles(data);
-        } else {
-          console.log('No profiles data returned');
-        }
-      } catch (err) {
-        console.error('Exception when fetching profiles:', err);
+      // Get all profiles that are not supervisors
+      // Removed the 'credentials' filter to fetch all profiles
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .neq('credentials', 'supervisor') // Only exclude supervisors
+        .order('application_date', { ascending: false });
+      
+      if (data) {
+        setUserProfiles(data);
+        console.log('Fetched profiles:', data);
+      }
+      
+      if (error) {
+        console.error('Error fetching user profiles:', error);
       }
     };
     
     checkUserRole();
     getUserProfiles();
 
-    // Load Font Awesome for icons
-    const script = document.createElement('script');
-    script.src = 'https://kit.fontawesome.com/your-code.js';
-    script.crossOrigin = 'anonymous';
-    document.body.appendChild(script);
-
-    // Load Poppins font
+    // Add Font Awesome
     const link = document.createElement('link');
-    link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap';
     link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css';
     document.head.appendChild(link);
 
-    setIsLoading(false);
+    // Add Poppins font
+    const fontLink = document.createElement('link');
+    fontLink.rel = 'stylesheet';
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap';
+    document.head.appendChild(fontLink);
 
     return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-      if (document.head.contains(link)) {
-        document.head.removeChild(link);
-      }
+      document.head.removeChild(link);
+      document.head.removeChild(fontLink);
     };
   }, [navigate]);
-
-  const handleViewProfile = (userId: string) => {
-    navigate(`/profile/${userId}`);
+  
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/');
   };
-
-  const handleApproveProfile = async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ application_status: 'approved' })
-        .eq('user_id', userId);
-
-      if (error) {
-        console.error('Error approving profile:', error);
-        return;
-      }
-
-      // Update local state
-      setUserProfiles(prevProfiles => 
-        prevProfiles.map(profile => 
-          profile.user_id === userId 
-            ? { ...profile, application_status: 'approved' } 
-            : profile
-        )
-      );
-    } catch (err) {
-      console.error('Exception when approving profile:', err);
+  
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+  
+  const openPhotoModal = (type: string, imageUrl: string) => {
+    if (!imageUrl) {
+      console.log('No image URL provided');
+      return;
     }
+    setImageType(type);
+    setCurrentImage(imageUrl);
+    setShowImageModal(true);
+  };
+  
+  const closeModal = () => {
+    setShowImageModal(false);
   };
 
-  const handleRejectProfile = async (userId: string) => {
+  const openEditDialog = (profile: UserProfile) => {
+    setSelectedProfile(profile);
+    setEditForm({
+      agent_id: profile.agent_id || '',
+      supervisor_notes: profile.supervisor_notes || '',
+      agent_standing: profile.agent_standing || 'Active',
+      lead_source: profile.lead_source || '',
+      start_date: profile.start_date || ''
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedProfile) return;
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_profiles')
-        .update({ application_status: 'rejected' })
-        .eq('user_id', userId);
+        .update({
+          agent_id: editForm.agent_id,
+          supervisor_notes: editForm.supervisor_notes,
+          agent_standing: editForm.agent_standing,
+          lead_source: editForm.lead_source,
+          start_date: editForm.start_date
+        })
+        .eq('id', selectedProfile.id)
+        .select();
 
       if (error) {
-        console.error('Error rejecting profile:', error);
+        console.error('Error updating profile:', error);
         return;
       }
 
-      // Update local state
+      // Update the user profiles list
       setUserProfiles(prevProfiles => 
         prevProfiles.map(profile => 
-          profile.user_id === userId 
-            ? { ...profile, application_status: 'rejected' } 
+          profile.id === selectedProfile.id 
+            ? { 
+                ...profile, 
+                agent_id: editForm.agent_id,
+                supervisor_notes: editForm.supervisor_notes,
+                agent_standing: editForm.agent_standing,
+                lead_source: editForm.lead_source,
+                start_date: editForm.start_date
+              } 
             : profile
         )
       );
-    } catch (err) {
-      console.error('Exception when rejecting profile:', err);
+
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error('Error:', error);
     }
   };
   
-  // Filter profiles based on search term
   const filteredProfiles = userProfiles.filter(profile => {
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    
-    if (lowerSearchTerm.includes('approved')) {
-      return profile.application_status?.toLowerCase() === 'approved';
-    }
-    
-    const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.toLowerCase();
+    const fullName = `${profile.first_name} ${profile.last_name}`.toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
     
     return (
-      fullName.includes(lowerSearchTerm) || 
-      (profile.gov_id_number?.toLowerCase() || '').includes(lowerSearchTerm) ||
-      (profile.application_status?.toLowerCase() || '').includes(lowerSearchTerm) ||
-      (profile.email?.toLowerCase() || '').includes(lowerSearchTerm)
+      fullName.includes(searchLower) || 
+      profile.gov_id_number?.toLowerCase().includes(searchLower) ||
+      profile.application_status?.toLowerCase().includes(searchLower) ||
+      profile.email?.toLowerCase().includes(searchLower)
     );
   });
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const getStatusClass = (status: string | null) => {
-    if (!status) return 'bg-gray-500';
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
     
-    switch (status.toLowerCase()) {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric', 
+      year: 'numeric'
+    }).format(date);
+  };
+  
+  // CSS classes for status display
+  const getStatusClass = (status: string) => {
+    switch (status) {
       case 'approved':
-        return 'bg-green-500';
+        return 'status-approved';
       case 'rejected':
-        return 'bg-red-500';
+        return 'status-rejected';
       case 'pending':
-        return 'bg-yellow-500';
+      case 'waitlist':
+        return 'status-pending';
       default:
-        return 'bg-gray-500';
+        return '';
     }
   };
-
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
-
+  
+  // Status icon display
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return 'fa-check-circle';
+      case 'rejected':
+        return 'fa-times-circle';
+      case 'pending':
+      case 'waitlist':
+        return 'fa-clock';
+      default:
+        return 'fa-question-circle';
+    }
+  };
+  
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Supervisor Dashboard</h1>
-      
-      <div className="mb-6">
-        <Input
-          placeholder="Search by name, ID, status, or email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-md"
-        />
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+      {/* Sidebar */}
+      <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} id="sidebar" style={{
+        width: sidebarCollapsed ? '60px' : '240px',
+        backgroundColor: 'white',
+        borderRight: '1px solid #eaeaea',
+        padding: '25px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 0 20px rgba(0,0,0,0.05)',
+        transition: 'all 0.3s ease',
+        position: 'relative',
+        zIndex: 10,
+        textAlign: 'left',
+        boxSizing: 'border-box'
+      }}>
+        <div className="logo" style={{
+          padding: sidebarCollapsed ? '25px 0 25px 0' : '0 25px 25px',
+          borderBottom: '1px solid #eaeaea',
+          marginBottom: '25px',
+          display: 'flex',
+          justifyContent: sidebarCollapsed ? 'center' : 'space-between',
+          alignItems: 'center',
+          overflow: 'hidden',
+          width: sidebarCollapsed ? '100%' : 'auto',
+          textAlign: sidebarCollapsed ? 'center' : 'left',
+          margin: sidebarCollapsed ? '0 auto' : 'inherit',
+          position: sidebarCollapsed ? 'relative' : 'static'
+        }}>
+          <h1 style={{
+            fontSize: '28px', 
+            fontWeight: 700, 
+            transition: 'opacity 0.3s',
+            opacity: sidebarCollapsed ? 0 : 1,
+            position: sidebarCollapsed ? 'absolute' : 'static',
+            left: sidebarCollapsed ? '-9999px' : 'auto',
+            width: sidebarCollapsed ? 0 : 'auto',
+            height: sidebarCollapsed ? 0 : 'auto',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible',
+            visibility: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <span style={{ color: '#00c2cb' }}>Apo</span>
+            <span style={{ color: '#4f46e5' }}>Lead</span>
+          </h1>
+          <div 
+            className="toggle-btn" 
+            id="sidebarToggle" 
+            onClick={toggleSidebar}
+            style={{
+              cursor: 'pointer',
+              fontSize: '12px',
+              color: '#64748b',
+              width: sidebarCollapsed ? '30px' : '20px',
+              height: sidebarCollapsed ? '30px' : '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              transition: 'all 0.3s',
+              position: sidebarCollapsed ? 'absolute' : 'relative',
+              right: sidebarCollapsed ? '-15px' : 'auto',
+              top: sidebarCollapsed ? '20px' : 'auto',
+              backgroundColor: sidebarCollapsed ? 'white' : 'transparent',
+              boxShadow: sidebarCollapsed ? '0 0 8px rgba(0,0,0,0.1)' : 'none',
+              border: sidebarCollapsed ? '1px solid #eaeaea' : 'none',
+              zIndex: 20
+            }}
+          >
+            <i className={`fas fa-angle-${sidebarCollapsed ? 'right' : 'left'}`}></i>
+          </div>
+        </div>
+        
+        <div className="nav-menu" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          padding: sidebarCollapsed ? 0 : '0 15px',
+          overflowX: 'hidden',
+          width: sidebarCollapsed ? '100%' : 'auto',
+          alignItems: sidebarCollapsed ? 'center' : 'stretch',
+          justifyContent: sidebarCollapsed ? 'flex-start' : 'flex-start'
+        }}>
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            transition: 'all 0.3s',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            position: 'relative',
+            boxSizing: 'border-box',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+            textAlign: sidebarCollapsed ? 'center' : 'left',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <i className="fas fa-chart-pie" style={{
+              marginRight: sidebarCollapsed ? 0 : '12px',
+              fontSize: '18px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}></i>
+            <span style={{
+              display: sidebarCollapsed ? 'none' : 'inline-block',
+              opacity: sidebarCollapsed ? 0 : 1,
+              visibility: sidebarCollapsed ? 'hidden' : 'visible',
+              width: sidebarCollapsed ? 0 : 'auto',
+              height: sidebarCollapsed ? 0 : 'auto',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible',
+              position: sidebarCollapsed ? 'absolute' : 'static'
+            }}>Dashboard</span>
+          </a>
+          
+          <a href="#" className="nav-item active" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            transition: 'all 0.3s',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            position: 'relative',
+            boxSizing: 'border-box',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            fontWeight: 500,
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+            textAlign: sidebarCollapsed ? 'center' : 'left',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <i className="fas fa-user-friends" style={{
+              marginRight: sidebarCollapsed ? 0 : '12px',
+              fontSize: '18px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}></i>
+            <span style={{
+              display: sidebarCollapsed ? 'none' : 'inline-block',
+              opacity: sidebarCollapsed ? 0 : 1,
+              visibility: sidebarCollapsed ? 'hidden' : 'visible',
+              width: sidebarCollapsed ? 0 : 'auto',
+              height: sidebarCollapsed ? 0 : 'auto',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible',
+              position: sidebarCollapsed ? 'absolute' : 'static'
+            }}>Interview</span>
+          </a>
+          
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            transition: 'all 0.3s',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            position: 'relative',
+            boxSizing: 'border-box',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+            textAlign: sidebarCollapsed ? 'center' : 'left',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <i className="fas fa-users" style={{
+              marginRight: sidebarCollapsed ? 0 : '12px',
+              fontSize: '18px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}></i>
+            <span style={{
+              display: sidebarCollapsed ? 'none' : 'inline-block',
+              opacity: sidebarCollapsed ? 0 : 1,
+              visibility: sidebarCollapsed ? 'hidden' : 'visible',
+              width: sidebarCollapsed ? 0 : 'auto',
+              height: sidebarCollapsed ? 0 : 'auto',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible',
+              position: sidebarCollapsed ? 'absolute' : 'static'
+            }}>Agent Roster</span>
+          </a>
+          
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            transition: 'all 0.3s',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            position: 'relative',
+            boxSizing: 'border-box',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+            textAlign: sidebarCollapsed ? 'center' : 'left',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <i className="fas fa-tools" style={{
+              marginRight: sidebarCollapsed ? 0 : '12px',
+              fontSize: '18px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}></i>
+            <span style={{
+              display: sidebarCollapsed ? 'none' : 'inline-block',
+              opacity: sidebarCollapsed ? 0 : 1,
+              visibility: sidebarCollapsed ? 'hidden' : 'visible',
+              width: sidebarCollapsed ? 0 : 'auto',
+              height: sidebarCollapsed ? 0 : 'auto',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible',
+              position: sidebarCollapsed ? 'absolute' : 'static'
+            }}>Tool Page</span>
+          </a>
+          
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            transition: 'all 0.3s',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            position: 'relative',
+            boxSizing: 'border-box',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+            textAlign: sidebarCollapsed ? 'center' : 'left',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <i className="fas fa-money-bill-wave" style={{
+              marginRight: sidebarCollapsed ? 0 : '12px',
+              fontSize: '18px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}></i>
+            <span style={{
+              display: sidebarCollapsed ? 'none' : 'inline-block',
+              opacity: sidebarCollapsed ? 0 : 1,
+              visibility: sidebarCollapsed ? 'hidden' : 'visible',
+              width: sidebarCollapsed ? 0 : 'auto',
+              height: sidebarCollapsed ? 0 : 'auto',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible',
+              position: sidebarCollapsed ? 'absolute' : 'static'
+            }}>Payment History</span>
+          </a>
+          
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            transition: 'all 0.3s',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            position: 'relative',
+            boxSizing: 'border-box',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+            textAlign: sidebarCollapsed ? 'center' : 'left',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <i className="fas fa-chart-line" style={{
+              marginRight: sidebarCollapsed ? 0 : '12px',
+              fontSize: '18px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}></i>
+            <span style={{
+              display: sidebarCollapsed ? 'none' : 'inline-block',
+              opacity: sidebarCollapsed ? 0 : 1,
+              visibility: sidebarCollapsed ? 'hidden' : 'visible',
+              width: sidebarCollapsed ? 0 : 'auto',
+              height: sidebarCollapsed ? 0 : 'auto',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible',
+              position: sidebarCollapsed ? 'absolute' : 'static'
+            }}>Performance</span>
+          </a>
+          
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            transition: 'all 0.3s',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            position: 'relative',
+            boxSizing: 'border-box',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+            textAlign: sidebarCollapsed ? 'center' : 'left',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <i className="fas fa-trophy" style={{
+              marginRight: sidebarCollapsed ? 0 : '12px',
+              fontSize: '18px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}></i>
+            <span style={{
+              display: sidebarCollapsed ? 'none' : 'inline-block',
+              opacity: sidebarCollapsed ? 0 : 1,
+              visibility: sidebarCollapsed ? 'hidden' : 'visible',
+              width: sidebarCollapsed ? 0 : 'auto',
+              height: sidebarCollapsed ? 0 : 'auto',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible',
+              position: sidebarCollapsed ? 'absolute' : 'static'
+            }}>Ranking</span>
+          </a>
+          
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            transition: 'all 0.3s',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            position: 'relative',
+            boxSizing: 'border-box',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+            textAlign: sidebarCollapsed ? 'center' : 'left',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <i className="fas fa-file-invoice-dollar" style={{
+              marginRight: sidebarCollapsed ? 0 : '12px',
+              fontSize: '18px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}></i>
+            <span style={{
+              display: sidebarCollapsed ? 'none' : 'inline-block',
+              opacity: sidebarCollapsed ? 0 : 1,
+              visibility: sidebarCollapsed ? 'hidden' : 'visible',
+              width: sidebarCollapsed ? 0 : 'auto',
+              height: sidebarCollapsed ? 0 : 'auto',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible',
+              position: sidebarCollapsed ? 'absolute' : 'static'
+            }}>Billing Information</span>
+          </a>
+          
+          <div className="nav-divider" style={{
+            height: '1px',
+            backgroundColor: '#eaeaea',
+            margin: '15px 10px 15px',
+            width: 'calc(100% - 20px)'
+          }}></div>
+          
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            transition: 'all 0.3s',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            position: 'relative',
+            boxSizing: 'border-box',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+            textAlign: sidebarCollapsed ? 'center' : 'left',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <i className="fas fa-cog" style={{
+              marginRight: sidebarCollapsed ? 0 : '12px',
+              fontSize: '18px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}></i>
+            <span style={{
+              display: sidebarCollapsed ? 'none' : 'inline-block',
+              opacity: sidebarCollapsed ? 0 : 1,
+              visibility: sidebarCollapsed ? 'hidden' : 'visible',
+              width: sidebarCollapsed ? 0 : 'auto',
+              height: sidebarCollapsed ? 0 : 'auto',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible',
+              position: sidebarCollapsed ? 'absolute' : 'static'
+            }}>Settings</span>
+          </a>
+          
+          <a 
+            href="#" 
+            className="nav-item" 
+            onClick={handleLogout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+              color: '#64748b',
+              textDecoration: 'none',
+              transition: 'all 0.3s',
+              marginBottom: '8px',
+              borderRadius: '10px',
+              width: '100%',
+              whiteSpace: 'nowrap',
+              position: 'relative',
+              boxSizing: 'border-box',
+              justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+              textAlign: sidebarCollapsed ? 'center' : 'left',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible'
+            }}
+          >
+            <i className="fas fa-sign-out-alt" style={{
+              marginRight: sidebarCollapsed ? 0 : '12px',
+              fontSize: '18px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}></i>
+            <span style={{
+              display: sidebarCollapsed ? 'none' : 'inline-block',
+              opacity: sidebarCollapsed ? 0 : 1,
+              visibility: sidebarCollapsed ? 'hidden' : 'visible',
+              width: sidebarCollapsed ? 0 : 'auto',
+              height: sidebarCollapsed ? 0 : 'auto',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible',
+              position: sidebarCollapsed ? 'absolute' : 'static'
+            }}>Log Out</span>
+          </a>
+          
+          <div style={{ flexGrow: 1 }}></div>
+        </div>
+        
+        <div className="sidebar-footer" style={{
+          padding: sidebarCollapsed ? 0 : '20px 25px',
+          borderTop: sidebarCollapsed ? 'none' : '1px solid #eaeaea',
+          color: '#64748b',
+          fontSize: '14px',
+          transition: 'opacity 0.3s',
+          opacity: sidebarCollapsed ? 0 : 1,
+          visibility: sidebarCollapsed ? 'hidden' : 'visible',
+          height: sidebarCollapsed ? 0 : 'auto'
+        }}>
+          <i className="fas fa-info-circle"></i> Need help? <a href="#" style={{ color: '#4f46e5', textDecoration: 'none' }}>Support Center</a>
+        </div>
       </div>
-
-      <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">All Applications</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="approved">Approved</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Applications</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>ID Number</TableHead>
-                    <TableHead>Application Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProfiles.length > 0 ? (
-                    filteredProfiles.map((profile) => (
-                      <TableRow key={profile.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{profile.first_name} {profile.last_name}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{profile.email}</TableCell>
-                        <TableCell>{profile.gov_id_number || 'N/A'}</TableCell>
-                        <TableCell>{formatDate(profile.application_date)}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusClass(profile.application_status)}>
-                            {profile.application_status || 'Unknown'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleViewProfile(profile.user_id)}
-                            >
-                              View
-                            </Button>
-                            {profile.application_status !== 'approved' && (
-                              <Button 
-                                variant="default" 
-                                size="sm"
-                                onClick={() => handleApproveProfile(profile.user_id)}
-                              >
-                                Approve
-                              </Button>
-                            )}
-                            {profile.application_status !== 'rejected' && (
-                              <Button 
-                                variant="destructive" 
-                                size="sm"
-                                onClick={() => handleRejectProfile(profile.user_id)}
-                              >
-                                Reject
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-4">
-                        No applications found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="pending" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Applications</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>ID Number</TableHead>
-                    <TableHead>Application Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {userProfiles
-                    .filter(profile => profile.application_status === 'pending')
-                    .map((profile) => (
-                      <TableRow key={profile.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{profile.first_name} {profile.last_name}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{profile.email}</TableCell>
-                        <TableCell>{profile.gov_id_number || 'N/A'}</TableCell>
-                        <TableCell>{formatDate(profile.application_date)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleViewProfile(profile.user_id)}
-                            >
-                              View
-                            </Button>
-                            <Button 
-                              variant="default" 
-                              size="sm"
-                              onClick={() => handleApproveProfile(profile.user_id)}
-                            >
-                              Approve
-                            </Button>
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => handleRejectProfile(profile.user_id)}
-                            >
-                              Reject
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="approved" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Approved Applications</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>ID Number</TableHead>
-                    <TableHead>Application Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {userProfiles
-                    .filter(profile => profile.application_status === 'approved')
-                    .map((profile) => (
-                      <TableRow key={profile.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{profile.first_name} {profile.last_name}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{profile.email}</TableCell>
-                        <TableCell>{profile.gov_id_number || 'N/A'}</TableCell>
-                        <TableCell>{formatDate(profile.application_date)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleViewProfile(profile.user_id)}
-                            >
-                              View
-                            </Button>
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => handleRejectProfile(profile.user_id)}
-                            >
-                              Reject
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="rejected" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Rejected Applications</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>ID Number</TableHead>
-                    <TableHead>Application Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {userProfiles
-                    .filter(profile => profile.application_status === 'rejected')
-                    .map((profile) => (
-                      <TableRow key={profile.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium">{profile.first_name} {profile.last_name}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{profile.email}</TableCell>
-                        <TableCell>{profile.gov_id_number || 'N/A'}</TableCell>
-                        <TableCell>{formatDate(profile.application_date)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleViewProfile(profile.user_id)}
-                            >
-                              View
-                            </Button>
-                            <Button 
-                              variant="default" 
-                              size="sm"
-                              onClick={() => handleApproveProfile(profile.user_id)}
-                            >
-                              Approve
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-export default SupervisorDashboard;
+      
+      {/* Main Content */}
+      <div className="main-content" style={{ flex: 1, padding: '20px 30px' }}>
+        {/* Header */}
+        <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+          <div className="welcome" style={{ fontSize: '26px', fontWeight: 600, color: '#1e293b' }}>
+            Welcome, <span style={{ color: '#4f46e5', position: 'relative' }}>{currentUser.first_name}</span>
+            <style>{`
+              .welcome span::after {
+                content: '';
+                position: absolute;
+                bottom: -5px;
+                left: 0;
+                width: 100%;
+                height: 3px;
+                background: linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%);
+                border-radius: 2px;
+              }
+            `}</style>
+          </div>
+          
+          <div className="user-info" style={{ display: 'flex', alignItems: 'center' }}>
+            <div className="action-buttons" style={{ display: 'flex', gap: '15px', marginRight: '20px' }}>
+              <div className="action-button" style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                backgroundColor: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                cursor: 'pointer',
+                position: 'relative',
+                color: '#64748b',
+                transition: 'all 0.3s'
+              }}>
+                <i className="fas fa-search"></i>
+              </div>
+              <div className="action-button notification" style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                backgroundColor: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                cursor: 'pointer',
+                position: 'relative',
+                color: '#64748b',
+                transition: 'all 0.3s'
+              }}>
+                <i className="fas fa-bell"></i>
+                <style>{`
+                  .notification::after {
+                    content: '';
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    background-color: #f56565;
+                    border: 2px solid white;
+                  }
+                `}</style>
+              </div>
+              <div className="action-button" style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                backgroundColor: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                cursor: 'pointer',
+                position: 'relative',
+                color: '#64748b',
+                transition: 'all 0.3s'
+              }}>
+                <i className="fas fa-cog"></i>
+              </div>
+            </div>
+            
+            <div className="user-profile" style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'white',
+              padding: '8px 15px 8px 8px',
+              borderRadius: '50px',
+              boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+              cursor: 'pointer',
+              transition: 'all 0.3s'
+            }}>
+              <div className="user-avatar" style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                marginRight: '10px',
+                background: 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
