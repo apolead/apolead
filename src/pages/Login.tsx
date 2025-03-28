@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,15 +21,18 @@ const Login = () => {
     const checkSession = async () => {
       try {
         if (!mounted) return;
-        setIsCheckingSession(true);
         
         const { data: { session } } = await supabase.auth.getSession();
         console.log("Initial session check:", !!session, session?.user?.email);
         
         if (session?.user && mounted) {
           console.log("User already logged in, checking application status");
-          // Handle user authentication outside of the state change listener
-          handleUserAuthentication(session);
+          // Use setTimeout to prevent potential deadlocks in Supabase client
+          setTimeout(() => {
+            if (mounted) {
+              handleUserAuthentication(session);
+            }
+          }, 0);
         } else if (mounted) {
           console.log("No active session found");
           setIsCheckingSession(false);

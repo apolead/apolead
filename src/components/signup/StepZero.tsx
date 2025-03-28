@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,18 @@ const StepZero = ({
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Add safety timeout to prevent UI from being stuck in "checking" state
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (isCheckingSession) {
+        console.log("Safety timeout in StepZero: forcing isCheckingSession to false");
+        setIsCheckingSession(false);
+      }
+    }, 5000); // 5 seconds timeout
+    
+    return () => clearTimeout(timeoutId);
+  }, [isCheckingSession]);
   
   const handleBackToHome = async (e) => {
     e.preventDefault();
@@ -56,61 +67,66 @@ const StepZero = ({
           });
 
           try {
-            const { data: profile, error: profileError } = await supabase
-              .from('user_profiles')
-              .select('application_status, first_name, credentials')
-              .eq('user_id', idToString(session.user.id))
-              .maybeSingle();
+            // Use setTimeout to avoid potential deadlocks
+            setTimeout(async () => {
+              if (!mounted) return;
               
-            console.log("Profile check in StepZero:", profile, profileError);
-            
-            if (profileError) {
-              console.error("Error checking profile in StepZero:", profileError);
-              if (mounted) {
-                setIsCheckingSession(false);
-                nextStep();
+              const { data: profile, error: profileError } = await supabase
+                .from('user_profiles')
+                .select('application_status, first_name, credentials')
+                .eq('user_id', idToString(session.user.id))
+                .maybeSingle();
+                
+              console.log("Profile check in StepZero:", profile, profileError);
+              
+              if (profileError) {
+                console.error("Error checking profile in StepZero:", profileError);
+                if (mounted) {
+                  setIsCheckingSession(false);
+                  nextStep();
+                }
+                return;
               }
-              return;
-            }
-            
-            if (!profileExists(profile)) {
-              console.log("Profile not found, continuing with signup flow");
-              if (mounted) {
-                setIsCheckingSession(false);
-                nextStep();
+              
+              if (!profileExists(profile)) {
+                console.log("Profile not found, continuing with signup flow");
+                if (mounted) {
+                  setIsCheckingSession(false);
+                  nextStep();
+                }
+                return;
               }
-              return;
-            }
-            
-            const appStatus = safelyAccessProfile(profile, 'application_status');
-            console.log("Application status in StepZero:", appStatus);
-            
-            if (appStatus === 'rejected') {
-              toast({
-                title: "Application Rejected",
-                description: "Unfortunately, your application didn't meet our qualifications.",
-                variant: "destructive",
-              });
-              await supabase.auth.signOut();
-              if (mounted) setIsCheckingSession(false);
-            } else if (appStatus === 'approved') {
-              toast({
-                title: "Welcome back!",
-                description: "You've been redirected to your dashboard",
-              });
-              const credentials = safelyAccessProfile(profile, 'credentials');
-              console.log("User approved with credentials:", credentials);
-              if (credentials === 'supervisor') {
-                navigate('/supervisor');
+              
+              const appStatus = safelyAccessProfile(profile, 'application_status');
+              console.log("Application status in StepZero:", appStatus);
+              
+              if (appStatus === 'rejected') {
+                toast({
+                  title: "Application Rejected",
+                  description: "Unfortunately, your application didn't meet our qualifications.",
+                  variant: "destructive",
+                });
+                await supabase.auth.signOut();
+                if (mounted) setIsCheckingSession(false);
+              } else if (appStatus === 'approved') {
+                toast({
+                  title: "Welcome back!",
+                  description: "You've been redirected to your dashboard",
+                });
+                const credentials = safelyAccessProfile(profile, 'credentials');
+                console.log("User approved with credentials:", credentials);
+                if (credentials === 'supervisor') {
+                  navigate('/supervisor');
+                } else {
+                  navigate('/dashboard');
+                }
               } else {
-                navigate('/dashboard');
+                if (mounted) {
+                  setIsCheckingSession(false);
+                  nextStep();
+                }
               }
-            } else {
-              if (mounted) {
-                setIsCheckingSession(false);
-                nextStep();
-              }
-            }
+            }, 0);
           } catch (error) {
             console.error("Error checking profile:", error);
             if (mounted) {
@@ -344,14 +360,6 @@ const StepZero = ({
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
               <p className="text-gray-600">Checking login status...</p>
-              {/* Add a hidden timeout to ensure we don't get stuck */}
-              <div className="hidden">
-                {setTimeout(() => {
-                  if (isCheckingSession) {
-                    setIsCheckingSession(false);
-                  }
-                }, 5000)}
-              </div>
             </div>
           )}
           
