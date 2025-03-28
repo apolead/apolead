@@ -49,11 +49,13 @@ const SignUp = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  // Check if user is already authenticated
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
+        // If already authenticated, update userData with email
         setUserData(prev => ({ ...prev, email: session.user.email }));
       }
     };
@@ -62,16 +64,50 @@ const SignUp = () => {
   }, []);
   
   const updateUserData = async (newData) => {
-    if (!newData.govIdNumber) {
-      setUserData(prev => ({ ...prev, ...newData }));
-      return;
+    if (newData.govIdNumber && newData.govIdNumber !== userData.govIdNumber) {
+      setIsCheckingGovId(true);
+      try {
+        // Check if the government ID has been used before in user_profiles
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('gov_id_number')
+          .eq('gov_id_number', newData.govIdNumber)
+          .maybeSingle();
+          
+        if (profileError) throw profileError;
+        
+        // Also check in user_applications table
+        const { data: applicationData, error: applicationError } = await supabase
+          .from('user_applications')
+          .select('gov_id_number')
+          .eq('gov_id_number', newData.govIdNumber)
+          .maybeSingle();
+          
+        if (applicationError) throw applicationError;
+        
+        if (profileData || applicationData) {
+          toast({
+            title: "Government ID already used",
+            description: "This government ID has already been registered in our system.",
+            variant: "destructive",
+          });
+          setIsCheckingGovId(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking government ID:', error);
+        toast({
+          title: "Validation error",
+          description: "Could not verify government ID. Please try again.",
+          variant: "destructive",
+        });
+        setIsCheckingGovId(false);
+        return;
+      }
+      setIsCheckingGovId(false);
     }
     
-    if (newData.govIdNumber && newData.govIdNumber !== userData.govIdNumber) {
-      setUserData(prev => ({ ...prev, ...newData }));
-    } else {
-      setUserData(prev => ({ ...prev, ...newData }));
-    }
+    setUserData(prev => ({ ...prev, ...newData }));
   };
   
   const nextStep = () => {
@@ -103,6 +139,7 @@ const SignUp = () => {
       const fileName = `${userId}_${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${userId}/${fileName}`;
       
+      // Convert file to ArrayBuffer for upload
       const fileArrayBuffer = await file.arrayBuffer();
       
       const { data, error } = await supabase.storage
@@ -117,6 +154,7 @@ const SignUp = () => {
         throw error;
       }
       
+      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('user_documents')
         .getPublicUrl(filePath);
@@ -131,16 +169,19 @@ const SignUp = () => {
   };
   
   const determineApplicationStatus = () => {
+    // Check minimum requirements
     if (!userData.hasHeadset || !userData.hasQuietPlace) {
       return 'rejected';
     }
     
+    // Check if they can meet the obligations
     if (!userData.meetObligation || !userData.loginDiscord || 
         !userData.checkEmails || !userData.solveProblems || 
         !userData.completeTraining) {
       return 'rejected';
     }
     
+    // Default to approved if they pass the checks
     return 'approved';
   };
   
@@ -148,8 +189,9 @@ const SignUp = () => {
     try {
       setIsSubmitting(true);
       
+      // Verify government ID one more time before final submission
       try {
-        setIsCheckingGovId(true);
+        // Check if the government ID has been used before
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
           .select('gov_id_number')
@@ -173,15 +215,13 @@ const SignUp = () => {
             variant: "destructive",
           });
           setIsSubmitting(false);
-          setIsCheckingGovId(false);
           return;
         }
-        setIsCheckingGovId(false);
       } catch (error) {
         console.error('Error verifying government ID:', error);
-        setIsCheckingGovId(false);
       }
       
+      // Check if user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -194,13 +234,16 @@ const SignUp = () => {
         return;
       }
       
+      // Upload ID image if provided
       let govIdImageUrl = null;
       if (userData.govIdImage) {
         govIdImageUrl = await uploadFile(userData.govIdImage);
       }
       
+      // Determine if the application should be approved or rejected
       const applicationStatus = determineApplicationStatus();
       
+      // Prepare data for submission
       const data = {
         first_name: userData.firstName,
         last_name: userData.lastName,
@@ -219,12 +262,12 @@ const SignUp = () => {
         day_hours: userData.dayHours,
         sales_experience: userData.salesExperience,
         sales_months: userData.salesMonths,
-        sales_company: userData.salesCompany,
-        sales_product: userData.salesProduct,
+        salesCompany: userData.salesCompany,
+        salesProduct: userData.salesProduct,
         service_experience: userData.serviceExperience,
         service_months: userData.serviceMonths,
-        service_company: userData.serviceCompany,
-        service_product: userData.serviceProduct,
+        serviceCompany: userData.serviceCompany,
+        serviceProduct: userData.serviceProduct,
         meet_obligation: userData.meetObligation,
         login_discord: userData.loginDiscord,
         check_emails: userData.checkEmails,
@@ -235,6 +278,7 @@ const SignUp = () => {
         application_status: applicationStatus
       };
       
+      // Update user profile in database
       const { error: updateError } = await supabase
         .from('user_profiles')
         .update(data)
@@ -245,12 +289,16 @@ const SignUp = () => {
         throw updateError;
       }
       
+      // For rejected applications, sign out the user
       if (applicationStatus === 'rejected') {
         await supabase.auth.signOut();
         navigate(`/confirmation?status=rejected`);
         return;
       }
       
+      // For approved applications, continue to confirmation screen
+      // Include email redirect for approved applications only
+      // The confirmation screen might require login for some views
       setCurrentStep(4);
       navigate('/confirmation?status=approved');
       
@@ -266,6 +314,7 @@ const SignUp = () => {
     }
   };
   
+  // Render steps
   const renderStep = () => {
     switch (currentStep) {
       case 0:
@@ -281,6 +330,7 @@ const SignUp = () => {
       case 2:
         return <StepTwo userData={userData} updateUserData={updateUserData} nextStep={nextStep} prevStep={prevStep} />;
       case 3:
+        // Fix: Changed nextStep to handleSubmit to match the component's expected props
         return <StepThree userData={userData} updateUserData={updateUserData} handleSubmit={handleSubmit} prevStep={prevStep} isSubmitting={isSubmitting} />;
       case 4:
         return <ConfirmationScreen />;
