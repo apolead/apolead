@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -116,7 +117,7 @@ const Dashboard = () => {
   };
   
   const getFirstName = () => {
-    return userProfile?.first_name || "User";
+    return userProfile?.first_name || user?.email?.split('@')[0] || "User";
   };
 
   const getFullName = () => {
@@ -782,7 +783,183 @@ const Dashboard = () => {
             borderLeft: '2px solid #e2e8f0'
           }}>Complete all steps to start earning</div>
         </div>
+        
+        {/* Main Dashboard Content */}
+        <div className="dashboard-content">
+          {/* Training Module Cards Would Go Here */}
+          <div className="training-modules" style={{ marginTop: '30px' }}>
+            <div className="module-card" style={{ 
+              backgroundColor: 'white', 
+              borderRadius: '12px', 
+              padding: '25px', 
+              boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{ fontSize: '18px', marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
+                <i className="fas fa-graduation-cap" style={{ marginRight: '10px', color: '#4f46e5' }}></i>
+                Introduction Training
+              </h3>
+              <p style={{ color: '#64748b', marginBottom: '20px' }}>
+                Complete the introduction training to understand our platform and processes.
+              </p>
+              <button 
+                onClick={startTraining}
+                style={{
+                  backgroundColor: '#4f46e5',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s'
+                }}
+              >
+                Start Training
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+      
+      {/* Training Modal */}
+      {showModal && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="modal-content" style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '30px',
+            width: '90%',
+            maxWidth: '600px',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            position: 'relative'
+          }}>
+            <button 
+              onClick={closeModal}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'none',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                color: '#64748b'
+              }}
+            >
+              <i className="fas fa-times"></i>
+            </button>
+            <h2 style={{ marginBottom: '20px', color: '#1e293b' }}>Introduction Training</h2>
+            
+            {moduleProgress === 0 ? (
+              <>
+                <p style={{ marginBottom: '20px', color: '#64748b' }}>
+                  This training module will introduce you to our platform, processes, and expectations.
+                  It should take approximately 15 minutes to complete.
+                </p>
+                <button 
+                  onClick={simulateProgress}
+                  style={{
+                    backgroundColor: '#4f46e5',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  Begin Training
+                </button>
+              </>
+            ) : moduleProgress < 100 ? (
+              <>
+                <div style={{ marginBottom: '20px' }}>
+                  <div style={{ 
+                    height: '8px', 
+                    backgroundColor: '#e2e8f0', 
+                    borderRadius: '4px',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{ 
+                      height: '100%', 
+                      width: `${moduleProgress}%`, 
+                      background: 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)',
+                      borderRadius: '4px',
+                      transition: 'width 0.3s'
+                    }}></div>
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    marginTop: '8px',
+                    color: '#64748b',
+                    fontSize: '14px'
+                  }}>
+                    <span>Progress</span>
+                    <span>{moduleProgress}%</span>
+                  </div>
+                </div>
+                <p style={{ color: '#64748b' }}>
+                  Loading training content... Please wait.
+                </p>
+              </>
+            ) : (
+              <>
+                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                  <div style={{ 
+                    width: '80px', 
+                    height: '80px', 
+                    borderRadius: '50%', 
+                    backgroundColor: '#ecfdf5',
+                    color: '#10b981',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 20px',
+                    fontSize: '40px'
+                  }}>
+                    <i className="fas fa-check"></i>
+                  </div>
+                  <h3 style={{ color: '#10b981', marginBottom: '10px' }}>Training Completed!</h3>
+                  <p style={{ color: '#64748b' }}>
+                    You have successfully completed the introduction training module.
+                  </p>
+                </div>
+                <button 
+                  onClick={closeModal}
+                  style={{
+                    backgroundColor: '#4f46e5',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.3s',
+                    width: '100%'
+                  }}
+                >
+                  Continue to Dashboard
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
