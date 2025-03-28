@@ -9,7 +9,6 @@ import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import SupervisorDashboard from "./pages/SupervisorDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
@@ -114,60 +113,8 @@ const AuthRoute = ({ children }) => {
   return children;
 };
 
+// Modified to no longer auto-redirect
 const PublicRoute = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isApproved, setIsApproved] = useState(false);
-  
-  useEffect(() => {
-    let mounted = true;
-    
-    const checkAuth = async () => {
-      if (!mounted) return;
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('application_status')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        if (profile && profile.application_status === 'approved') {
-          setIsAuthenticated(true);
-          setIsApproved(true);
-        } else {
-          setIsAuthenticated(true);
-          setIsApproved(false);
-        }
-      } else {
-        setIsAuthenticated(false);
-        setIsApproved(false);
-      }
-      
-      setIsLoading(false);
-    };
-    
-    checkAuth();
-    
-    return () => {
-      mounted = false;
-    };
-  }, []);
-  
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
-  
-  if (isAuthenticated && isApproved) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  if (isAuthenticated && !isApproved) {
-    return <Navigate to="/signup" replace />;
-  }
-  
   return children;
 };
 
@@ -189,21 +136,12 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={
-              <PublicRoute>
-                <Index />
-              </PublicRoute>
-            } />
+            <Route path="/" element={<Index />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={
               <AuthRoute>
                 <Dashboard />
-              </AuthRoute>
-            } />
-            <Route path="/supervisor" element={
-              <AuthRoute>
-                <SupervisorDashboard />
               </AuthRoute>
             } />
             <Route path="/confirmation" element={<ConfirmationScreen />} />
