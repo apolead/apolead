@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,29 +64,55 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
         .eq('gov_id_number', userData.govIdNumber)
         .maybeSingle();
         
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Error checking government ID in profiles:', profileError);
+        setErrorMessage('Could not verify government ID. Please try again.');
+        return;
+      }
       
-      // Also check in user_applications table
-      const { data: applicationData, error: applicationError } = await supabase
-        .from('user_applications')
-        .select('gov_id_number')
-        .eq('gov_id_number', userData.govIdNumber)
-        .maybeSingle();
-        
-      if (applicationError) throw applicationError;
-      
-      if (profileData || applicationData) {
+      // If we found a matching gov ID in profiles, show error
+      if (profileData) {
         setErrorMessage('This government ID has already been registered in our system.');
         return;
       }
+      
+      // Only check the user_applications table if it exists
+      try {
+        const { data: applicationData, error: applicationError } = await supabase
+          .from('user_applications')
+          .select('gov_id_number')
+          .eq('gov_id_number', userData.govIdNumber)
+          .maybeSingle();
+          
+        if (applicationError) {
+          // If the table doesn't exist, this will catch but we should continue
+          // Only if it's not a "relation does not exist" error
+          if (!applicationError.message.includes('relation "user_applications" does not exist')) {
+            console.error('Error checking government ID in applications:', applicationError);
+            setErrorMessage('Could not verify government ID. Please try again.');
+            return;
+          }
+        } else if (applicationData) {
+          // If we found a matching gov ID in applications, show error
+          setErrorMessage('This government ID has already been registered in our system.');
+          return;
+        }
+      } catch (error) {
+        // Continue if error is related to missing table
+        if (!error.message.includes('relation "user_applications" does not exist')) {
+          console.error('Error checking government ID:', error);
+          setErrorMessage('Could not verify government ID. Please try again.');
+          return;
+        }
+      }
+      
+      // Continue to next step if no matching gov ID was found
+      nextStep();
     } catch (error) {
       console.error('Error checking government ID:', error);
       setErrorMessage('Could not verify government ID. Please try again.');
       return;
     }
-    
-    // Continue to next step
-    nextStep();
   };
   
   const handleFileChange = (e) => {
