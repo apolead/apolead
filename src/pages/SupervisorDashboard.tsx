@@ -9,6 +9,16 @@ import {
   TableHeader,
   TableRow 
 } from '@/components/ui/table';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogClose
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from '@/components/ui/sheet';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface UserProfile {
@@ -25,6 +35,11 @@ interface UserProfile {
   service_experience: boolean;
   application_status: string;
   credentials: string;
+  agent_standing?: string;
+  supervisor_notes?: string;
+  agent_id?: string;
+  lead_source?: string;
+  start_date?: string;
 }
 
 const SupervisorDashboard = () => {
@@ -38,6 +53,15 @@ const SupervisorDashboard = () => {
   const [currentUser, setCurrentUser] = useState<{first_name: string, last_name: string}>({
     first_name: '',
     last_name: ''
+  });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
+  const [editForm, setEditForm] = useState({
+    agent_id: '',
+    supervisor_notes: '',
+    agent_standing: 'Active',
+    lead_source: '',
+    start_date: ''
   });
   
   useEffect(() => {
@@ -68,6 +92,7 @@ const SupervisorDashboard = () => {
     };
     
     const getUserProfiles = async () => {
+      // Get all agents (non-supervisors)
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -76,6 +101,7 @@ const SupervisorDashboard = () => {
       
       if (data) {
         setUserProfiles(data);
+        console.log('Fetched profiles:', data);
       }
       
       if (error) {
@@ -125,6 +151,69 @@ const SupervisorDashboard = () => {
   
   const closeModal = () => {
     setShowImageModal(false);
+  };
+
+  const openEditDialog = (profile: UserProfile) => {
+    setSelectedProfile(profile);
+    setEditForm({
+      agent_id: profile.agent_id || '',
+      supervisor_notes: profile.supervisor_notes || '',
+      agent_standing: profile.agent_standing || 'Active',
+      lead_source: profile.lead_source || '',
+      start_date: profile.start_date || ''
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedProfile) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({
+          agent_id: editForm.agent_id,
+          supervisor_notes: editForm.supervisor_notes,
+          agent_standing: editForm.agent_standing,
+          lead_source: editForm.lead_source,
+          start_date: editForm.start_date
+        })
+        .eq('id', selectedProfile.id)
+        .select();
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        return;
+      }
+
+      // Update the user profiles list
+      setUserProfiles(prevProfiles => 
+        prevProfiles.map(profile => 
+          profile.id === selectedProfile.id 
+            ? { 
+                ...profile, 
+                agent_id: editForm.agent_id,
+                supervisor_notes: editForm.supervisor_notes,
+                agent_standing: editForm.agent_standing,
+                lead_source: editForm.lead_source,
+                start_date: editForm.start_date
+              } 
+            : profile
+        )
+      );
+
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error('Error:', error);
+    }
   };
   
   const filteredProfiles = userProfiles.filter(profile => {
@@ -1157,7 +1246,6 @@ const SupervisorDashboard = () => {
                 <TableHead>Interview Date</TableHead>
                 <TableHead>Sales Skills</TableHead>
                 <TableHead>Communication</TableHead>
-                <TableHead>Interview Process</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -1203,8 +1291,16 @@ const SupervisorDashboard = () => {
                         ''
                       )}
                     </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
+                    <TableCell>
+                      {profile.service_experience !== undefined ? (
+                        <span className={`badge ${profile.service_experience ? 'badge-success' : 'badge-warning'}`}>
+                          <i className={`fas ${profile.service_experience ? 'fa-check' : 'fa-times'}`}></i>
+                          {profile.service_experience ? ' Good' : ' Average'}
+                        </span>
+                      ) : (
+                        ''
+                      )}
+                    </TableCell>
                     <TableCell>
                       {profile.application_status && (
                         <span className={`status ${getStatusClass(profile.application_status)}`}>
@@ -1214,14 +1310,18 @@ const SupervisorDashboard = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <button className="action-btn" style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#64748b',
-                        cursor: 'pointer',
-                        fontSize: '16px',
-                        transition: 'all 0.3s'
-                      }}>
+                      <button 
+                        className="action-btn" 
+                        onClick={() => openEditDialog(profile)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#64748b',
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          transition: 'all 0.3s'
+                        }}
+                      >
                         <i className="fas fa-edit"></i>
                       </button>
                     </TableCell>
@@ -1455,6 +1555,214 @@ const SupervisorDashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <i className="fas fa-user-edit" style={{ marginRight: '10px', color: '#4f46e5' }}></i>
+                  Edit Agent Information
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
+                  Agent Name
+                </label>
+                <input 
+                  type="text" 
+                  value={selectedProfile ? `${selectedProfile.first_name} ${selectedProfile.last_name}` : ''}
+                  disabled
+                  style={{
+                    padding: '10px 15px',
+                    width: '100%',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '10px',
+                    backgroundColor: '#f8fafc',
+                    cursor: 'not-allowed'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
+                  Agent ID
+                </label>
+                <input 
+                  type="text" 
+                  name="agent_id"
+                  value={editForm.agent_id} 
+                  onChange={handleInputChange}
+                  placeholder="e.g., AG-12345"
+                  style={{
+                    padding: '10px 15px',
+                    width: '100%',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '10px'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
+                  Start Date
+                </label>
+                <input 
+                  type="date" 
+                  name="start_date"
+                  value={editForm.start_date || ''} 
+                  onChange={handleInputChange}
+                  style={{
+                    padding: '10px 15px',
+                    width: '100%',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '10px'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
+                  Supervisor
+                </label>
+                <input 
+                  type="text" 
+                  value={currentUser.first_name + ' ' + currentUser.last_name}
+                  disabled
+                  style={{
+                    padding: '10px 15px',
+                    width: '100%',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '10px',
+                    backgroundColor: '#f8fafc',
+                    cursor: 'not-allowed'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
+                Agent Standing
+              </label>
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input 
+                    type="radio" 
+                    name="agent_standing"
+                    value="Active" 
+                    checked={editForm.agent_standing === 'Active'}
+                    onChange={handleInputChange}
+                    style={{ marginRight: '8px' }}
+                  />
+                  Active
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input 
+                    type="radio" 
+                    name="agent_standing"
+                    value="Probation" 
+                    checked={editForm.agent_standing === 'Probation'}
+                    onChange={handleInputChange}
+                    style={{ marginRight: '8px' }}
+                  />
+                  Probation
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input 
+                    type="radio" 
+                    name="agent_standing"
+                    value="Warning" 
+                    checked={editForm.agent_standing === 'Warning'}
+                    onChange={handleInputChange}
+                    style={{ marginRight: '8px' }}
+                  />
+                  Warning
+                </label>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
+                Email Address
+              </label>
+              <input 
+                type="email" 
+                value={selectedProfile?.email || ''}
+                disabled
+                style={{
+                  padding: '10px 15px',
+                  width: '100%',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  backgroundColor: '#f8fafc',
+                  cursor: 'not-allowed'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
+                Lead Source
+              </label>
+              <select 
+                name="lead_source"
+                value={editForm.lead_source || ''}
+                onChange={handleInputChange}
+                style={{
+                  padding: '10px 15px',
+                  width: '100%',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">Select Source</option>
+                <option value="ApexCredit">ApexCredit</option>
+                <option value="WebAds">Web Ads</option>
+                <option value="Referral">Referral</option>
+                <option value="JobBoard">Job Board</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
+                Supervisor Notes
+              </label>
+              <textarea 
+                name="supervisor_notes"
+                value={editForm.supervisor_notes || ''}
+                onChange={handleInputChange}
+                placeholder="Enter notes about this agent..."
+                style={{
+                  padding: '10px 15px',
+                  width: '100%',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  minHeight: '120px',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button onClick={handleSubmit}>
+                <i className="fas fa-save" style={{ marginRight: '8px' }}></i>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
