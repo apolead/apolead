@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -148,14 +149,17 @@
   }
 
   .locked-item:hover {
-    @apply opacity-70;
+    @apply opacity-60;
   }
 
   .locked-item:hover::after {
     content: "\f023"; /* Font Awesome lock icon */
     font-family: "Font Awesome 5 Free";
     font-weight: 900;
-    @apply absolute inset-0 flex items-center justify-center text-gray-500 text-2xl;
+    @apply absolute inset-0 flex items-center justify-center text-gray-700 text-2xl;
     z-index: 10;
+    background-color: rgba(243, 244, 246, 0.3);
+    backdrop-filter: blur(1px);
+    border-radius: 0.375rem;
   }
 }
