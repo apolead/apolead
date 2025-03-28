@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import StepZero from '@/components/signup/StepZero';
 import StepOne from '@/components/signup/StepOne';
 import StepTwo from '@/components/signup/StepTwo';
@@ -62,16 +62,7 @@ const SignUp = () => {
   }, []);
   
   const updateUserData = async (newData) => {
-    if (!newData.govIdNumber) {
-      setUserData(prev => ({ ...prev, ...newData }));
-      return;
-    }
-    
-    if (newData.govIdNumber && newData.govIdNumber !== userData.govIdNumber) {
-      setUserData(prev => ({ ...prev, ...newData }));
-    } else {
-      setUserData(prev => ({ ...prev, ...newData }));
-    }
+    setUserData(prev => ({ ...prev, ...newData }));
   };
   
   const nextStep = () => {
@@ -149,7 +140,6 @@ const SignUp = () => {
       setIsSubmitting(true);
       
       try {
-        setIsCheckingGovId(true);
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
           .select('gov_id_number')
@@ -173,13 +163,10 @@ const SignUp = () => {
             variant: "destructive",
           });
           setIsSubmitting(false);
-          setIsCheckingGovId(false);
           return;
         }
-        setIsCheckingGovId(false);
       } catch (error) {
         console.error('Error verifying government ID:', error);
-        setIsCheckingGovId(false);
       }
       
       const { data: { session } } = await supabase.auth.getSession();
@@ -219,12 +206,12 @@ const SignUp = () => {
         day_hours: userData.dayHours,
         sales_experience: userData.salesExperience,
         sales_months: userData.salesMonths,
-        sales_company: userData.salesCompany,
-        sales_product: userData.salesProduct,
+        salesCompany: userData.salesCompany,
+        salesProduct: userData.salesProduct,
         service_experience: userData.serviceExperience,
         service_months: userData.serviceMonths,
-        service_company: userData.serviceCompany,
-        service_product: userData.serviceProduct,
+        serviceCompany: userData.serviceCompany,
+        serviceProduct: userData.serviceProduct,
         meet_obligation: userData.meetObligation,
         login_discord: userData.loginDiscord,
         check_emails: userData.checkEmails,
@@ -253,7 +240,6 @@ const SignUp = () => {
       
       setCurrentStep(4);
       navigate('/confirmation?status=approved');
-      
     } catch (error) {
       console.error('Error submitting application:', error);
       toast({
@@ -266,20 +252,10 @@ const SignUp = () => {
     }
   };
   
-  const handleBackToHome = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
-  };
-  
   const renderStep = () => {
     switch (currentStep) {
       case 0:
-        return <StepZero 
-          userData={userData} 
-          updateUserData={updateUserData} 
-          nextStep={nextStep} 
-          handleBackToHome={handleBackToHome} 
-        />;
+        return <StepZero userData={userData} updateUserData={updateUserData} nextStep={nextStep} />;
       case 1:
         return <StepOne 
           userData={userData} 
@@ -287,34 +263,15 @@ const SignUp = () => {
           nextStep={nextStep} 
           prevStep={prevStep}
           isCheckingGovId={isCheckingGovId}
-          handleBackToHome={handleBackToHome}
         />;
       case 2:
-        return <StepTwo 
-          userData={userData} 
-          updateUserData={updateUserData} 
-          nextStep={nextStep} 
-          prevStep={prevStep} 
-          handleBackToHome={handleBackToHome}
-        />;
+        return <StepTwo userData={userData} updateUserData={updateUserData} nextStep={nextStep} prevStep={prevStep} />;
       case 3:
-        return <StepThree 
-          userData={userData} 
-          updateUserData={updateUserData} 
-          handleSubmit={handleSubmit} 
-          prevStep={prevStep} 
-          isSubmitting={isSubmitting} 
-          handleBackToHome={handleBackToHome}
-        />;
+        return <StepThree userData={userData} updateUserData={updateUserData} handleSubmit={handleSubmit} prevStep={prevStep} isSubmitting={isSubmitting} />;
       case 4:
         return <ConfirmationScreen />;
       default:
-        return <StepZero 
-          userData={userData} 
-          updateUserData={updateUserData} 
-          nextStep={nextStep} 
-          handleBackToHome={handleBackToHome}
-        />;
+        return <StepZero userData={userData} updateUserData={updateUserData} nextStep={nextStep} />;
     }
   };
   
