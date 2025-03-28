@@ -30,7 +30,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 });
 
 // Helper for safely handling Supabase query results
-export function handleQueryResult<T>(result: any): T | null {
+export function handleQueryResult<T>(result: { data: any, error: any }): T | null {
   if (result && !result.error && result.data) {
     return result.data as T;
   }

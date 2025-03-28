@@ -17,6 +17,7 @@ const Login = () => {
   // Check if user is already logged in
   useEffect(() => {
     let mounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
     
     const checkSession = async () => {
       try {
@@ -24,11 +25,13 @@ const Login = () => {
         setIsCheckingSession(true);
         
         const { data: { session } } = await supabase.auth.getSession();
+        console.log("Initial session check:", !!session, session?.user?.email);
         
         if (session?.user && mounted) {
           console.log("User already logged in, checking application status");
           await handleUserAuthentication(session);
         } else if (mounted) {
+          console.log("No active session found");
           setIsCheckingSession(false);
         }
       } catch (error) {
@@ -43,102 +46,119 @@ const Login = () => {
     const handleUserAuthentication = async (session) => {
       console.log("Handling user authentication for:", session.user.email);
       
-      // First check if user profile exists
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('application_status, credentials')
-        .eq('user_id', idToString(session.user.id))
-        .maybeSingle();
-      
-      console.log("Profile check result:", data, error);
-      
-      if (error) {
-        console.error("Error checking profile:", error);
-        if (mounted) setIsCheckingSession(false);
-        return;
-      }
-      
-      if (profileExists(data)) {
-        // Profile exists, check application status
-        const status = safelyAccessProfile(data, 'application_status');
-        const credentials = safelyAccessProfile(data, 'credentials');
+      try {
+        // First check if user profile exists
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('application_status, credentials')
+          .eq('user_id', idToString(session.user.id))
+          .maybeSingle();
         
-        console.log("Application status:", status, "Credentials:", credentials);
+        console.log("Profile check result:", data, error);
         
-        if (status === 'approved') {
-          console.log("User is approved with credentials:", credentials);
-          // Redirect to appropriate dashboard based on credentials
-          if (credentials === 'supervisor') {
-            navigate('/supervisor');
-          } else {
-            navigate('/dashboard');
+        if (error) {
+          console.error("Error checking profile:", error);
+          if (mounted) {
+            setErrorMessage("Error fetching user profile: " + error.message);
+            setIsCheckingSession(false);
           }
-        } else if (status === 'rejected') {
-          console.log("User application was rejected");
-          toast({
-            title: "Application Rejected",
-            description: "Unfortunately, your application didn't meet our qualifications.",
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
-          if (mounted) setIsCheckingSession(false);
-        } else {
-          // Application pending or other status, redirect to signup
-          console.log("User application is pending or incomplete, status:", status);
-          navigate('/signup');
+          return;
         }
-      } else {
-        // If no profile exists, we need to create one and redirect to signup
-        console.log("No profile found for user, creating initial profile");
         
-        try {
-          const { error: insertError } = await supabase
-            .from('user_profiles')
-            .insert({
-              email: session.user.email,
-              first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
-              last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-              application_status: 'pending',
-              credentials: 'agent',
-              user_id: session.user.id
-            });
+        if (profileExists(data)) {
+          // Profile exists, check application status
+          const status = safelyAccessProfile(data, 'application_status');
+          const credentials = safelyAccessProfile(data, 'credentials');
           
-          if (insertError) {
-            console.error("Error creating initial profile:", insertError);
+          console.log("Application status:", status, "Credentials:", credentials);
+          
+          if (status === 'approved') {
+            console.log("User is approved with credentials:", credentials);
+            // Redirect to appropriate dashboard based on credentials
+            if (credentials === 'supervisor') {
+              navigate('/supervisor');
+            } else {
+              navigate('/dashboard');
+            }
+          } else if (status === 'rejected') {
+            console.log("User application was rejected");
             toast({
-              title: "Profile Creation Failed",
-              description: "There was an error creating your profile. Please try again.",
+              title: "Application Rejected",
+              description: "Unfortunately, your application didn't meet our qualifications.",
               variant: "destructive",
             });
+            await supabase.auth.signOut();
+            if (mounted) setIsCheckingSession(false);
           } else {
-            console.log("Created initial profile, redirecting to signup");
+            // Application pending or other status, redirect to signup
+            console.log("User application is pending or incomplete, status:", status);
             navigate('/signup');
           }
-        } catch (error) {
-          console.error("Error in profile creation:", error);
+        } else {
+          // If no profile exists, we need to create one and redirect to signup
+          console.log("No profile found for user, creating initial profile");
+          
+          try {
+            const { error: insertError } = await supabase
+              .from('user_profiles')
+              .insert({
+                email: session.user.email,
+                first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
+                last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+                application_status: 'pending',
+                credentials: 'agent',
+                user_id: session.user.id
+              });
+            
+            if (insertError) {
+              console.error("Error creating initial profile:", insertError);
+              toast({
+                title: "Profile Creation Failed",
+                description: "There was an error creating your profile. Please try again.",
+                variant: "destructive",
+              });
+              if (mounted) setIsCheckingSession(false);
+            } else {
+              console.log("Created initial profile, redirecting to signup");
+              navigate('/signup');
+            }
+          } catch (createError) {
+            console.error("Error in profile creation:", createError);
+            if (mounted) setIsCheckingSession(false);
+          }
         }
-        
+      } catch (authError) {
+        console.error("Error in handleUserAuthentication:", authError);
         if (mounted) setIsCheckingSession(false);
       }
     };
     
     // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    authSubscription = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
-          await handleUserAuthentication(session);
+          setTimeout(async () => {
+            // Use setTimeout to prevent deadlocks in Supabase client
+            if (mounted) {
+              await handleUserAuthentication(session);
+            }
+          }, 0);
+        } else if (event === 'SIGNED_OUT' && mounted) {
+          setIsCheckingSession(false);
         }
       }
-    );
+    ).data.subscription;
     
     checkSession();
     
     // Clean up
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, [navigate, toast]);
   
@@ -180,7 +200,6 @@ const Login = () => {
         description: error.message || "Failed to sign in with Google",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
