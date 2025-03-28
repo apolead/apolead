@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -60,25 +59,17 @@ const Login = () => {
 
       // Get user profile using security definer function to avoid RLS recursion
       const { data: profileData, error: profileError } = await supabase
-        .rpc('get_user_credentials', { user_id: data.user.id })
-        .then(result => ({ 
-          data: result.data ? { credentials: result.data } : null, 
-          error: result.error 
-        }));
+        .rpc('get_user_credentials', { user_id: data.user.id });
         
       const { data: statusData, error: statusError } = await supabase
-        .rpc('get_application_status', { user_id: data.user.id })
-        .then(result => ({ 
-          data: result.data ? { application_status: result.data } : null, 
-          error: result.error 
-        }));
+        .rpc('get_application_status', { user_id: data.user.id });
 
       if (profileError) throw profileError;
       if (statusError) throw statusError;
 
       // Route based on user credentials
-      const isApproved = statusData?.application_status === 'approved';
-      const credentials = profileData?.credentials || 'agent';
+      const isApproved = statusData === 'approved';
+      const credentials = profileData || 'agent';
 
       if (isApproved) {
         if (credentials === 'supervisor') {
