@@ -19,11 +19,11 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     debug: true // Enable debugging for auth issues
   },
   global: {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  },
-  db: {
-    schema: 'public',
-  },
+    fetch: function(url: RequestInfo | URL, options?: RequestInit) {
+      if (typeof url === 'string' && url.includes('/auth/v1/token')) {
+        console.log('[Supabase Auth] Refreshing token');
+      }
+      return fetch(url, options);
+    }
+  }
 });
