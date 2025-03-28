@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react'; // Add this import
 import StepZero from '@/components/signup/StepZero';
 import StepOne from '@/components/signup/StepOne';
 import StepTwo from '@/components/signup/StepTwo';
