@@ -45,8 +45,29 @@ serve(async (req) => {
 
     console.log('Edge Function: Getting application status for user_id:', user_id);
 
-    // Get application status directly
+    // Try the database function first (security definer approach)
     try {
+      const { data, error } = await supabaseClient.rpc('get_application_status', { user_id });
+      
+      if (error) {
+        console.error('Error calling get_application_status RPC:', error);
+        throw error; // Will be caught by outer try/catch
+      }
+      
+      console.log('Edge Function: Application status from RPC:', data);
+      
+      // Return status from RPC function or default to "approved"
+      return new Response(
+        JSON.stringify(data || "approved"),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    } catch (rpcError) {
+      console.error('RPC approach failed:', rpcError);
+      
+      // Fall back to direct query as a second approach
       const { data, error } = await supabaseClient
         .from('user_profiles')
         .select('application_status')
@@ -55,7 +76,7 @@ serve(async (req) => {
 
       if (error) {
         console.error('Error fetching application status directly:', error);
-        // Always return "approved" in case of error
+        // Default to "approved" in case of error
         return new Response(
           JSON.stringify("approved"),
           { 
@@ -70,16 +91,6 @@ serve(async (req) => {
       // Return "approved" if no status is found or it's null/undefined
       return new Response(
         JSON.stringify(data?.application_status || "approved"),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      );
-    } catch (innerError) {
-      console.error('Error in direct database query:', innerError);
-      // Always return "approved" in case of any error
-      return new Response(
-        JSON.stringify("approved"),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200

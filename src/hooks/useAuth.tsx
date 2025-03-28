@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,9 +27,9 @@ export const useAuth = () => {
           if (session) {
             setUser(session.user);
             setIsAuthenticated(true);
-            setIsApproved(true); // Default to approved to ensure dashboard access
+            setIsApproved(true); // Always approve for dashboard access initially
             
-            // Avoid Supabase deadlocks with setTimeout
+            // Prevent Supabase deadlocks with setTimeout
             setTimeout(async () => {
               if (!mounted) return;
               
@@ -40,43 +39,40 @@ export const useAuth = () => {
                   body: { user_id: session.user.id }
                 });
                 
+                if (credentialsResponse.error) {
+                  console.error('Error getting credentials:', credentialsResponse.error);
+                  // Do not update state if there's an error; keep defaults
+                } else {
+                  // Set user credentials if successful
+                  setUserCredentials(credentialsResponse.data || 'agent');
+                }
+                
+                // Now check application status
                 const statusResponse = await supabase.functions.invoke('get_application_status', {
                   body: { user_id: session.user.id }
                 });
                 
-                console.log('Credentials response:', credentialsResponse);
-                console.log('Status response:', statusResponse);
-                
-                // If there's a credentials error, we default to agent and approved
-                if (credentialsResponse.error) {
-                  console.error('Error getting credentials:', credentialsResponse.error);
-                  setUserCredentials('agent');
-                  setIsLoading(false);
-                  return;
-                }
-                
-                // Set user credentials
-                setUserCredentials(credentialsResponse.data || 'agent');
-                
-                // Only handle the rejected status specifically
-                if (statusResponse.data === 'rejected') {
+                if (statusResponse.error) {
+                  console.error('Error checking application status:', statusResponse.error);
+                  // Do not update approval state if there's an error; keep defaults
+                } else if (statusResponse.data === 'rejected') {
+                  // Only handle rejection explicitly
                   toast({
                     title: "Application Rejected",
                     description: "Unfortunately, your application didn't meet our qualifications.",
                     variant: "destructive",
                   });
+                  
                   await supabase.auth.signOut();
                   setIsAuthenticated(false);
                   setIsApproved(false);
                   setUserCredentials('agent');
                   navigate('/login');
                 }
-                
-                // For all other statuses (approved, pending, null, etc), allow access to the dashboard
-                
+                // For all other statuses (approved, pending, null), allow dashboard access
               } catch (error) {
                 console.error('Error checking profile:', error);
-                // Default to approved on error for better UX
+                // Keep default values on error
               } finally {
                 if (mounted) setIsLoading(false);
               }
@@ -106,24 +102,33 @@ export const useAuth = () => {
       if (session) {
         setUser(session.user);
         setIsAuthenticated(true);
-        setIsApproved(true); // DEFAULT TO APPROVED STATUS
+        setIsApproved(true); // Default to approved
         
         try {
-          const credentialsResponse = await supabase.functions.invoke('get_user_credentials', {
+          // Fetch user data but don't block the initialization
+          const credentialsPromise = supabase.functions.invoke('get_user_credentials', {
             body: { user_id: session.user.id }
           });
           
-          // Set credentials if available
-          if (!credentialsResponse.error) {
-            setUserCredentials(credentialsResponse.data || 'agent');
+          const statusPromise = supabase.functions.invoke('get_application_status', {
+            body: { user_id: session.user.id }
+          });
+          
+          // Wait for both promises to complete
+          const [credentialsResponse, statusResponse] = await Promise.allSettled([
+            credentialsPromise, 
+            statusPromise
+          ]);
+          
+          // Handle credentials response
+          if (credentialsResponse.status === 'fulfilled' && !credentialsResponse.value.error) {
+            setUserCredentials(credentialsResponse.value.data || 'agent');
           }
           
-          // Only check for rejected status
-          const statusResponse = await supabase.functions.invoke('get_application_status', {
-            body: { user_id: session.user.id }
-          });
-          
-          if (!statusResponse.error && statusResponse.data === 'rejected') {
+          // Only handle rejection for application status
+          if (statusResponse.status === 'fulfilled' && 
+              !statusResponse.value.error && 
+              statusResponse.value.data === 'rejected') {
             toast({
               title: "Application Rejected",
               description: "Unfortunately, your application didn't meet our qualifications.",
@@ -135,10 +140,9 @@ export const useAuth = () => {
             setUserCredentials('agent');
             navigate('/login');
           }
-          
         } catch (error) {
           console.error('Error checking initial session profile:', error);
-          // Just log error, don't change default approved status
+          // Keep default values on error
         }
       } else {
         // Not authenticated

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,14 +13,22 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/dashboard');
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          // User is already logged in, redirect to dashboard
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setCheckingSession(false);
       }
     };
     
@@ -71,9 +80,42 @@ const Login = () => {
 
       console.log('Login successful, user ID:', data.user.id);
       
-      setIsRedirecting(true);
-      
-      navigate('/dashboard');
+      // Check if user has been approved
+      try {
+        const statusResponse = await supabase.functions.invoke('get_application_status', {
+          body: { user_id: data.user.id }
+        });
+        
+        console.log('Application status response:', statusResponse);
+        
+        if (statusResponse.error) {
+          console.error('Error checking status:', statusResponse.error);
+          // On error, still proceed to dashboard
+          setIsRedirecting(true);
+          navigate('/dashboard');
+          return;
+        }
+        
+        if (statusResponse.data === 'rejected') {
+          toast({
+            title: "Application Rejected",
+            description: "Unfortunately, your application didn't meet our qualifications.",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          navigate('/login');
+          return;
+        }
+        
+        // Default flow: go to dashboard
+        setIsRedirecting(true);
+        navigate('/dashboard');
+      } catch (statusError) {
+        console.error('Error in status check:', statusError);
+        // On error, still proceed to dashboard
+        setIsRedirecting(true);
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Login error:', error);
       toast({
@@ -84,6 +126,13 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  if (checkingSession) {
+    return <div className="flex items-center justify-center h-screen">
+      <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      <span className="ml-2">Checking session...</span>
+    </div>;
+  }
 
   return <div className="flex flex-col md:flex-row w-full h-screen">
       <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
@@ -153,6 +202,9 @@ const Login = () => {
               {isLoading ? <div className="flex items-center justify-center">
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Signing in...
+                </div> : isRedirecting ? <div className="flex items-center justify-center">
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Redirecting to dashboard...
                 </div> : "Sign in"}
             </Button>
           </form>

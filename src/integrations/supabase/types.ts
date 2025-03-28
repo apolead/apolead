@@ -376,6 +376,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_profile_owner: {
+        Args: {
+          profile_user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "agent" | "supervisor" | "admin"
