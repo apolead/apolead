@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -26,33 +25,7 @@ const Login = () => {
         
         if (session?.user && mounted) {
           console.log("User already logged in, checking application status");
-          
-          // Check if profile exists and application is approved
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('application_status')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-            
-          if (profile && profile.application_status === 'approved') {
-            // Approved user, redirect to dashboard
-            console.log("User is approved, redirecting to dashboard");
-            navigate('/dashboard');
-          } else if (profile && profile.application_status === 'rejected') {
-            // Rejected user, show notification and sign out
-            console.log("User was rejected, showing notification");
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            setIsCheckingSession(false);
-          } else {
-            // User exists but not approved, redirect to signup
-            console.log("User is not approved, redirecting to signup");
-            navigate('/signup');
-          }
+          await handleUserAuthentication(session);
         } else if (mounted) {
           setIsCheckingSession(false);
         }
@@ -64,39 +37,91 @@ const Login = () => {
       }
     };
     
+    // Helper function to handle user authentication and profile checking
+    const handleUserAuthentication = async (session) => {
+      console.log("Handling user authentication for:", session.user.email);
+      
+      // First check if user profile exists
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('application_status, credentials')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+      
+      console.log("Profile check result:", data, error);
+      
+      if (error) {
+        console.error("Error checking profile:", error);
+        if (mounted) setIsCheckingSession(false);
+        return;
+      }
+      
+      if (data) {
+        // Profile exists, check application status
+        if (data.application_status === 'approved') {
+          console.log("User is approved with credentials:", data.credentials);
+          // Redirect to appropriate dashboard based on credentials
+          if (data.credentials === 'supervisor') {
+            navigate('/supervisor');
+          } else {
+            navigate('/dashboard');
+          }
+        } else if (data.application_status === 'rejected') {
+          console.log("User application was rejected");
+          toast({
+            title: "Application Rejected",
+            description: "Unfortunately, your application didn't meet our qualifications.",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          if (mounted) setIsCheckingSession(false);
+        } else {
+          // Application pending or other status, redirect to signup
+          console.log("User application is pending or incomplete");
+          navigate('/signup');
+        }
+      } else {
+        // If no profile exists, we need to create one and redirect to signup
+        console.log("No profile found for user, creating initial profile");
+        
+        try {
+          const { error: insertError } = await supabase
+            .from('user_profiles')
+            .insert({
+              email: session.user.email,
+              first_name: session.user.user_metadata?.full_name?.split(' ')[0] || '',
+              last_name: session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+              application_status: 'pending',
+              credentials: 'agent',
+              user_id: session.user.id
+            });
+          
+          if (insertError) {
+            console.error("Error creating initial profile:", insertError);
+            toast({
+              title: "Profile Creation Failed",
+              description: "There was an error creating your profile. Please try again.",
+              variant: "destructive",
+            });
+          } else {
+            console.log("Created initial profile, redirecting to signup");
+            navigate('/signup');
+          }
+        } catch (error) {
+          console.error("Error in profile creation:", error);
+        }
+        
+        if (mounted) setIsCheckingSession(false);
+      }
+    };
+    
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
-          // Check if profile exists and application is approved
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('application_status')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-            
-          if (profile && profile.application_status === 'approved') {
-            // Approved user, redirect to dashboard
-            toast({
-              title: "Login successful",
-              description: "Welcome back!",
-            });
-            navigate('/dashboard');
-          } else if (profile && profile.application_status === 'rejected') {
-            // Rejected user, show notification and sign out
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-          } else {
-            // User exists but not approved, redirect to signup
-            console.log("User is not approved, redirecting to signup");
-            navigate('/signup');
-          }
+          await handleUserAuthentication(session);
         }
       }
     );
@@ -108,7 +133,7 @@ const Login = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, toast]);
   
   const handleGoogleLogin = async () => {
     try {
