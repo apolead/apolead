@@ -59,11 +59,12 @@ const SupervisorDashboard = () => {
       try {
         console.log('Fetching user profiles...');
         
-        // Get all profiles that are not supervisors
+        // Get all profiles that are not supervisors or admins and are approved
         const { data, error } = await supabase
           .from('user_profiles')
           .select('*')
-          .neq('credentials', 'supervisor')
+          .eq('credentials', 'agent')
+          .eq('application_status', 'approved')
           .order('application_date', { ascending: false });
         
         if (error) {
