@@ -47,79 +47,105 @@ const StepZero = ({
         if (session?.user && mounted) {
           console.log("User is authenticated:", session.user);
           
-          const { data: profile, error: profileError } = await supabase
-            .from('user_profiles')
-            .select('application_status, first_name, credentials')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-            
-          if (profileError || !profile) {
-            setErrorMessage('Profile not found or error, continuing with signup flow');
-            updateUserData({
-              email: session.user.email,
-              firstName: session.user.user_metadata?.first_name || '',
-              lastName: session.user.user_metadata?.last_name || ''
-            });
-            
-            if (mounted) {
-              try {
-                const { error: insertError } = await supabase
-                  .from('user_profiles')
-                  .upsert({
-                    user_id: session.user.id,
-                    email: session.user.email,
-                    first_name: session.user.user_metadata?.first_name || '',
-                    last_name: session.user.user_metadata?.last_name || '',
-                    application_status: 'pending'
-                  });
-                  
-                if (insertError) {
-                  console.error("Error creating initial profile:", insertError);
+          try {
+            // Use simple select without RLS dependencies
+            const { data: profile, error: profileError } = await supabase
+              .from('user_profiles')
+              .select('application_status, first_name, credentials')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+              
+            if (profileError) {
+              console.error("Error fetching profile:", profileError);
+              setErrorMessage('Error fetching profile, continuing with signup flow');
+              
+              if (mounted) {
+                updateUserData({
+                  email: session.user.email,
+                  firstName: session.user.user_metadata?.first_name || '',
+                  lastName: session.user.user_metadata?.last_name || ''
+                });
+                
+                setTimeout(() => {
+                  if (mounted) {
+                    nextStep();
+                    setIsCheckingSession(false);
+                  }
+                }, 500);
+              }
+            } else if (!profile) {
+              console.log("No profile found, creating initial profile");
+              
+              if (mounted) {
+                updateUserData({
+                  email: session.user.email,
+                  firstName: session.user.user_metadata?.first_name || '',
+                  lastName: session.user.user_metadata?.last_name || ''
+                });
+                
+                try {
+                  const { error: insertError } = await supabase
+                    .from('user_profiles')
+                    .insert({
+                      user_id: session.user.id,
+                      email: session.user.email,
+                      first_name: session.user.user_metadata?.first_name || '',
+                      last_name: session.user.user_metadata?.last_name || '',
+                      application_status: 'pending',
+                      credentials: 'agent'
+                    });
+                    
+                  if (insertError) {
+                    console.error("Error creating initial profile:", insertError);
+                  }
+                } catch (err) {
+                  console.error("Error in profile creation:", err);
                 }
-              } catch (err) {
-                console.error("Error in profile creation:", err);
+                
+                setTimeout(() => {
+                  if (mounted) {
+                    nextStep();
+                    setIsCheckingSession(false);
+                  }
+                }, 500);
               }
-            }
-            
-            setTimeout(() => {
-              if (mounted) {
-                nextStep();
-                setIsCheckingSession(false);
+            } else if (profile.application_status === 'rejected') {
+              toast({
+                title: "Application Rejected",
+                description: "Unfortunately, your application didn't meet our qualifications.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+              setIsCheckingSession(false);
+            } else if (profile.application_status === 'approved') {
+              toast({
+                title: "Welcome back!",
+                description: "You've been redirected to your dashboard",
+              });
+              
+              if (profile.credentials === 'supervisor') {
+                navigate('/supervisor');
+              } else {
+                navigate('/dashboard');
               }
-            }, 500);
-          } else if (profile.application_status === 'rejected') {
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            setIsCheckingSession(false);
-          } else if (profile?.application_status === 'approved') {
-            toast({
-              title: "Welcome back!",
-              description: "You've been redirected to your dashboard",
-            });
-            
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
             } else {
-              navigate('/dashboard');
+              // If profile exists but not approved, continue with signup
+              updateUserData({
+                email: session.user.email,
+                firstName: profile.first_name || '',
+                lastName: profile.last_name || ''
+              });
+              
+              setTimeout(() => {
+                if (mounted) {
+                  nextStep();
+                  setIsCheckingSession(false);
+                }
+              }, 500);
             }
-          } else if (profile?.first_name) {
-            setTimeout(() => {
-              if (mounted) {
-                nextStep();
-                setIsCheckingSession(false);
-              }
-            }, 500);
-          } else {
-            setTimeout(() => {
-              if (mounted) {
-                nextStep();
-                setIsCheckingSession(false);
-              }
-            }, 500);
+          } catch (error) {
+            console.error("Error in profile handling:", error);
+            setIsCheckingSession(false);
           }
         } else if (mounted) {
           console.log("No authenticated user found");
@@ -133,38 +159,68 @@ const StepZero = ({
       }
     };
     
+    // First set up the auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
+        if (!mounted) return;
+        
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
-          const { data: profile, error: profileError } = await supabase
-            .from('user_profiles')
-            .select('application_status, first_name, credentials')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-            
+          // Handle new sign in
           updateUserData({
             email: session.user.email,
             firstName: session.user.user_metadata?.first_name || '',
             lastName: session.user.user_metadata?.last_name || ''
           });
           
-          if (!profileError && profile?.application_status === 'rejected') {
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            if (mounted) setIsCheckingSession(false);
-          } else if (!profileError && profile?.application_status === 'approved') {
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from('user_profiles')
+              .select('application_status, credentials')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+              
+            if (profileError) {
+              console.error("Error checking profile after sign in:", profileError);
+              setTimeout(() => {
+                if (mounted) nextStep();
+              }, 500);
+              return;
             }
-          } else {
+              
+            if (!profile) {
+              console.log("No profile found after sign in, continuing to next step");
+              setTimeout(() => {
+                if (mounted) nextStep();
+              }, 500);
+            } else if (profile.application_status === 'rejected') {
+              toast({
+                title: "Application Rejected",
+                description: "Unfortunately, your application didn't meet our qualifications.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+            } else if (profile.application_status === 'approved') {
+              toast({
+                title: "Login successful!",
+                description: "Welcome back!",
+              });
+              
+              // Redirect based on credentials
+              if (profile.credentials === 'supervisor') {
+                navigate('/supervisor');
+              } else {
+                navigate('/dashboard');
+              }
+            } else {
+              // If pending, continue with signup
+              setTimeout(() => {
+                if (mounted) nextStep();
+              }, 500);
+            }
+          } catch (error) {
+            console.error("Error in auth state change handler:", error);
             setTimeout(() => {
               if (mounted) nextStep();
             }, 500);
@@ -173,13 +229,14 @@ const StepZero = ({
       }
     );
     
+    // Then check the current session
     checkSession();
     
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate, nextStep, updateUserData, toast]);
   
   const validateEmail = (email) => {
     // Check if email ends with @gmail.com
@@ -310,14 +367,12 @@ const StepZero = ({
           <h1 className="text-2xl font-bold mb-2 text-center">Get started</h1>
           <p className="text-gray-600 mb-8 text-center">Create your account now</p>
           
-          {isCheckingSession && (
+          {isCheckingSession ? (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
               <p className="text-gray-600">Checking login status...</p>
             </div>
-          )}
-          
-          {!isCheckingSession && (
+          ) : (
             <>
               {errorMessage && (
                 <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6">

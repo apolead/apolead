@@ -31,32 +31,43 @@ const Login = () => {
         if (session?.user && mounted) {
           console.log("User already logged in, checking application status and credentials");
           
-          // Check if profile exists and application is approved
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('application_status, credentials')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-            
-          if (profile && profile.application_status === 'approved') {
-            // Redirect based on credentials
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
+          try {
+            // Check if profile exists and application is approved
+            const { data: profile, error } = await supabase
+              .from('user_profiles')
+              .select('application_status, credentials')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+              
+            if (error) {
+              console.error("Error fetching profile:", error);
+              setIsCheckingSession(false);
+              return;
             }
-          } else if (profile && profile.application_status === 'rejected') {
-            // Rejected user, show notification and sign out
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
+              
+            if (profile && profile.application_status === 'approved') {
+              // Redirect based on credentials
+              if (profile.credentials === 'supervisor') {
+                navigate('/supervisor');
+              } else {
+                navigate('/dashboard');
+              }
+            } else if (profile && profile.application_status === 'rejected') {
+              // Rejected user, show notification and sign out
+              toast({
+                title: "Application Rejected",
+                description: "Unfortunately, your application didn't meet our qualifications.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+              setIsCheckingSession(false);
+            } else {
+              // User exists but not approved, redirect to signup
+              navigate('/signup');
+            }
+          } catch (error) {
+            console.error("Error checking profile:", error);
             setIsCheckingSession(false);
-          } else {
-            // User exists but not approved, redirect to signup
-            navigate('/signup');
           }
         } else if (mounted) {
           setIsCheckingSession(false);
@@ -74,38 +85,52 @@ const Login = () => {
       async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
+        if (!mounted) return;
+        
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
-          // Check if profile exists and application is approved
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('application_status, credentials')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-            
-          if (profile && profile.application_status === 'approved') {
-            // Redirect based on credentials
-            toast({
-              title: "Login successful",
-              description: "Welcome back!",
-            });
-            
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
+          try {
+            // Check if profile exists and application is approved
+            const { data: profile, error } = await supabase
+              .from('user_profiles')
+              .select('application_status, credentials')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+              
+            if (error) {
+              console.error("Error checking profile after sign in:", error);
+              setIsCheckingSession(false);
+              return;
             }
-          } else if (profile && profile.application_status === 'rejected') {
-            // Rejected user, show notification and sign out
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-          } else {
-            // User exists but not approved, redirect to signup
-            console.log("User is not approved, redirecting to signup");
-            navigate('/signup');
+              
+            if (profile && profile.application_status === 'approved') {
+              // Redirect based on credentials
+              toast({
+                title: "Login successful",
+                description: "Welcome back!",
+              });
+              
+              if (profile.credentials === 'supervisor') {
+                navigate('/supervisor');
+              } else {
+                navigate('/dashboard');
+              }
+            } else if (profile && profile.application_status === 'rejected') {
+              // Rejected user, show notification and sign out
+              toast({
+                title: "Application Rejected",
+                description: "Unfortunately, your application didn't meet our qualifications.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+              setIsCheckingSession(false);
+            } else {
+              // User exists but not approved, redirect to signup
+              console.log("User is not approved, redirecting to signup");
+              navigate('/signup');
+            }
+          } catch (error) {
+            console.error("Error in auth state change handler:", error);
+            setIsCheckingSession(false);
           }
         }
       }
@@ -118,7 +143,7 @@ const Login = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, toast]);
   
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -128,6 +153,7 @@ const Login = () => {
       
       if (!email || !password) {
         setErrorMessage('Please enter both email and password');
+        setIsLoading(false);
         return;
       }
       
@@ -148,7 +174,6 @@ const Login = () => {
         description: error.message || "Failed to sign in",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
