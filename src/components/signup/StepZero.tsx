@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -39,18 +38,16 @@ const StepZero = ({
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user && mounted) {
-          console.log("User is authenticated in StepZero:", session.user);
+          console.log("User is authenticated:", session.user);
           
           const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
-            .select('application_status, first_name, credentials')
+            .select('application_status, first_name')
             .eq('user_id', session.user.id)
             .maybeSingle();
             
-          console.log("Profile check in StepZero:", profile, profileError);
-            
           if (profileError || !profile) {
-            console.log("Profile not found or error, continuing with signup flow");
+            setErrorMessage('Profile not found or error, continuing with signup flow');
             updateUserData({
               email: session.user.email,
               firstName: session.user.user_metadata?.given_name || 
@@ -78,8 +75,7 @@ const StepZero = ({
                               session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
                             (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
                               session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : ''),
-                    application_status: 'pending',
-                    credentials: 'agent'
+                    application_status: 'pending'
                   });
                   
                 if (insertError) {
@@ -109,11 +105,7 @@ const StepZero = ({
               title: "Welcome back!",
               description: "You've been redirected to your dashboard",
             });
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
-            }
+            navigate('/dashboard');
           } else if (profile?.first_name) {
             setTimeout(() => {
               if (mounted) {
@@ -130,11 +122,11 @@ const StepZero = ({
             }, 500);
           }
         } else if (mounted) {
-          console.log("No authenticated user found in StepZero");
+          console.log("No authenticated user found");
           setIsCheckingSession(false);
         }
       } catch (error) {
-        console.error("Error checking session in StepZero:", error);
+        console.error("Error checking session:", error);
         if (mounted) {
           setIsCheckingSession(false);
         }
@@ -143,16 +135,14 @@ const StepZero = ({
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state changed in StepZero:", event, session?.user?.email);
+        console.log("Auth state changed:", event, session?.user?.email);
         
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
           const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
-            .select('application_status, first_name, credentials')
+            .select('application_status, first_name')
             .eq('user_id', session.user.id)
             .maybeSingle();
-            
-          console.log("Auth state change profile in StepZero:", profile, profileError);
             
           updateUserData({
             email: session.user.email,
@@ -175,11 +165,7 @@ const StepZero = ({
             await supabase.auth.signOut();
             if (mounted) setIsCheckingSession(false);
           } else if (!profileError && profile?.application_status === 'approved') {
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
-            }
+            navigate('/dashboard');
           } else {
             setTimeout(() => {
               if (mounted) nextStep();
