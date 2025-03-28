@@ -14,10 +14,11 @@ import { Link } from 'react-router-dom';
 interface TermsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  type: 'privacy' | 'terms';
+  type?: 'privacy' | 'terms';
+  onAccept?: () => void;
 }
 
-const TermsDialog = ({ open, onOpenChange, type }: TermsDialogProps) => {
+const TermsDialog = ({ open, onOpenChange, type = 'terms', onAccept }: TermsDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[80vh] overflow-y-auto w-full max-w-2xl">
@@ -114,7 +115,10 @@ const TermsDialog = ({ open, onOpenChange, type }: TermsDialogProps) => {
             Close
           </Button>
           <DialogClose asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button 
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              onClick={onAccept}
+            >
               I Understand
             </Button>
           </DialogClose>
