@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -24,8 +25,8 @@ const SignUp = () => {
     ramAmount: '',
     hasHeadset: false,
     hasQuietPlace: false,
-    speedTest: '',
-    systemSettings: '',
+    speedTest: null,
+    systemSettings: null,
     availableHours: [],
     availableDays: [],
     dayHours: {},
@@ -130,6 +131,8 @@ const SignUp = () => {
       const fileName = `${userId}_${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${userId}/${fileName}`;
       
+      console.log('Uploading file:', file.name, 'to path:', filePath);
+      
       const fileArrayBuffer = await file.arrayBuffer();
       
       const { data, error } = await supabase.storage
@@ -175,6 +178,7 @@ const SignUp = () => {
     try {
       setIsSubmitting(true);
       
+      // Check only user_profiles table for existing gov ID
       try {
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
@@ -195,6 +199,7 @@ const SignUp = () => {
         }
       } catch (error) {
         console.error('Error verifying government ID:', error);
+        // Continue anyway
       }
       
       const { data: { session } } = await supabase.auth.getSession();
@@ -209,19 +214,28 @@ const SignUp = () => {
         return;
       }
       
+      // Upload both government ID and speed test images
+      console.log('Starting file uploads...');
+      
       let govIdImageUrl = null;
       if (userData.govIdImage) {
+        console.log('Uploading government ID image:', userData.govIdImage.name);
         govIdImageUrl = await uploadFile(userData.govIdImage);
+        console.log('Government ID image uploaded, URL:', govIdImageUrl);
       }
       
       let speedTestUrl = null;
       if (userData.speedTest) {
+        console.log('Uploading speed test image:', userData.speedTest.name);
         speedTestUrl = await uploadFile(userData.speedTest);
+        console.log('Speed test image uploaded, URL:', speedTestUrl);
       }
       
       let systemSettingsUrl = null;
       if (userData.systemSettings) {
+        console.log('Uploading system settings image:', userData.systemSettings.name);
         systemSettingsUrl = await uploadFile(userData.systemSettings);
+        console.log('System settings image uploaded, URL:', systemSettingsUrl);
       }
       
       const applicationStatus = determineApplicationStatus();
@@ -259,6 +273,8 @@ const SignUp = () => {
         accepted_terms: userData.acceptedTerms,
         application_status: applicationStatus
       };
+      
+      console.log('Updating user profile with data:', data);
       
       const { error: updateError } = await supabase
         .from('user_profiles')
