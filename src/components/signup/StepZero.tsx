@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
 const StepZero = ({
   userData,
   updateUserData,
@@ -18,87 +16,83 @@ const StepZero = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const handleEmailChange = (e) => {
+  const {
+    toast
+  } = useToast();
+  const handleEmailChange = e => {
     setEmail(e.target.value);
   };
-
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = e => {
     setPassword(e.target.value);
   };
-
-  const handleConfirmPasswordChange = (e) => {
+  const handleConfirmPasswordChange = e => {
     setConfirmPassword(e.target.value);
   };
-
-  const validateEmail = (email) => {
+  const validateEmail = email => {
     if (!email.endsWith('@gmail.com')) {
       return 'Only Gmail accounts are allowed';
     }
     return null;
   };
-
-  const handleSignUp = async (e) => {
+  const handleSignUp = async e => {
     e.preventDefault();
-    
+
     // Validate email domain
     const emailError = validateEmail(email);
     if (emailError) {
       toast({
         title: "Invalid email",
         description: emailError,
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-    
+
     // Check password match
     if (password !== confirmPassword) {
       toast({
         title: "Passwords don't match",
         description: "Please ensure both passwords match",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-    
     setIsLoading(true);
-    
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const {
+        data,
+        error
+      } = await supabase.auth.signUp({
         email,
-        password,
+        password
       });
-      
       if (error) throw error;
-      
+
       // Update userData with email
-      await updateUserData({ email });
-      
+      await updateUserData({
+        email
+      });
+
       // Successful signup
       toast({
         title: "Signup successful",
-        description: "Please proceed with your application",
+        description: "Please proceed with your application"
       });
-      
+
       // Move to the next step
       nextStep();
-      
     } catch (error) {
       console.error('Signup error:', error);
       toast({
         title: "Signup failed",
         description: error.message || "An error occurred during signup",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  return (
-    <div className="flex flex-col md:flex-row w-full h-screen">
+  return <div className="flex flex-col md:flex-row w-full h-screen">
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
@@ -159,53 +153,24 @@ const StepZero = ({
           <form onSubmit={handleSignUp} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email (Gmail only)</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="your.name@gmail.com" 
-                value={email}
-                onChange={handleEmailChange}
-                required
-              />
+              <Input id="email" type="email" placeholder="your.name@gmail.com" value={email} onChange={handleEmailChange} required />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="••••••••" 
-                value={password}
-                onChange={handlePasswordChange}
-                required
-              />
+              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={handlePasswordChange} required />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input 
-                id="confirmPassword" 
-                type="password" 
-                placeholder="••••••••" 
-                value={confirmPassword}
-                onChange={handleConfirmPasswordChange}
-                required
-              />
+              <Input id="confirmPassword" type="password" placeholder="••••••••" value={confirmPassword} onChange={handleConfirmPasswordChange} required />
             </div>
             
-            <Button 
-              type="submit"
-              className="w-full py-6"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
+            <Button type="submit" disabled={isLoading} className="w-full py-6 text-neutral-100">
+              {isLoading ? <div className="flex items-center justify-center">
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Signing up...
-                </div>
-              ) : (
-                "Sign up"
-              )}
+                </div> : "Sign up"}
             </Button>
           </form>
           
@@ -224,8 +189,6 @@ const StepZero = ({
           <p className="text-center text-gray-500 text-xs">© 2025 ApoLead, All rights Reserved</p>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default StepZero;
