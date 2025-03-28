@@ -165,8 +165,6 @@ export type Database = {
       user_profiles: {
         Row: {
           accepted_terms: boolean | null
-          agent_id: string | null
-          agent_standing: string | null
           application_date: string | null
           application_status: string | null
           available_days: string[] | null
@@ -186,7 +184,6 @@ export type Database = {
           has_quiet_place: boolean | null
           id: string
           last_name: string
-          lead_source: string | null
           login_discord: boolean | null
           meet_obligation: boolean | null
           personal_statement: string | null
@@ -201,16 +198,12 @@ export type Database = {
           service_product: string | null
           solve_problems: boolean | null
           speed_test: string | null
-          start_date: string | null
-          supervisor_notes: string | null
           system_settings: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           accepted_terms?: boolean | null
-          agent_id?: string | null
-          agent_standing?: string | null
           application_date?: string | null
           application_status?: string | null
           available_days?: string[] | null
@@ -230,7 +223,6 @@ export type Database = {
           has_quiet_place?: boolean | null
           id?: string
           last_name: string
-          lead_source?: string | null
           login_discord?: boolean | null
           meet_obligation?: boolean | null
           personal_statement?: string | null
@@ -245,16 +237,12 @@ export type Database = {
           service_product?: string | null
           solve_problems?: boolean | null
           speed_test?: string | null
-          start_date?: string | null
-          supervisor_notes?: string | null
           system_settings?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           accepted_terms?: boolean | null
-          agent_id?: string | null
-          agent_standing?: string | null
           application_date?: string | null
           application_status?: string | null
           available_days?: string[] | null
@@ -274,7 +262,6 @@ export type Database = {
           has_quiet_place?: boolean | null
           id?: string
           last_name?: string
-          lead_source?: string | null
           login_discord?: boolean | null
           meet_obligation?: boolean | null
           personal_statement?: string | null
@@ -289,8 +276,6 @@ export type Database = {
           service_product?: string | null
           solve_problems?: boolean | null
           speed_test?: string | null
-          start_date?: string | null
-          supervisor_notes?: string | null
           system_settings?: string | null
           updated_at?: string | null
           user_id?: string
