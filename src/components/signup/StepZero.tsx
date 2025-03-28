@@ -5,75 +5,17 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const StepZero = ({ userData, updateUserData, nextStep }) => {
+const StepZero = ({
+  userData,
+  updateUserData,
+  nextStep,
+  isCheckingEmail = false
+}) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const [sessionCheckTimedOut, setSessionCheckTimedOut] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  useEffect(() => {
-    let mounted = true;
-    let sessionCheckTimeout;
-    
-    const checkSession = async () => {
-      try {
-        if (!mounted) return;
-        
-        sessionCheckTimeout = setTimeout(() => {
-          if (mounted) {
-            setSessionCheckTimedOut(true);
-            setIsCheckingSession(false);
-          }
-        }, 5000);
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user && mounted) {
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('application_status, credentials')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-            
-          if (profile && profile.application_status === 'approved') {
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
-            }
-          } else if (profile && profile.application_status === 'rejected') {
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-          } else {
-            updateUserData({ email: session.user.email });
-            setIsCheckingSession(false);
-          }
-        } else if (mounted) {
-          setIsCheckingSession(false);
-        }
-      } catch (error) {
-        console.error('Error checking session:', error);
-        if (mounted) {
-          setIsCheckingSession(false);
-        }
-      } finally {
-        clearTimeout(sessionCheckTimeout);
-      }
-    };
-    
-    checkSession();
-    
-    return () => {
-      mounted = false;
-      clearTimeout(sessionCheckTimeout);
-    };
-  }, [navigate, toast, updateUserData]);
   
   const handleBackToHome = async (e) => {
     e.preventDefault();
@@ -85,24 +27,179 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
     }
   };
 
-  const handleCancelSessionCheck = () => {
-    setSessionCheckTimedOut(true);
-    setIsCheckingSession(false);
-  };
-
+  useEffect(() => {
+    let mounted = true;
+    
+    const checkSession = async () => {
+      try {
+        if (!mounted) return;
+        setIsCheckingSession(true);
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user && mounted) {
+          console.log("User is authenticated:", session.user);
+          
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('application_status, first_name')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+            
+          if (profileError || !profile) {
+            setErrorMessage('Profile not found or error, continuing with signup flow');
+            updateUserData({
+              email: session.user.email,
+              firstName: session.user.user_metadata?.given_name || 
+                        session.user.user_metadata?.name?.split(' ')[0] || 
+                        session.user.user_metadata?.full_name?.split(' ')[0] || '',
+              lastName: session.user.user_metadata?.family_name || 
+                      (session.user.user_metadata?.name?.split(' ').length > 1 ? 
+                        session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
+                      (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
+                        session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
+            });
+            
+            if (mounted) {
+              try {
+                const { error: insertError } = await supabase
+                  .from('user_profiles')
+                  .upsert({
+                    user_id: session.user.id,
+                    email: session.user.email,
+                    first_name: session.user.user_metadata?.given_name || 
+                              session.user.user_metadata?.name?.split(' ')[0] || 
+                              session.user.user_metadata?.full_name?.split(' ')[0] || '',
+                    last_name: session.user.user_metadata?.family_name || 
+                            (session.user.user_metadata?.name?.split(' ').length > 1 ? 
+                              session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
+                            (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
+                              session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : ''),
+                    application_status: 'pending'
+                  });
+                  
+                if (insertError) {
+                  console.error("Error creating initial profile:", insertError);
+                }
+              } catch (err) {
+                console.error("Error in profile creation:", err);
+              }
+            }
+            
+            setTimeout(() => {
+              if (mounted) {
+                nextStep();
+                setIsCheckingSession(false);
+              }
+            }, 500);
+          } else if (profile.application_status === 'rejected') {
+            toast({
+              title: "Application Rejected",
+              description: "Unfortunately, your application didn't meet our qualifications.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
+            setIsCheckingSession(false);
+          } else if (profile?.application_status === 'approved') {
+            toast({
+              title: "Welcome back!",
+              description: "You've been redirected to your dashboard",
+            });
+            navigate('/dashboard');
+          } else if (profile?.first_name) {
+            setTimeout(() => {
+              if (mounted) {
+                nextStep();
+                setIsCheckingSession(false);
+              }
+            }, 500);
+          } else {
+            setTimeout(() => {
+              if (mounted) {
+                nextStep();
+                setIsCheckingSession(false);
+              }
+            }, 500);
+          }
+        } else if (mounted) {
+          console.log("No authenticated user found");
+          setIsCheckingSession(false);
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        if (mounted) {
+          setIsCheckingSession(false);
+        }
+      }
+    };
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.email);
+        
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('application_status, first_name')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+            
+          updateUserData({
+            email: session.user.email,
+            firstName: session.user.user_metadata?.given_name || 
+                      session.user.user_metadata?.name?.split(' ')[0] || 
+                      session.user.user_metadata?.full_name?.split(' ')[0] || '',
+            lastName: session.user.user_metadata?.family_name || 
+                    (session.user.user_metadata?.name?.split(' ').length > 1 ? 
+                      session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
+                    (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
+                      session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
+          });
+          
+          if (!profileError && profile?.application_status === 'rejected') {
+            toast({
+              title: "Application Rejected",
+              description: "Unfortunately, your application didn't meet our qualifications.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
+            if (mounted) setIsCheckingSession(false);
+          } else if (!profileError && profile?.application_status === 'approved') {
+            navigate('/dashboard');
+          } else {
+            setTimeout(() => {
+              if (mounted) nextStep();
+            }, 500);
+          }
+        }
+      }
+    );
+    
+    checkSession();
+    
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+  
   const handleGoogleSignUp = async () => {
     try {
       setIsLoading(true);
       setErrorMessage('');
       
       const siteUrl = window.location.origin;
+      const currentPath = '/signup';
+      
+      console.log("Current site URL:", siteUrl);
+      console.log("Current path:", currentPath);
       
       await supabase.auth.signOut();
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${siteUrl}/signup`,
+          redirectTo: `${siteUrl}${currentPath}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account consent',
@@ -112,6 +209,8 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
 
       if (error) throw error;
       
+      console.log("OAuth flow initiated, awaiting redirect");
+      
     } catch (error) {
       console.error('Error signing up with Google:', error);
       setErrorMessage(error.message || 'Failed to sign up with Google');
@@ -120,6 +219,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         description: error.message || "Failed to sign up with Google",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -190,17 +290,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           {isCheckingSession && (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
-              <p className="text-gray-600 mb-2">Checking login status...</p>
-              {sessionCheckTimedOut ? (
-                <p className="text-red-500 text-sm mb-2">Session check is taking longer than expected</p>
-              ) : null}
-              <Button 
-                variant="outline"
-                onClick={handleCancelSessionCheck}
-                className="mt-2"
-              >
-                Cancel
-              </Button>
+              <p className="text-gray-600">Checking login status...</p>
             </div>
           )}
           

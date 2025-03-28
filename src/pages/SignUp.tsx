@@ -52,66 +52,15 @@ const SignUp = () => {
   
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          // No session, redirect to login
-          console.log('No session found, redirecting to login');
-          navigate('/login');
-          return;
-        }
-        
-        // Check if the user already has a profile
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('application_status, credentials')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        console.log('User profile check:', profile, error);
-        
-        if (profile) {
-          // User already has a profile
-          if (profile.application_status === 'approved') {
-            // User is already approved, redirect to appropriate dashboard
-            console.log('User is approved, redirecting to dashboard');
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
-            }
-            return;
-          } else if (profile.application_status === 'rejected') {
-            // User was rejected, show message and redirect to login
-            console.log('User application was rejected');
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            navigate('/login');
-            return;
-          }
-        }
-        
-        // Fill in the email from the session
-        console.log('Setting user email from session:', session.user.email);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
         setUserData(prev => ({ ...prev, email: session.user.email }));
-      } catch (error) {
-        console.error('Error in checkSession:', error);
-        toast({
-          title: "Error",
-          description: "There was a problem checking your session. Please try again.",
-          variant: "destructive",
-        });
-        navigate('/login');
       }
     };
     
     checkSession();
-  }, [navigate, toast]);
+  }, []);
   
   const updateUserData = async (newData) => {
     setUserData(prev => ({ ...prev, ...newData }));
@@ -190,10 +139,8 @@ const SignUp = () => {
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
-      console.log('Submitting application...');
       
       try {
-        // Verify uniqueness of government ID
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
           .select('gov_id_number')
@@ -232,11 +179,8 @@ const SignUp = () => {
           variant: "destructive",
         });
         setIsSubmitting(false);
-        navigate('/login');
         return;
       }
-      
-      console.log('User is authenticated, continuing with submission');
       
       let govIdImageUrl = null;
       if (userData.govIdImage) {
@@ -244,7 +188,6 @@ const SignUp = () => {
       }
       
       const applicationStatus = determineApplicationStatus();
-      console.log('Determined application status:', applicationStatus);
       
       const data = {
         first_name: userData.firstName,
@@ -264,11 +207,11 @@ const SignUp = () => {
         day_hours: userData.dayHours,
         sales_experience: userData.salesExperience,
         sales_months: userData.salesMonths,
-        sales_company: userData.salesCompany,
+        sales_company: userData.salesCompany,  // This should match the DB column name
         sales_product: userData.salesProduct,
         service_experience: userData.serviceExperience,
         service_months: userData.serviceMonths,
-        service_company: userData.serviceCompany,
+        service_company: userData.serviceCompany,  // This should match the DB column name
         service_product: userData.serviceProduct,
         meet_obligation: userData.meetObligation,
         login_discord: userData.loginDiscord,
@@ -280,45 +223,15 @@ const SignUp = () => {
         application_status: applicationStatus
       };
       
-      console.log('Updating user profile with data:', data);
-      
-      // Check if profile already exists
-      const { data: existingProfile } = await supabase
+      const { error: updateError } = await supabase
         .from('user_profiles')
-        .select('id')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-        
-      let updateError;
-      
-      if (existingProfile) {
-        // Update existing profile
-        console.log('Updating existing profile');
-        const { error } = await supabase
-          .from('user_profiles')
-          .update(data)
-          .eq('user_id', session.user.id);
-          
-        updateError = error;
-      } else {
-        // Insert new profile
-        console.log('Creating new profile');
-        const { error } = await supabase
-          .from('user_profiles')
-          .insert({
-            ...data,
-            user_id: session.user.id
-          });
-          
-        updateError = error;
-      }
+        .update(data)
+        .eq('user_id', session.user.id);
       
       if (updateError) {
-        console.error('Error updating/inserting user profile:', updateError);
+        console.error('Error updating user profile:', updateError);
         throw updateError;
       }
-      
-      console.log('Profile updated successfully with status:', applicationStatus);
       
       if (applicationStatus === 'rejected') {
         await supabase.auth.signOut();
