@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StepZero from '@/components/signup/StepZero';
@@ -206,12 +207,12 @@ const SignUp = () => {
         day_hours: userData.dayHours,
         sales_experience: userData.salesExperience,
         sales_months: userData.salesMonths,
-        salesCompany: userData.salesCompany,
-        salesProduct: userData.salesProduct,
+        sales_company: userData.salesCompany,  // This should match the DB column name
+        sales_product: userData.salesProduct,
         service_experience: userData.serviceExperience,
         service_months: userData.serviceMonths,
-        serviceCompany: userData.serviceCompany,
-        serviceProduct: userData.serviceProduct,
+        service_company: userData.serviceCompany,  // This should match the DB column name
+        service_product: userData.serviceProduct,
         meet_obligation: userData.meetObligation,
         login_discord: userData.loginDiscord,
         check_emails: userData.checkEmails,
