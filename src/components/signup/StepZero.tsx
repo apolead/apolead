@@ -1,9 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const StepZero = ({
   userData,
@@ -11,6 +14,10 @@ const StepZero = ({
   nextStep,
   isCheckingEmail = false
 }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
@@ -42,7 +49,7 @@ const StepZero = ({
           
           const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
-            .select('application_status, first_name')
+            .select('application_status, first_name, credentials')
             .eq('user_id', session.user.id)
             .maybeSingle();
             
@@ -50,14 +57,8 @@ const StepZero = ({
             setErrorMessage('Profile not found or error, continuing with signup flow');
             updateUserData({
               email: session.user.email,
-              firstName: session.user.user_metadata?.given_name || 
-                        session.user.user_metadata?.name?.split(' ')[0] || 
-                        session.user.user_metadata?.full_name?.split(' ')[0] || '',
-              lastName: session.user.user_metadata?.family_name || 
-                      (session.user.user_metadata?.name?.split(' ').length > 1 ? 
-                        session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
-                      (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
-                        session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
+              firstName: session.user.user_metadata?.first_name || '',
+              lastName: session.user.user_metadata?.last_name || ''
             });
             
             if (mounted) {
@@ -67,14 +68,8 @@ const StepZero = ({
                   .upsert({
                     user_id: session.user.id,
                     email: session.user.email,
-                    first_name: session.user.user_metadata?.given_name || 
-                              session.user.user_metadata?.name?.split(' ')[0] || 
-                              session.user.user_metadata?.full_name?.split(' ')[0] || '',
-                    last_name: session.user.user_metadata?.family_name || 
-                            (session.user.user_metadata?.name?.split(' ').length > 1 ? 
-                              session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
-                            (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
-                              session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : ''),
+                    first_name: session.user.user_metadata?.first_name || '',
+                    last_name: session.user.user_metadata?.last_name || '',
                     application_status: 'pending'
                   });
                   
@@ -105,7 +100,12 @@ const StepZero = ({
               title: "Welcome back!",
               description: "You've been redirected to your dashboard",
             });
-            navigate('/dashboard');
+            
+            if (profile.credentials === 'supervisor') {
+              navigate('/supervisor');
+            } else {
+              navigate('/dashboard');
+            }
           } else if (profile?.first_name) {
             setTimeout(() => {
               if (mounted) {
@@ -140,20 +140,14 @@ const StepZero = ({
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
           const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
-            .select('application_status, first_name')
+            .select('application_status, first_name, credentials')
             .eq('user_id', session.user.id)
             .maybeSingle();
             
           updateUserData({
             email: session.user.email,
-            firstName: session.user.user_metadata?.given_name || 
-                      session.user.user_metadata?.name?.split(' ')[0] || 
-                      session.user.user_metadata?.full_name?.split(' ')[0] || '',
-            lastName: session.user.user_metadata?.family_name || 
-                    (session.user.user_metadata?.name?.split(' ').length > 1 ? 
-                      session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
-                    (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
-                      session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
+            firstName: session.user.user_metadata?.first_name || '',
+            lastName: session.user.user_metadata?.last_name || ''
           });
           
           if (!profileError && profile?.application_status === 'rejected') {
@@ -165,7 +159,11 @@ const StepZero = ({
             await supabase.auth.signOut();
             if (mounted) setIsCheckingSession(false);
           } else if (!profileError && profile?.application_status === 'approved') {
-            navigate('/dashboard');
+            if (profile.credentials === 'supervisor') {
+              navigate('/supervisor');
+            } else {
+              navigate('/dashboard');
+            }
           } else {
             setTimeout(() => {
               if (mounted) nextStep();
@@ -183,40 +181,65 @@ const StepZero = ({
     };
   }, []);
   
-  const handleGoogleSignUp = async () => {
+  const validateEmail = (email) => {
+    // Check if email ends with @gmail.com
+    return email.toLowerCase().endsWith('@gmail.com');
+  };
+  
+  const handleSignUp = async (e) => {
+    e.preventDefault();
     try {
       setIsLoading(true);
       setErrorMessage('');
       
-      const siteUrl = window.location.origin;
-      const currentPath = '/signup';
+      // Validate all fields are filled
+      if (!email || !password || !firstName || !lastName) {
+        setErrorMessage('Please fill in all fields');
+        setIsLoading(false);
+        return;
+      }
       
-      console.log("Current site URL:", siteUrl);
-      console.log("Current path:", currentPath);
+      // Validate email is a Gmail address
+      if (!validateEmail(email)) {
+        setErrorMessage('Please use a Gmail address (@gmail.com)');
+        setIsLoading(false);
+        return;
+      }
       
-      await supabase.auth.signOut();
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+      // Register user with email and password
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
         options: {
-          redirectTo: `${siteUrl}${currentPath}`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account consent',
+          data: {
+            first_name: firstName,
+            last_name: lastName
           }
-        },
+        }
       });
 
       if (error) throw error;
       
-      console.log("OAuth flow initiated, awaiting redirect");
+      toast({
+        title: "Signup successful",
+        description: "Please check your email for verification",
+      });
+      
+      updateUserData({
+        email,
+        firstName,
+        lastName
+      });
+      
+      // The auth state change listener will handle the rest
+      console.log("Sign up initiated, awaiting email verification");
       
     } catch (error) {
-      console.error('Error signing up with Google:', error);
-      setErrorMessage(error.message || 'Failed to sign up with Google');
+      console.error('Error signing up:', error);
+      setErrorMessage(error.message || 'Failed to sign up');
       toast({
         title: "Sign up failed",
-        description: error.message || "Failed to sign up with Google",
+        description: error.message || "Failed to sign up",
         variant: "destructive",
       });
     } finally {
@@ -311,28 +334,70 @@ const StepZero = ({
                 </div>
               )}
               
-              <Button 
-                className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 transition py-6 mb-6"
-                onClick={handleGoogleSignUp}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Signing up...
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input 
+                      id="firstName" 
+                      type="text" 
+                      value={firstName} 
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center">
-                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                    </svg>
-                    Sign up with Google
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input 
+                      id="lastName" 
+                      type="text" 
+                      value={lastName} 
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
                   </div>
-                )}
-              </Button>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email (Gmail only)</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="youremail@gmail.com" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                
+                <Button 
+                  type="submit"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Signing up...
+                    </div>
+                  ) : (
+                    "Sign up"
+                  )}
+                </Button>
+              </form>
               
               <div className="mt-6 text-center">
                 <p className="text-sm">
@@ -341,7 +406,7 @@ const StepZero = ({
               </div>
               
               <div className="mt-4 text-center">
-                <p className="text-sm text-gray-500">We only support Google authentication</p>
+                <p className="text-sm text-gray-500">Only Gmail accounts are accepted</p>
               </div>
             </>
           )}
