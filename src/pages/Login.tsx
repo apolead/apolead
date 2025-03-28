@@ -1,156 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 const Login = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const { isLoading, handleGoogleAuth } = useAuth();
 
-  // Check if user is already logged in
-  useEffect(() => {
-    let mounted = true;
-    
-    const checkSession = async () => {
-      try {
-        if (!mounted) return;
-        setIsCheckingSession(true);
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user && mounted) {
-          console.log("User already logged in, checking application status");
-          
-          // Check if profile exists and application is approved
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('application_status')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-            
-          if (profile && profile.application_status === 'approved') {
-            // Approved user, redirect to dashboard
-            console.log("User is approved, redirecting to dashboard");
-            navigate('/dashboard');
-          } else if (profile && profile.application_status === 'rejected') {
-            // Rejected user, show notification and sign out
-            console.log("User was rejected, showing notification");
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            setIsCheckingSession(false);
-          } else {
-            // User exists but not approved, redirect to signup
-            console.log("User is not approved, redirecting to signup");
-            navigate('/signup');
-          }
-        } else if (mounted) {
-          setIsCheckingSession(false);
-        }
-      } catch (error) {
-        console.error("Error checking session:", error);
-        if (mounted) {
-          setIsCheckingSession(false);
-        }
-      }
-    };
-    
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.email);
-        
-        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
-          // Check if profile exists and application is approved
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('application_status')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-            
-          if (profile && profile.application_status === 'approved') {
-            // Approved user, redirect to dashboard
-            toast({
-              title: "Login successful",
-              description: "Welcome back!",
-            });
-            navigate('/dashboard');
-          } else if (profile && profile.application_status === 'rejected') {
-            // Rejected user, show notification and sign out
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-          } else {
-            // User exists but not approved, redirect to signup
-            console.log("User is not approved, redirecting to signup");
-            navigate('/signup');
-          }
-        }
-      }
-    );
-    
-    checkSession();
-    
-    // Clean up
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
-  
-  const handleGoogleLogin = async () => {
-    try {
-      setIsLoading(true);
-      setErrorMessage('');
-      
-      // Get the URL of the current page for proper redirect
-      const siteUrl = window.location.origin;
-      const currentPath = '/login'; // Always redirect back to login first for proper status checking
-      
-      console.log("Site URL:", siteUrl);
-      console.log("Redirect path:", currentPath);
-      
-      // Force logout first to ensure Google auth prompt appears
-      await supabase.auth.signOut();
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${siteUrl}${currentPath}`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account consent', // Force Google to show account selection
-          }
-        },
-      });
-
-      if (error) throw error;
-      
-      console.log("OAuth flow initiated, awaiting redirect");
-      
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-      setErrorMessage(error.message || 'Failed to sign in with Google');
-      toast({
-        title: "Login failed",
-        description: error.message || "Failed to sign in with Google",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleGoogleLogin = () => {
+    // Use /login as the redirect path for proper status checking
+    handleGoogleAuth('/login');
   };
 
   return (
@@ -212,20 +72,6 @@ const Login = () => {
 
           <h1 className="text-2xl font-bold mb-2 text-center">Sign in</h1>
           <p className="text-gray-600 mb-8 text-center">Sign in to your account</p>
-          
-          {/* Form error - ENHANCED: make error more visible */}
-          {errorMessage && <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm">{errorMessage}</p>
-                </div>
-              </div>
-            </div>}
           
           {/* Google Login Button */}
           <Button 

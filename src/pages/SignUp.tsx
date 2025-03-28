@@ -8,6 +8,7 @@ import StepThree from '@/components/signup/StepThree';
 import ConfirmationScreen from '@/components/signup/ConfirmationScreen';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -49,18 +50,32 @@ const SignUp = () => {
   
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isLoading, isAuthenticated, user } = useAuth();
   
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    // If user is authenticated, update the form data with their details
+    if (user) {
+      setUserData(prev => ({
+        ...prev,
+        email: user.email,
+        firstName: user.user_metadata?.given_name || 
+                  user.user_metadata?.name?.split(' ')[0] || 
+                  user.user_metadata?.full_name?.split(' ')[0] || '',
+        lastName: user.user_metadata?.family_name || 
+                (user.user_metadata?.name?.split(' ').length > 1 ? 
+                  user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
+                (user.user_metadata?.full_name?.split(' ').length > 1 ? 
+                  user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
+      }));
       
-      if (session) {
-        setUserData(prev => ({ ...prev, email: session.user.email }));
+      // Move to Step 1 after authentication
+      if (currentStep === 0 && !isLoading) {
+        setTimeout(() => {
+          setCurrentStep(1);
+        }, 500);
       }
-    };
-    
-    checkSession();
-  }, []);
+    }
+  }, [user, isLoading, currentStep]);
   
   const updateUserData = async (newData) => {
     setUserData(prev => ({ ...prev, ...newData }));
@@ -207,11 +222,11 @@ const SignUp = () => {
         day_hours: userData.dayHours,
         sales_experience: userData.salesExperience,
         sales_months: userData.salesMonths,
-        sales_company: userData.salesCompany,  // This should match the DB column name
+        sales_company: userData.salesCompany,
         sales_product: userData.salesProduct,
         service_experience: userData.serviceExperience,
         service_months: userData.serviceMonths,
-        service_company: userData.serviceCompany,  // This should match the DB column name
+        service_company: userData.serviceCompany,
         service_product: userData.serviceProduct,
         meet_obligation: userData.meetObligation,
         login_discord: userData.loginDiscord,
@@ -254,6 +269,16 @@ const SignUp = () => {
   };
   
   const renderStep = () => {
+    // Show loading indicator if we're checking authentication
+    if (isLoading && currentStep === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+          <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mb-4" />
+          <p className="text-gray-600">Checking authentication status...</p>
+        </div>
+      );
+    }
+    
     switch (currentStep) {
       case 0:
         return <StepZero userData={userData} updateUserData={updateUserData} nextStep={nextStep} />;
