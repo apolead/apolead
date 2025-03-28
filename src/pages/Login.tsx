@@ -74,13 +74,9 @@ const Login = () => {
             });
             await forceSignOut();
             setIsCheckingSession(false);
-          } else if (profile) {
+          } else {
             // User exists but application is pending or other status
             console.log("User exists but application is pending, redirecting to signup");
-            navigate('/signup');
-          } else {
-            // No profile found, new user
-            console.log("No profile found, redirecting to signup");
             navigate('/signup');
           }
         } else if (mounted) {
@@ -98,55 +94,66 @@ const Login = () => {
       }
     };
     
+    checkSession();
+    
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log("Auth state changed in Login:", event, session?.user?.email);
+        
+        if (!mounted) return;
         
         // Clear timeout when auth state changes
         clearTimeout(sessionCheckTimeout);
         
-        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
-          // User has signed in, check their profile status
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('application_status, credentials')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-          
-          console.log("Auth change profile check:", profile, error);
+        // Defer Supabase calls with setTimeout to avoid deadlocks
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
+          setTimeout(async () => {
+            if (!mounted) return;
             
-          if (profile && profile.application_status === 'approved') {
-            // Approved user, redirect to dashboard
-            toast({
-              title: "Login successful",
-              description: "Welcome back!",
-            });
-            
-            // Redirect based on credentials
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
+            try {
+              // User has signed in, check their profile status
+              const { data: profile, error } = await supabase
+                .from('user_profiles')
+                .select('application_status, credentials')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+              
+              console.log("Auth change profile check:", profile, error);
+                
+              if (profile && profile.application_status === 'approved') {
+                // Approved user, redirect to dashboard
+                toast({
+                  title: "Login successful",
+                  description: "Welcome back!",
+                });
+                
+                // Redirect based on credentials
+                if (profile.credentials === 'supervisor') {
+                  navigate('/supervisor');
+                } else {
+                  navigate('/dashboard');
+                }
+              } else if (profile && profile.application_status === 'rejected') {
+                // Rejected user, show notification and sign out
+                toast({
+                  title: "Application Rejected",
+                  description: "Unfortunately, your application didn't meet our qualifications.",
+                  variant: "destructive",
+                });
+                await forceSignOut();
+              } else {
+                // User exists but not approved or no profile yet, redirect to signup
+                console.log("User not approved or no profile, redirecting to signup");
+                navigate('/signup');
+              }
+            } catch (error) {
+              console.error('Error checking profile after auth state change:', error);
             }
-          } else if (profile && profile.application_status === 'rejected') {
-            // Rejected user, show notification and sign out
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await forceSignOut();
-          } else {
-            // User exists but not approved or no profile yet, redirect to signup
-            console.log("User not approved or no profile, redirecting to signup");
-            navigate('/signup');
-          }
+          }, 0);
         }
       }
     );
-    
-    checkSession();
     
     // Clean up
     return () => {
@@ -154,7 +161,7 @@ const Login = () => {
       clearTimeout(sessionCheckTimeout);
       subscription.unsubscribe();
     };
-  }, [navigate, toast]);
+  }, [navigate, toast, isCheckingSession]);
   
   const handleGoogleLogin = async () => {
     try {
@@ -163,19 +170,17 @@ const Login = () => {
       
       // Get the URL of the current page for proper redirect
       const siteUrl = window.location.origin;
-      const currentPath = '/login'; // Always redirect back to login first for proper status checking
       
       console.log("Starting Google login flow");
       console.log("Site URL:", siteUrl);
-      console.log("Redirect path:", currentPath);
       
       // Force logout first to ensure Google auth prompt appears
       await supabase.auth.signOut();
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${siteUrl}${currentPath}`,
+          redirectTo: `${siteUrl}/login`,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account consent', // Force Google to show account selection
@@ -195,7 +200,6 @@ const Login = () => {
         description: error.message || "Failed to sign in with Google",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };

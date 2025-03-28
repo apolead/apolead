@@ -55,12 +55,43 @@ const SignUp = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
+        // Check if the user already has a profile with approved or rejected status
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('application_status, credentials')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+          
+        if (profile && profile.application_status === 'approved') {
+          // User is already approved, redirect to appropriate dashboard
+          if (profile.credentials === 'supervisor') {
+            navigate('/supervisor');
+          } else {
+            navigate('/dashboard');
+          }
+          return;
+        } else if (profile && profile.application_status === 'rejected') {
+          // User was rejected, show message and redirect to login
+          toast({
+            title: "Application Rejected",
+            description: "Unfortunately, your application didn't meet our qualifications.",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          navigate('/login');
+          return;
+        }
+        
+        // Fill in the email from the session
         setUserData(prev => ({ ...prev, email: session.user.email }));
+      } else {
+        // No session, redirect to login
+        navigate('/login');
       }
     };
     
     checkSession();
-  }, []);
+  }, [navigate, toast]);
   
   const updateUserData = async (newData) => {
     setUserData(prev => ({ ...prev, ...newData }));
@@ -207,11 +238,11 @@ const SignUp = () => {
         day_hours: userData.dayHours,
         sales_experience: userData.salesExperience,
         sales_months: userData.salesMonths,
-        sales_company: userData.salesCompany,  // This should match the DB column name
+        sales_company: userData.salesCompany,
         sales_product: userData.salesProduct,
         service_experience: userData.serviceExperience,
         service_months: userData.serviceMonths,
-        service_company: userData.serviceCompany,  // This should match the DB column name
+        service_company: userData.serviceCompany,
         service_product: userData.serviceProduct,
         meet_obligation: userData.meetObligation,
         login_discord: userData.loginDiscord,

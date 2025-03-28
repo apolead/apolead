@@ -1,17 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 
 const StepZero = ({ userData, updateUserData, nextStep }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { isSessionChecking } = useAuthRedirect();
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [sessionCheckTimedOut, setSessionCheckTimedOut] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  useEffect(() => {
+    let mounted = true;
+    let sessionCheckTimeout;
+    
+    const checkSession = async () => {
+      try {
+        if (!mounted) return;
+        
+        sessionCheckTimeout = setTimeout(() => {
+          if (mounted) {
+            setSessionCheckTimedOut(true);
+            setIsCheckingSession(false);
+          }
+        }, 5000);
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user && mounted) {
+          const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('application_status, credentials')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+            
+          if (profile && profile.application_status === 'approved') {
+            if (profile.credentials === 'supervisor') {
+              navigate('/supervisor');
+            } else {
+              navigate('/dashboard');
+            }
+          } else if (profile && profile.application_status === 'rejected') {
+            toast({
+              title: "Application Rejected",
+              description: "Unfortunately, your application didn't meet our qualifications.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
+          } else {
+            updateUserData({ email: session.user.email });
+            setIsCheckingSession(false);
+          }
+        } else if (mounted) {
+          setIsCheckingSession(false);
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+        if (mounted) {
+          setIsCheckingSession(false);
+        }
+      } finally {
+        clearTimeout(sessionCheckTimeout);
+      }
+    };
+    
+    checkSession();
+    
+    return () => {
+      mounted = false;
+      clearTimeout(sessionCheckTimeout);
+    };
+  }, [navigate, toast, updateUserData]);
   
   const handleBackToHome = async (e) => {
     e.preventDefault();
@@ -21,6 +83,11 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
     } catch (error) {
       console.error('Error signing out:', error);
     }
+  };
+
+  const handleCancelSessionCheck = () => {
+    setSessionCheckTimedOut(true);
+    setIsCheckingSession(false);
   };
 
   const handleGoogleSignUp = async () => {
@@ -53,7 +120,6 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         description: error.message || "Failed to sign up with Google",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -121,7 +187,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
           <h1 className="text-2xl font-bold mb-2 text-center">Get started</h1>
           <p className="text-gray-600 mb-8 text-center">Create your account now</p>
           
-          {isSessionChecking && (
+          {isCheckingSession && (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
               <p className="text-gray-600 mb-2">Checking login status...</p>
@@ -138,7 +204,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
             </div>
           )}
           
-          {!isSessionChecking && (
+          {!isCheckingSession && (
             <>
               {errorMessage && (
                 <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6">
