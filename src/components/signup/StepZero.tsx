@@ -1,20 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { supabase, forceSignOut } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 
-const StepZero = ({
-  userData,
-  updateUserData,
-  nextStep,
-  isCheckingEmail = false
-}) => {
+const StepZero = ({ userData, updateUserData, nextStep }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const [sessionCheckTimedOut, setSessionCheckTimedOut] = useState(false);
+  const { isSessionChecking } = useAuthRedirect();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -28,249 +23,19 @@ const StepZero = ({
     }
   };
 
-  const handleCancelSessionCheck = () => {
-    setSessionCheckTimedOut(true);
-    setIsCheckingSession(false);
-  };
-
-  useEffect(() => {
-    let mounted = true;
-    let sessionCheckTimeout;
-    
-    const checkSession = async () => {
-      try {
-        if (!mounted) return;
-        
-        sessionCheckTimeout = setTimeout(() => {
-          if (mounted && isCheckingSession) {
-            console.log("Session check timed out");
-            setSessionCheckTimedOut(true);
-            setIsCheckingSession(false);
-          }
-        }, 10000);
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        clearTimeout(sessionCheckTimeout);
-        
-        if (session?.user && mounted) {
-          console.log("User is authenticated:", session.user.email);
-          
-          const { data: profile, error: profileError } = await supabase
-            .from('user_profiles')
-            .select('application_status, first_name, last_name, credentials')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-          
-          console.log("Profile check result:", profile, profileError);
-          
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            setErrorMessage('Error checking profile status');
-            
-            if (mounted) {
-              setIsCheckingSession(false);
-            }
-          } else if (!profile) {
-            console.log("No profile found - creating initial profile");
-            
-            const userData = {
-              email: session.user.email,
-              firstName: session.user.user_metadata?.given_name || 
-                        session.user.user_metadata?.name?.split(' ')[0] || 
-                        session.user.user_metadata?.full_name?.split(' ')[0] || '',
-              lastName: session.user.user_metadata?.family_name || 
-                      (session.user.user_metadata?.name?.split(' ').length > 1 ? 
-                        session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
-                      (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
-                        session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
-            };
-            
-            updateUserData(userData);
-            
-            if (mounted) {
-              try {
-                const { error: insertError } = await supabase
-                  .from('user_profiles')
-                  .upsert({
-                    user_id: session.user.id,
-                    email: userData.email,
-                    first_name: userData.firstName,
-                    last_name: userData.lastName,
-                    application_status: 'pending'
-                  });
-                  
-                if (insertError) {
-                  console.error("Error creating initial profile:", insertError);
-                }
-              } catch (err) {
-                console.error("Error in profile creation:", err);
-              }
-              
-              nextStep();
-              setIsCheckingSession(false);
-            }
-          } else if (profile.application_status === 'rejected') {
-            console.log("Application was rejected");
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            
-            if (mounted) {
-              await forceSignOut();
-              setIsCheckingSession(false);
-            }
-          } else if (profile.application_status === 'approved') {
-            console.log("User is approved - redirecting to dashboard");
-            
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
-            }
-          } else {
-            console.log("Application is pending - continuing to next step");
-            
-            if (mounted) {
-              updateUserData({
-                email: session.user.email,
-                firstName: profile.first_name || '',
-                lastName: profile.last_name || ''
-              });
-              
-              nextStep();
-              setIsCheckingSession(false);
-            }
-          }
-        } else if (mounted) {
-          console.log("No authenticated user found");
-          setIsCheckingSession(false);
-        }
-      } catch (error) {
-        clearTimeout(sessionCheckTimeout);
-        
-        console.error("Error checking session:", error);
-        if (mounted) {
-          setIsCheckingSession(false);
-        }
-      }
-    };
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.email);
-        
-        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
-          clearTimeout(sessionCheckTimeout);
-          
-          const { data: profile, error: profileError } = await supabase
-            .from('user_profiles')
-            .select('application_status, first_name, last_name, credentials')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-            
-          console.log("Auth change profile check:", profile, profileError);
-          
-          updateUserData({
-            email: session.user.email,
-            firstName: session.user.user_metadata?.given_name || 
-                      session.user.user_metadata?.name?.split(' ')[0] || 
-                      session.user.user_metadata?.full_name?.split(' ')[0] || '',
-            lastName: session.user.user_metadata?.family_name || 
-                    (session.user.user_metadata?.name?.split(' ').length > 1 ? 
-                      session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
-                    (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
-                      session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
-          });
-          
-          if (profileError) {
-            console.error("Error checking profile on auth change:", profileError);
-          } else if (!profile) {
-            console.log("New sign in - creating profile and continuing");
-            
-            try {
-              const { error: insertError } = await supabase
-                .from('user_profiles')
-                .upsert({
-                  user_id: session.user.id,
-                  email: session.user.email,
-                  first_name: session.user.user_metadata?.given_name || 
-                            session.user.user_metadata?.name?.split(' ')[0] || 
-                            session.user.user_metadata?.full_name?.split(' ')[0] || '',
-                  last_name: session.user.user_metadata?.family_name || 
-                          (session.user.user_metadata?.name?.split(' ').length > 1 ? 
-                            session.user.user_metadata?.name?.split(' ').slice(1).join(' ') : '') ||
-                          (session.user.user_metadata?.full_name?.split(' ').length > 1 ? 
-                            session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : ''),
-                  application_status: 'pending'
-                });
-                
-              if (insertError) {
-                console.error("Error creating profile on auth change:", insertError);
-              }
-            } catch (err) {
-              console.error("Error in profile creation on auth change:", err);
-            }
-            
-            if (mounted) {
-              nextStep();
-            }
-          } else if (profile.application_status === 'rejected') {
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await forceSignOut();
-          } else if (profile.application_status === 'approved') {
-            toast({
-              title: "Login successful",
-              description: "Welcome back!",
-            });
-            
-            if (profile.credentials === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
-            }
-          } else {
-            if (mounted) {
-              nextStep();
-            }
-          }
-        }
-      }
-    );
-    
-    checkSession();
-    
-    return () => {
-      mounted = false;
-      clearTimeout(sessionCheckTimeout);
-      subscription.unsubscribe();
-    };
-  }, [navigate, nextStep, updateUserData, toast]);
-  
   const handleGoogleSignUp = async () => {
     try {
       setIsLoading(true);
       setErrorMessage('');
       
       const siteUrl = window.location.origin;
-      const currentPath = '/signup';
-      
-      console.log("Starting Google sign-up flow");
-      console.log("Current site URL:", siteUrl);
-      console.log("Current path:", currentPath);
       
       await supabase.auth.signOut();
       
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${siteUrl}${currentPath}`,
+          redirectTo: `${siteUrl}/signup`,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account consent',
@@ -279,8 +44,6 @@ const StepZero = ({
       });
 
       if (error) throw error;
-      
-      console.log("OAuth flow initiated, awaiting redirect");
       
     } catch (error) {
       console.error('Error signing up with Google:', error);
@@ -358,7 +121,7 @@ const StepZero = ({
           <h1 className="text-2xl font-bold mb-2 text-center">Get started</h1>
           <p className="text-gray-600 mb-8 text-center">Create your account now</p>
           
-          {isCheckingSession && (
+          {isSessionChecking && (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-4" />
               <p className="text-gray-600 mb-2">Checking login status...</p>
@@ -375,7 +138,7 @@ const StepZero = ({
             </div>
           )}
           
-          {!isCheckingSession && (
+          {!isSessionChecking && (
             <>
               {errorMessage && (
                 <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6">
