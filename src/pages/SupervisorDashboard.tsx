@@ -21,43 +21,49 @@ const SupervisorDashboard = () => {
 
   useEffect(() => {
     const checkUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.log('No user found, redirecting to login');
-        navigate('/login');
-        return;
-      }
-      
-      // Check if the user is a supervisor based on their user_profiles entry
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('credentials')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          console.log('No user found, redirecting to login');
+          navigate('/login');
+          return;
+        }
+        
+        // Check if the user is a supervisor based on their user_profiles entry
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('credentials')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          navigate('/dashboard');
+          return;
+        }
+        
+        if (!profileData || (profileData.credentials !== 'supervisor' && profileData.credentials !== 'admin')) {
+          console.error('Not authorized as supervisor:', profileData?.credentials);
+          navigate('/dashboard');
+        } else {
+          console.log('User is authorized as:', profileData.credentials);
+        }
+      } catch (error) {
+        console.error('Error checking user role:', error);
         navigate('/dashboard');
-        return;
-      }
-      
-      if (!profileData || (profileData.credentials !== 'supervisor' && profileData.credentials !== 'admin')) {
-        console.error('Not authorized as supervisor:', profileData?.credentials);
-        navigate('/dashboard');
-      } else {
-        console.log('User is authorized as:', profileData.credentials);
       }
     };
     
     const getUserProfiles = async () => {
       try {
         console.log('Fetching user profiles...');
+        
         // Get all profiles that are not supervisors
         const { data, error } = await supabase
           .from('user_profiles')
           .select('*')
-          .neq('credentials', 'supervisor') // Exclude supervisors
+          .neq('credentials', 'supervisor')
           .order('application_date', { ascending: false });
         
         if (error) {
@@ -95,8 +101,12 @@ const SupervisorDashboard = () => {
     setIsLoading(false);
 
     return () => {
-      document.body.removeChild(script);
-      document.head.removeChild(link);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+      if (document.head.contains(link)) {
+        document.head.removeChild(link);
+      }
     };
   }, [navigate]);
 
@@ -154,22 +164,21 @@ const SupervisorDashboard = () => {
     }
   };
   
-  // Updated filtering to ensure we get all profiles that have status 'approved' if requested
+  // Filter profiles based on search term
   const filteredProfiles = userProfiles.filter(profile => {
-    // If searchTerm is empty or includes 'approved', show all approved profiles
-    if (searchTerm.toLowerCase().includes('approved')) {
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    
+    if (lowerSearchTerm.includes('approved')) {
       return profile.application_status?.toLowerCase() === 'approved';
     }
     
-    // Otherwise filter by search term
-    const fullName = `${profile.first_name} ${profile.last_name}`.toLowerCase();
-    const searchLower = searchTerm.toLowerCase();
+    const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.toLowerCase();
     
     return (
-      fullName.includes(searchLower) || 
-      (profile.gov_id_number?.toLowerCase() || '').includes(searchLower) ||
-      (profile.application_status?.toLowerCase() || '').includes(searchLower) ||
-      (profile.email?.toLowerCase() || '').includes(searchLower)
+      fullName.includes(lowerSearchTerm) || 
+      (profile.gov_id_number?.toLowerCase() || '').includes(lowerSearchTerm) ||
+      (profile.application_status?.toLowerCase() || '').includes(lowerSearchTerm) ||
+      (profile.email?.toLowerCase() || '').includes(lowerSearchTerm)
     );
   });
 
