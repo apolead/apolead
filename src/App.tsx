@@ -46,12 +46,12 @@ const AuthRoute = ({ children }) => {
           
           if (profile.application_status === 'approved') {
             setIsApproved(true);
+            // Set user credentials for routing
+            setUserCredentials(profile.credentials || "agent");
           } else {
             setIsApproved(false);
+            setUserCredentials("agent");
           }
-          
-          // Set user credentials for routing
-          setUserCredentials(profile.credentials || "agent");
         } else {
           setIsAuthenticated(true);
           setIsApproved(false);
@@ -86,12 +86,12 @@ const AuthRoute = ({ children }) => {
           
           if (profile.application_status === 'approved') {
             setIsApproved(true);
+            // Set user credentials for routing
+            setUserCredentials(profile.credentials || "agent");
           } else {
             setIsApproved(false);
+            setUserCredentials("agent");
           }
-          
-          // Set user credentials for routing
-          setUserCredentials(profile.credentials || "agent");
         } else {
           setIsAuthenticated(true);
           setIsApproved(false);
@@ -150,41 +150,46 @@ const PublicRoute = ({ children }) => {
     const checkAuth = async () => {
       if (!mounted) return;
       
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("PublicRoute checking session:", !!session);
-      
-      if (session) {
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('application_status, credentials')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        console.log("PublicRoute profile check:", profile, profileError);
-          
-        if (profile) {
-          setIsAuthenticated(true);
-          
-          if (profile.application_status === 'approved') {
-            setIsApproved(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("PublicRoute checking session:", !!session);
+        
+        if (session) {
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('application_status, credentials')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+            
+          console.log("PublicRoute profile check:", profile, profileError);
+            
+          if (profile) {
+            setIsAuthenticated(true);
+            
+            if (profile.application_status === 'approved') {
+              setIsApproved(true);
+              // Set user credentials for routing
+              setUserCredentials(profile.credentials || "agent");
+            } else {
+              setIsApproved(false);
+              setUserCredentials("agent");
+            }
           } else {
+            setIsAuthenticated(true);
             setIsApproved(false);
+            setUserCredentials("agent");
           }
-          
-          // Set user credentials for routing
-          setUserCredentials(profile.credentials || "agent");
         } else {
-          setIsAuthenticated(true);
+          setIsAuthenticated(false);
           setIsApproved(false);
           setUserCredentials("agent");
         }
-      } else {
-        setIsAuthenticated(false);
-        setIsApproved(false);
-        setUserCredentials("agent");
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error in PublicRoute checkAuth:", error);
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
     
     checkAuth();
@@ -224,28 +229,33 @@ const SupervisorRoute = ({ children }) => {
     const checkSupervisorRole = async () => {
       if (!mounted) return;
       
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("SupervisorRoute checking session:", !!session);
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('credentials, application_status')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        console.log("SupervisorRoute profile check:", profile, error);
-          
-        if (profile && profile.credentials === 'supervisor' && profile.application_status === 'approved') {
-          setIsSupervisor(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("SupervisorRoute checking session:", !!session);
+        
+        if (session) {
+          const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('credentials, application_status')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+            
+          console.log("SupervisorRoute profile check:", profile, error);
+            
+          if (profile && profile.credentials === 'supervisor' && profile.application_status === 'approved') {
+            setIsSupervisor(true);
+          } else {
+            setIsSupervisor(false);
+          }
         } else {
           setIsSupervisor(false);
         }
-      } else {
-        setIsSupervisor(false);
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error in SupervisorRoute:", error);
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
     
     checkSupervisorRole();

@@ -83,45 +83,49 @@ const Login = () => {
         console.log("Auth state changed:", event, session?.user?.email);
         
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && mounted) {
-          // Check if profile exists and application is approved
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('application_status, credentials')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-            
-          console.log("Auth state change profile:", profile);
-          console.log("Auth state change error:", error);
-            
-          if (profile) {
-            if (profile.application_status === 'approved') {
-              // Approved user, redirect to the appropriate dashboard
-              toast({
-                title: "Login successful",
-                description: "Welcome back!",
-              });
-              if (profile.credentials === 'supervisor') {
-                navigate('/supervisor');
+          try {
+            // Check if profile exists and application is approved
+            const { data: profile, error } = await supabase
+              .from('user_profiles')
+              .select('application_status, credentials')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+              
+            console.log("Auth state change profile:", profile);
+            console.log("Auth state change error:", error);
+              
+            if (profile) {
+              if (profile.application_status === 'approved') {
+                // Approved user, redirect to the appropriate dashboard
+                toast({
+                  title: "Login successful",
+                  description: "Welcome back!",
+                });
+                if (profile.credentials === 'supervisor') {
+                  navigate('/supervisor');
+                } else {
+                  navigate('/dashboard');
+                }
+              } else if (profile.application_status === 'rejected') {
+                // Rejected user, show notification and sign out
+                toast({
+                  title: "Application Rejected",
+                  description: "Unfortunately, your application didn't meet our qualifications.",
+                  variant: "destructive",
+                });
+                await supabase.auth.signOut();
               } else {
-                navigate('/dashboard');
+                // User exists but not approved, redirect to signup
+                console.log("User is not approved, redirecting to signup");
+                navigate('/signup');
               }
-            } else if (profile.application_status === 'rejected') {
-              // Rejected user, show notification and sign out
-              toast({
-                title: "Application Rejected",
-                description: "Unfortunately, your application didn't meet our qualifications.",
-                variant: "destructive",
-              });
-              await supabase.auth.signOut();
             } else {
-              // User exists but not approved, redirect to signup
-              console.log("User is not approved, redirecting to signup");
+              // No profile found, redirect to signup
+              console.log("No profile found after login, redirecting to signup");
               navigate('/signup');
             }
-          } else {
-            // No profile found, redirect to signup
-            console.log("No profile found after login, redirecting to signup");
-            navigate('/signup');
+          } catch (error) {
+            console.error("Error handling auth state change:", error);
           }
         }
       }
@@ -134,7 +138,7 @@ const Login = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, toast]);
   
   const handleGoogleLogin = async () => {
     try {
