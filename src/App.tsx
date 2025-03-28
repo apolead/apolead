@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +28,53 @@ const AuthRoute = ({ children }) => {
   useEffect(() => {
     let mounted = true;
     
+    const checkAuth = async () => {
+      if (!mounted) return;
+      
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("Checking session in AuthRoute:", !!session);
+        
+        if (session) {
+          const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('application_status, credentials')
+            .eq('user_id', idToString(session.user.id))
+            .maybeSingle();
+            
+          console.log("Initial profile check:", profile, error);
+          
+          if (profileExists(profile)) {
+            setIsAuthenticated(true);
+            
+            const status = safelyAccessProfile(profile, 'application_status');
+            if (status === 'approved') {
+              setIsApproved(true);
+              const credentials = safelyAccessProfile(profile, 'credentials') || "agent";
+              setUserCredentials(credentials);
+            } else {
+              setIsApproved(false);
+              setUserCredentials("agent");
+            }
+          } else {
+            setIsAuthenticated(true);
+            setIsApproved(false);
+            setUserCredentials("agent");
+          }
+        } else {
+          setIsAuthenticated(false);
+          setIsApproved(false);
+          setUserCredentials("agent");
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error in AuthRoute checkAuth:", error);
+        setIsLoading(false);
+      }
+    };
+    
+    // First set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed in AuthRoute:", event, session?.user?.email);
       
@@ -44,10 +92,11 @@ const AuthRoute = ({ children }) => {
         if (profileExists(profile)) {
           setIsAuthenticated(true);
           
-          if (safelyAccessProfile(profile, 'application_status') === 'approved') {
+          const status = safelyAccessProfile(profile, 'application_status');
+          if (status === 'approved') {
             setIsApproved(true);
-            // Set user credentials for routing
-            setUserCredentials(safelyAccessProfile(profile, 'credentials') || "agent");
+            const credentials = safelyAccessProfile(profile, 'credentials') || "agent";
+            setUserCredentials(credentials);
           } else {
             setIsApproved(false);
             setUserCredentials("agent");
@@ -66,46 +115,7 @@ const AuthRoute = ({ children }) => {
       setIsLoading(false);
     });
     
-    const checkAuth = async () => {
-      if (!mounted) return;
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("Checking session in AuthRoute:", !!session);
-      
-      if (session) {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('application_status, credentials')
-          .eq('user_id', idToString(session.user.id))
-          .maybeSingle();
-          
-        console.log("Initial profile check:", profile, error);
-        
-        if (profileExists(profile)) {
-          setIsAuthenticated(true);
-          
-          if (safelyAccessProfile(profile, 'application_status') === 'approved') {
-            setIsApproved(true);
-            // Set user credentials for routing
-            setUserCredentials(safelyAccessProfile(profile, 'credentials') || "agent");
-          } else {
-            setIsApproved(false);
-            setUserCredentials("agent");
-          }
-        } else {
-          setIsAuthenticated(true);
-          setIsApproved(false);
-          setUserCredentials("agent");
-        }
-      } else {
-        setIsAuthenticated(false);
-        setIsApproved(false);
-        setUserCredentials("agent");
-      }
-      
-      setIsLoading(false);
-    };
-    
+    // Then check the initial auth state
     checkAuth();
     
     return () => {

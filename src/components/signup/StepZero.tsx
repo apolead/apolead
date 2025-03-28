@@ -96,38 +96,43 @@ const StepZero = ({
                 setIsCheckingSession(false);
               }
             }, 500);
-          } else if (safelyAccessProfile(profile, 'application_status') === 'rejected') {
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            setIsCheckingSession(false);
-          } else if (safelyAccessProfile(profile, 'application_status') === 'approved') {
-            toast({
-              title: "Welcome back!",
-              description: "You've been redirected to your dashboard",
-            });
-            if (safelyAccessProfile(profile, 'credentials') === 'supervisor') {
-              navigate('/supervisor');
-            } else {
-              navigate('/dashboard');
-            }
-          } else if (safelyAccessProfile(profile, 'first_name')) {
-            setTimeout(() => {
-              if (mounted) {
-                nextStep();
-                setIsCheckingSession(false);
-              }
-            }, 500);
           } else {
-            setTimeout(() => {
-              if (mounted) {
-                nextStep();
-                setIsCheckingSession(false);
+            const appStatus = safelyAccessProfile(profile, 'application_status');
+            
+            if (appStatus === 'rejected') {
+              toast({
+                title: "Application Rejected",
+                description: "Unfortunately, your application didn't meet our qualifications.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+              setIsCheckingSession(false);
+            } else if (appStatus === 'approved') {
+              toast({
+                title: "Welcome back!",
+                description: "You've been redirected to your dashboard",
+              });
+              const credentials = safelyAccessProfile(profile, 'credentials');
+              if (credentials === 'supervisor') {
+                navigate('/supervisor');
+              } else {
+                navigate('/dashboard');
               }
-            }, 500);
+            } else if (safelyAccessProfile(profile, 'first_name')) {
+              setTimeout(() => {
+                if (mounted) {
+                  nextStep();
+                  setIsCheckingSession(false);
+                }
+              }, 500);
+            } else {
+              setTimeout(() => {
+                if (mounted) {
+                  nextStep();
+                  setIsCheckingSession(false);
+                }
+              }, 500);
+            }
           }
         } else if (mounted) {
           console.log("No authenticated user found in StepZero");
@@ -166,19 +171,27 @@ const StepZero = ({
                       session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') : '')
           });
           
-          if (!profileError && profileExists(profile) && safelyAccessProfile(profile, 'application_status') === 'rejected') {
-            toast({
-              title: "Application Rejected",
-              description: "Unfortunately, your application didn't meet our qualifications.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            if (mounted) setIsCheckingSession(false);
-          } else if (!profileError && profileExists(profile) && safelyAccessProfile(profile, 'application_status') === 'approved') {
-            if (safelyAccessProfile(profile, 'credentials') === 'supervisor') {
-              navigate('/supervisor');
+          if (!profileError && profileExists(profile)) {
+            const appStatus = safelyAccessProfile(profile, 'application_status');
+            if (appStatus === 'rejected') {
+              toast({
+                title: "Application Rejected",
+                description: "Unfortunately, your application didn't meet our qualifications.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+              if (mounted) setIsCheckingSession(false);
+            } else if (appStatus === 'approved') {
+              const credentials = safelyAccessProfile(profile, 'credentials');
+              if (credentials === 'supervisor') {
+                navigate('/supervisor');
+              } else {
+                navigate('/dashboard');
+              }
             } else {
-              navigate('/dashboard');
+              setTimeout(() => {
+                if (mounted) nextStep();
+              }, 500);
             }
           } else {
             setTimeout(() => {

@@ -6,7 +6,7 @@ export function safelyAccessProfile<T extends Record<string, any>>(
   profileResult: T | null | { error: PostgrestError },
   key: keyof T
 ): any {
-  if (!profileResult || 'error' in profileResult) {
+  if (!profileResult || (profileResult && 'error' in profileResult)) {
     console.error("Error in profile result:", profileResult);
     return null;
   }

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { idToString, profileExists, safelyAccessProfile } from '@/utils/supabaseHelpers';
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +46,7 @@ const Login = () => {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('application_status, credentials')
-        .eq('user_id', session.user.id)
+        .eq('user_id', idToString(session.user.id))
         .maybeSingle();
       
       console.log("Profile check result:", data, error);
@@ -56,17 +57,20 @@ const Login = () => {
         return;
       }
       
-      if (data) {
+      if (profileExists(data)) {
         // Profile exists, check application status
-        if (data.application_status === 'approved') {
-          console.log("User is approved with credentials:", data.credentials);
+        const status = safelyAccessProfile(data, 'application_status');
+        const credentials = safelyAccessProfile(data, 'credentials');
+        
+        if (status === 'approved') {
+          console.log("User is approved with credentials:", credentials);
           // Redirect to appropriate dashboard based on credentials
-          if (data.credentials === 'supervisor') {
+          if (credentials === 'supervisor') {
             navigate('/supervisor');
           } else {
             navigate('/dashboard');
           }
-        } else if (data.application_status === 'rejected') {
+        } else if (status === 'rejected') {
           console.log("User application was rejected");
           toast({
             title: "Application Rejected",
@@ -238,7 +242,7 @@ const Login = () => {
           <h1 className="text-2xl font-bold mb-2 text-center">Sign in</h1>
           <p className="text-gray-600 mb-8 text-center">Sign in to your account</p>
           
-          {/* Form error - ENHANCED: make error more visible */}
+          {/* Form error */}
           {errorMessage && <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -256,12 +260,12 @@ const Login = () => {
           <Button 
             className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 transition py-6 mb-6"
             onClick={handleGoogleLogin}
-            disabled={isLoading}
+            disabled={isLoading || isCheckingSession}
           >
-            {isLoading ? (
+            {isLoading || isCheckingSession ? (
               <div className="flex items-center justify-center">
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Signing in...
+                {isCheckingSession ? "Checking login status..." : "Signing in..."}
               </div>
             ) : (
               <div className="flex items-center justify-center">
