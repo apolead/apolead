@@ -1,14 +1,25 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId = false }) => {
   const [errorMessage, setErrorMessage] = useState('');
+  const navigate = useNavigate();
   
-  const handleContinue = (e) => {
+  const handleBackToHome = async (e) => {
+    e.preventDefault();
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+  
+  const handleContinue = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     
@@ -43,6 +54,36 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       return;
     }
     
+    // Verify government ID number against database
+    try {
+      // Check if the government ID has been used before in user_profiles
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('gov_id_number')
+        .eq('gov_id_number', userData.govIdNumber)
+        .maybeSingle();
+        
+      if (profileError) throw profileError;
+      
+      // Also check in user_applications table
+      const { data: applicationData, error: applicationError } = await supabase
+        .from('user_applications')
+        .select('gov_id_number')
+        .eq('gov_id_number', userData.govIdNumber)
+        .maybeSingle();
+        
+      if (applicationError) throw applicationError;
+      
+      if (profileData || applicationData) {
+        setErrorMessage('This government ID has already been registered in our system.');
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking government ID:', error);
+      setErrorMessage('Could not verify government ID. Please try again.');
+      return;
+    }
+    
     // Continue to next step
     nextStep();
   };
@@ -64,12 +105,16 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
         <div className="relative z-10">
-          <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
+          <a 
+            href="#" 
+            onClick={handleBackToHome}
+            className="inline-flex items-center text-white hover:text-white/80 mb-12"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
             Back to Home
-          </Link>
+          </a>
 
           <h2 className="text-2xl font-bold mb-6">Step 1 of 4: Personal Details</h2>
           <p className="text-white/80 mb-6">We need your basic personal information to get started with your application.</p>
