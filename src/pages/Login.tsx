@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,68 +6,62 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const handleEmailChange = (e) => {
+  const {
+    toast
+  } = useToast();
+  const handleEmailChange = e => {
     setEmail(e.target.value);
   };
-
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = e => {
     setPassword(e.target.value);
   };
-
-  const validateEmail = (email) => {
+  const validateEmail = email => {
     if (!email.endsWith('@gmail.com')) {
       return 'Only Gmail accounts are allowed';
     }
     return null;
   };
-
-  const handleLogin = async (e) => {
+  const handleLogin = async e => {
     e.preventDefault();
-    
+
     // Validate email domain
     const emailError = validateEmail(email);
     if (emailError) {
       toast({
         title: "Invalid email",
         description: emailError,
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-    
     setIsLoading(true);
-    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const {
+        data,
+        error
+      } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password
       });
-      
       if (error) throw error;
-      
+
       // Successful login
       toast({
         title: "Login successful",
-        description: "Welcome back!",
+        description: "Welcome back!"
       });
-      
+
       // Check if user is approved
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('application_status, credentials')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
-        
+      const {
+        data: profile,
+        error: profileError
+      } = await supabase.from('user_profiles').select('application_status, credentials').eq('user_id', data.user.id).maybeSingle();
       if (profileError) throw profileError;
-      
       if (profile) {
         if (profile.application_status === 'approved') {
           // Redirect based on credentials
@@ -81,7 +74,7 @@ const Login = () => {
           toast({
             title: "Account rejected",
             description: "Your application has been rejected.",
-            variant: "destructive",
+            variant: "destructive"
           });
           await supabase.auth.signOut();
         } else {
@@ -92,21 +85,18 @@ const Login = () => {
         // No profile, redirect to signup
         navigate('/signup');
       }
-      
     } catch (error) {
       console.error('Login error:', error);
       toast({
         title: "Login failed",
         description: error.message || "An error occurred during login",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  return (
-    <div className="flex flex-col md:flex-row w-full h-screen">
+  return <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
       <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes - adjusted to not overlap */}
@@ -168,41 +158,19 @@ const Login = () => {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email (Gmail only)</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="your.name@gmail.com" 
-                value={email}
-                onChange={handleEmailChange}
-                required
-              />
+              <Input id="email" type="email" placeholder="your.name@gmail.com" value={email} onChange={handleEmailChange} required />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="••••••••" 
-                value={password}
-                onChange={handlePasswordChange}
-                required
-              />
+              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={handlePasswordChange} required />
             </div>
             
-            <Button 
-              type="submit"
-              className="w-full py-6"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
+            <Button type="submit" disabled={isLoading} className="w-full py-6 text-neutral-50">
+              {isLoading ? <div className="flex items-center justify-center">
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Signing in...
-                </div>
-              ) : (
-                "Sign in"
-              )}
+                </div> : "Sign in"}
             </Button>
           </form>
           
@@ -221,8 +189,6 @@ const Login = () => {
           <p className="text-center text-gray-500 text-xs">© 2025 ApoLead, All rights Reserved</p>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Login;
