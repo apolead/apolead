@@ -20,82 +20,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      console.log('Fetching user profile for:', userId);
-      
-      // Get user profile that matches the actual user ID
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return null;
-      } else if (data) {
-        console.log('User profile fetched successfully:', data);
-        
-        // Explicitly ensure boolean fields are properly typed
-        const formattedProfile = {
-          ...data,
-          quiz_passed: data.quiz_passed === null ? null : data.quiz_passed === true,
-          training_video_watched: data.training_video_watched === null ? null : data.training_video_watched === true
-        };
-        
-        // Ensure quiz_passed is explicitly handled as boolean
-        if (formattedProfile.quiz_passed !== undefined) {
-          // Force to boolean if it somehow became a string
-          if (formattedProfile.quiz_passed === 'true') formattedProfile.quiz_passed = true;
-          if (formattedProfile.quiz_passed === 'false') formattedProfile.quiz_passed = false;
-        }
-        
-        console.log('Formatted profile with boolean conversion:', formattedProfile);
-        return formattedProfile;
-      } else {
-        console.log('No user profile found');
-        return null;
-      }
-    } catch (error) {
-      console.error('Exception in fetchUserProfile:', error);
-      return null;
-    }
-  };
-
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('Auth state changed in hook:', event);
+        setUser(session?.user ?? null);
         
-        if (event === 'SIGNED_IN') {
-          console.log('User signed in, fetching profile...');
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            const profile = await fetchUserProfile(session.user.id);
-            
-            if (profile) {
-              console.log('Setting user profile on SIGNED_IN:', profile);
-              setUserProfile(profile);
-              localStorage.setItem('userProfile', JSON.stringify(profile));
-            }
-          }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out, clearing profile');
-          setUser(null);
-          setUserProfile(null);
-          localStorage.removeItem('userProfile');
+        // Defer profile fetching to prevent deadlocks
+        if (session?.user) {
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
         } else {
-          // For other events, just update the user
-          setUser(session?.user ?? null);
+          setUserProfile(null);
+          // Clear user profile from localStorage when logged out
+          localStorage.removeItem('userProfile');
         }
       }
     );
     
     // THEN check for existing session
-    const loadInitialSession = async () => {
+    const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -117,13 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           
           // Then fetch the latest data from the database
-          const profile = await fetchUserProfile(session.user.id);
-          
-          if (profile) {
-            console.log('Initial profile load from DB:', profile);
-            setUserProfile(profile);
-            localStorage.setItem('userProfile', JSON.stringify(profile));
-          }
+          fetchUserProfile(session.user.id);
         }
       } catch (error) {
         console.error('Error checking session:', error);
@@ -132,12 +72,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
     
-    loadInitialSession();
+    checkSession();
     
     return () => {
       subscription.unsubscribe();
     };
   }, []);
+  
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      console.log('Fetching user profile for:', userId);
+      
+      // Get user profile that matches the actual user ID
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user profile:', error);
+      } else if (data) {
+        console.log('User profile fetched successfully:', data);
+        
+        // Explicitly ensure boolean fields are properly typed
+        const formattedProfile = {
+          ...data,
+          quiz_passed: data.quiz_passed === null ? null : data.quiz_passed === true,
+          training_video_watched: data.training_video_watched === null ? null : data.training_video_watched === true
+        };
+        
+        setUserProfile(formattedProfile);
+        // Cache the profile in localStorage
+        localStorage.setItem('userProfile', JSON.stringify(formattedProfile));
+        console.log('User profile cached in localStorage:', formattedProfile);
+      } else {
+        console.log('No user profile found');
+      }
+    } catch (error) {
+      console.error('Exception in fetchUserProfile:', error);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
@@ -163,17 +138,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      // Clear cached profile on logout
-      localStorage.removeItem('userProfile');
-      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Explicitly clear state
-      setUser(null);
-      setUserProfile(null);
-      
-      console.log('Logout successful, profile cleared');
+      // Clear cached profile on logout
+      localStorage.removeItem('userProfile');
+      console.log('Logout successful');
     } catch (error: any) {
       console.error('Logout error:', error);
       toast({
