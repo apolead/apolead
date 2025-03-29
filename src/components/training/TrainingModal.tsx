@@ -31,18 +31,22 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   
   useEffect(() => {
-    // If training is already completed (passed or failed), show result
-    if (userProfile?.quiz_passed === true || userProfile?.quiz_passed === false) {
+    // Check if quiz state is already set in the database
+    if (userProfile?.quiz_passed === true) {
+      console.log("User has passed the quiz", userProfile);
       setStep('result');
-      setQuizPassed(userProfile.quiz_passed);
+      setQuizPassed(true);
       setQuizScore(userProfile.quiz_score || 0);
-    }
-    // If video was already watched but quiz not completed, go to quiz
-    else if (userProfile?.training_video_watched) {
+    } else if (userProfile?.quiz_passed === false) {
+      console.log("User has failed the quiz", userProfile);
+      setStep('result');
+      setQuizPassed(false);
+      setQuizScore(userProfile.quiz_score || 0);
+    } else if (userProfile?.training_video_watched) {
+      console.log("User has watched the video but not completed quiz", userProfile);
       setStep('quiz');
-    }
-    // Otherwise start with video
-    else {
+    } else {
+      console.log("User has not started training yet", userProfile);
       setStep('video');
     }
   }, [userProfile]);
@@ -135,7 +139,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             </Alert>
           )}
           
-          {/* Only show the video and quiz for new users who haven't completed training yet */}
+          {/* Only show the video and quiz for users who haven't completed training */}
           {step === 'video' && quizPassed === null && (
             <>
               <TrainingVideo onComplete={handleVideoComplete} />
