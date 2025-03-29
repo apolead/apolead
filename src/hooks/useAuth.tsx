@@ -20,6 +20,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  // Helper function to sanitize boolean values in the profile
+  const sanitizeProfileData = (profileData: any) => {
+    if (!profileData) return null;
+    
+    const cleanProfile = { ...profileData };
+    
+    // Ensure boolean properties are properly typed
+    if (typeof cleanProfile.quiz_passed === 'string') {
+      cleanProfile.quiz_passed = cleanProfile.quiz_passed === 'true';
+    }
+    if (typeof cleanProfile.training_video_watched === 'string') {
+      cleanProfile.training_video_watched = cleanProfile.training_video_watched === 'true';
+    }
+    
+    return cleanProfile;
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -33,15 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const cachedProfile = localStorage.getItem('userProfile');
           if (cachedProfile) {
             try {
-              const parsed = JSON.parse(cachedProfile);
-              // Ensure boolean properties are correctly typed
-              if (typeof parsed.quiz_passed === 'string') {
-                parsed.quiz_passed = parsed.quiz_passed === 'true';
-              }
-              if (typeof parsed.training_video_watched === 'string') {
-                parsed.training_video_watched = parsed.training_video_watched === 'true';
-              }
-              
+              const parsed = sanitizeProfileData(JSON.parse(cachedProfile));
               console.log('Using cached profile while fetching from DB:', parsed);
               setUserProfile(parsed);
             } catch (error) {
@@ -75,15 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const cachedProfile = localStorage.getItem('userProfile');
           if (cachedProfile) {
             try {
-              const parsed = JSON.parse(cachedProfile);
-              // Ensure boolean properties are correctly typed
-              if (typeof parsed.quiz_passed === 'string') {
-                parsed.quiz_passed = parsed.quiz_passed === 'true';
-              }
-              if (typeof parsed.training_video_watched === 'string') {
-                parsed.training_video_watched = parsed.training_video_watched === 'true';
-              }
-              
+              const parsed = sanitizeProfileData(JSON.parse(cachedProfile));
               console.log('Using cached profile while fetching from DB:', parsed);
               setUserProfile(parsed);
             } catch (error) {
@@ -113,30 +114,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user profile for:', userId);
       
-      // Get user profile that matches the actual user ID
+      // Using the get_user_profile function to avoid RLS recursion
       const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', userId)
+        .rpc('get_user_profile', { user_id: userId })
         .single();
       
       if (error) {
         console.error('Error fetching user profile:', error);
+        
+        // Fallback to direct query if RPC fails
+        const { data: directData, error: directError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+          
+        if (directError) {
+          console.error('Direct query also failed:', directError);
+        } else if (directData) {
+          const sanitizedData = sanitizeProfileData(directData);
+          console.log('User profile fetched successfully via direct query:', sanitizedData);
+          setUserProfile(sanitizedData);
+          
+          // Cache the profile in localStorage
+          localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
+        }
       } else if (data) {
-        console.log('User profile fetched successfully:', data);
+        const sanitizedData = sanitizeProfileData(data);
+        console.log('User profile fetched successfully via RPC:', sanitizedData);
+        setUserProfile(sanitizedData);
         
-        // Ensure boolean values are properly typed
-        const typedData = { ...data };
-        if (typeof typedData.quiz_passed === 'string') {
-          typedData.quiz_passed = typedData.quiz_passed === 'true';
-        }
-        if (typeof typedData.training_video_watched === 'string') {
-          typedData.training_video_watched = typedData.training_video_watched === 'true';
-        }
-        
-        setUserProfile(typedData);
         // Cache the profile in localStorage
-        localStorage.setItem('userProfile', JSON.stringify(typedData));
+        localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
       } else {
         console.log('No user profile found');
       }

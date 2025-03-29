@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -31,31 +30,33 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   
   useEffect(() => {
-    // Check if quiz state is already set in the database - use strict equality checks
-    console.log("Training Modal - Current user profile:", userProfile);
+    if (!userProfile) return;
     
-    if (userProfile?.quiz_passed === true) {
-      console.log("User has passed the quiz", userProfile);
+    console.log("Training Modal - Initializing from user profile:", userProfile);
+    console.log("quiz_passed type:", typeof userProfile.quiz_passed, "value:", userProfile.quiz_passed);
+    console.log("training_video_watched type:", typeof userProfile.training_video_watched, "value:", userProfile.training_video_watched);
+    
+    if (userProfile.quiz_passed === true) {
+      console.log("User has passed the quiz");
       setStep('result');
       setQuizPassed(true);
       setQuizScore(userProfile.quiz_score || 0);
-    } else if (userProfile?.quiz_passed === false) {
-      console.log("User has failed the quiz", userProfile);
+    } else if (userProfile.quiz_passed === false) {
+      console.log("User has failed the quiz");
       setStep('result');
       setQuizPassed(false);
       setQuizScore(userProfile.quiz_score || 0);
-    } else if (userProfile?.training_video_watched === true) {
-      console.log("User has watched the video but not completed quiz", userProfile);
+    } else if (userProfile.training_video_watched === true) {
+      console.log("User has watched the video but not completed quiz");
       setStep('quiz');
     } else {
-      console.log("User has not started training yet", userProfile);
+      console.log("User has not started training yet");
       setStep('video');
     }
   }, [userProfile]);
   
   const handleVideoComplete = async () => {
     try {
-      // Mark the video as watched in the database
       await updateProfile({
         training_video_watched: true
       });
@@ -77,19 +78,15 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       setQuizPassed(passed);
       setQuizScore(score);
       
-      // Update user profile with quiz results
       await updateProfile({
         quiz_passed: passed,
         quiz_score: score
       });
       
-      // Set step to result to show final screen
       setStep('result');
       
-      // Call the onComplete callback to update parent component
       onComplete(passed);
       
-      // If passed, show the schedule interview dialog
       if (passed) {
         setShowScheduleDialog(true);
       }
@@ -112,7 +109,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-lg">
-        {/* Modal Header */}
         <div className={`sticky top-0 z-10 flex items-center justify-between p-4 border-b ${
           (quizPassed === true) 
             ? 'bg-gradient-to-r from-green-600 to-green-500' 
@@ -134,7 +130,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
           </button>
         </div>
         
-        {/* Modal Content */}
         <div className="p-6">
           {error && (
             <Alert variant="destructive" className="mb-4">
@@ -143,7 +138,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             </Alert>
           )}
           
-          {/* Only show the video and quiz for users who haven't completed training */}
           {step === 'video' && quizPassed === null && (
             <>
               <TrainingVideo onComplete={handleVideoComplete} />
@@ -161,7 +155,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             <TrainingQuiz onComplete={handleQuizComplete} />
           )}
           
-          {/* Always show result if we're at the result step */}
           {step === 'result' && (
             <div className="text-center py-6">
               {quizPassed ? (
@@ -231,7 +224,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
         </div>
       </div>
       
-      {/* Scheduling Dialog */}
       <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
