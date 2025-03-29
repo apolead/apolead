@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -31,7 +30,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   
   useEffect(() => {
-    // If training is already completed (passed or failed), show result
+    // If training is already completed, show result
     if (userProfile?.quiz_passed !== undefined && userProfile?.quiz_passed !== null) {
       setStep('result');
       setQuizPassed(userProfile.quiz_passed);
@@ -135,7 +134,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             </Alert>
           )}
           
-          {/* Only show the video and quiz for new users who haven't completed training yet */}
           {step === 'video' && quizPassed === null && (
             <>
               <TrainingVideo onComplete={handleVideoComplete} />
@@ -153,7 +151,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             <TrainingQuiz onComplete={handleQuizComplete} />
           )}
           
-          {/* Always show result if we're at the result step */}
           {step === 'result' && (
             <div className="text-center py-6">
               {quizPassed ? (
