@@ -129,7 +129,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
               <p className="text-lg mb-4">
                 {quizPassed 
                   ? 'You passed the training quiz successfully!' 
-                  : 'You did not pass the training quiz. Please review the materials and try again later.'}
+                  : 'You did not pass the training quiz. You cannot retake this quiz.'}
               </p>
               <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
                 <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
@@ -144,14 +144,24 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
                 <div className="border-t pt-6 mt-4">
                   <h4 className="text-xl font-semibold mb-2">Next Steps</h4>
                   <p className="mb-4">
-                    Your training is complete! We'll be in touch soon to schedule your interview.
+                    Your training is complete! You can now schedule your interview using the calendar below.
                   </p>
+                  <div className="w-full h-[600px] border rounded-lg mt-6">
+                    <iframe 
+                      src="https://calendly.com/embedded-widget" 
+                      width="100%" 
+                      height="100%" 
+                      frameBorder="0" 
+                      title="Schedule Interview"
+                      className="rounded-lg"
+                    ></iframe>
+                  </div>
                 </div>
               )}
               
               <button
                 onClick={handleCloseModal}
-                className={`px-6 py-2 rounded-full text-white font-medium ${
+                className={`px-6 py-2 rounded-full text-white font-medium mt-6 ${
                   quizPassed ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
                 } transition-colors`}
               >
