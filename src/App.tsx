@@ -82,31 +82,30 @@ const AuthWrapper = () => {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={
-          <PublicRoute>
-            <Index />
-          </PublicRoute>
-        } />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={
-          <AuthRoute>
-            <Dashboard />
-          </AuthRoute>
-        } />
-        <Route path="/supervisor" element={
-          <SupervisorRoute>
-            <SupervisorDashboard />
-          </SupervisorRoute>
-        } />
-        <Route path="/confirmation" element={<ConfirmationScreen />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/terms-of-service" element={<TermsOfService />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={
+        <PublicRoute>
+          <Index />
+        </PublicRoute>
+      } />
+      <Route path="/signup" element={<SignUp />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/dashboard" element={
+        <AuthRoute>
+          <Dashboard />
+        </AuthRoute>
+      } />
+      <Route path="/supervisor" element={
+        <SupervisorRoute>
+          <SupervisorDashboard />
+        </SupervisorRoute>
+      } />
+      <Route path="/confirmation" element={<ConfirmationScreen />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
+      {/* The "catch-all" route - this must be last */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 
@@ -117,7 +116,10 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <AuthWrapper />
+          {/* Using BrowserRouter with basename set to prevent refresh issues */}
+          <BrowserRouter basename="/">
+            <AuthWrapper />
+          </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
