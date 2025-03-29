@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,28 +15,35 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const [videoCompleted, setVideoCompleted] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     async function fetchVideoUrl() {
       try {
+        setIsLoading(true);
+        // Use the correct bucket name "trainingvideo" and file name "2025-03-19-14-24-06.mp4" from your screenshot
         const { data, error } = await supabase.storage
-          .from('training-videos')
-          .createSignedUrl('training_video_1.mp4', 3600); // URL valid for 1 hour
+          .from('trainingvideo')
+          .createSignedUrl('2025-03-19-14-24-06.mp4', 3600); // URL valid for 1 hour
         
         if (error) {
           console.error("Error fetching video:", error);
           setVideoError("There was an error loading the training video. Please try again later.");
+          setIsLoading(false);
           return;
         }
 
         if (data) {
+          console.log("Video URL fetched successfully:", data.signedUrl);
           setVideoUrl(data.signedUrl);
+          setIsLoading(false);
         }
       } catch (err) {
         console.error("Error in video fetch:", err);
         setVideoError("There was an error loading the training video. Please try again later.");
+        setIsLoading(false);
       }
     }
 
@@ -84,6 +92,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
     console.error("Video error:", e);
     setVideoError("There was an error with the video. Please refresh the page or contact support.");
+    setIsLoading(false);
   };
 
   const markVideoAsWatched = async () => {
@@ -156,11 +165,11 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
             backgroundColor: '#f9fafb',
             borderRadius: '12px'
           }}>
-            <div className="loading">Loading video...</div>
+            <div className="loading">{isLoading ? "Loading video..." : "Video could not be loaded."}</div>
           </div>
         )}
         
-        {!isPlaying && !videoCompleted && (
+        {!isPlaying && !videoCompleted && videoUrl && (
           <div className="video-overlay" style={{
             position: 'absolute',
             top: 0,
