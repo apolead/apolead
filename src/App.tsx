@@ -3,10 +3,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "./integrations/supabase/client";
-import { AuthProvider } from "./hooks/useAuth";
+import { AuthProvider, useAuth } from "./hooks/useAuth";
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -20,40 +20,26 @@ import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 
 const queryClient = new QueryClient();
 
+// Improved protected route that uses the useAuth hook
 const ProtectedRoute = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    };
-    
-    checkAuth();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    });
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    // Only redirect after we've checked auth state
+    if (!loading && !user) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, loading, navigate]);
   
-  if (isLoading) {
+  if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
   
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return children;
+  return user ? children : null;
 };
 
+// Simplified versions that use our improved ProtectedRoute
 const AuthRoute = ({ children }) => {
   return (
     <ProtectedRoute>{children}</ProtectedRoute>
@@ -61,40 +47,30 @@ const AuthRoute = ({ children }) => {
 };
 
 const PublicRoute = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    };
-    
-    checkAuth();
-    
-    return () => {};
-  }, []);
+    // Only redirect after auth state check is complete
+    if (!loading && user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, loading, navigate]);
   
-  if (isLoading) {
+  if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
   
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return children;
+  return !user ? children : null;
 };
 
-// Simple route component for supervisor access
+// Protected route for supervisor access
 const SupervisorRoute = ({ children }) => {
-  // For now, we'll just use the AuthRoute and assume all authenticated users 
-  // can access both dashboards for simplicity
   return <AuthRoute>{children}</AuthRoute>;
 };
 
-const App = () => {
+// Auth wrapper that includes the router to make hooks available
+const AuthWrapper = () => {
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed in App:", event, session?.user?.email);
@@ -106,36 +82,42 @@ const App = () => {
   }, []);
 
   return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={
+          <PublicRoute>
+            <Index />
+          </PublicRoute>
+        } />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={
+          <AuthRoute>
+            <Dashboard />
+          </AuthRoute>
+        } />
+        <Route path="/supervisor" element={
+          <SupervisorRoute>
+            <SupervisorDashboard />
+          </SupervisorRoute>
+        } />
+        <Route path="/confirmation" element={<ConfirmationScreen />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+const App = () => {
+  return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={
-                <PublicRoute>
-                  <Index />
-                </PublicRoute>
-              } />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/dashboard" element={
-                <AuthRoute>
-                  <Dashboard />
-                </AuthRoute>
-              } />
-              <Route path="/supervisor" element={
-                <SupervisorRoute>
-                  <SupervisorDashboard />
-                </SupervisorRoute>
-              } />
-              <Route path="/confirmation" element={<ConfirmationScreen />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/terms-of-service" element={<TermsOfService />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <AuthWrapper />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
