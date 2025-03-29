@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "./integrations/supabase/client";
-import { AuthProvider } from "./hooks/useAuth";
+import { AuthProvider, useAuth } from "./hooks/useAuth";
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -21,33 +21,13 @@ import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    };
-    
-    checkAuth();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    });
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  const { user, isLoading } = useAuth();
   
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
   
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
   
@@ -61,26 +41,13 @@ const AuthRoute = ({ children }) => {
 };
 
 const PublicRoute = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
-    };
-    
-    checkAuth();
-    
-    return () => {};
-  }, []);
+  const { user, isLoading } = useAuth();
   
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
   
-  if (isAuthenticated) {
+  if (user) {
     return <Navigate to="/dashboard" replace />;
   }
   
