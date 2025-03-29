@@ -13,13 +13,25 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [videoCompleted, setVideoCompleted] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
 
   const handlePlay = () => {
     if (videoRef.current) {
-      videoRef.current.play();
-      setIsPlaying(true);
+      const playPromise = videoRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(error => {
+            console.error("Error playing video:", error);
+            setVideoError("There was an error playing the video. Please try again.");
+            setIsPlaying(false);
+          });
+      }
     }
   };
 
@@ -43,6 +55,11 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
         markVideoAsWatched();
       }
     }
+  };
+
+  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    console.error("Video error:", e);
+    setVideoError("There was an error with the video. Please refresh the page or contact support.");
   };
 
   const markVideoAsWatched = async () => {
@@ -76,10 +93,22 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
         overflow: 'hidden',
         boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)'
       }}>
+        {videoError && (
+          <div className="video-error" style={{
+            padding: '20px',
+            backgroundColor: '#FEE2E2',
+            color: '#EF4444',
+            borderRadius: '8px',
+            marginBottom: '15px'
+          }}>
+            {videoError}
+          </div>
+        )}
+        
         <video 
           ref={videoRef}
-          src="/training_video_1.mp4" 
-          controls={false}
+          preload="auto"
+          playsInline
           style={{ 
             width: '100%', 
             display: 'block',
@@ -87,7 +116,11 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
           }}
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleVideoEnd}
-        />
+          onError={handleVideoError}
+        >
+          <source src="/training_video_1.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
         
         {!isPlaying && !videoCompleted && (
           <div className="video-overlay" style={{
