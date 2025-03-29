@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -104,7 +103,7 @@ const Dashboard = () => {
     if (!userProfile) return { percentage: 0, steps: 0 };
     
     let steps = 0;
-    if (userProfile.quiz_passed) steps++;
+    if (userProfile.quiz_passed === true) steps++;
     
     return {
       percentage: (steps / 4) * 100,
@@ -1120,9 +1119,194 @@ const Dashboard = () => {
             )}
           </div>
         </div>
+        
+        <div className="task-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '25px', marginBottom: '30px' }}>
+          <div className="task-card locked" style={{
+            backgroundColor: 'white',
+            borderRadius: '15px',
+            overflow: 'hidden',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+            position: 'relative',
+            opacity: 0.7,
+            pointerEvents: 'none',
+          }}>
+            <div className="task-header" style={{
+              padding: '25px 25px 20px',
+              borderBottom: '1px solid #f1f5f9',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: '#f1f5f9',
+                  color: '#94a3b8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: '12px',
+                  fontSize: '16px',
+                }}>
+                  <i className="fas fa-graduation-cap"></i>
+                </div>
+                Advanced Training
+              </h3>
+              <span className="task-status pending" style={{
+                padding: '5px 10px',
+                borderRadius: '50px',
+                fontSize: '12px',
+                fontWeight: 500,
+                backgroundColor: '#f1f5f9',
+                color: '#94a3b8',
+              }}>
+                Locked
+              </span>
+            </div>
+            <div className="task-body" style={{ padding: '20px 25px' }}>
+              <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '15px' }}>
+                This advanced training will be unlocked after your interview is successfully completed.
+              </p>
+              <button 
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 100%)',
+                  color: 'white',
+                  fontSize: '15px',
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'default',
+                  transition: 'all 0.3s',
+                }}
+                disabled={true}
+              >
+                <i className="fas fa-lock mr-2" style={{ marginRight: '8px' }}></i>
+                Locked
+              </button>
+            </div>
+            <div className="task-overlay" style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(241, 245, 249, 0.3)',
+              backdropFilter: 'blur(2px)',
+              zIndex: 5,
+            }}>
+              <div style={{
+                fontSize: '24px',
+                color: '#94a3b8',
+              }}>
+                <i className="fas fa-lock"></i>
+              </div>
+            </div>
+          </div>
+          
+          <div className="task-card locked" style={{
+            backgroundColor: 'white',
+            borderRadius: '15px',
+            overflow: 'hidden',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+            position: 'relative',
+            opacity: 0.7,
+            pointerEvents: 'none',
+          }}>
+            <div className="task-header" style={{
+              padding: '25px 25px 20px',
+              borderBottom: '1px solid #f1f5f9',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  backgroundColor: '#f1f5f9',
+                  color: '#94a3b8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: '12px',
+                  fontSize: '16px',
+                }}>
+                  <i className="fas fa-user-cog"></i>
+                </div>
+                Account Setup
+              </h3>
+              <span className="task-status pending" style={{
+                padding: '5px 10px',
+                borderRadius: '50px',
+                fontSize: '12px',
+                fontWeight: 500,
+                backgroundColor: '#f1f5f9',
+                color: '#94a3b8',
+              }}>
+                Locked
+              </span>
+            </div>
+            <div className="task-body" style={{ padding: '20px 25px' }}>
+              <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '15px' }}>
+                Complete your account setup with payment information and profile settings.
+              </p>
+              <button 
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 100%)',
+                  color: 'white',
+                  fontSize: '15px',
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'default',
+                  transition: 'all 0.3s',
+                }}
+                disabled={true}
+              >
+                <i className="fas fa-lock mr-2" style={{ marginRight: '8px' }}></i>
+                Locked
+              </button>
+            </div>
+            <div className="task-overlay" style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(241, 245, 249, 0.3)',
+              backdropFilter: 'blur(2px)',
+              zIndex: 5,
+            }}>
+              <div style={{
+                fontSize: '24px',
+                color: '#94a3b8',
+              }}>
+                <i className="fas fa-lock"></i>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
-      {/* Training Modal */}
       <TrainingModal 
         isOpen={showTrainingModal}
         onClose={closeTrainingModal}

@@ -32,7 +32,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   
   useEffect(() => {
     // If training is already completed (passed or failed), show result
-    if (userProfile?.quiz_passed !== undefined && userProfile?.quiz_passed !== null) {
+    if (userProfile?.quiz_passed === true || userProfile?.quiz_passed === false) {
       setStep('result');
       setQuizPassed(userProfile.quiz_passed);
       setQuizScore(userProfile.quiz_score || 0);
