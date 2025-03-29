@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      quiz_questions: {
+        Row: {
+          correct_answer: number
+          created_at: string | null
+          id: string
+          options: Json
+          question: string
+          updated_at: string | null
+        }
+        Insert: {
+          correct_answer: number
+          created_at?: string | null
+          id?: string
+          options: Json
+          question: string
+          updated_at?: string | null
+        }
+        Update: {
+          correct_answer?: number
+          created_at?: string | null
+          id?: string
+          options?: Json
+          question?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_applications: {
         Row: {
           accepted_terms: boolean | null
