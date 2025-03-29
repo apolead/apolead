@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -135,7 +134,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             </Alert>
           )}
           
-          {step === 'video' && !quizPassed && (
+          {step === 'video' && quizPassed === null && (
             <>
               <TrainingVideo onComplete={handleVideoComplete} />
               {userProfile?.training_video_watched && (

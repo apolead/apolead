@@ -119,6 +119,9 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
     };
     
     fetchQuestions();
+    
+    // Clear any previously stored answers when quiz component is mounted
+    setAnswers({});
   }, []);
   
   if (loading) {
@@ -151,7 +154,8 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
   const totalQuestions = questions.length;
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
   
-  const handleChange = (answerIndex: number) => {
+  const handleChange = (value: string) => {
+    const answerIndex = parseInt(value, 10);
     setAnswers(prev => ({
       ...prev,
       [currentQuestion.id]: answerIndex
@@ -192,6 +196,9 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
     // Call the onComplete callback with the result
     onComplete(passed, scorePercentage);
   };
+  
+  // Get the user's answer for the current question (if any)
+  const currentAnswer = answers[currentQuestion.id]?.toString();
   
   return (
     <div className="space-y-6">
@@ -234,8 +241,8 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
           {currentQuestion.question}
         </h4>
         <RadioGroup 
-          value={answers[currentQuestion.id]?.toString()} 
-          onValueChange={(value) => handleChange(parseInt(value))}
+          value={currentAnswer} 
+          onValueChange={handleChange}
           className="space-y-3"
         >
           {currentQuestion.options.map((option, optIndex) => (

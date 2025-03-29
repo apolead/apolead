@@ -15,19 +15,16 @@ const Dashboard = () => {
   useEffect(() => {
     setIsLoading(false);
 
-    // Add Font Awesome
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css';
     document.head.appendChild(link);
 
-    // Add Poppins font
     const fontLink = document.createElement('link');
     fontLink.rel = 'stylesheet';
     fontLink.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap';
     document.head.appendChild(fontLink);
 
-    // Add debug logging for debugging name issue
     console.log('Dashboard mounted, user:', user);
     console.log('Dashboard mounted, userProfile:', userProfile);
 
@@ -64,7 +61,6 @@ const Dashboard = () => {
   };
   
   const handleTrainingComplete = (passed: boolean) => {
-    // This will be called after the quiz is submitted
     if (passed) {
       toast({
         title: "Training Completed",
@@ -73,7 +69,6 @@ const Dashboard = () => {
     }
   };
   
-  // Generate user initials
   const getUserInitials = () => {
     if (!userProfile?.first_name && !userProfile?.last_name) {
       if (user?.email) {
@@ -100,26 +95,57 @@ const Dashboard = () => {
     return user?.email || "User";
   };
   
-  // Calculate progress based on completed steps
   const getProgress = () => {
     if (!userProfile) return { percentage: 0, steps: 0 };
     
     let steps = 0;
     if (userProfile.quiz_passed) steps++;
     
-    // More steps will be added later
-    
     return {
-      percentage: (steps / 4) * 100, // 4 total steps
+      percentage: (steps / 4) * 100,
       steps: steps
     };
   };
   
+  const getTrainingStatus = () => {
+    if (userProfile?.quiz_passed === true) {
+      return {
+        status: 'completed',
+        color: 'green',
+        btnText: 'Completed',
+        btnIcon: 'check-circle',
+        btnColor: 'linear-gradient(90deg, #10B981 0%, #059669 100%)',
+        btnShadow: '0 4px 10px rgba(16,185,129,0.2)',
+        canClick: false
+      };
+    } else if (userProfile?.quiz_passed === false) {
+      return {
+        status: 'failed',
+        color: 'red',
+        btnText: 'Failed',
+        btnIcon: 'times-circle',
+        btnColor: 'linear-gradient(90deg, #EF4444 0%, #DC2626 100%)',
+        btnShadow: '0 4px 10px rgba(239,68,68,0.2)',
+        canClick: false
+      };
+    } else {
+      return {
+        status: 'pending',
+        color: 'blue',
+        btnText: 'Start',
+        btnIcon: 'play-circle',
+        btnColor: 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)',
+        btnShadow: '0 4px 10px rgba(79,70,229,0.2)',
+        canClick: true
+      };
+    }
+  };
+  
   const { percentage, steps } = getProgress();
+  const trainingStatus = getTrainingStatus();
   
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-      {/* Sidebar */}
       <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} style={{
         width: sidebarCollapsed ? '60px' : '240px',
         backgroundColor: 'white',
@@ -603,9 +629,7 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {/* Main Content */}
       <div className="main-content" style={{ flex: 1, padding: '20px 30px' }}>
-        {/* Header */}
         <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
           <div className="welcome" style={{ fontSize: '26px', fontWeight: 600, color: '#1e293b' }}>
             {isLoading ? (
@@ -725,7 +749,6 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Page Title */}
         <div className="page-title" style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', position: 'relative' }}>
           <h2 style={{ fontSize: '24px', color: '#1e293b', display: 'flex', alignItems: 'center' }}>
             <div className="page-title-icon" style={{
@@ -753,7 +776,6 @@ const Dashboard = () => {
           }}>Complete all steps to start earning</div>
         </div>
         
-        {/* Stats Section */}
         <div className="stats" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
@@ -899,7 +921,6 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Action Cards Container */}
         <div className="action-cards-container" style={{
           marginBottom: '40px',
           background: 'white',
@@ -975,7 +996,6 @@ const Dashboard = () => {
             </div>
           </div>
           
-          {/* Action Cards */}
           <div className="action-cards" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
@@ -984,7 +1004,6 @@ const Dashboard = () => {
             paddingTop: '20px',
             paddingBottom: '20px'
           }}>
-            {/* Step 1: Initial Training */}
             <div style={{
               backgroundColor: 'white',
               borderRadius: '16px',
@@ -1007,16 +1026,16 @@ const Dashboard = () => {
                 width: '36px',
                 height: '36px',
                 borderRadius: '50%',
-                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 
-                             userProfile?.quiz_passed === false ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' : 
-                             'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
+                background: userProfile?.quiz_passed === true ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 
+                           userProfile?.quiz_passed === false ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' : 
+                           'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 600,
                 fontSize: '16px',
-                boxShadow: userProfile?.quiz_passed ? '0 4px 10px rgba(16,185,129,0.3)' : 
+                boxShadow: userProfile?.quiz_passed === true ? '0 4px 10px rgba(16,185,129,0.3)' : 
                            userProfile?.quiz_passed === false ? '0 4px 10px rgba(239,68,68,0.3)' : 
                            '0 4px 10px rgba(79,70,229,0.3)',
                 zIndex: 3,
@@ -1032,12 +1051,12 @@ const Dashboard = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: '25px',
-                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 
-                             userProfile?.quiz_passed === false ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' : 
-                             'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
+                background: userProfile?.quiz_passed === true ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 
+                           userProfile?.quiz_passed === false ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' : 
+                           'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
                 color: 'white',
                 fontSize: '30px',
-                boxShadow: userProfile?.quiz_passed ? '0 8px 20px rgba(16,185,129,0.2)' : 
+                boxShadow: userProfile?.quiz_passed === true ? '0 8px 20px rgba(16,185,129,0.2)' : 
                            userProfile?.quiz_passed === false ? '0 8px 20px rgba(239,68,68,0.2)' : 
                            '0 8px 20px rgba(79,70,229,0.2)',
                 position: 'relative',
@@ -1052,14 +1071,13 @@ const Dashboard = () => {
                 Complete the initial training module to unlock the next step. This will teach you the fundamentals.
               </p>
               <button
-                onClick={startTraining}
-                disabled={userProfile?.quiz_passed !== undefined}
+                onClick={trainingStatus.canClick ? startTraining : undefined}
                 style={{
                   padding: '12px 24px',
                   borderRadius: '12px',
                   color: 'white',
                   border: 'none',
-                  cursor: userProfile?.quiz_passed !== undefined ? 'default' : 'pointer',
+                  cursor: trainingStatus.canClick ? 'pointer' : 'default',
                   fontWeight: 500,
                   transition: 'all 0.3s',
                   width: '100%',
@@ -1067,50 +1085,33 @@ const Dashboard = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '14px',
-                  background: userProfile?.quiz_passed 
-                    ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)' 
-                    : userProfile?.quiz_passed === false
-                    ? 'linear-gradient(90deg, #EF4444 0%, #DC2626 100%)'
-                    : 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)',
-                  boxShadow: userProfile?.quiz_passed
-                    ? '0 4px 10px rgba(16,185,129,0.2)'
-                    : userProfile?.quiz_passed === false
-                    ? '0 4px 10px rgba(239,68,68,0.2)'
-                    : '0 4px 10px rgba(79,70,229,0.2)',
-                  opacity: userProfile?.quiz_passed !== undefined ? 0.9 : 1
+                  background: trainingStatus.btnColor,
+                  boxShadow: trainingStatus.btnShadow,
+                  opacity: trainingStatus.canClick ? 1 : 0.9
                 }}
               >
-                <i style={{ marginRight: '8px', fontSize: '16px' }} className={
-                  userProfile?.quiz_passed || userProfile?.quiz_passed === false
-                    ? "fas fa-check-circle" 
-                    : "fas fa-play-circle"
-                }></i>
-                {userProfile?.quiz_passed 
-                  ? 'Completed' 
-                  : userProfile?.quiz_passed === false
-                  ? 'Failed'
-                  : 'Start'}
+                <i style={{ marginRight: '8px', fontSize: '16px' }} className={`fas fa-${trainingStatus.btnIcon}`}></i>
+                {trainingStatus.btnText}
               </button>
             </div>
             
-            {/* Step 2: Interview - Locked unless quiz passed */}
             <div style={{
-              backgroundColor: userProfile?.quiz_passed ? 'white' : 'rgba(241, 245, 249, 0.5)',
+              backgroundColor: userProfile?.quiz_passed === true ? 'white' : 'rgba(241, 245, 249, 0.5)',
               borderRadius: '16px',
               padding: '30px 25px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               textAlign: 'center',
-              border: userProfile?.quiz_passed ? '1px solid #e2e8f0' : '1px dashed #cbd5e1',
-              boxShadow: userProfile?.quiz_passed ? '0 4px 15px rgba(0,0,0,0.05)' : 'none',
+              border: userProfile?.quiz_passed === true ? '1px solid #e2e8f0' : '1px dashed #cbd5e1',
+              boxShadow: userProfile?.quiz_passed === true ? '0 4px 15px rgba(0,0,0,0.05)' : 'none',
               position: 'relative',
               zIndex: 2,
               transition: 'all 0.3s ease',
-              opacity: userProfile?.quiz_passed ? 1 : 0.5,
-              filter: userProfile?.quiz_passed ? 'none' : 'grayscale(100%)'
+              opacity: userProfile?.quiz_passed === true ? 1 : 0.5,
+              filter: userProfile?.quiz_passed === true ? 'none' : 'grayscale(100%)'
             }}>
-              {!userProfile?.quiz_passed && (
+              {userProfile?.quiz_passed !== true && (
                 <div style={{
                   position: 'absolute',
                   top: '-12px',
@@ -1138,14 +1139,14 @@ const Dashboard = () => {
                 width: '36px',
                 height: '36px',
                 borderRadius: '50%',
-                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)' : 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)',
+                background: userProfile?.quiz_passed === true ? 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)' : 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)',
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 600,
                 fontSize: '16px',
-                boxShadow: userProfile?.quiz_passed ? '0 4px 10px rgba(79,70,229,0.3)' : 'none',
+                boxShadow: userProfile?.quiz_passed === true ? '0 4px 10px rgba(79,70,229,0.3)' : 'none',
                 zIndex: 3,
                 border: '3px solid white'
               }}>
@@ -1159,10 +1160,10 @@ const Dashboard = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: '25px',
-                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)' : 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)',
+                background: userProfile?.quiz_passed === true ? 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)' : 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)',
                 color: 'white',
                 fontSize: '30px',
-                boxShadow: userProfile?.quiz_passed ? '0 8px 20px rgba(79,70,229,0.2)' : 'none',
+                boxShadow: userProfile?.quiz_passed === true ? '0 8px 20px rgba(79,70,229,0.2)' : 'none',
                 position: 'relative',
                 overflow: 'hidden'
               }}>
@@ -1175,12 +1176,13 @@ const Dashboard = () => {
                 Once your training is reviewed, you'll be able to schedule your interview with our team.
               </p>
               <button
+                onClick={userProfile?.quiz_passed === true ? handleScheduleInterview : undefined}
                 style={{
                   padding: '12px 24px',
                   borderRadius: '12px',
                   color: 'white',
                   border: 'none',
-                  cursor: userProfile?.quiz_passed ? 'pointer' : 'not-allowed',
+                  cursor: userProfile?.quiz_passed === true ? 'pointer' : 'not-allowed',
                   fontWeight: 500,
                   transition: 'all 0.3s',
                   width: '100%',
@@ -1188,17 +1190,16 @@ const Dashboard = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '14px',
-                  background: userProfile?.quiz_passed ? 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)' : '#94A3B8',
-                  boxShadow: userProfile?.quiz_passed ? '0 4px 10px rgba(79,70,229,0.2)' : 'none',
-                  opacity: userProfile?.quiz_passed ? 1 : 0.7
+                  background: userProfile?.quiz_passed === true ? 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)' : '#94A3B8',
+                  boxShadow: userProfile?.quiz_passed === true ? '0 4px 10px rgba(79,70,229,0.2)' : 'none',
+                  opacity: userProfile?.quiz_passed === true ? 1 : 0.7
                 }}
               >
-                <i style={{ marginRight: '8px', fontSize: '16px' }} className={userProfile?.quiz_passed ? "fas fa-calendar-alt" : "fas fa-lock"}></i>
-                {userProfile?.quiz_passed ? "Schedule Now" : "Locked"}
+                <i style={{ marginRight: '8px', fontSize: '16px' }} className={userProfile?.quiz_passed === true ? "fas fa-calendar-alt" : "fas fa-lock"}></i>
+                {userProfile?.quiz_passed === true ? "Schedule Now" : "Locked"}
               </button>
             </div>
             
-            {/* Step 3: Additional Training - Locked */}
             <div style={{
               backgroundColor: 'rgba(241, 245, 249, 0.5)',
               borderRadius: '16px',
@@ -1300,7 +1301,6 @@ const Dashboard = () => {
               </button>
             </div>
             
-            {/* Step 4: Kickoff & Onboarding - Locked */}
             <div style={{
               backgroundColor: 'rgba(241, 245, 249, 0.5)',
               borderRadius: '16px',
@@ -1405,14 +1405,13 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {/* Training Modal */}
-      {showTrainingModal && (
+      <div className="training-modal" style={{ display: showTrainingModal ? 'block' : 'none' }}>
         <TrainingModal 
           isOpen={showTrainingModal}
           onClose={closeTrainingModal}
           onComplete={handleTrainingComplete}
         />
-      )}
+      </div>
     </div>
   );
 };
