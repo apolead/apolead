@@ -4,7 +4,8 @@ import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { X } from 'lucide-react';
+import { X, CheckCircle, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 interface TrainingModalProps {
@@ -24,9 +25,9 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
     // If video was already watched, go to quiz
     if (userProfile?.training_video_watched) {
       // If quiz was already taken and passed, show result
-      if (userProfile?.quiz_passed) {
+      if (userProfile?.quiz_passed !== undefined) {
         setStep('result');
-        setQuizPassed(true);
+        setQuizPassed(userProfile.quiz_passed);
         setQuizScore(userProfile.quiz_score || 0);
       } else {
         setStep('quiz');
@@ -49,6 +50,10 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
     }
   };
   
+  const handleContinueToQuiz = () => {
+    setStep('quiz');
+  };
+  
   const handleQuizComplete = async (passed: boolean, score: number) => {
     try {
       setQuizPassed(passed);
@@ -65,13 +70,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       
       // Call the onComplete callback to update parent component
       onComplete(passed);
-      
-      // Show toast notification
-      if (passed) {
-        toast.success("Congratulations! You passed the quiz!");
-      } else {
-        toast.error("You didn't pass the quiz. Please review the material and try again later.");
-      }
     } catch (error) {
       console.error("Error completing training:", error);
       setError("There was an error saving your quiz results. Please try again.");
@@ -79,12 +77,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   };
   
   const handleCloseModal = () => {
-    // Only allow closing if they've passed or we're not on the result screen
-    if (quizPassed || step !== 'result') {
-      onClose();
-    } else {
-      toast.error("You must pass the quiz to proceed.");
-    }
+    onClose();
   };
   
   if (!isOpen) return null;
@@ -118,7 +111,16 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
           )}
           
           {step === 'video' && (
-            <TrainingVideo onComplete={handleVideoComplete} />
+            <>
+              <TrainingVideo onComplete={handleVideoComplete} />
+              {userProfile?.training_video_watched && (
+                <div className="mt-6 flex justify-end">
+                  <Button onClick={handleContinueToQuiz}>
+                    Continue to Quiz
+                  </Button>
+                </div>
+              )}
+            </>
           )}
           
           {step === 'quiz' && (
@@ -127,40 +129,62 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
           
           {step === 'result' && (
             <div className="text-center py-6">
-              <h3 className={`text-2xl font-bold mb-4 ${quizPassed ? 'text-green-600' : 'text-red-600'}`}>
-                {quizPassed ? 'Congratulations!' : 'Quiz Failed'}
-              </h3>
-              <p className="text-lg mb-4">
-                {quizPassed 
-                  ? 'You passed the training quiz successfully!' 
-                  : 'You did not pass the training quiz. You cannot retake this quiz.'}
-              </p>
-              <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
-                <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
-                <p className="text-sm text-gray-600">
-                  {quizPassed 
-                    ? 'You answered all questions correctly!' 
-                    : 'You need to answer all questions correctly to pass.'}
-                </p>
-              </div>
-              
-              {quizPassed && (
-                <div className="border-t pt-6 mt-4">
-                  <h4 className="text-xl font-semibold mb-2">Next Steps</h4>
-                  <p className="mb-4">
-                    Your training is complete! You can now schedule your interview using the calendar below.
-                  </p>
-                  <div className="w-full h-[600px] border rounded-lg mt-6">
-                    <iframe 
-                      src="https://calendly.com/embedded-widget" 
-                      width="100%" 
-                      height="100%" 
-                      frameBorder="0" 
-                      title="Schedule Interview"
-                      className="rounded-lg"
-                    ></iframe>
+              {quizPassed ? (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <CheckCircle className="h-20 w-20 text-green-500" />
                   </div>
-                </div>
+                  <h3 className="text-2xl font-bold mb-4 text-green-600">
+                    Congratulations!
+                  </h3>
+                  <p className="text-lg mb-4">
+                    You passed the training quiz successfully!
+                  </p>
+                  <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
+                    <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
+                    <p className="text-sm text-gray-600">
+                      You answered all questions correctly!
+                    </p>
+                  </div>
+                  
+                  <div className="border-t pt-6 mt-4">
+                    <h4 className="text-xl font-semibold mb-2">Next Steps</h4>
+                    <p className="mb-4">
+                      Your training is complete! You can now schedule your interview using the calendar below.
+                    </p>
+                    <div className="w-full h-[600px] border rounded-lg mt-6">
+                      <iframe 
+                        src="https://calendly.com/embedded-widget" 
+                        width="100%" 
+                        height="100%" 
+                        frameBorder="0" 
+                        title="Schedule Interview"
+                        className="rounded-lg"
+                      ></iframe>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <XCircle className="h-20 w-20 text-red-500" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4 text-red-600">
+                    Unfortunately
+                  </h3>
+                  <p className="text-lg mb-4">
+                    You did not pass the training quiz.
+                  </p>
+                  <p className="text-md mb-6">
+                    You cannot move forward in the application process.
+                  </p>
+                  <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
+                    <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
+                    <p className="text-sm text-gray-600">
+                      You need to answer all questions correctly to pass.
+                    </p>
+                  </div>
+                </>
               )}
               
               <button
@@ -169,7 +193,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
                   quizPassed ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
                 } transition-colors`}
               >
-                {quizPassed ? 'Continue' : 'Close'}
+                Close
               </button>
             </div>
           )}
