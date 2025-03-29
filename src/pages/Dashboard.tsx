@@ -643,11 +643,7 @@ const Dashboard = () => {
                 cursor: 'pointer',
                 position: 'relative',
                 color: '#64748b',
-                transition: 'all 0.3s',
-                backgroundColor: sidebarCollapsed ? 'white' : 'transparent',
-                boxShadow: sidebarCollapsed ? '0 0 8px rgba(0,0,0,0.1)' : 'none',
-                border: sidebarCollapsed ? '1px solid #eaeaea' : 'none',
-                zIndex: 20
+                transition: 'all 0.3s'
               }}>
                 <i className="fas fa-search"></i>
               </div>
@@ -663,11 +659,7 @@ const Dashboard = () => {
                 cursor: 'pointer',
                 position: 'relative',
                 color: '#64748b',
-                transition: 'all 0.3s',
-                backgroundColor: sidebarCollapsed ? 'white' : 'transparent',
-                boxShadow: sidebarCollapsed ? '0 0 8px rgba(0,0,0,0.1)' : 'none',
-                border: sidebarCollapsed ? '1px solid #eaeaea' : 'none',
-                zIndex: 20
+                transition: 'all 0.3s'
               }}>
                 <i className="fas fa-bell"></i>
                 <style>{`
@@ -696,11 +688,7 @@ const Dashboard = () => {
                 cursor: 'pointer',
                 position: 'relative',
                 color: '#64748b',
-                transition: 'all 0.3s',
-                backgroundColor: sidebarCollapsed ? 'white' : 'transparent',
-                boxShadow: sidebarCollapsed ? '0 0 8px rgba(0,0,0,0.1)' : 'none',
-                border: sidebarCollapsed ? '1px solid #eaeaea' : 'none',
-                zIndex: 20
+                transition: 'all 0.3s'
               }}>
                 <i className="fas fa-cog"></i>
               </div>
@@ -1065,12 +1053,13 @@ const Dashboard = () => {
               </p>
               <button
                 onClick={startTraining}
+                disabled={userProfile?.quiz_passed !== undefined}
                 style={{
                   padding: '12px 24px',
                   borderRadius: '12px',
                   color: 'white',
                   border: 'none',
-                  cursor: 'pointer',
+                  cursor: userProfile?.quiz_passed !== undefined ? 'default' : 'pointer',
                   fontWeight: 500,
                   transition: 'all 0.3s',
                   width: '100%',
@@ -1087,7 +1076,8 @@ const Dashboard = () => {
                     ? '0 4px 10px rgba(16,185,129,0.2)'
                     : userProfile?.quiz_passed === false
                     ? '0 4px 10px rgba(239,68,68,0.2)'
-                    : '0 4px 10px rgba(79,70,229,0.2)'
+                    : '0 4px 10px rgba(79,70,229,0.2)',
+                  opacity: userProfile?.quiz_passed !== undefined ? 0.9 : 1
                 }}
               >
                 <i style={{ marginRight: '8px', fontSize: '16px' }} className={

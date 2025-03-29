@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -6,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Check, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 interface QuizQuestion {
   id: string;
@@ -38,10 +38,13 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
         
         if (data && data.length > 0) {
           // Transform the data to match our QuizQuestion interface
+          // Convert Json options to string[] explicitly
           const formattedQuestions = data.map(q => ({
             id: q.id,
             question: q.question,
-            options: Array.isArray(q.options) ? q.options : [],
+            options: Array.isArray(q.options) 
+              ? (q.options as any[]).map(opt => String(opt)) 
+              : [],
             correct_answer: q.correct_answer
           }));
           
@@ -257,7 +260,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
           type="button" 
           onClick={handleNext}
           disabled={!(answers[currentQuestion.id] !== undefined)}
-          className="px-6"
+          className="px-6 text-white"
         >
           {isLastQuestion ? (
             'Submit Quiz'
