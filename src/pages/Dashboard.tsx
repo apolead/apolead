@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -28,11 +27,15 @@ const Dashboard = () => {
     fontLink.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap';
     document.head.appendChild(fontLink);
 
+    // Add debug logging for debugging name issue
+    console.log('Dashboard mounted, user:', user);
+    console.log('Dashboard mounted, userProfile:', userProfile);
+
     return () => {
       document.head.removeChild(link);
       document.head.removeChild(fontLink);
     };
-  }, []);
+  }, [user, userProfile]);
   
   const handleLogout = async () => {
     try {
@@ -640,7 +643,11 @@ const Dashboard = () => {
                 cursor: 'pointer',
                 position: 'relative',
                 color: '#64748b',
-                transition: 'all 0.3s'
+                transition: 'all 0.3s',
+                backgroundColor: sidebarCollapsed ? 'white' : 'transparent',
+                boxShadow: sidebarCollapsed ? '0 0 8px rgba(0,0,0,0.1)' : 'none',
+                border: sidebarCollapsed ? '1px solid #eaeaea' : 'none',
+                zIndex: 20
               }}>
                 <i className="fas fa-search"></i>
               </div>
@@ -656,7 +663,11 @@ const Dashboard = () => {
                 cursor: 'pointer',
                 position: 'relative',
                 color: '#64748b',
-                transition: 'all 0.3s'
+                transition: 'all 0.3s',
+                backgroundColor: sidebarCollapsed ? 'white' : 'transparent',
+                boxShadow: sidebarCollapsed ? '0 0 8px rgba(0,0,0,0.1)' : 'none',
+                border: sidebarCollapsed ? '1px solid #eaeaea' : 'none',
+                zIndex: 20
               }}>
                 <i className="fas fa-bell"></i>
                 <style>{`
@@ -685,7 +696,11 @@ const Dashboard = () => {
                 cursor: 'pointer',
                 position: 'relative',
                 color: '#64748b',
-                transition: 'all 0.3s'
+                transition: 'all 0.3s',
+                backgroundColor: sidebarCollapsed ? 'white' : 'transparent',
+                boxShadow: sidebarCollapsed ? '0 0 8px rgba(0,0,0,0.1)' : 'none',
+                border: sidebarCollapsed ? '1px solid #eaeaea' : 'none',
+                zIndex: 20
               }}>
                 <i className="fas fa-cog"></i>
               </div>
@@ -1004,14 +1019,18 @@ const Dashboard = () => {
                 width: '36px',
                 height: '36px',
                 borderRadius: '50%',
-                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
+                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 
+                             userProfile?.quiz_passed === false ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' : 
+                             'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 600,
                 fontSize: '16px',
-                boxShadow: userProfile?.quiz_passed ? '0 4px 10px rgba(16,185,129,0.3)' : '0 4px 10px rgba(79,70,229,0.3)',
+                boxShadow: userProfile?.quiz_passed ? '0 4px 10px rgba(16,185,129,0.3)' : 
+                           userProfile?.quiz_passed === false ? '0 4px 10px rgba(239,68,68,0.3)' : 
+                           '0 4px 10px rgba(79,70,229,0.3)',
                 zIndex: 3,
                 border: '3px solid white'
               }}>
@@ -1025,10 +1044,14 @@ const Dashboard = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: '25px',
-                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
+                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 
+                             userProfile?.quiz_passed === false ? 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' : 
+                             'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
                 color: 'white',
                 fontSize: '30px',
-                boxShadow: userProfile?.quiz_passed ? '0 8px 20px rgba(16,185,129,0.2)' : '0 8px 20px rgba(79,70,229,0.2)',
+                boxShadow: userProfile?.quiz_passed ? '0 8px 20px rgba(16,185,129,0.2)' : 
+                           userProfile?.quiz_passed === false ? '0 8px 20px rgba(239,68,68,0.2)' : 
+                           '0 8px 20px rgba(79,70,229,0.2)',
                 position: 'relative',
                 overflow: 'hidden'
               }}>
@@ -1057,14 +1080,26 @@ const Dashboard = () => {
                   fontSize: '14px',
                   background: userProfile?.quiz_passed 
                     ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)' 
+                    : userProfile?.quiz_passed === false
+                    ? 'linear-gradient(90deg, #EF4444 0%, #DC2626 100%)'
                     : 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)',
                   boxShadow: userProfile?.quiz_passed
                     ? '0 4px 10px rgba(16,185,129,0.2)'
+                    : userProfile?.quiz_passed === false
+                    ? '0 4px 10px rgba(239,68,68,0.2)'
                     : '0 4px 10px rgba(79,70,229,0.2)'
                 }}
               >
-                <i style={{ marginRight: '8px', fontSize: '16px' }} className="fas fa-play-circle"></i>
-                {userProfile?.quiz_passed ? 'Review' : 'Start'}
+                <i style={{ marginRight: '8px', fontSize: '16px' }} className={
+                  userProfile?.quiz_passed || userProfile?.quiz_passed === false
+                    ? "fas fa-check-circle" 
+                    : "fas fa-play-circle"
+                }></i>
+                {userProfile?.quiz_passed 
+                  ? 'Completed' 
+                  : userProfile?.quiz_passed === false
+                  ? 'Failed'
+                  : 'Start'}
               </button>
             </div>
             

@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error('Error fetching user profile:', error);
       } else if (data && data.length > 0) {
-        console.log('User profile fetched successfully');
+        console.log('User profile fetched successfully:', data[0]);
         setUserProfile(data[0]);
       } else {
         console.log('No user profile found');
@@ -126,6 +126,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!user) throw new Error("User not authenticated");
       
+      console.log('Updating user profile with:', data);
+      
       // Use a function call instead of direct table update to avoid RLS recursion
       const { error } = await supabase.rpc('update_user_profile', { 
         p_user_id: user.id,
@@ -135,10 +137,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       // Update local state
-      setUserProfile(prev => ({
-        ...prev,
-        ...data
-      }));
+      setUserProfile(prev => {
+        const updated = {
+          ...prev,
+          ...data
+        };
+        console.log('Updated user profile in state:', updated);
+        return updated;
+      });
       
       toast({
         title: "Profile updated",

@@ -115,7 +115,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
               <TrainingVideo onComplete={handleVideoComplete} />
               {userProfile?.training_video_watched && (
                 <div className="mt-6 flex justify-end">
-                  <Button onClick={handleContinueToQuiz}>
+                  <Button onClick={handleContinueToQuiz} className="text-white">
                     Continue to Quiz
                   </Button>
                 </div>
