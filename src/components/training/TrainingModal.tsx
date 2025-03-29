@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -22,17 +21,18 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   const [quizScore, setQuizScore] = useState<number>(0);
   
   useEffect(() => {
-    // If video was already watched, go to quiz
-    if (userProfile?.training_video_watched) {
-      // If quiz was already taken and passed, show result
-      if (userProfile?.quiz_passed !== undefined) {
-        setStep('result');
-        setQuizPassed(userProfile.quiz_passed);
-        setQuizScore(userProfile.quiz_score || 0);
-      } else {
-        setStep('quiz');
-      }
-    } else {
+    // If training is already completed, show result
+    if (userProfile?.quiz_passed !== undefined) {
+      setStep('result');
+      setQuizPassed(userProfile.quiz_passed);
+      setQuizScore(userProfile.quiz_score || 0);
+    }
+    // If video was already watched but quiz not completed, go to quiz
+    else if (userProfile?.training_video_watched) {
+      setStep('quiz');
+    }
+    // Otherwise start with video
+    else {
       setStep('video');
     }
   }, [userProfile]);
@@ -81,6 +81,13 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   };
   
   if (!isOpen) return null;
+  
+  // If training is already completed, show only the result
+  if (userProfile?.quiz_passed !== undefined && step !== 'result') {
+    setStep('result');
+    setQuizPassed(userProfile.quiz_passed);
+    setQuizScore(userProfile.quiz_score || 0);
+  }
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">

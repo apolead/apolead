@@ -67,14 +67,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user profile for:', userId);
       
-      // Use a function call instead of direct table access to avoid RLS recursion
-      const { data, error } = await supabase.rpc('get_user_profile', { user_id: userId });
+      // Get user profile that matches the actual user ID
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
       
       if (error) {
         console.error('Error fetching user profile:', error);
-      } else if (data && data.length > 0) {
-        console.log('User profile fetched successfully:', data[0]);
-        setUserProfile(data[0]);
+      } else if (data) {
+        console.log('User profile fetched successfully:', data);
+        setUserProfile(data);
       } else {
         console.log('No user profile found');
       }
