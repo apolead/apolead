@@ -28,15 +28,11 @@ const Dashboard = () => {
     fontLink.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap';
     document.head.appendChild(fontLink);
 
-    // Add debug logging
-    console.log('Dashboard mounted, user:', user);
-    console.log('Dashboard mounted, userProfile:', userProfile);
-
     return () => {
       document.head.removeChild(link);
       document.head.removeChild(fontLink);
     };
-  }, [user, userProfile]);
+  }, []);
   
   const handleLogout = async () => {
     try {
@@ -788,345 +784,597 @@ const Dashboard = () => {
               <i className="fas fa-graduation-cap"></i>
             </div>
             <div className="stat-info">
-              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>Step 1</h3>
-              <p style={{ color: '#64748b', marginBottom: '5px' }}>Complete Training</p>
-              <button 
+              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>{percentage}%</h3>
+              <p style={{ color: '#64748b', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
+                <i style={{ color: '#4f46e5', marginRight: '5px', fontSize: '12px' }} className="fas fa-arrow-up"></i> Onboarding Progress
+              </p>
+            </div>
+          </div>
+          
+          <div className="stat-card" style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '25px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+            transition: 'all 0.3s ease',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div className="stat-icon" style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: '20px',
+              background: 'linear-gradient(135deg, rgba(79,70,229,0.1) 0%, rgba(0,194,203,0.1) 100%)',
+              color: '#4f46e5',
+              fontSize: '24px',
+              position: 'relative'
+            }}>
+              <i className="fas fa-tasks"></i>
+            </div>
+            <div className="stat-info">
+              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>{steps}/4</h3>
+              <p style={{ color: '#64748b', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
+                <i style={{ color: '#4f46e5', marginRight: '5px', fontSize: '12px' }} className="fas fa-check-circle"></i> Steps Completed
+              </p>
+            </div>
+          </div>
+          
+          <div className="stat-card" style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '25px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+            transition: 'all 0.3s ease',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div className="stat-icon" style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: '20px',
+              background: 'linear-gradient(135deg, rgba(79,70,229,0.1) 0%, rgba(0,194,203,0.1) 100%)',
+              color: '#4f46e5',
+              fontSize: '24px',
+              position: 'relative'
+            }}>
+              <i className="fas fa-calendar-alt"></i>
+            </div>
+            <div className="stat-info">
+              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>7 days</h3>
+              <p style={{ color: '#64748b', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
+                <i style={{ color: '#4f46e5', marginRight: '5px', fontSize: '12px' }} className="fas fa-hourglass-half"></i> Until Deadline
+              </p>
+            </div>
+          </div>
+          
+          <div className="stat-card" style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '25px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+            transition: 'all 0.3s ease',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div className="stat-icon" style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: '20px',
+              background: 'linear-gradient(135deg, rgba(79,70,229,0.1) 0%, rgba(0,194,203,0.1) 100%)',
+              color: '#4f46e5',
+              fontSize: '24px',
+              position: 'relative'
+            }}>
+              <i className="fas fa-star"></i>
+            </div>
+            <div className="stat-info">
+              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>
+                {userProfile?.quiz_score ? userProfile.quiz_score + '%' : '-'}
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
+                <i style={{ color: '#4f46e5', marginRight: '5px', fontSize: '12px' }} className="fas fa-trophy"></i> Assessment Score
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Action Cards Container */}
+        <div className="action-cards-container" style={{
+          marginBottom: '40px',
+          background: 'white',
+          borderRadius: '20px',
+          padding: '30px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div className="action-cards-header" style={{
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '30px',
+            position: 'relative'
+          }}>
+            <h2 style={{ 
+              fontSize: '20px', 
+              color: '#1e293b', 
+              display: 'flex', 
+              alignItems: 'center'
+            }}>
+              <div style={{
+                marginRight: '10px',
+                background: 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
+                color: 'white',
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px'
+              }}>
+                <i className="fas fa-tasks"></i>
+              </div>
+              Complete These Steps
+            </h2>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(226, 232, 240, 0.5)',
+              padding: '8px 15px',
+              borderRadius: '50px'
+            }}>
+              <div style={{
+                width: '150px',
+                height: '8px',
+                backgroundColor: 'rgba(148, 163, 184, 0.2)',
+                borderRadius: '4px',
+                marginRight: '15px',
+                overflow: 'hidden',
+                position: 'relative'
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${percentage}%`,
+                  background: 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)',
+                  borderRadius: '4px',
+                  position: 'relative'
+                }}>
+                </div>
+              </div>
+              <div style={{
+                fontSize: '14px',
+                color: '#64748b',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <i style={{ color: '#10B981', marginRight: '5px' }} className="fas fa-check-circle"></i> {steps} of 4 completed
+              </div>
+            </div>
+          </div>
+          
+          {/* Action Cards */}
+          <div className="action-cards" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '25px',
+            position: 'relative',
+            paddingTop: '20px',
+            paddingBottom: '20px'
+          }}>
+            {/* Step 1: Initial Training */}
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '30px 25px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+              position: 'relative',
+              zIndex: 2,
+              transition: 'all 0.3s ease'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '-18px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 600,
+                fontSize: '16px',
+                boxShadow: userProfile?.quiz_passed ? '0 4px 10px rgba(16,185,129,0.3)' : '0 4px 10px rgba(79,70,229,0.3)',
+                zIndex: 3,
+                border: '3px solid white'
+              }}>
+                1
+              </div>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '25px',
+                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
+                color: 'white',
+                fontSize: '30px',
+                boxShadow: userProfile?.quiz_passed ? '0 8px 20px rgba(16,185,129,0.2)' : '0 8px 20px rgba(79,70,229,0.2)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <i className="fas fa-book-reader"></i>
+              </div>
+              <h3 style={{ fontSize: '18px', marginBottom: '15px', color: '#1e293b', fontWeight: 600 }}>
+                Initial Training
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '25px', flexGrow: 1, lineHeight: 1.6 }}>
+                Complete the initial training module to unlock the next step. This will teach you the fundamentals.
+              </p>
+              <button
                 onClick={startTraining}
-                style={{ 
-                  backgroundColor: userProfile?.quiz_passed ? '#10b981' : '#4f46e5',
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '12px',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
-                  padding: '6px 15px',
-                  fontSize: '14px',
-                  fontWeight: 500,
                   cursor: 'pointer',
-                  transition: 'all 0.3s',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-              >
-                {userProfile?.quiz_passed ? (
-                  <>
-                    <i className="fas fa-check-circle" style={{ marginRight: '8px' }}></i>
-                    Completed
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-play" style={{ marginRight: '8px' }}></i>
-                    Start Training
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-          
-          <div className="stat-card" style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '25px',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-            transition: 'all 0.3s ease',
-            position: 'relative',
-            overflow: 'hidden',
-            opacity: !userProfile?.quiz_passed ? 0.5 : 1,
-            cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer'
-          }}>
-            <div className="stat-icon" style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: '20px',
-              background: 'linear-gradient(135deg, rgba(249,115,22,0.1) 0%, rgba(234,88,12,0.1) 100%)',
-              color: '#f97316',
-              fontSize: '24px'
-            }}>
-              <i className="fas fa-file-signature"></i>
-            </div>
-            <div className="stat-info">
-              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>Step 2</h3>
-              <p style={{ color: '#64748b', marginBottom: '5px' }}>Complete Profile</p>
-              <button 
-                disabled={!userProfile?.quiz_passed}
-                style={{ 
-                  backgroundColor: '#f97316',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '6px 15px',
-                  fontSize: '14px',
                   fontWeight: 500,
-                  cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s',
+                  width: '100%',
                   display: 'flex',
                   alignItems: 'center',
-                  opacity: !userProfile?.quiz_passed ? 0.7 : 1
+                  justifyContent: 'center',
+                  fontSize: '14px',
+                  background: userProfile?.quiz_passed 
+                    ? 'linear-gradient(90deg, #10B981 0%, #059669 100%)' 
+                    : 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)',
+                  boxShadow: userProfile?.quiz_passed
+                    ? '0 4px 10px rgba(16,185,129,0.2)'
+                    : '0 4px 10px rgba(79,70,229,0.2)'
                 }}
               >
-                <i className="fas fa-edit" style={{ marginRight: '8px' }}></i>
-                Update Profile
+                <i style={{ marginRight: '8px', fontSize: '16px' }} className="fas fa-play-circle"></i>
+                {userProfile?.quiz_passed ? 'Review' : 'Start'}
               </button>
+            </div>
+            
+            {/* Step 2: Interview - Locked unless quiz passed */}
+            <div style={{
+              backgroundColor: userProfile?.quiz_passed ? 'white' : 'rgba(241, 245, 249, 0.5)',
+              borderRadius: '16px',
+              padding: '30px 25px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              border: userProfile?.quiz_passed ? '1px solid #e2e8f0' : '1px dashed #cbd5e1',
+              boxShadow: userProfile?.quiz_passed ? '0 4px 15px rgba(0,0,0,0.05)' : 'none',
+              position: 'relative',
+              zIndex: 2,
+              transition: 'all 0.3s ease',
+              opacity: userProfile?.quiz_passed ? 1 : 0.5,
+              filter: userProfile?.quiz_passed ? 'none' : 'grayscale(100%)'
+            }}>
               {!userProfile?.quiz_passed && (
                 <div style={{
                   position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'transparent',
-                  cursor: 'not-allowed',
-                  zIndex: 5
-                }}></div>
-              )}
-            </div>
-          </div>
-          
-          <div className="stat-card" style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '25px',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-            transition: 'all 0.3s ease',
-            position: 'relative',
-            overflow: 'hidden',
-            opacity: !userProfile?.quiz_passed ? 0.5 : 1,
-            cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer'
-          }}>
-            <div className="stat-icon" style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: '20px',
-              background: 'linear-gradient(135deg, rgba(14,165,233,0.1) 0%, rgba(6,182,212,0.1) 100%)',
-              color: '#0ea5e9',
-              fontSize: '24px'
-            }}>
-              <i className="fas fa-university"></i>
-            </div>
-            <div className="stat-info">
-              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>Step 3</h3>
-              <p style={{ color: '#64748b', marginBottom: '5px' }}>Banking Details</p>
-              <button 
-                disabled={!userProfile?.quiz_passed}
-                style={{ 
-                  backgroundColor: '#0ea5e9',
+                  top: '-12px',
+                  right: '-12px',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: '#94A3B8',
                   color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '6px 15px',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s',
                   display: 'flex',
                   alignItems: 'center',
-                  opacity: !userProfile?.quiz_passed ? 0.7 : 1
-                }}
-              >
-                <i className="fas fa-plus" style={{ marginRight: '8px' }}></i>
-                Add Bank Account
-              </button>
-              {!userProfile?.quiz_passed && (
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'transparent',
-                  cursor: 'not-allowed',
-                  zIndex: 5
-                }}></div>
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  zIndex: 3,
+                  fontSize: '14px'
+                }}>
+                  <i className="fas fa-lock"></i>
+                </div>
               )}
-            </div>
-          </div>
-          
-          <div className="stat-card" style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '25px',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-            transition: 'all 0.3s ease',
-            position: 'relative',
-            overflow: 'hidden',
-            opacity: !userProfile?.quiz_passed ? 0.5 : 1,
-            cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer'
-          }}>
-            <div className="stat-icon" style={{
-              width: '60px',
-              height: '60px',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: '20px',
-              background: 'linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(168,85,247,0.1) 100%)',
-              color: '#8b5cf6',
-              fontSize: '24px'
-            }}>
-              <i className="fas fa-handshake"></i>
-            </div>
-            <div className="stat-info">
-              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>Step 4</h3>
-              <p style={{ color: '#64748b', marginBottom: '5px' }}>Sign Contract</p>
-              <button 
-                disabled={!userProfile?.quiz_passed}
-                style={{ 
-                  backgroundColor: '#8b5cf6',
+              <div style={{
+                position: 'absolute',
+                top: '-18px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)' : 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 600,
+                fontSize: '16px',
+                boxShadow: userProfile?.quiz_passed ? '0 4px 10px rgba(79,70,229,0.3)' : 'none',
+                zIndex: 3,
+                border: '3px solid white'
+              }}>
+                2
+              </div>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '25px',
+                background: userProfile?.quiz_passed ? 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)' : 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)',
+                color: 'white',
+                fontSize: '30px',
+                boxShadow: userProfile?.quiz_passed ? '0 8px 20px rgba(79,70,229,0.2)' : 'none',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <i className="fas fa-user-friends"></i>
+              </div>
+              <h3 style={{ fontSize: '18px', marginBottom: '15px', color: '#1e293b', fontWeight: 600 }}>
+                Schedule Interview
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '25px', flexGrow: 1, lineHeight: 1.6 }}>
+                Once your training is reviewed, you'll be able to schedule your interview with our team.
+              </p>
+              <button
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '12px',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
-                  padding: '6px 15px',
-                  fontSize: '14px',
+                  cursor: userProfile?.quiz_passed ? 'pointer' : 'not-allowed',
                   fontWeight: 500,
-                  cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s',
+                  width: '100%',
                   display: 'flex',
                   alignItems: 'center',
-                  opacity: !userProfile?.quiz_passed ? 0.7 : 1
+                  justifyContent: 'center',
+                  fontSize: '14px',
+                  background: userProfile?.quiz_passed ? 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)' : '#94A3B8',
+                  boxShadow: userProfile?.quiz_passed ? '0 4px 10px rgba(79,70,229,0.2)' : 'none',
+                  opacity: userProfile?.quiz_passed ? 1 : 0.7
                 }}
               >
-                <i className="fas fa-file-signature" style={{ marginRight: '8px' }}></i>
-                Review Contract
+                <i style={{ marginRight: '8px', fontSize: '16px' }} className={userProfile?.quiz_passed ? "fas fa-calendar-alt" : "fas fa-lock"}></i>
+                {userProfile?.quiz_passed ? "Schedule Now" : "Locked"}
               </button>
-              {!userProfile?.quiz_passed && (
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'transparent',
+            </div>
+            
+            {/* Step 3: Additional Training - Locked */}
+            <div style={{
+              backgroundColor: 'rgba(241, 245, 249, 0.5)',
+              borderRadius: '16px',
+              padding: '30px 25px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              border: '1px dashed #cbd5e1',
+              boxShadow: 'none',
+              position: 'relative',
+              zIndex: 2,
+              transition: 'all 0.3s ease',
+              opacity: 0.5,
+              filter: 'grayscale(100%)'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '-12px',
+                right: '-12px',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: '#94A3B8',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                zIndex: 3,
+                fontSize: '14px'
+              }}>
+                <i className="fas fa-lock"></i>
+              </div>
+              <div style={{
+                position: 'absolute',
+                top: '-18px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 600,
+                fontSize: '16px',
+                boxShadow: 'none',
+                zIndex: 3,
+                border: '3px solid white'
+              }}>
+                3
+              </div>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '25px',
+                background: 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)',
+                color: 'white',
+                fontSize: '30px',
+                boxShadow: 'none',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <i className="fas fa-chalkboard-teacher"></i>
+              </div>
+              <h3 style={{ fontSize: '18px', marginBottom: '15px', color: '#1e293b', fontWeight: 600 }}>
+                Additional Training
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '25px', flexGrow: 1, lineHeight: 1.6 }}>
+                After your interview, complete additional training modules to refine your skills.
+              </p>
+              <button
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '12px',
+                  color: 'white',
+                  border: 'none',
                   cursor: 'not-allowed',
-                  zIndex: 5
-                }}></div>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {/* Progress Section */}
-        <div className="progress-section" style={{
-          backgroundColor: 'white',
-          borderRadius: '16px',
-          padding: '25px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-          marginBottom: '30px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '20px', color: '#1e293b', fontWeight: 600 }}>Onboarding Progress</h3>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div style={{ fontSize: '16px', fontWeight: 600, color: '#4f46e5' }}>{steps}/4 Steps</div>
-              <div style={{ marginLeft: '15px', fontSize: '24px', fontWeight: 600, color: '#1e293b' }}>{Math.round(percentage)}%</div>
-            </div>
-          </div>
-          
-          <div className="progress-bar-container" style={{ width: '100%', backgroundColor: '#f1f5f9', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
-            <div style={{ width: `${percentage}%`, height: '100%', background: 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)', borderRadius: '5px', transition: 'width 0.5s ease' }}></div>
-          </div>
-        </div>
-        
-        {/* Guide Section */}
-        <div className="guide-section" style={{
-          backgroundColor: 'white',
-          borderRadius: '16px',
-          padding: '25px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-          marginBottom: '30px'
-        }}>
-          <h3 style={{ fontSize: '20px', color: '#1e293b', fontWeight: 600, marginBottom: '15px' }}>Getting Started Guide</h3>
-          
-          <div className="guide-steps" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div className="guide-step" style={{ display: 'flex' }}>
-              <div className="step-number" style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                color: '#4f46e5',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 600,
-                marginRight: '15px',
-                flexShrink: 0
-              }}>1</div>
-              <div className="step-content">
-                <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#1e293b', marginBottom: '5px' }}>Complete the training</h4>
-                <p style={{ color: '#64748b', fontSize: '14px' }}>Watch the training video and pass the quiz to understand how our platform works and what's expected from you.</p>
-              </div>
+                  fontWeight: 500,
+                  transition: 'all 0.3s',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '14px',
+                  background: '#94A3B8',
+                  opacity: 0.7
+                }}
+              >
+                <i style={{ marginRight: '8px', fontSize: '16px' }} className="fas fa-lock"></i>
+                Locked
+              </button>
             </div>
             
-            <div className="guide-step" style={{ display: 'flex' }}>
-              <div className="step-number" style={{
-                width: '30px',
-                height: '30px',
+            {/* Step 4: Kickoff & Onboarding - Locked */}
+            <div style={{
+              backgroundColor: 'rgba(241, 245, 249, 0.5)',
+              borderRadius: '16px',
+              padding: '30px 25px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              border: '1px dashed #cbd5e1',
+              boxShadow: 'none',
+              position: 'relative',
+              zIndex: 2,
+              transition: 'all 0.3s ease',
+              opacity: 0.5,
+              filter: 'grayscale(100%)'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '-12px',
+                right: '-12px',
+                width: '32px',
+                height: '32px',
                 borderRadius: '50%',
-                backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                color: '#f97316',
+                background: '#94A3B8',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                zIndex: 3,
+                fontSize: '14px'
+              }}>
+                <i className="fas fa-lock"></i>
+              </div>
+              <div style={{
+                position: 'absolute',
+                top: '-18px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)',
+                color: 'white',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 600,
-                marginRight: '15px',
-                flexShrink: 0
-              }}>2</div>
-              <div className="step-content">
-                <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#1e293b', marginBottom: '5px' }}>Complete your profile</h4>
-                <p style={{ color: '#64748b', fontSize: '14px' }}>Add all required personal information, including contact details, experience, and a professional photo.</p>
+                fontSize: '16px',
+                boxShadow: 'none',
+                zIndex: 3,
+                border: '3px solid white'
+              }}>
+                4
               </div>
-            </div>
-            
-            <div className="guide-step" style={{ display: 'flex' }}>
-              <div className="step-number" style={{
-                width: '30px',
-                height: '30px',
+              <div style={{
+                width: '80px',
+                height: '80px',
                 borderRadius: '50%',
-                backgroundColor: 'rgba(14, 165, 233, 0.1)',
-                color: '#0ea5e9',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontWeight: 600,
-                marginRight: '15px',
-                flexShrink: 0
-              }}>3</div>
-              <div className="step-content">
-                <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#1e293b', marginBottom: '5px' }}>Add your banking details</h4>
-                <p style={{ color: '#64748b', fontSize: '14px' }}>Set up your payment information to ensure you get paid quickly for your completed tasks.</p>
+                marginBottom: '25px',
+                background: 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)',
+                color: 'white',
+                fontSize: '30px',
+                boxShadow: 'none',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <i className="fas fa-rocket"></i>
               </div>
-            </div>
-            
-            <div className="guide-step" style={{ display: 'flex' }}>
-              <div className="step-number" style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                color: '#8b5cf6',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 600,
-                marginRight: '15px',
-                flexShrink: 0
-              }}>4</div>
-              <div className="step-content">
-                <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#1e293b', marginBottom: '5px' }}>Review and sign the contract</h4>
-                <p style={{ color: '#64748b', fontSize: '14px' }}>Read and digitally sign the contract with all terms and conditions for working with our platform.</p>
-              </div>
+              <h3 style={{ fontSize: '18px', marginBottom: '15px', color: '#1e293b', fontWeight: 600 }}>
+                Kickoff & Setup
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '25px', flexGrow: 1, lineHeight: 1.6 }}>
+                Add your banking info, join Discord, and complete final onboarding steps to get started.
+              </p>
+              <button
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '12px',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'not-allowed',
+                  fontWeight: 500,
+                  transition: 'all 0.3s',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '14px',
+                  background: '#94A3B8',
+                  opacity: 0.7
+                }}
+              >
+                <i style={{ marginRight: '8px', fontSize: '16px' }} className="fas fa-lock"></i>
+                Locked
+              </button>
             </div>
           </div>
         </div>
@@ -1134,7 +1382,11 @@ const Dashboard = () => {
       
       {/* Training Modal */}
       {showTrainingModal && (
-        <TrainingModal onClose={closeTrainingModal} onComplete={handleTrainingComplete} />
+        <TrainingModal 
+          isOpen={showTrainingModal}
+          onClose={closeTrainingModal}
+          onComplete={handleTrainingComplete}
+        />
       )}
     </div>
   );
