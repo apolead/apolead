@@ -21,7 +21,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const { toast } = useToast();
 
   // Use local video path as primary source
-  const videoSrc = '/training_video_1.mp4';
+  const videoSrc = '/public/training_video_1.mp4';
   
   useEffect(() => {
     let mounted = true;
