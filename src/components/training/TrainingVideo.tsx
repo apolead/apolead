@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,8 +13,34 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [videoCompleted, setVideoCompleted] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchVideoUrl() {
+      try {
+        const { data, error } = await supabase.storage
+          .from('training-videos')
+          .createSignedUrl('training_video_1.mp4', 3600); // URL valid for 1 hour
+        
+        if (error) {
+          console.error("Error fetching video:", error);
+          setVideoError("There was an error loading the training video. Please try again later.");
+          return;
+        }
+
+        if (data) {
+          setVideoUrl(data.signedUrl);
+        }
+      } catch (err) {
+        console.error("Error in video fetch:", err);
+        setVideoError("There was an error loading the training video. Please try again later.");
+      }
+    }
+
+    fetchVideoUrl();
+  }, []);
 
   const handlePlay = () => {
     if (videoRef.current) {
@@ -49,7 +74,6 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
       const calculatedProgress = (currentTime / duration) * 100;
       setProgress(calculatedProgress);
       
-      // Mark as completed when the video is 95% done
       if (calculatedProgress >= 95 && !videoCompleted) {
         setVideoCompleted(true);
         markVideoAsWatched();
@@ -105,22 +129,36 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
           </div>
         )}
         
-        <video 
-          ref={videoRef}
-          preload="auto"
-          playsInline
-          style={{ 
-            width: '100%', 
-            display: 'block',
+        {videoUrl ? (
+          <video 
+            ref={videoRef}
+            preload="auto"
+            playsInline
+            style={{ 
+              width: '100%', 
+              display: 'block',
+              borderRadius: '12px'
+            }}
+            onTimeUpdate={handleTimeUpdate}
+            onEnded={handleVideoEnd}
+            onError={handleVideoError}
+          >
+            <source src={videoUrl} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        ) : !videoError && (
+          <div style={{
+            width: '100%',
+            height: '300px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f9fafb',
             borderRadius: '12px'
-          }}
-          onTimeUpdate={handleTimeUpdate}
-          onEnded={handleVideoEnd}
-          onError={handleVideoError}
-        >
-          <source src="/training_video_1.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+          }}>
+            <div className="loading">Loading video...</div>
+          </div>
+        )}
         
         {!isPlaying && !videoCompleted && (
           <div className="video-overlay" style={{
