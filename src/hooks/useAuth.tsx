@@ -21,75 +21,81 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    const getUser = async () => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state changed in hook:', event);
+        setUser(session?.user ?? null);
+        
+        // Defer profile fetching to prevent deadlocks
+        if (session?.user) {
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
+        } else {
+          setUserProfile(null);
+        }
+      }
+    );
+    
+    // THEN check for existing session
+    const checkSession = async () => {
       try {
-        setLoading(true);
-        
-        // Set up auth state listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            setUser(session?.user ?? null);
-            
-            if (session?.user) {
-              // Fetch user profile data
-              const { data: profile, error } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('user_id', session.user.id)
-                .single();
-              
-              if (error) {
-                console.error('Error fetching user profile:', error);
-              } else {
-                setUserProfile(profile);
-              }
-            } else {
-              setUserProfile(null);
-            }
-          }
-        );
-        
-        // Check for current session
         const { data: { session } } = await supabase.auth.getSession();
+        
+        console.log('Initial session check:', session ? 'Session found' : 'No session');
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user profile data
-          const { data: profile, error } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .single();
-          
-          if (error) {
-            console.error('Error fetching user profile:', error);
-          } else {
-            setUserProfile(profile);
-          }
+          fetchUserProfile(session.user.id);
         }
-        
-        return () => {
-          subscription.unsubscribe();
-        };
       } catch (error) {
-        console.error('Auth error:', error);
+        console.error('Error checking session:', error);
       } finally {
         setLoading(false);
       }
     };
     
-    getUser();
+    checkSession();
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
+  
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      console.log('Fetching user profile for:', userId);
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user profile:', error);
+      } else {
+        console.log('User profile fetched successfully');
+        setUserProfile(data);
+      }
+    } catch (error) {
+      console.error('Exception in fetchUserProfile:', error);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('Attempting login for:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) throw error;
+      
+      console.log('Login successful');
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         title: "Login failed",
         description: error.message || "Failed to log in",
@@ -103,7 +109,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      console.log('Logout successful');
     } catch (error: any) {
+      console.error('Logout error:', error);
       toast({
         title: "Logout failed",
         description: error.message || "An error occurred during logout",
@@ -135,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Your profile has been updated successfully",
       });
     } catch (error: any) {
+      console.error('Profile update error:', error);
       toast({
         title: "Update failed",
         description: error.message || "Failed to update profile",

@@ -19,40 +19,54 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
 
+  // Fallback video from public folder as last resort
+  const localVideoPath = '/training_video_1.mp4';
+  
   useEffect(() => {
     async function fetchVideoUrl() {
       setIsLoading(true);
+      setVideoError(null);
+      
+      console.log("TrainingVideo: Starting to fetch video URL");
+      
       try {
-        console.log("Attempting to fetch video from Supabase storage...");
-        
-        // Try to get a signed URL for the video - make sure the path is correct
+        // Try to get a signed URL for the video first
+        console.log("TrainingVideo: Attempting to fetch signed URL from Supabase");
         const { data: signedUrlData, error: signedUrlError } = await supabase.storage
           .from('trainingvideo')
           .createSignedUrl('training_one.mp4', 3600); // URL valid for 1 hour
         
         if (signedUrlError) {
-          console.error("Error creating signed URL:", signedUrlError);
+          console.error("TrainingVideo: Error creating signed URL:", signedUrlError);
           
           // Fallback to public URL if signed URL fails
+          console.log("TrainingVideo: Attempting fallback to public URL");
           const publicUrl = supabase.storage
             .from('trainingvideo')
             .getPublicUrl('training_one.mp4').data.publicUrl;
           
-          console.log("Attempting fallback to public URL:", publicUrl);
-          setVideoUrl(publicUrl);
+          console.log("TrainingVideo: Public URL:", publicUrl);
+          
+          if (publicUrl) {
+            setVideoUrl(publicUrl);
+            console.log("TrainingVideo: Using public URL:", publicUrl);
+          } else {
+            throw new Error("Could not get public URL");
+          }
         } else if (signedUrlData) {
-          console.log("Successfully created signed URL");
+          console.log("TrainingVideo: Successfully created signed URL");
           setVideoUrl(signedUrlData.signedUrl);
         }
       } catch (err) {
-        console.error("Exception in video fetch:", err);
+        console.error("TrainingVideo: Exception in video fetch:", err);
         
-        // Final fallback - use a local video file if available
-        console.log("Attempting fallback to local video file");
-        setVideoUrl('/training_video_1.mp4');
+        // Final fallback - use a local video file
+        console.log("TrainingVideo: Attempting fallback to local video file:", localVideoPath);
+        setVideoUrl(localVideoPath);
         
         if (!videoUrl) {
           setVideoError("There was an error loading the training video. Please try again later.");
+          console.error("TrainingVideo: No video URL available after all attempts");
         }
       } finally {
         setIsLoading(false);
@@ -64,17 +78,17 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
 
   const handlePlay = () => {
     if (videoRef.current) {
-      console.log("Attempting to play video from URL:", videoUrl);
+      console.log("TrainingVideo: Attempting to play video from URL:", videoUrl);
       const playPromise = videoRef.current.play();
       
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
             setIsPlaying(true);
-            console.log("Video playing successfully");
+            console.log("TrainingVideo: Video playing successfully");
           })
           .catch(error => {
-            console.error("Error playing video:", error);
+            console.error("TrainingVideo: Error playing video:", error);
             setVideoError("There was an error playing the video. Please try again.");
             setIsPlaying(false);
           });
@@ -96,7 +110,9 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
       const calculatedProgress = (currentTime / duration) * 100;
       setProgress(calculatedProgress);
       
+      // Mark as completed at 95% to account for buffering issues
       if (calculatedProgress >= 95 && !videoCompleted) {
+        console.log("TrainingVideo: Video reached 95% completion");
         setVideoCompleted(true);
         markVideoAsWatched();
       }
@@ -104,14 +120,21 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   };
 
   const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-    console.error("Video error event:", e);
-    setVideoError("There was an error with the video. Please refresh the page or contact support.");
+    console.error("TrainingVideo: Video error event:", e);
+    
+    // If the video fails with the current URL, try the local fallback
+    if (videoUrl !== localVideoPath) {
+      console.log("TrainingVideo: Video error with remote URL, trying local fallback");
+      setVideoUrl(localVideoPath);
+    } else {
+      setVideoError("There was an error with the video. Please refresh the page or contact support.");
+    }
   };
 
   const markVideoAsWatched = async () => {
     try {
       if (user) {
-        console.log("Marking video as watched for user:", user.id);
+        console.log("TrainingVideo: Marking video as watched for user:", user.id);
         await updateProfile({ training_video_watched: true });
         toast({
           title: "Video completed",
@@ -119,14 +142,38 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
         });
       }
     } catch (error) {
-      console.error("Error marking video as watched:", error);
+      console.error("TrainingVideo: Error marking video as watched:", error);
     }
   };
 
   const handleVideoEnd = () => {
+    console.log("TrainingVideo: Video ended");
     setIsPlaying(false);
     setVideoCompleted(true);
     onComplete();
+  };
+
+  // Attempt to reload the video if there's an error
+  const handleRetry = () => {
+    console.log("TrainingVideo: Retrying video load");
+    setVideoError(null);
+    setVideoUrl(null);
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.load();
+      }
+      // Restart the fetch process
+      const fetchVideoUrl = async () => {
+        try {
+          console.log("TrainingVideo: Retrying with local file:", localVideoPath);
+          setVideoUrl(localVideoPath);
+        } catch (err) {
+          console.error("TrainingVideo: Retry failed:", err);
+          setVideoError("Could not load the video after multiple attempts. Please contact support.");
+        }
+      };
+      fetchVideoUrl();
+    }, 1000);
   };
 
   return (
@@ -148,7 +195,21 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
             borderRadius: '8px',
             marginBottom: '15px'
           }}>
-            {videoError}
+            <p>{videoError}</p>
+            <button 
+              onClick={handleRetry}
+              style={{
+                marginTop: '10px',
+                padding: '8px 16px',
+                backgroundColor: '#EF4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Try Again
+            </button>
           </div>
         )}
         
