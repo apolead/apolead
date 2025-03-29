@@ -51,7 +51,10 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [videoCompleted, setVideoCompleted] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [apiLoaded, setApiLoaded] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
+  const [watchTime, setWatchTime] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
   
@@ -63,135 +66,208 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   
   // Function to load the YouTube IFrame API
   useEffect(() => {
-    // Only load the script once
-    if (window.YT) {
-      console.log("TrainingVideo: YouTube IFrame API already loaded");
-      setPlayerReady(true);
-      return;
-    }
+    console.log("TrainingVideo: Component mounted, loading YouTube API");
     
-    console.log("TrainingVideo: Loading YouTube IFrame API");
-    
-    // Create script element
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    
-    // Add event listeners to track loading state
-    tag.onload = () => {
-      console.log("TrainingVideo: YouTube IFrame API loaded successfully");
-      
-      // The API will call this function when the video player is ready
-      window.onYouTubeIframeAPIReady = () => {
-        console.log("TrainingVideo: YouTube player is ready to be initialized");
-        setPlayerReady(true);
-      };
-    };
-    
-    tag.onerror = (error) => {
-      console.error("TrainingVideo: Error loading YouTube IFrame API:", error);
-      setVideoError("Failed to load video player. Please check your internet connection and try again.");
-      setIsLoading(false);
-    };
-    
-    // Add the script to the document
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-    
-    return () => {
-      // Clean up event handler when component unmounts
-      window.onYouTubeIframeAPIReady = null;
-    };
-  }, []);
-  
-  // Initialize the YouTube player once the API is ready
-  useEffect(() => {
-    if (!playerReady || !window.YT || !window.YT.Player) {
-      return;
-    }
-    
-    console.log("TrainingVideo: Initializing YouTube player for video ID:", videoId);
-    setIsLoading(true);
-    
-    try {
-      // Create the player instance
-      playerRef.current = new window.YT.Player('youtube-player', {
-        videoId: videoId,
-        playerVars: {
-          // Auto play is disabled to give user control
-          autoplay: 0,
-          // Hide related videos when the video finishes
-          rel: 0,
-          // Show video controls
-          controls: 1,
-          // Disable keyboard controls
-          disablekb: 0,
-          // Show video info
-          showinfo: 1,
-          // Allow full screen
-          fs: 1,
-          // Set modest branding
-          modestbranding: 1,
-          // Set playback origin
-          origin: window.location.origin,
-        },
-        events: {
-          onReady: (event) => {
-            console.log("TrainingVideo: YouTube player ready event received");
-            setIsLoading(false);
-          },
-          onStateChange: (event) => {
-            // When video ends (state: 0)
-            if (event.data === 0) {
-              console.log("TrainingVideo: Video ended");
-              setVideoCompleted(true);
-              markVideoAsWatched();
-            }
-          },
-          onError: (event) => {
-            console.error("TrainingVideo: YouTube player error:", event);
-            let errorMessage = "An error occurred with the video player.";
-            
-            // YouTube error codes: https://developers.google.com/youtube/iframe_api_reference#onError
-            switch (event.data) {
-              case 2:
-                errorMessage = "Invalid video ID. Please contact support.";
-                break;
-              case 5:
-                errorMessage = "The requested content cannot be played. Please try again later.";
-                break;
-              case 100:
-                errorMessage = "The video has been removed or is private.";
-                break;
-              case 101:
-              case 150:
-                errorMessage = "The video owner doesn't allow it to be played in embedded players.";
-                break;
-              default:
-                errorMessage = "There was an error playing the video. Please try again.";
-            }
-            
-            setVideoError(errorMessage);
-            setIsLoading(false);
-          }
+    const loadYouTubeAPI = () => {
+      return new Promise<void>((resolve, reject) => {
+        // If already loaded, resolve immediately
+        if (window.YT && window.YT.Player) {
+          console.log("TrainingVideo: YouTube API already loaded");
+          setApiLoaded(true);
+          resolve();
+          return;
         }
+        
+        // Create script element
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        
+        // Add event listeners to track loading state
+        tag.onload = () => {
+          console.log("TrainingVideo: YouTube IFrame API script loaded");
+          
+          // Define callback for when API is ready
+          window.onYouTubeIframeAPIReady = () => {
+            console.log("TrainingVideo: onYouTubeIframeAPIReady called");
+            setApiLoaded(true);
+            resolve();
+          };
+        };
+        
+        tag.onerror = (error) => {
+          console.error("TrainingVideo: Error loading YouTube IFrame API:", error);
+          setVideoError("Failed to load video player. Please refresh the page and try again.");
+          setIsLoading(false);
+          reject(error);
+        };
+        
+        // Add the script to the document
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
       });
-    } catch (error) {
-      console.error("TrainingVideo: Exception initializing YouTube player:", error);
-      setVideoError("Failed to initialize video player. Please refresh the page.");
-      setIsLoading(false);
-    }
+    };
     
+    loadYouTubeAPI().catch(error => {
+      console.error("TrainingVideo: Failed to load YouTube API:", error);
+    });
+    
+    // Clean up function
     return () => {
-      // Clean up the player when the component unmounts
+      window.onYouTubeIframeAPIReady = undefined;
       if (playerRef.current) {
         try {
           playerRef.current.destroy();
+          playerRef.current = null;
         } catch (error) {
-          console.error("TrainingVideo: Error destroying YouTube player:", error);
+          console.error("TrainingVideo: Error destroying player on unmount:", error);
         }
       }
     };
-  }, [playerReady, videoId]);
+  }, []);
+  
+  // Initialize player when API is loaded
+  useEffect(() => {
+    if (!apiLoaded) {
+      return;
+    }
+    
+    console.log("TrainingVideo: YouTube API loaded, creating player");
+    setIsLoading(true);
+    
+    // Use a small timeout to ensure DOM is ready
+    const initTimer = setTimeout(() => {
+      try {
+        // Check if the container element exists
+        const container = document.getElementById('youtube-player');
+        if (!container) {
+          console.error("TrainingVideo: Player container not found");
+          setVideoError("Video player container not found. Please refresh the page.");
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log("TrainingVideo: Creating YouTube player with video ID:", videoId);
+        
+        // Ensure we only create the player once
+        if (playerRef.current) {
+          console.log("TrainingVideo: Player already exists, destroying previous instance");
+          playerRef.current.destroy();
+          playerRef.current = null;
+        }
+        
+        // Create the player instance
+        playerRef.current = new window.YT.Player('youtube-player', {
+          videoId: videoId,
+          playerVars: {
+            // Auto play is disabled to give user control
+            autoplay: 0,
+            // Hide related videos when the video finishes
+            rel: 0,
+            // Show video controls
+            controls: 1,
+            // Disable keyboard controls
+            disablekb: 0,
+            // Show video info
+            showinfo: 1,
+            // Allow full screen
+            fs: 1,
+            // Set modest branding
+            modestbranding: 1,
+            // Set playback origin
+            origin: window.location.origin,
+            // Prevent seeking ahead 
+            start: 0
+          },
+          events: {
+            onReady: (event) => {
+              console.log("TrainingVideo: Player ready event received");
+              setPlayerReady(true);
+              setIsLoading(false);
+              
+              // Get video duration
+              try {
+                const duration = event.target.getDuration();
+                setVideoDuration(duration);
+                console.log("TrainingVideo: Video duration:", duration);
+              } catch (error) {
+                console.error("TrainingVideo: Error getting video duration:", error);
+              }
+            },
+            onStateChange: (event) => {
+              // When video ends (state: 0)
+              if (event.data === 0) {
+                console.log("TrainingVideo: Video ended");
+                setVideoCompleted(true);
+                markVideoAsWatched();
+              }
+              
+              // Start tracking progress when video is playing (state: 1)
+              if (event.data === 1) {
+                console.log("TrainingVideo: Video is playing");
+                
+                // Track video progress to prevent skipping
+                const progressInterval = setInterval(() => {
+                  if (playerRef.current) {
+                    try {
+                      const currentTime = playerRef.current.getCurrentTime();
+                      setWatchTime(currentTime);
+                      
+                      // Log progress every 10 seconds
+                      if (Math.floor(currentTime) % 10 === 0) {
+                        console.log(`TrainingVideo: Progress - ${Math.floor(currentTime)}s / ${Math.floor(videoDuration)}s`);
+                      }
+                    } catch (error) {
+                      console.error("TrainingVideo: Error tracking progress:", error);
+                      clearInterval(progressInterval);
+                    }
+                  } else {
+                    clearInterval(progressInterval);
+                  }
+                }, 1000);
+                
+                // Clean up interval when video pauses or ends
+                return () => clearInterval(progressInterval);
+              }
+            },
+            onError: (event) => {
+              console.error("TrainingVideo: YouTube player error:", event);
+              let errorMessage = "An error occurred with the video player.";
+              
+              // YouTube error codes: https://developers.google.com/youtube/iframe_api_reference#onError
+              switch (event.data) {
+                case 2:
+                  errorMessage = "Invalid video ID. Please contact support.";
+                  break;
+                case 5:
+                  errorMessage = "The requested content cannot be played. Please try again later.";
+                  break;
+                case 100:
+                  errorMessage = "The video has been removed or is private.";
+                  break;
+                case 101:
+                case 150:
+                  errorMessage = "The video owner doesn't allow it to be played in embedded players.";
+                  break;
+                default:
+                  errorMessage = "There was an error playing the video. Please try again.";
+              }
+              
+              setVideoError(errorMessage);
+              setIsLoading(false);
+            }
+          }
+        });
+      } catch (error) {
+        console.error("TrainingVideo: Exception initializing YouTube player:", error);
+        setVideoError("Failed to initialize video player. Please refresh the page.");
+        setIsLoading(false);
+      }
+    }, 500);
+    
+    return () => {
+      clearTimeout(initTimer);
+    };
+  }, [apiLoaded, videoId]);
   
   const markVideoAsWatched = async () => {
     try {
@@ -213,54 +289,76 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     console.log("TrainingVideo: Retrying video load");
     setVideoError(null);
     setIsLoading(true);
+    setApiLoaded(false);
     
-    // Destroy and recreate the player
+    // Destroy and clean up the player if it exists
     if (playerRef.current) {
       try {
         playerRef.current.destroy();
         playerRef.current = null;
-        
-        // Reinitialize the player after a short delay
-        setTimeout(() => {
-          if (window.YT && window.YT.Player) {
-            playerRef.current = new window.YT.Player('youtube-player', {
-              videoId: videoId,
-              playerVars: {
-                autoplay: 0,
-                rel: 0,
-                controls: 1,
-                modestbranding: 1,
-              },
-              events: {
-                onReady: () => setIsLoading(false),
-                onStateChange: (event) => {
-                  if (event.data === 0) {
-                    setVideoCompleted(true);
-                    markVideoAsWatched();
-                  }
-                },
-                onError: (event) => {
-                  setVideoError("There was an error playing the video. Please try again.");
-                  setIsLoading(false);
-                }
-              }
-            });
-          } else {
-            setVideoError("Video player failed to initialize. Please refresh the page.");
-            setIsLoading(false);
-          }
-        }, 1000);
       } catch (error) {
-        console.error("TrainingVideo: Error during retry:", error);
-        setVideoError("Failed to reload the video. Please refresh the page.");
-        setIsLoading(false);
+        console.error("TrainingVideo: Error destroying player on retry:", error);
       }
-    } else {
-      // If there's no player instance, just set loading to false
-      setIsLoading(false);
-      setVideoError("Video player not available. Please refresh the page.");
     }
+    
+    // Reload the API
+    const script = document.createElement('script');
+    script.src = 'https://www.youtube.com/iframe_api';
+    script.onload = () => {
+      console.log("TrainingVideo: YouTube API reloaded");
+      setApiLoaded(true);
+    };
+    script.onerror = () => {
+      setVideoError("Failed to reload the video player. Please refresh the page.");
+      setIsLoading(false);
+    };
+    
+    // Remove any existing script first
+    const existingScript = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+    if (existingScript) {
+      existingScript.remove();
+    }
+    
+    document.head.appendChild(script);
   };
+
+  // Insert a direct iframe as fallback if player doesn't initialize after 10 seconds
+  useEffect(() => {
+    if (isLoading && !videoError) {
+      const fallbackTimer = setTimeout(() => {
+        if (isLoading && !playerReady) {
+          console.log("TrainingVideo: Using fallback iframe after timeout");
+          
+          // Create a direct iframe element
+          const container = document.getElementById('youtube-player');
+          if (container) {
+            // Clear the container
+            container.innerHTML = '';
+            
+            // Create and append the iframe
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}&rel=0&modestbranding=1`;
+            iframe.width = '100%';
+            iframe.height = '100%';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+            iframe.allowFullscreen = true;
+            iframe.id = 'youtube-iframe-fallback';
+            
+            container.appendChild(iframe);
+            setIsLoading(false);
+            
+            // Set a message to let user know they need to watch the video
+            toast({
+              title: "Video loaded",
+              description: "Please watch the entire video before proceeding to the quiz."
+            });
+          }
+        }
+      }, 10000);
+      
+      return () => clearTimeout(fallbackTimer);
+    }
+  }, [isLoading, playerReady, videoId, toast]);
 
   return (
     <div className="training-video-container">
