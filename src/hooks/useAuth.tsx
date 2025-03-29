@@ -66,17 +66,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserProfile = async (userId: string) => {
     try {
       console.log('Fetching user profile for:', userId);
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+      
+      // Use a function call instead of direct table access to avoid RLS recursion
+      const { data, error } = await supabase.rpc('get_user_profile', { user_id: userId });
       
       if (error) {
         console.error('Error fetching user profile:', error);
-      } else {
+      } else if (data && data.length > 0) {
         console.log('User profile fetched successfully');
-        setUserProfile(data);
+        setUserProfile(data[0]);
+      } else {
+        console.log('No user profile found');
       }
     } catch (error) {
       console.error('Exception in fetchUserProfile:', error);
@@ -126,10 +126,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!user) throw new Error("User not authenticated");
       
-      const { error } = await supabase
-        .from('user_profiles')
-        .update(data)
-        .eq('user_id', user.id);
+      // Use a function call instead of direct table update to avoid RLS recursion
+      const { error } = await supabase.rpc('update_user_profile', { 
+        p_user_id: user.id,
+        p_updates: data
+      });
       
       if (error) throw error;
       

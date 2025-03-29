@@ -117,11 +117,15 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             </Alert>
           )}
           
-          {step === 'video' ? (
+          {step === 'video' && (
             <TrainingVideo onComplete={handleVideoComplete} />
-          ) : step === 'quiz' ? (
+          )}
+          
+          {step === 'quiz' && (
             <TrainingQuiz onComplete={handleQuizComplete} />
-          ) : (
+          )}
+          
+          {step === 'result' && (
             <div className="text-center py-6">
               <h3 className={`text-2xl font-bold mb-4 ${quizPassed ? 'text-green-600' : 'text-red-600'}`}>
                 {quizPassed ? 'Congratulations!' : 'Quiz Failed'}
