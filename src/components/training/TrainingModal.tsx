@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
 import { useAuth } from '@/hooks/useAuth';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { X } from 'lucide-react';
 
 interface TrainingModalProps {
   isOpen: boolean;
@@ -13,6 +15,7 @@ interface TrainingModalProps {
 const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComplete }) => {
   const [step, setStep] = useState<'video' | 'quiz'>('video');
   const { userProfile, updateProfile } = useAuth();
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     // If video was already watched, go to quiz
@@ -33,74 +36,38 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       onComplete(passed);
     } catch (error) {
       console.error("Error completing training:", error);
+      setError("There was an error completing your training. Please try again.");
     }
   };
   
   if (!isOpen) return null;
   
   return (
-    <div className="modal" style={{
-      display: 'flex',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      zIndex: 1000,
-      justifyContent: 'center',
-      alignItems: 'center',
-      opacity: 1,
-      transition: 'opacity 0.3s ease'
-    }}>
-      <div className="modal-content" style={{
-        backgroundColor: 'white',
-        width: '100%',
-        maxWidth: '800px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        borderRadius: '16px',
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
-        transform: 'translateY(0)',
-        transition: 'transform 0.3s ease'
-      }}>
-        <div className="modal-header" style={{
-          padding: '20px 25px',
-          borderBottom: '1px solid #eaeaea',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'linear-gradient(to right, #4169E1, #00CED1)',
-          color: 'white',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10
-        }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center' }}>
-            <i className="fas fa-book-reader" style={{ marginRight: '10px' }}></i> 
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-lg">
+        {/* Modal Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-t-lg">
+          <h2 className="text-xl font-semibold flex items-center">
             Initial Training: {step === 'video' ? 'Training Video' : 'Knowledge Quiz'}
           </h2>
-          <span 
-            className="close-modal" 
+          <button 
             onClick={onClose}
-            style={{ 
-              fontSize: '24px', 
-              cursor: 'pointer', 
-              color: 'white', 
-              opacity: 0.8, 
-              transition: 'opacity 0.3s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '32px',
-              height: '32px'
-            }}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+            aria-label="Close modal"
           >
-            &times;
-          </span>
+            <X size={20} />
+          </button>
         </div>
         
-        <div className="modal-body" style={{ padding: '30px' }}>
+        {/* Modal Content */}
+        <div className="p-6">
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           {step === 'video' ? (
             <TrainingVideo onComplete={handleVideoComplete} />
           ) : (
