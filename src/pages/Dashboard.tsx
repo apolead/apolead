@@ -12,6 +12,11 @@ const Dashboard = () => {
   const [showTrainingModal, setShowTrainingModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Add the missing function referenced in the error
+  const handleScheduleInterview = () => {
+    setShowTrainingModal(true);
+  };
+  
   useEffect(() => {
     setIsLoading(false);
 
