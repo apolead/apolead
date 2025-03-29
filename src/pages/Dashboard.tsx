@@ -57,7 +57,18 @@ const Dashboard = () => {
   };
   
   const startTraining = () => {
-    setShowTrainingModal(true);
+    // Only allow starting training if it hasn't been completed already
+    if (userProfile?.quiz_passed !== true && userProfile?.quiz_passed !== false) {
+      setShowTrainingModal(true);
+    } else {
+      console.log("Training already completed with result:", userProfile?.quiz_passed);
+      toast({
+        title: "Training Status",
+        description: userProfile?.quiz_passed === true 
+          ? "You have already completed the training successfully." 
+          : "You have already attempted the training.",
+      });
+    }
   };
   
   const closeTrainingModal = () => {
@@ -112,7 +123,7 @@ const Dashboard = () => {
   };
   
   const getTrainingStatus = () => {
-    // Handle all quiz_passed states properly
+    // Handle all quiz_passed states properly with strict equality checks
     if (userProfile?.quiz_passed === true) {
       return {
         status: 'completed',

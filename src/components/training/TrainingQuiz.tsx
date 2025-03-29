@@ -26,6 +26,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
   
+  // Reset answers state when component mounts to ensure no pre-filled selections
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -122,6 +123,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
     
     // Clear any previously stored answers when quiz component is mounted
     setAnswers({});
+    setCurrentQuestionIndex(0);
   }, []);
   
   if (loading) {
