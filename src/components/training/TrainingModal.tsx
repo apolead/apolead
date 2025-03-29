@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -6,6 +7,14 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { X, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface TrainingModalProps {
   isOpen: boolean;
@@ -19,10 +28,11 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   const [error, setError] = useState<string | null>(null);
   const [quizPassed, setQuizPassed] = useState<boolean | null>(null);
   const [quizScore, setQuizScore] = useState<number>(0);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   
   useEffect(() => {
     // If training is already completed, show result
-    if (userProfile?.quiz_passed !== undefined) {
+    if (userProfile?.quiz_passed !== undefined && userProfile?.quiz_passed !== null) {
       setStep('result');
       setQuizPassed(userProfile.quiz_passed);
       setQuizScore(userProfile.quiz_score || 0);
@@ -70,6 +80,11 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       
       // Call the onComplete callback to update parent component
       onComplete(passed);
+      
+      // If passed, show the schedule interview dialog
+      if (passed) {
+        setShowScheduleDialog(true);
+      }
     } catch (error) {
       console.error("Error completing training:", error);
       setError("There was an error saving your quiz results. Please try again.");
@@ -80,20 +95,23 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
     onClose();
   };
   
-  if (!isOpen) return null;
+  const handleScheduleInterview = () => {
+    setShowScheduleDialog(true);
+  };
   
-  // If training is already completed, show only the result
-  if (userProfile?.quiz_passed !== undefined && step !== 'result') {
-    setStep('result');
-    setQuizPassed(userProfile.quiz_passed);
-    setQuizScore(userProfile.quiz_score || 0);
-  }
+  if (!isOpen) return null;
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-lg">
         {/* Modal Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-t-lg">
+        <div className={`sticky top-0 z-10 flex items-center justify-between p-4 border-b ${
+          (quizPassed === true) 
+            ? 'bg-gradient-to-r from-green-600 to-green-500' 
+            : (quizPassed === false)
+              ? 'bg-gradient-to-r from-red-600 to-red-500'
+              : 'bg-gradient-to-r from-blue-600 to-cyan-500'
+        } text-white rounded-t-lg`}>
           <h2 className="text-xl font-semibold flex items-center">
             {step === 'video' && 'Initial Training: Training Video'}
             {step === 'quiz' && 'Initial Training: Knowledge Quiz'}
@@ -117,7 +135,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             </Alert>
           )}
           
-          {step === 'video' && (
+          {step === 'video' && !quizPassed && (
             <>
               <TrainingVideo onComplete={handleVideoComplete} />
               {userProfile?.training_video_watched && (
@@ -130,7 +148,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             </>
           )}
           
-          {step === 'quiz' && (
+          {step === 'quiz' && quizPassed === null && (
             <TrainingQuiz onComplete={handleQuizComplete} />
           )}
           
@@ -157,18 +175,14 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
                   <div className="border-t pt-6 mt-4">
                     <h4 className="text-xl font-semibold mb-2">Next Steps</h4>
                     <p className="mb-4">
-                      Your training is complete! You can now schedule your interview using the calendar below.
+                      Your training is complete! You can now schedule your interview.
                     </p>
-                    <div className="w-full h-[600px] border rounded-lg mt-6">
-                      <iframe 
-                        src="https://calendly.com/embedded-widget" 
-                        width="100%" 
-                        height="100%" 
-                        frameBorder="0" 
-                        title="Schedule Interview"
-                        className="rounded-lg"
-                      ></iframe>
-                    </div>
+                    <Button 
+                      onClick={handleScheduleInterview}
+                      className="px-6 py-2 rounded-full text-white font-medium mt-2 bg-green-600 hover:bg-green-700 transition-colors"
+                    >
+                      Schedule Interview
+                    </Button>
                   </div>
                 </>
               ) : (
@@ -206,6 +220,28 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
           )}
         </div>
       </div>
+      
+      {/* Scheduling Dialog */}
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Schedule Your Interview</DialogTitle>
+            <DialogDescription>
+              Please select a date and time that works for you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="w-full h-[500px] border rounded-lg mt-4">
+            <iframe 
+              src="https://calendly.com/embedded-widget" 
+              width="100%" 
+              height="100%" 
+              frameBorder="0" 
+              title="Schedule Interview"
+              className="rounded-lg"
+            ></iframe>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

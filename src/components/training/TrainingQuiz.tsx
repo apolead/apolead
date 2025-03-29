@@ -159,7 +159,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
   };
   
   const handleNext = () => {
-    if (!answers[currentQuestion.id] && answers[currentQuestion.id] !== 0) {
+    if (answers[currentQuestion.id] === undefined) {
       setError("Please select an answer before continuing.");
       return;
     }
@@ -260,7 +260,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
         <Button 
           type="button" 
           onClick={handleNext}
-          disabled={!(answers[currentQuestion.id] !== undefined)}
+          disabled={answers[currentQuestion.id] === undefined}
           className="px-6 text-white"
         >
           {isLastQuestion ? (
