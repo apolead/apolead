@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,6 +29,7 @@ interface YTPlayerOptions {
     modestbranding?: number;
     showinfo?: number;
     origin?: string;
+    // Don't use start here - we'll use seekTo method instead
   };
   events?: {
     onReady?: (event: any) => void;
@@ -62,54 +63,63 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const videoId = "WYJEoLDhI2I";
   
   // Create a ref to hold the YouTube player instance
-  const playerRef = React.useRef<YTPlayer | null>(null);
+  const playerRef = useRef<YTPlayer | null>(null);
+  // Create a ref to track if the component is mounted
+  const isMountedRef = useRef(true);
+  // Create a ref for the container element
+  const containerRef = useRef<HTMLDivElement>(null);
   
+  // Check if component is unmounted
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   // Function to load the YouTube IFrame API
   useEffect(() => {
     console.log("TrainingVideo: Component mounted, loading YouTube API");
     
     const loadYouTubeAPI = () => {
-      return new Promise<void>((resolve, reject) => {
-        // If already loaded, resolve immediately
-        if (window.YT && window.YT.Player) {
-          console.log("TrainingVideo: YouTube API already loaded");
-          setApiLoaded(true);
-          resolve();
-          return;
-        }
+      // If already loaded, resolve immediately
+      if (window.YT && window.YT.Player) {
+        console.log("TrainingVideo: YouTube API already loaded");
+        setApiLoaded(true);
+        return;
+      }
+      
+      // Create script element
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      
+      // Add event listeners to track loading state
+      tag.onload = () => {
+        console.log("TrainingVideo: YouTube IFrame API script loaded");
         
-        // Create script element
-        const tag = document.createElement('script');
-        tag.src = 'https://www.youtube.com/iframe_api';
-        
-        // Add event listeners to track loading state
-        tag.onload = () => {
-          console.log("TrainingVideo: YouTube IFrame API script loaded");
-          
-          // Define callback for when API is ready
-          window.onYouTubeIframeAPIReady = () => {
-            console.log("TrainingVideo: onYouTubeIframeAPIReady called");
+        // Define callback for when API is ready
+        window.onYouTubeIframeAPIReady = () => {
+          console.log("TrainingVideo: onYouTubeIframeAPIReady called");
+          if (isMountedRef.current) {
             setApiLoaded(true);
-            resolve();
-          };
+          }
         };
-        
-        tag.onerror = (error) => {
-          console.error("TrainingVideo: Error loading YouTube IFrame API:", error);
+      };
+      
+      tag.onerror = (error) => {
+        console.error("TrainingVideo: Error loading YouTube IFrame API:", error);
+        if (isMountedRef.current) {
           setVideoError("Failed to load video player. Please refresh the page and try again.");
           setIsLoading(false);
-          reject(error);
-        };
-        
-        // Add the script to the document
-        const firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-      });
+        }
+      };
+      
+      // Add the script to the document
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
     };
     
-    loadYouTubeAPI().catch(error => {
-      console.error("TrainingVideo: Failed to load YouTube API:", error);
-    });
+    loadYouTubeAPI();
     
     // Clean up function
     return () => {
@@ -132,18 +142,31 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     }
     
     console.log("TrainingVideo: YouTube API loaded, creating player");
-    setIsLoading(true);
     
-    // Use a small timeout to ensure DOM is ready
+    // Short delay to ensure DOM is ready
     const initTimer = setTimeout(() => {
+      if (!isMountedRef.current) return;
+      
       try {
-        // Check if the container element exists
-        const container = document.getElementById('youtube-player');
-        if (!container) {
-          console.error("TrainingVideo: Player container not found");
+        // Ensure container exists and is in the DOM
+        if (!containerRef.current) {
+          console.error("TrainingVideo: Container ref is not available");
           setVideoError("Video player container not found. Please refresh the page.");
           setIsLoading(false);
           return;
+        }
+        
+        // Create the player container if it doesn't exist
+        let playerContainer = document.getElementById('youtube-player');
+        if (!playerContainer) {
+          console.log("TrainingVideo: Creating player container");
+          playerContainer = document.createElement('div');
+          playerContainer.id = 'youtube-player';
+          playerContainer.style.width = '100%';
+          playerContainer.style.height = '315px';
+          
+          // Append to our container ref
+          containerRef.current.appendChild(playerContainer);
         }
         
         console.log("TrainingVideo: Creating YouTube player with video ID:", videoId);
@@ -174,13 +197,14 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
             // Set modest branding
             modestbranding: 1,
             // Set playback origin
-            origin: window.location.origin,
-            // Prevent seeking ahead 
-            start: 0
+            origin: window.location.origin
+            // start parameter removed as it's not in the type definition
           },
           events: {
             onReady: (event) => {
               console.log("TrainingVideo: Player ready event received");
+              if (!isMountedRef.current) return;
+              
               setPlayerReady(true);
               setIsLoading(false);
               
@@ -194,6 +218,8 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
               }
             },
             onStateChange: (event) => {
+              if (!isMountedRef.current) return;
+              
               // When video ends (state: 0)
               if (event.data === 0) {
                 console.log("TrainingVideo: Video ended");
@@ -207,20 +233,33 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
                 
                 // Track video progress to prevent skipping
                 const progressInterval = setInterval(() => {
-                  if (playerRef.current) {
-                    try {
-                      const currentTime = playerRef.current.getCurrentTime();
-                      setWatchTime(currentTime);
-                      
-                      // Log progress every 10 seconds
-                      if (Math.floor(currentTime) % 10 === 0) {
-                        console.log(`TrainingVideo: Progress - ${Math.floor(currentTime)}s / ${Math.floor(videoDuration)}s`);
-                      }
-                    } catch (error) {
-                      console.error("TrainingVideo: Error tracking progress:", error);
-                      clearInterval(progressInterval);
+                  if (!isMountedRef.current || !playerRef.current) {
+                    clearInterval(progressInterval);
+                    return;
+                  }
+                  
+                  try {
+                    const currentTime = playerRef.current.getCurrentTime();
+                    setWatchTime(currentTime);
+                    
+                    // Log progress every 10 seconds
+                    if (Math.floor(currentTime) % 10 === 0) {
+                      console.log(`TrainingVideo: Progress - ${Math.floor(currentTime)}s / ${Math.floor(videoDuration)}s`);
                     }
-                  } else {
+                    
+                    // If the user tries to skip ahead significantly (more than 30s)
+                    const expectedMaxTime = watchTime + 35; // Allow some buffer
+                    if (currentTime > expectedMaxTime && videoDuration > 0) {
+                      console.log(`TrainingVideo: Attempting to skip ahead detected. Current: ${currentTime}, Expected: ~${watchTime}`);
+                      // Move them back to where they should be
+                      playerRef.current.seekTo(watchTime, true);
+                      toast({
+                        title: "Please watch the entire video",
+                        description: "You cannot skip ahead. The video will automatically play from the beginning."
+                      });
+                    }
+                  } catch (error) {
+                    console.error("TrainingVideo: Error tracking progress:", error);
                     clearInterval(progressInterval);
                   }
                 }, 1000);
@@ -231,6 +270,8 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
             },
             onError: (event) => {
               console.error("TrainingVideo: YouTube player error:", event);
+              if (!isMountedRef.current) return;
+              
               let errorMessage = "An error occurred with the video player.";
               
               // YouTube error codes: https://developers.google.com/youtube/iframe_api_reference#onError
@@ -259,15 +300,18 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
         });
       } catch (error) {
         console.error("TrainingVideo: Exception initializing YouTube player:", error);
-        setVideoError("Failed to initialize video player. Please refresh the page.");
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setVideoError("Failed to initialize video player. Please refresh the page.");
+          setIsLoading(false);
+          useFallbackIframe();
+        }
       }
     }, 500);
     
     return () => {
       clearTimeout(initTimer);
     };
-  }, [apiLoaded, videoId]);
+  }, [apiLoaded, videoId, toast, watchTime]);
   
   const markVideoAsWatched = async () => {
     try {
@@ -301,6 +345,11 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
       }
     }
     
+    // Clear the container
+    if (containerRef.current) {
+      containerRef.current.innerHTML = '';
+    }
+    
     // Reload the API
     const script = document.createElement('script');
     script.src = 'https://www.youtube.com/iframe_api';
@@ -311,6 +360,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     script.onerror = () => {
       setVideoError("Failed to reload the video player. Please refresh the page.");
       setIsLoading(false);
+      useFallbackIframe();
     };
     
     // Remove any existing script first
@@ -322,43 +372,75 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     document.head.appendChild(script);
   };
 
+  // Function to use a direct iframe as fallback
+  const useFallbackIframe = () => {
+    console.log("TrainingVideo: Using fallback iframe");
+    
+    if (!containerRef.current) return;
+    
+    // Clear the container
+    containerRef.current.innerHTML = '';
+    
+    // Create and append the iframe
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}&rel=0&modestbranding=1`;
+    iframe.width = '100%';
+    iframe.height = '100%';
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+    iframe.allowFullscreen = true;
+    iframe.id = 'youtube-iframe-fallback';
+    
+    containerRef.current.appendChild(iframe);
+    setIsLoading(false);
+    
+    // Set a message to let user know they need to watch the video
+    toast({
+      title: "Video loaded",
+      description: "Please watch the entire video before proceeding to the quiz."
+    });
+    
+    // We can't track progress with a basic iframe, so add a button to mark as watched
+    // But delay it to ensure they at least spend some time watching
+    setTimeout(() => {
+      if (!containerRef.current || !isMountedRef.current) return;
+      
+      const completeButton = document.createElement('button');
+      completeButton.innerText = "Mark Video as Watched";
+      completeButton.className = "complete-button";
+      completeButton.style.marginTop = '15px';
+      completeButton.style.padding = '8px 16px';
+      completeButton.style.backgroundColor = '#4f46e5';
+      completeButton.style.color = 'white';
+      completeButton.style.border = 'none';
+      completeButton.style.borderRadius = '4px';
+      completeButton.style.cursor = 'pointer';
+      
+      completeButton.onclick = () => {
+        setVideoCompleted(true);
+        markVideoAsWatched();
+      };
+      
+      const buttonContainer = document.createElement('div');
+      buttonContainer.style.textAlign = 'center';
+      buttonContainer.appendChild(completeButton);
+      
+      containerRef.current.parentNode?.appendChild(buttonContainer);
+    }, 60000); // Only show after 1 minute
+  };
+
   // Insert a direct iframe as fallback if player doesn't initialize after 10 seconds
   useEffect(() => {
     if (isLoading && !videoError) {
       const fallbackTimer = setTimeout(() => {
-        if (isLoading && !playerReady) {
+        if (isLoading && !playerReady && isMountedRef.current) {
           console.log("TrainingVideo: Using fallback iframe after timeout");
-          
-          // Create a direct iframe element
-          const container = document.getElementById('youtube-player');
-          if (container) {
-            // Clear the container
-            container.innerHTML = '';
-            
-            // Create and append the iframe
-            const iframe = document.createElement('iframe');
-            iframe.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=${window.location.origin}&rel=0&modestbranding=1`;
-            iframe.width = '100%';
-            iframe.height = '100%';
-            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-            iframe.allowFullscreen = true;
-            iframe.id = 'youtube-iframe-fallback';
-            
-            container.appendChild(iframe);
-            setIsLoading(false);
-            
-            // Set a message to let user know they need to watch the video
-            toast({
-              title: "Video loaded",
-              description: "Please watch the entire video before proceeding to the quiz."
-            });
-          }
+          useFallbackIframe();
         }
       }, 10000);
       
       return () => clearTimeout(fallbackTimer);
     }
-  }, [isLoading, playerReady, videoId, toast]);
+  }, [isLoading, playerReady, toast]);
 
   return (
     <div className="training-video-container">
@@ -425,16 +507,18 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
             <div className="loading-text">Loading training video...</div>
           </div>
         ) : (
-          // YouTube player container
+          // YouTube player container with ref
           <div 
-            id="youtube-player" 
+            ref={containerRef}
             style={{ 
               width: '100%', 
               height: '315px',
               borderRadius: '12px',
               overflow: 'hidden'
             }}
-          ></div>
+          >
+            {/* Player will be inserted here */}
+          </div>
         )}
       </div>
       
