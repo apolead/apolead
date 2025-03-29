@@ -34,6 +34,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }, 0);
         } else {
           setUserProfile(null);
+          // Clear user profile from localStorage when logged out
+          localStorage.removeItem('userProfile');
         }
       }
     );
@@ -47,6 +49,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // First check for cached profile
+          const cachedProfile = localStorage.getItem('userProfile');
+          if (cachedProfile) {
+            try {
+              const parsed = JSON.parse(cachedProfile);
+              console.log('Using cached profile while fetching from DB:', parsed);
+              setUserProfile(parsed);
+            } catch (error) {
+              console.error('Error parsing cached profile:', error);
+              localStorage.removeItem('userProfile');
+            }
+          }
+          
+          // Then fetch the latest data from the database
           fetchUserProfile(session.user.id);
         }
       } catch (error) {
@@ -79,6 +95,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else if (data) {
         console.log('User profile fetched successfully:', data);
         setUserProfile(data);
+        // Cache the profile in localStorage
+        localStorage.setItem('userProfile', JSON.stringify(data));
       } else {
         console.log('No user profile found');
       }
@@ -114,6 +132,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      // Clear cached profile on logout
+      localStorage.removeItem('userProfile');
       console.log('Logout successful');
     } catch (error: any) {
       console.error('Logout error:', error);
@@ -147,6 +167,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ...data
         };
         console.log('Updated user profile in state:', updated);
+        
+        // Update localStorage cache with the new profile data
+        localStorage.setItem('userProfile', JSON.stringify(updated));
+        
         return updated;
       });
       

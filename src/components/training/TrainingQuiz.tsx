@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -26,7 +25,6 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
   
-  // Reset answers state when component mounts to ensure no pre-filled selections
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -39,8 +37,6 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
         }
         
         if (data && data.length > 0) {
-          // Transform the data to match our QuizQuestion interface
-          // Convert Json options to string[] explicitly
           const formattedQuestions = data.map(q => ({
             id: q.id,
             question: q.question,
@@ -52,7 +48,6 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
           
           setQuestions(formattedQuestions);
         } else {
-          // Fallback to hardcoded questions if no data is found
           setQuestions([
             {
               id: 'q1',
@@ -121,9 +116,9 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
     
     fetchQuestions();
     
-    // Clear any previously stored answers when quiz component is mounted
     setAnswers({});
     setCurrentQuestionIndex(0);
+    console.log('Initializing quiz with empty answers');
   }, []);
   
   if (loading) {
@@ -157,6 +152,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
   
   const handleChange = (value: string) => {
+    console.log('Answer selected:', value, 'for question:', currentQuestion.id);
     const answerIndex = parseInt(value, 10);
     setAnswers(prev => ({
       ...prev,
@@ -173,16 +169,13 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
     setError(null);
     
     if (isLastQuestion) {
-      // Submit the quiz
       handleSubmit();
     } else {
-      // Go to next question
       setCurrentQuestionIndex(prev => prev + 1);
     }
   };
   
   const handleSubmit = () => {
-    // Calculate score
     let correctCount = 0;
     questions.forEach(question => {
       if (answers[question.id] === question.correct_answer) {
@@ -192,18 +185,19 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
     
     const scorePercentage = Math.round((correctCount / questions.length) * 100);
     
-    // Pass only if ALL questions are answered correctly
     const passed = correctCount === questions.length;
     
-    // Call the onComplete callback with the result
+    console.log('Quiz completed. Passed:', passed, 'Score:', scorePercentage);
+    console.log('Answers submitted:', answers);
+    
     onComplete(passed, scorePercentage);
   };
   
-  // Get the user's answer for the current question (if any)
-  // This is the key part - we explicitly check that the answer is defined
-  const currentAnswer = answers[currentQuestion.id] !== undefined 
+  const currentAnswer = answers[currentQuestion?.id] !== undefined 
     ? answers[currentQuestion.id].toString() 
     : undefined;
+  
+  console.log('Rendering question:', currentQuestionIndex, 'Current answer:', currentAnswer);
   
   return (
     <div className="space-y-6">

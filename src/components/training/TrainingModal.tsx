@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -32,6 +31,8 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   
   useEffect(() => {
     // Check if quiz state is already set in the database - use strict equality checks
+    console.log("Training Modal - Current user profile:", userProfile);
+    
     if (userProfile?.quiz_passed === true) {
       console.log("User has passed the quiz", userProfile);
       setStep('result');
@@ -70,6 +71,8 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   
   const handleQuizComplete = async (passed: boolean, score: number) => {
     try {
+      console.log("Quiz completed. Passed:", passed, "Score:", score);
+      
       setQuizPassed(passed);
       setQuizScore(score);
       
