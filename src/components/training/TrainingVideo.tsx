@@ -23,15 +23,15 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     async function fetchVideoUrl() {
       setIsLoading(true);
       try {
-        console.log("Attempting to fetch video from Supabase...");
+        console.log("Attempting to fetch video from Supabase storage...");
         
-        // Try to get a signed URL for the video
-        const { data, error } = await supabase.storage
+        // Try to get a signed URL for the video - make sure the path is correct
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
           .from('trainingvideo')
           .createSignedUrl('training_one.mp4', 3600); // URL valid for 1 hour
         
-        if (error) {
-          console.error("Error creating signed URL:", error);
+        if (signedUrlError) {
+          console.error("Error creating signed URL:", signedUrlError);
           
           // Fallback to public URL if signed URL fails
           const publicUrl = supabase.storage
@@ -40,13 +40,20 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
           
           console.log("Attempting fallback to public URL:", publicUrl);
           setVideoUrl(publicUrl);
-        } else if (data) {
+        } else if (signedUrlData) {
           console.log("Successfully created signed URL");
-          setVideoUrl(data.signedUrl);
+          setVideoUrl(signedUrlData.signedUrl);
         }
       } catch (err) {
         console.error("Exception in video fetch:", err);
-        setVideoError("There was an error loading the training video. Please try again later.");
+        
+        // Final fallback - use a local video file if available
+        console.log("Attempting fallback to local video file");
+        setVideoUrl('/training_video_1.mp4');
+        
+        if (!videoUrl) {
+          setVideoError("There was an error loading the training video. Please try again later.");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -57,12 +64,14 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
 
   const handlePlay = () => {
     if (videoRef.current) {
+      console.log("Attempting to play video from URL:", videoUrl);
       const playPromise = videoRef.current.play();
       
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
             setIsPlaying(true);
+            console.log("Video playing successfully");
           })
           .catch(error => {
             console.error("Error playing video:", error);
@@ -102,6 +111,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const markVideoAsWatched = async () => {
     try {
       if (user) {
+        console.log("Marking video as watched for user:", user.id);
         await updateProfile({ training_video_watched: true });
         toast({
           title: "Video completed",
