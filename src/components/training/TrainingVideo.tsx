@@ -1,6 +1,6 @@
-import React, { useRef, useState, useEffect } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface TrainingVideoProps {
@@ -8,202 +8,150 @@ interface TrainingVideoProps {
 }
 
 const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [videoCompleted, setVideoCompleted] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadingMessage, setLoadingMessage] = useState("Preparing training video...");
-  const [maxAllowedTime, setMaxAllowedTime] = useState(0);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [playerReady, setPlayerReady] = useState(false);
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
-
-  const bucketName = 'trainingvideo';
-  const filePath = 'training_one.mp4';
   
+  // YouTube video ID from the provided URL
+  const videoId = "WYJEoLDhI2I";
+  
+  // Create a ref to hold the YouTube player instance
+  const playerRef = React.useRef<YT.Player | null>(null);
+  
+  // Function to load the YouTube IFrame API
   useEffect(() => {
-    let mounted = true;
+    // Only load the script once
+    if (window.YT) {
+      setPlayerReady(true);
+      return;
+    }
     
-    async function fetchVideoUrl() {
-      if (!mounted) return;
+    console.log("TrainingVideo: Loading YouTube IFrame API");
+    
+    // Create script element
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    
+    // Add event listeners to track loading state
+    tag.onload = () => {
+      console.log("TrainingVideo: YouTube IFrame API loaded successfully");
       
-      try {
-        setIsLoading(true);
-        setVideoError(null);
-        setLoadingMessage("Loading training video from Supabase...");
-        
-        console.log("TrainingVideo: Attempting to fetch video URL from Supabase storage");
-        console.log(`TrainingVideo: Bucket: ${bucketName}, File path: ${filePath}`);
-        
-        const { data, error } = await supabase
-          .storage
-          .from(bucketName)
-          .createSignedUrl(filePath, 60 * 60);
-        
-        if (error) {
-          console.error("TrainingVideo: Error fetching signed URL:", error);
-          throw error;
-        }
-        
-        if (!data?.signedUrl) {
-          console.error("TrainingVideo: No signed URL returned from Supabase");
-          throw new Error("Could not generate a valid URL for the training video");
-        }
-        
-        console.log("TrainingVideo: Successfully obtained signed URL:", data.signedUrl);
-        setVideoUrl(data.signedUrl);
-        
-        setTimeout(() => {
-          if (mounted) {
-            setIsLoading(false);
-          }
-        }, 1000);
-      } catch (err) {
-        console.error("TrainingVideo: Exception in video initialization:", err);
-        
-        if (mounted) {
-          setVideoError("There was an error loading the video. Please try refreshing the page or contact support.");
-          setIsLoading(false);
-        }
-      }
-    }
-
-    fetchVideoUrl();
-    
-    return () => {
-      mounted = false;
-    };
-  }, [bucketName, filePath]);
-
-  useEffect(() => {
-    const videoElement = videoRef.current;
-    
-    const handleMetadataLoaded = () => {
-      if (videoElement) {
-        console.log("TrainingVideo: Video metadata loaded, duration:", videoElement.duration);
-        setMaxAllowedTime(videoElement.duration * 0.05);
-      }
+      // The API will call this function when the video player is ready
+      window.onYouTubeIframeAPIReady = () => {
+        console.log("TrainingVideo: YouTube player is ready to be initialized");
+        setPlayerReady(true);
+      };
     };
     
-    if (videoElement) {
-      videoElement.addEventListener('loadedmetadata', handleMetadataLoaded);
-    }
+    tag.onerror = (error) => {
+      console.error("TrainingVideo: Error loading YouTube IFrame API:", error);
+      setVideoError("Failed to load video player. Please check your internet connection and try again.");
+      setIsLoading(false);
+    };
+    
+    // Add the script to the document
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
     
     return () => {
-      if (videoElement) {
-        videoElement.removeEventListener('loadedmetadata', handleMetadataLoaded);
-      }
+      // Clean up event handler when component unmounts
+      window.onYouTubeIframeAPIReady = null;
     };
   }, []);
-
-  const handlePlay = () => {
-    if (videoRef.current && videoUrl) {
-      console.log("TrainingVideo: Attempting to play video from URL:", videoUrl);
-      const playPromise = videoRef.current.play();
-      
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsPlaying(true);
-            console.log("TrainingVideo: Video playing successfully");
-          })
-          .catch(error => {
-            console.error("TrainingVideo: Error playing video:", error);
-            setVideoError(`There was an error playing the video: ${error.message}. Please try again.`);
-            setIsPlaying(false);
-          });
-      }
-    } else {
-      console.error("TrainingVideo: Video reference or URL is missing", {
-        videoRefExists: !!videoRef.current,
-        videoUrl
-      });
-      setVideoError("Video cannot be played. Please refresh the page.");
-    }
-  };
-
-  const handlePause = () => {
-    if (videoRef.current) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      const duration = videoRef.current.duration;
-      const currentTime = videoRef.current.currentTime;
-      const calculatedProgress = (currentTime / duration) * 100;
-      setProgress(calculatedProgress);
-      
-      if (currentTime > maxAllowedTime) {
-        setMaxAllowedTime(currentTime + (duration * 0.05));
-      }
-      
-      if (calculatedProgress >= 95 && !videoCompleted) {
-        console.log("TrainingVideo: Video reached 95% completion");
-        setVideoCompleted(true);
-        markVideoAsWatched();
-      }
-    }
-  };
   
-  const handleSeeking = () => {
-    if (videoRef.current) {
-      if (videoRef.current.currentTime > maxAllowedTime) {
-        console.log("TrainingVideo: Prevented seeking ahead", {
-          attempted: videoRef.current.currentTime, 
-          maxAllowed: maxAllowedTime
-        });
-        videoRef.current.currentTime = maxAllowedTime;
-        
-        toast({
-          title: "Can't skip ahead",
-          description: "You need to watch the entire training video",
-          variant: "destructive"
-        });
-      }
-    }
-  };
-
-  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-    const target = e.target as HTMLVideoElement;
-    console.error("TrainingVideo: Video error event:", {
-      error: e,
-      videoElement: target,
-      errorCode: target.error?.code,
-      errorMessage: target.error?.message,
-      networkState: target.networkState,
-      readyState: target.readyState,
-      currentSrc: target.currentSrc
-    });
-    
-    let errorMessage = "There was an error with the video. Please refresh the page or contact support.";
-    
-    if (target.error) {
-      switch (target.error.code) {
-        case 1: // MEDIA_ERR_ABORTED
-          errorMessage = "The video playback was aborted. Please try again.";
-          break;
-        case 2: // MEDIA_ERR_NETWORK
-          errorMessage = "A network error occurred while loading the video. Please check your connection.";
-          break;
-        case 3: // MEDIA_ERR_DECODE
-          errorMessage = "The video could not be decoded. Please try a different browser.";
-          break;
-        case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
-          errorMessage = "The video format is not supported by your browser.";
-          break;
-        default:
-          errorMessage = `Video error: ${target.error.message}`;
-      }
+  // Initialize the YouTube player once the API is ready
+  useEffect(() => {
+    if (!playerReady || !window.YT || !window.YT.Player) {
+      return;
     }
     
-    setVideoError(errorMessage);
-  };
-
+    console.log("TrainingVideo: Initializing YouTube player for video ID:", videoId);
+    setIsLoading(true);
+    
+    try {
+      // Create the player instance
+      playerRef.current = new window.YT.Player('youtube-player', {
+        videoId: videoId,
+        playerVars: {
+          // Auto play is disabled to give user control
+          autoplay: 0,
+          // Hide related videos when the video finishes
+          rel: 0,
+          // Show video controls
+          controls: 1,
+          // Disable keyboard controls
+          disablekb: 0,
+          // Show video info
+          showinfo: 1,
+          // Allow full screen
+          fs: 1,
+          // Set modest branding
+          modestbranding: 1,
+          // Set playback origin
+          origin: window.location.origin,
+        },
+        events: {
+          onReady: (event) => {
+            console.log("TrainingVideo: YouTube player ready event received");
+            setIsLoading(false);
+          },
+          onStateChange: (event) => {
+            // When video ends (state: 0)
+            if (event.data === 0) {
+              console.log("TrainingVideo: Video ended");
+              setVideoCompleted(true);
+              markVideoAsWatched();
+            }
+          },
+          onError: (event) => {
+            console.error("TrainingVideo: YouTube player error:", event);
+            let errorMessage = "An error occurred with the video player.";
+            
+            // YouTube error codes: https://developers.google.com/youtube/iframe_api_reference#onError
+            switch (event.data) {
+              case 2:
+                errorMessage = "Invalid video ID. Please contact support.";
+                break;
+              case 5:
+                errorMessage = "The requested content cannot be played. Please try again later.";
+                break;
+              case 100:
+                errorMessage = "The video has been removed or is private.";
+                break;
+              case 101:
+              case 150:
+                errorMessage = "The video owner doesn't allow it to be played in embedded players.";
+                break;
+              default:
+                errorMessage = "There was an error playing the video. Please try again.";
+            }
+            
+            setVideoError(errorMessage);
+            setIsLoading(false);
+          }
+        }
+      });
+    } catch (error) {
+      console.error("TrainingVideo: Exception initializing YouTube player:", error);
+      setVideoError("Failed to initialize video player. Please refresh the page.");
+      setIsLoading(false);
+    }
+    
+    return () => {
+      // Clean up the player when the component unmounts
+      if (playerRef.current) {
+        try {
+          playerRef.current.destroy();
+        } catch (error) {
+          console.error("TrainingVideo: Error destroying YouTube player:", error);
+        }
+      }
+    };
+  }, [playerReady, videoId]);
+  
   const markVideoAsWatched = async () => {
     try {
       if (user) {
@@ -213,57 +161,63 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
           title: "Video completed",
           description: "You can now proceed to the quiz"
         });
+        onComplete();
       }
     } catch (error) {
       console.error("TrainingVideo: Error marking video as watched:", error);
     }
   };
-
-  const handleVideoEnd = () => {
-    console.log("TrainingVideo: Video ended");
-    setIsPlaying(false);
-    setVideoCompleted(true);
-    onComplete();
-  };
-
-  const handleRetry = async () => {
+  
+  const handleRetry = () => {
     console.log("TrainingVideo: Retrying video load");
     setVideoError(null);
     setIsLoading(true);
     
-    try {
-      const { data, error } = await supabase
-        .storage
-        .from(bucketName)
-        .createSignedUrl(filePath, 60 * 60);
+    // Destroy and recreate the player
+    if (playerRef.current) {
+      try {
+        playerRef.current.destroy();
+        playerRef.current = null;
         
-      if (error) {
-        console.error("TrainingVideo: Error refreshing signed URL:", error);
-        throw error;
-      }
-      
-      if (!data?.signedUrl) {
-        throw new Error("Could not generate a valid URL for the training video");
-      }
-      
-      console.log("TrainingVideo: Successfully refreshed signed URL:", data.signedUrl);
-      setVideoUrl(data.signedUrl);
-      
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.load();
-        }
-        
-        setIsLoading(false);
-        
+        // Reinitialize the player after a short delay
         setTimeout(() => {
-          handlePlay();
-        }, 500);
-      }, 1000);
-    } catch (err) {
-      console.error("TrainingVideo: Exception in video retry:", err);
-      setVideoError("There was an error reloading the video. Please try refreshing the page.");
+          if (window.YT && window.YT.Player) {
+            playerRef.current = new window.YT.Player('youtube-player', {
+              videoId: videoId,
+              playerVars: {
+                autoplay: 0,
+                rel: 0,
+                controls: 1,
+                modestbranding: 1,
+              },
+              events: {
+                onReady: () => setIsLoading(false),
+                onStateChange: (event) => {
+                  if (event.data === 0) {
+                    setVideoCompleted(true);
+                    markVideoAsWatched();
+                  }
+                },
+                onError: (event) => {
+                  setVideoError("There was an error playing the video. Please try again.");
+                  setIsLoading(false);
+                }
+              }
+            });
+          } else {
+            setVideoError("Video player failed to initialize. Please refresh the page.");
+            setIsLoading(false);
+          }
+        }, 1000);
+      } catch (error) {
+        console.error("TrainingVideo: Error during retry:", error);
+        setVideoError("Failed to reload the video. Please refresh the page.");
+        setIsLoading(false);
+      }
+    } else {
+      // If there's no player instance, just set loading to false
       setIsLoading(false);
+      setVideoError("Video player not available. Please refresh the page.");
     }
   };
 
@@ -329,101 +283,19 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
                 to { transform: rotate(360deg); }
               }
             `}</style>
-            <div className="loading-text">{loadingMessage}</div>
+            <div className="loading-text">Loading training video...</div>
           </div>
         ) : (
-          <video 
-            ref={videoRef}
-            src={videoUrl || undefined}
-            preload="auto"
-            playsInline
+          // YouTube player container
+          <div 
+            id="youtube-player" 
             style={{ 
               width: '100%', 
-              display: 'block',
-              borderRadius: '12px'
-            }}
-            onTimeUpdate={handleTimeUpdate}
-            onEnded={handleVideoEnd}
-            onError={handleVideoError}
-            onSeeking={handleSeeking}
-          >
-            Your browser does not support the video tag.
-          </video>
-        )}
-        
-        {!isLoading && !isPlaying && !videoCompleted && videoUrl && (
-          <div className="video-overlay" style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0, 0, 0, 0.5)',
-            borderRadius: '12px',
-            cursor: 'pointer'
-          }} onClick={handlePlay}>
-            <div className="play-button" style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #4f46e5 0%, #00c2cb 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '32px',
-              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
-              transform: 'scale(1)',
-              transition: 'transform 0.3s ease',
-            }}>
-              <i className="fas fa-play" style={{ marginLeft: '5px' }}></i>
-            </div>
-          </div>
-        )}
-        
-        {isPlaying && (
-          <div className="video-controls" style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '15px',
-            background: 'rgba(0, 0, 0, 0.6)',
-            padding: '10px 20px',
-            borderRadius: '50px',
-            zIndex: 10
-          }}>
-            <button onClick={handlePause} style={{
-              background: 'none',
-              border: 'none',
-              color: 'white',
-              fontSize: '20px',
-              cursor: 'pointer'
-            }}>
-              <i className="fas fa-pause"></i>
-            </button>
-            
-            <div className="progress-container" style={{
-              width: '200px',
-              height: '6px',
-              background: 'rgba(255, 255, 255, 0.3)',
-              borderRadius: '3px',
+              height: '315px',
+              borderRadius: '12px',
               overflow: 'hidden'
-            }}>
-              <div className="progress-fill" style={{
-                width: `${progress}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)',
-                borderRadius: '3px',
-                transition: 'width 0.2s ease'
-              }}></div>
-            </div>
-          </div>
+            }}
+          ></div>
         )}
       </div>
       
@@ -468,5 +340,43 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     </div>
   );
 };
+
+// Add TypeScript interface for YouTube IFrame API
+declare global {
+  interface Window {
+    YT: {
+      Player: new (
+        elementId: string,
+        options: {
+          videoId: string;
+          playerVars?: {
+            autoplay?: number;
+            controls?: number;
+            disablekb?: number;
+            rel?: number;
+            fs?: number;
+            modestbranding?: number;
+            showinfo?: number;
+            origin?: string;
+          };
+          events?: {
+            onReady?: (event: any) => void;
+            onStateChange?: (event: { data: number }) => void;
+            onError?: (event: { data: number }) => void;
+          };
+        }
+      ) => {
+        destroy: () => void;
+        playVideo: () => void;
+        pauseVideo: () => void;
+        stopVideo: () => void;
+        seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+        getCurrentTime: () => number;
+        getDuration: () => number;
+      };
+    };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
 
 export default TrainingVideo;
