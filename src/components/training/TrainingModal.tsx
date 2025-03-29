@@ -31,7 +31,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   
   useEffect(() => {
-    // Check if quiz state is already set in the database
+    // Check if quiz state is already set in the database - use strict equality checks
     if (userProfile?.quiz_passed === true) {
       console.log("User has passed the quiz", userProfile);
       setStep('result');
@@ -42,7 +42,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       setStep('result');
       setQuizPassed(false);
       setQuizScore(userProfile.quiz_score || 0);
-    } else if (userProfile?.training_video_watched) {
+    } else if (userProfile?.training_video_watched === true) {
       console.log("User has watched the video but not completed quiz", userProfile);
       setStep('quiz');
     } else {
@@ -143,7 +143,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
           {step === 'video' && quizPassed === null && (
             <>
               <TrainingVideo onComplete={handleVideoComplete} />
-              {userProfile?.training_video_watched && (
+              {userProfile?.training_video_watched === true && (
                 <div className="mt-6 flex justify-end">
                   <Button onClick={handleContinueToQuiz} className="text-white">
                     Continue to Quiz

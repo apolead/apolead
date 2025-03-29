@@ -198,9 +198,10 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
   };
   
   // Get the user's answer for the current question (if any)
-  const currentAnswer = answers[currentQuestion.id] !== undefined ? 
-    answers[currentQuestion.id].toString() : 
-    undefined;
+  // This is the key part - we explicitly check that the answer is defined
+  const currentAnswer = answers[currentQuestion.id] !== undefined 
+    ? answers[currentQuestion.id].toString() 
+    : undefined;
   
   return (
     <div className="space-y-6">
