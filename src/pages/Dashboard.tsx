@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [showTrainingModal, setShowTrainingModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Add the missing function referenced in the error
   const handleScheduleInterview = () => {
     setShowTrainingModal(true);
   };
@@ -112,6 +113,7 @@ const Dashboard = () => {
   };
   
   const getTrainingStatus = () => {
+    // Here's the issue - we need to properly handle the false case
     if (userProfile?.quiz_passed === true) {
       return {
         status: 'completed',
@@ -780,181 +782,6 @@ const Dashboard = () => {
           }}>Complete all steps to start earning</div>
         </div>
         
-        <div className="content">
-          <div className="steps-container" style={{ maxWidth: '1080px', margin: '0 auto' }}>
-            <div className="steps-header" style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-              <div className="steps-icon" style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                width: '36px',
-                height: '36px',
-                borderRadius: '10px',
-                backgroundColor: '#3b82f6',
-                color: 'white',
-                marginRight: '15px',
-                flexShrink: 0 
-              }}>
-                <i className="fas fa-list-check"></i>
-              </div>
-              <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#1e293b', margin: 0 }}>Complete These Steps</h3>
-            </div>
-            
-            <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-              <div className="step-card" style={{ 
-                border: '1px solid #e2e8f0', 
-                borderRadius: '15px',
-                padding: '25px',
-                backgroundColor: 'white',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-                position: 'relative',
-                overflow: 'hidden'
-              }}>
-                <div className="step-number" style={{
-                  position: 'absolute',
-                  top: '15px',
-                  right: '15px',
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 600,
-                  fontSize: '14px'
-                }}>1</div>
-                
-                <div className="step-icon" style={{
-                  width: '70px',
-                  height: '70px',
-                  borderRadius: '50%',
-                  backgroundColor: '#3b82f6',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '20px'
-                }}>
-                  <i className="fas fa-book" style={{ color: 'white', fontSize: '28px' }}></i>
-                </div>
-                
-                <h4 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '10px', color: '#1e293b' }}>Initial Training</h4>
-                
-                <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '25px', lineHeight: 1.5 }}>
-                  Complete the initial training module to unlock the next step. This will teach you the fundamentals.
-                </p>
-                
-                <button
-                  onClick={trainingStatus.canClick ? startTraining : undefined}
-                  disabled={!trainingStatus.canClick && trainingStatus.status !== 'pending'}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '30px',
-                    border: 'none',
-                    background: trainingStatus.btnColor,
-                    color: 'white',
-                    fontWeight: 500,
-                    cursor: trainingStatus.canClick ? 'pointer' : 'default',
-                    boxShadow: trainingStatus.btnShadow,
-                    opacity: trainingStatus.canClick ? 1 : 0.9,
-                    transition: 'all 0.3s'
-                  }}
-                >
-                  <i className={`fas fa-${trainingStatus.btnIcon}`} style={{ marginRight: '8px' }}></i>
-                  {trainingStatus.btnText}
-                </button>
-              </div>
-              
-              <div className="step-card" style={{ 
-                border: '1px solid #e2e8f0', 
-                borderRadius: '15px',
-                padding: '25px',
-                backgroundColor: 'white',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-                position: 'relative',
-                overflow: 'hidden',
-                opacity: userProfile?.quiz_passed === true ? 1 : 0.6
-              }}>
-                <div className="step-number" style={{
-                  position: 'absolute',
-                  top: '15px',
-                  right: '15px',
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  backgroundColor: '#9ca3af',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 600,
-                  fontSize: '14px'
-                }}>2</div>
-                
-                <div className="step-icon" style={{
-                  width: '70px',
-                  height: '70px',
-                  borderRadius: '50%',
-                  backgroundColor: '#9ca3af',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '20px'
-                }}>
-                  <i className="fas fa-users" style={{ color: 'white', fontSize: '28px' }}></i>
-                </div>
-                
-                <h4 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '10px', color: '#1e293b' }}>Schedule Interview</h4>
-                
-                <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '25px', lineHeight: 1.5 }}>
-                  Once your training is approved and reviewed, you'll be able to schedule your interview with our team.
-                </p>
-                
-                <button
-                  onClick={userProfile?.quiz_passed === true ? handleScheduleInterview : undefined}
-                  disabled={userProfile?.quiz_passed !== true}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '30px',
-                    border: 'none',
-                    background: userProfile?.quiz_passed === true 
-                      ? 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)' 
-                      : 'linear-gradient(90deg, #9ca3af 0%, #d1d5db 100%)',
-                    color: 'white',
-                    fontWeight: 500,
-                    cursor: userProfile?.quiz_passed === true ? 'pointer' : 'default',
-                    boxShadow: userProfile?.quiz_passed === true 
-                      ? '0 4px 10px rgba(59,130,246,0.2)' 
-                      : 'none',
-                    opacity: userProfile?.quiz_passed === true ? 1 : 0.8,
-                    transition: 'all 0.3s'
-                  }}
-                >
-                  <i className={`fas fa-${userProfile?.quiz_passed === true ? 'calendar-check' : 'lock'}`} style={{ marginRight: '8px' }}></i>
-                  {userProfile?.quiz_passed === true ? 'Schedule Now' : 'Locked'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <TrainingModal
-        isOpen={showTrainingModal}
-        onClose={closeTrainingModal}
-        onComplete={handleTrainingComplete}
-      />
-    </div>
-  );
-};
-
-export default Dashboard;
+        <div className="stats" style={{
+          display: 'grid',
+          gridTemplateColumns:
