@@ -190,6 +190,8 @@ export type Database = {
           login_discord: boolean | null
           meet_obligation: boolean | null
           personal_statement: string | null
+          quiz_passed: boolean | null
+          quiz_score: number | null
           ram_amount: string | null
           sales_company: string | null
           sales_experience: boolean | null
@@ -204,6 +206,7 @@ export type Database = {
           start_date: string | null
           supervisor_notes: string | null
           system_settings: string | null
+          training_video_watched: boolean | null
           updated_at: string | null
           user_id: string
         }
@@ -234,6 +237,8 @@ export type Database = {
           login_discord?: boolean | null
           meet_obligation?: boolean | null
           personal_statement?: string | null
+          quiz_passed?: boolean | null
+          quiz_score?: number | null
           ram_amount?: string | null
           sales_company?: string | null
           sales_experience?: boolean | null
@@ -248,6 +253,7 @@ export type Database = {
           start_date?: string | null
           supervisor_notes?: string | null
           system_settings?: string | null
+          training_video_watched?: boolean | null
           updated_at?: string | null
           user_id: string
         }
@@ -278,6 +284,8 @@ export type Database = {
           login_discord?: boolean | null
           meet_obligation?: boolean | null
           personal_statement?: string | null
+          quiz_passed?: boolean | null
+          quiz_score?: number | null
           ram_amount?: string | null
           sales_company?: string | null
           sales_experience?: boolean | null
@@ -292,6 +300,7 @@ export type Database = {
           start_date?: string | null
           supervisor_notes?: string | null
           system_settings?: string | null
+          training_video_watched?: boolean | null
           updated_at?: string | null
           user_id?: string
         }
@@ -345,6 +354,8 @@ export type Database = {
           login_discord: boolean | null
           meet_obligation: boolean | null
           personal_statement: string | null
+          quiz_passed: boolean | null
+          quiz_score: number | null
           ram_amount: string | null
           sales_company: string | null
           sales_experience: boolean | null
@@ -359,6 +370,7 @@ export type Database = {
           start_date: string | null
           supervisor_notes: string | null
           system_settings: string | null
+          training_video_watched: boolean | null
           updated_at: string | null
           user_id: string
         }[]

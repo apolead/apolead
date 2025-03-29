@@ -1,124 +1,160 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from './use-toast';
 
-export const useAuth = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isApproved, setIsApproved] = useState(true); // Default to true
-  const [userCredentials, setUserCredentials] = useState('agent');
-  const [user, setUser] = useState(null);
-  const navigate = useNavigate();
+interface AuthContextType {
+  user: any | null;
+  userProfile: any | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfile: (data: any) => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<any | null>(null);
+  const [userProfile, setUserProfile] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    let mounted = true;
-    let authSubscription = null;
-    
-    const initializeAuth = async () => {
-      // Set up the auth state listener first
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          console.log('Auth state changed:', event, session?.user?.email);
-          
-          if (!mounted) return;
-          
-          if (session) {
-            setUser(session.user);
-            setIsAuthenticated(true);
-            setIsApproved(true); // Always approve to ensure dashboard access
+    const getUser = async () => {
+      try {
+        setLoading(true);
+        
+        // Set up auth state listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            setUser(session?.user ?? null);
             
-            // Check if on login/signup page and redirect if needed
-            const currentPath = window.location.pathname;
-            if (currentPath === '/login' || currentPath === '/signup') {
-              // Redirect them to dashboard
-              if (userCredentials === 'supervisor') {
-                navigate('/supervisor');
+            if (session?.user) {
+              // Fetch user profile data
+              const { data: profile, error } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              if (error) {
+                console.error('Error fetching user profile:', error);
               } else {
-                navigate('/dashboard');
+                setUserProfile(profile);
               }
-            }
-            
-            setIsLoading(false);
-          } else {
-            // Not authenticated
-            setUser(null);
-            setIsAuthenticated(false);
-            setIsApproved(false);
-            setUserCredentials('agent');
-            setIsLoading(false);
-            
-            // Check if on protected route and redirect if needed
-            const currentPath = window.location.pathname;
-            if (currentPath.startsWith('/dashboard') || currentPath.startsWith('/supervisor')) {
-              navigate('/login');
+            } else {
+              setUserProfile(null);
             }
           }
-        }
-      );
-      
-      authSubscription = subscription;
-
-      // Then check for existing session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        setUser(session.user);
-        setIsAuthenticated(true);
-        setIsApproved(true); // Always approve to ensure dashboard access
+        );
         
-        // Check if on login/signup page and redirect if needed
-        const currentPath = window.location.pathname;
-        if (currentPath === '/login' || currentPath === '/signup') {
-          navigate('/dashboard');
+        // Check for current session
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Fetch user profile data
+          const { data: profile, error } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching user profile:', error);
+          } else {
+            setUserProfile(profile);
+          }
         }
-      } else {
-        // Not authenticated
-        setUser(null);
-        setIsAuthenticated(false);
-        setIsApproved(false);
-        setUserCredentials('agent');
-      }
-      
-      setIsLoading(false);
-    };
-    
-    initializeAuth();
-    
-    return () => {
-      mounted = false;
-      if (authSubscription) {
-        authSubscription.unsubscribe();
+        
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('Auth error:', error);
+      } finally {
+        setLoading(false);
       }
     };
-  }, [navigate, userCredentials]);
+    
+    getUser();
+  }, []);
 
-  const logout = async () => {
+  const login = async (email: string, password: string) => {
     try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out.",
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      navigate('/'); // Redirect to home page after logout
-    } catch (error) {
-      console.error('Error signing out:', error);
+      
+      if (error) throw error;
+    } catch (error: any) {
       toast({
-        title: "Logout failed",
-        description: "Failed to sign out. Please try again.",
+        title: "Login failed",
+        description: error.message || "Failed to log in",
         variant: "destructive",
       });
+      throw error;
     }
   };
 
-  return { 
-    isLoading, 
-    isAuthenticated, 
-    isApproved, 
-    userCredentials,
-    user,
-    logout
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Logout failed",
+        description: error.message || "An error occurred during logout",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
+
+  const updateProfile = async (data: any) => {
+    try {
+      if (!user) throw new Error("User not authenticated");
+      
+      const { error } = await supabase
+        .from('user_profiles')
+        .update(data)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setUserProfile(prev => ({
+        ...prev,
+        ...data
+      }));
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
+        description: error.message || "Failed to update profile",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, userProfile, loading, login, logout, updateProfile }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
