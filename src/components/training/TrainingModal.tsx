@@ -31,20 +31,22 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   
   useEffect(() => {
-    // Check if quiz state is already set in the database - use strict equality checks
+    if (!userProfile) return;
+    
+    // Check if quiz state is already set in the database - use triple equals to ensure type checking
     console.log("Training Modal - Current user profile:", userProfile);
     
-    if (userProfile?.quiz_passed === true) {
+    if (userProfile.quiz_passed === true) {
       console.log("User has passed the quiz", userProfile);
       setStep('result');
       setQuizPassed(true);
       setQuizScore(userProfile.quiz_score || 0);
-    } else if (userProfile?.quiz_passed === false) {
+    } else if (userProfile.quiz_passed === false) {
       console.log("User has failed the quiz", userProfile);
       setStep('result');
       setQuizPassed(false);
       setQuizScore(userProfile.quiz_score || 0);
-    } else if (userProfile?.training_video_watched === true) {
+    } else if (userProfile.training_video_watched === true) {
       console.log("User has watched the video but not completed quiz", userProfile);
       setStep('quiz');
     } else {
