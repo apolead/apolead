@@ -38,7 +38,12 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
         if (data) {
           setQuestions(data.map(q => ({
             ...q,
-            options: Array.isArray(q.options) ? q.options : JSON.parse(q.options)
+            // Properly handle the options parsing based on what we get from Supabase
+            options: Array.isArray(q.options) 
+              ? q.options 
+              : (typeof q.options === 'string' 
+                ? JSON.parse(q.options) 
+                : Object.values(q.options))
           })));
         }
       } catch (err) {
@@ -81,7 +86,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
   };
   
   const handleNext = () => {
-    if (!answers[currentQuestion.id] && answers[currentQuestion.id] !== 0) {
+    if (answers[currentQuestion.id] === undefined) {
       setError("Please select an answer before continuing.");
       return;
     }
@@ -182,15 +187,15 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
         <Button 
           type="button" 
           onClick={handleNext}
-          disabled={!(answers[currentQuestion.id] !== undefined)}
+          disabled={answers[currentQuestion.id] === undefined}
           className="px-6 text-white"
         >
           {isLastQuestion ? (
             'Submit Quiz'
           ) : (
             <>
-              Next
-              <ChevronRight className="ml-1 h-4 w-4" />
+              <span className="text-white">Next</span>
+              <ChevronRight className="ml-1 h-4 w-4 text-white" />
             </>
           )}
         </Button>
