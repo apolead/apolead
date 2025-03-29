@@ -7,6 +7,46 @@ interface TrainingVideoProps {
   onComplete: () => void;
 }
 
+// Define the YouTube Player API types
+interface YTPlayer {
+  destroy: () => void;
+  playVideo: () => void;
+  pauseVideo: () => void;
+  stopVideo: () => void;
+  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+  getCurrentTime: () => number;
+  getDuration: () => number;
+}
+
+interface YTPlayerOptions {
+  videoId: string;
+  playerVars?: {
+    autoplay?: number;
+    controls?: number;
+    disablekb?: number;
+    rel?: number;
+    fs?: number;
+    modestbranding?: number;
+    showinfo?: number;
+    origin?: string;
+  };
+  events?: {
+    onReady?: (event: any) => void;
+    onStateChange?: (event: { data: number }) => void;
+    onError?: (event: { data: number }) => void;
+  };
+}
+
+// Augment the window interface to include YouTube API
+declare global {
+  interface Window {
+    YT: {
+      Player: new (elementId: string, options: YTPlayerOptions) => YTPlayer;
+    };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
 const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [videoCompleted, setVideoCompleted] = useState(false);
@@ -19,12 +59,13 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const videoId = "WYJEoLDhI2I";
   
   // Create a ref to hold the YouTube player instance
-  const playerRef = React.useRef<YT.Player | null>(null);
+  const playerRef = React.useRef<YTPlayer | null>(null);
   
   // Function to load the YouTube IFrame API
   useEffect(() => {
     // Only load the script once
     if (window.YT) {
+      console.log("TrainingVideo: YouTube IFrame API already loaded");
       setPlayerReady(true);
       return;
     }
@@ -340,43 +381,5 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     </div>
   );
 };
-
-// Add TypeScript interface for YouTube IFrame API
-declare global {
-  interface Window {
-    YT: {
-      Player: new (
-        elementId: string,
-        options: {
-          videoId: string;
-          playerVars?: {
-            autoplay?: number;
-            controls?: number;
-            disablekb?: number;
-            rel?: number;
-            fs?: number;
-            modestbranding?: number;
-            showinfo?: number;
-            origin?: string;
-          };
-          events?: {
-            onReady?: (event: any) => void;
-            onStateChange?: (event: { data: number }) => void;
-            onError?: (event: { data: number }) => void;
-          };
-        }
-      ) => {
-        destroy: () => void;
-        playVideo: () => void;
-        pauseVideo: () => void;
-        stopVideo: () => void;
-        seekTo: (seconds: number, allowSeekAhead: boolean) => void;
-        getCurrentTime: () => number;
-        getDuration: () => number;
-      };
-    };
-    onYouTubeIframeAPIReady?: () => void;
-  }
-}
 
 export default TrainingVideo;
