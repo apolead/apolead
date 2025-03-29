@@ -94,9 +94,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error fetching user profile:', error);
       } else if (data) {
         console.log('User profile fetched successfully:', data);
-        setUserProfile(data);
+        
+        // Explicitly ensure boolean fields are properly typed
+        const formattedProfile = {
+          ...data,
+          quiz_passed: data.quiz_passed === null ? null : data.quiz_passed === true,
+          training_video_watched: data.training_video_watched === null ? null : data.training_video_watched === true
+        };
+        
+        setUserProfile(formattedProfile);
         // Cache the profile in localStorage
-        localStorage.setItem('userProfile', JSON.stringify(data));
+        localStorage.setItem('userProfile', JSON.stringify(formattedProfile));
+        console.log('User profile cached in localStorage:', formattedProfile);
       } else {
         console.log('No user profile found');
       }
