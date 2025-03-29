@@ -31,6 +31,8 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   
   useEffect(() => {
+    console.log("Training modal mounted, userProfile:", userProfile);
+    
     // If training is already completed (passed or failed), show result
     if (userProfile?.quiz_passed !== undefined && userProfile?.quiz_passed !== null) {
       setStep('result');
