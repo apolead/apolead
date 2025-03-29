@@ -25,7 +25,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
     // If video was already watched, go to quiz
     if (userProfile?.training_video_watched) {
       // If quiz was already taken and passed, show result
-      if (userProfile?.quiz_passed !== undefined) {
+      if (userProfile?.quiz_completed) {
         setStep('result');
         setQuizPassed(userProfile.quiz_passed);
         setQuizScore(userProfile.quiz_score || 0);
@@ -62,6 +62,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       // Update user profile with quiz results
       await updateProfile({
         quiz_passed: passed,
+        quiz_completed: true,
         quiz_score: score
       });
       
@@ -90,7 +91,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
           <h2 className="text-xl font-semibold flex items-center">
             {step === 'video' && 'Initial Training: Training Video'}
             {step === 'quiz' && 'Initial Training: Knowledge Quiz'}
-            {step === 'result' && `Quiz Result: ${quizPassed ? 'Passed' : 'Failed'}`}
+            {step === 'result' && `Training ${quizPassed ? 'Completed' : 'Failed'}`}
           </h2>
           <button 
             onClick={handleCloseModal}
