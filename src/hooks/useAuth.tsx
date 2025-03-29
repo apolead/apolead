@@ -35,10 +35,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
               const parsed = JSON.parse(cachedProfile);
               // Ensure boolean properties are correctly typed
-              if (parsed.quiz_passed === 'true') parsed.quiz_passed = true;
-              if (parsed.quiz_passed === 'false') parsed.quiz_passed = false;
-              if (parsed.training_video_watched === 'true') parsed.training_video_watched = true;
-              if (parsed.training_video_watched === 'false') parsed.training_video_watched = false;
+              if (typeof parsed.quiz_passed === 'string') {
+                parsed.quiz_passed = parsed.quiz_passed === 'true';
+              }
+              if (typeof parsed.training_video_watched === 'string') {
+                parsed.training_video_watched = parsed.training_video_watched === 'true';
+              }
               
               console.log('Using cached profile while fetching from DB:', parsed);
               setUserProfile(parsed);
@@ -75,10 +77,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
               const parsed = JSON.parse(cachedProfile);
               // Ensure boolean properties are correctly typed
-              if (parsed.quiz_passed === 'true') parsed.quiz_passed = true;
-              if (parsed.quiz_passed === 'false') parsed.quiz_passed = false;
-              if (parsed.training_video_watched === 'true') parsed.training_video_watched = true;
-              if (parsed.training_video_watched === 'false') parsed.training_video_watched = false;
+              if (typeof parsed.quiz_passed === 'string') {
+                parsed.quiz_passed = parsed.quiz_passed === 'true';
+              }
+              if (typeof parsed.training_video_watched === 'string') {
+                parsed.training_video_watched = parsed.training_video_watched === 'true';
+              }
               
               console.log('Using cached profile while fetching from DB:', parsed);
               setUserProfile(parsed);
@@ -122,14 +126,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('User profile fetched successfully:', data);
         
         // Ensure boolean values are properly typed
-        if (data.quiz_passed === 'true') data.quiz_passed = true;
-        if (data.quiz_passed === 'false') data.quiz_passed = false;
-        if (data.training_video_watched === 'true') data.training_video_watched = true;
-        if (data.training_video_watched === 'false') data.training_video_watched = false;
+        const typedData = { ...data };
+        if (typeof typedData.quiz_passed === 'string') {
+          typedData.quiz_passed = typedData.quiz_passed === 'true';
+        }
+        if (typeof typedData.training_video_watched === 'string') {
+          typedData.training_video_watched = typedData.training_video_watched === 'true';
+        }
         
-        setUserProfile(data);
+        setUserProfile(typedData);
         // Cache the profile in localStorage
-        localStorage.setItem('userProfile', JSON.stringify(data));
+        localStorage.setItem('userProfile', JSON.stringify(typedData));
       } else {
         console.log('No user profile found');
       }
