@@ -1,7 +1,5 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface TrainingVideoProps {
@@ -20,8 +18,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
 
-  // Use local video path as primary source
-  const videoSrc = '/public/training_video_1.mp4';
+  const videoSrc = '/training_video_1.mp4';
   
   useEffect(() => {
     let mounted = true;
@@ -36,7 +33,6 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
         
         console.log("TrainingVideo: Initializing video with source:", videoSrc);
         
-        // Simply set the video source to the local file
         setTimeout(() => {
           if (mounted) {
             setIsLoading(false);
@@ -59,14 +55,12 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     };
   }, []);
 
-  // Track when the video metadata is loaded to get duration
   useEffect(() => {
     const videoElement = videoRef.current;
     
     const handleMetadataLoaded = () => {
       if (videoElement) {
         console.log("TrainingVideo: Video metadata loaded, duration:", videoElement.duration);
-        // Set initial allowed time to 5% of the video (can't skip beyond this)
         setMaxAllowedTime(videoElement.duration * 0.05);
       }
     };
@@ -116,13 +110,10 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
       const calculatedProgress = (currentTime / duration) * 100;
       setProgress(calculatedProgress);
       
-      // As the user watches, gradually increase how far they can skip ahead
-      // This prevents skipping to the end but allows small seeking
       if (currentTime > maxAllowedTime) {
-        setMaxAllowedTime(currentTime + (duration * 0.05)); // Allow skipping 5% ahead of current position
+        setMaxAllowedTime(currentTime + (duration * 0.05));
       }
       
-      // Mark as completed at 95% to account for buffering issues
       if (calculatedProgress >= 95 && !videoCompleted) {
         console.log("TrainingVideo: Video reached 95% completion");
         setVideoCompleted(true);
@@ -131,7 +122,6 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     }
   };
   
-  // Prevent seeking ahead beyond what they've watched
   const handleSeeking = () => {
     if (videoRef.current) {
       if (videoRef.current.currentTime > maxAllowedTime) {
@@ -177,23 +167,19 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     onComplete();
   };
 
-  // Attempt to reload the video if there's an error
   const handleRetry = () => {
     console.log("TrainingVideo: Retrying video load");
     setVideoError(null);
     
-    // Reset to initial loading state and restart the process
     setIsLoading(true);
     
     setTimeout(() => {
-      // Force reload the video element
       if (videoRef.current) {
         videoRef.current.load();
       }
       
       setIsLoading(false);
       
-      // Try to play after a short delay
       setTimeout(() => {
         handlePlay();
       }, 500);
