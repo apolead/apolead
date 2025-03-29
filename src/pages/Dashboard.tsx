@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -787,4 +788,356 @@ const Dashboard = () => {
               <i className="fas fa-graduation-cap"></i>
             </div>
             <div className="stat-info">
-              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom:
+              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>Step 1</h3>
+              <p style={{ color: '#64748b', marginBottom: '5px' }}>Complete Training</p>
+              <button 
+                onClick={startTraining}
+                style={{ 
+                  backgroundColor: userProfile?.quiz_passed ? '#10b981' : '#4f46e5',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '6px 15px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                {userProfile?.quiz_passed ? (
+                  <>
+                    <i className="fas fa-check-circle" style={{ marginRight: '8px' }}></i>
+                    Completed
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-play" style={{ marginRight: '8px' }}></i>
+                    Start Training
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+          
+          <div className="stat-card" style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '25px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+            transition: 'all 0.3s ease',
+            position: 'relative',
+            overflow: 'hidden',
+            opacity: !userProfile?.quiz_passed ? 0.5 : 1,
+            cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer'
+          }}>
+            <div className="stat-icon" style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: '20px',
+              background: 'linear-gradient(135deg, rgba(249,115,22,0.1) 0%, rgba(234,88,12,0.1) 100%)',
+              color: '#f97316',
+              fontSize: '24px'
+            }}>
+              <i className="fas fa-file-signature"></i>
+            </div>
+            <div className="stat-info">
+              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>Step 2</h3>
+              <p style={{ color: '#64748b', marginBottom: '5px' }}>Complete Profile</p>
+              <button 
+                disabled={!userProfile?.quiz_passed}
+                style={{ 
+                  backgroundColor: '#f97316',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '6px 15px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  opacity: !userProfile?.quiz_passed ? 0.7 : 1
+                }}
+              >
+                <i className="fas fa-edit" style={{ marginRight: '8px' }}></i>
+                Update Profile
+              </button>
+              {!userProfile?.quiz_passed && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'transparent',
+                  cursor: 'not-allowed',
+                  zIndex: 5
+                }}></div>
+              )}
+            </div>
+          </div>
+          
+          <div className="stat-card" style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '25px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+            transition: 'all 0.3s ease',
+            position: 'relative',
+            overflow: 'hidden',
+            opacity: !userProfile?.quiz_passed ? 0.5 : 1,
+            cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer'
+          }}>
+            <div className="stat-icon" style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: '20px',
+              background: 'linear-gradient(135deg, rgba(14,165,233,0.1) 0%, rgba(6,182,212,0.1) 100%)',
+              color: '#0ea5e9',
+              fontSize: '24px'
+            }}>
+              <i className="fas fa-university"></i>
+            </div>
+            <div className="stat-info">
+              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>Step 3</h3>
+              <p style={{ color: '#64748b', marginBottom: '5px' }}>Banking Details</p>
+              <button 
+                disabled={!userProfile?.quiz_passed}
+                style={{ 
+                  backgroundColor: '#0ea5e9',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '6px 15px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  opacity: !userProfile?.quiz_passed ? 0.7 : 1
+                }}
+              >
+                <i className="fas fa-plus" style={{ marginRight: '8px' }}></i>
+                Add Bank Account
+              </button>
+              {!userProfile?.quiz_passed && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'transparent',
+                  cursor: 'not-allowed',
+                  zIndex: 5
+                }}></div>
+              )}
+            </div>
+          </div>
+          
+          <div className="stat-card" style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '25px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+            transition: 'all 0.3s ease',
+            position: 'relative',
+            overflow: 'hidden',
+            opacity: !userProfile?.quiz_passed ? 0.5 : 1,
+            cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer'
+          }}>
+            <div className="stat-icon" style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: '20px',
+              background: 'linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(168,85,247,0.1) 100%)',
+              color: '#8b5cf6',
+              fontSize: '24px'
+            }}>
+              <i className="fas fa-handshake"></i>
+            </div>
+            <div className="stat-info">
+              <h3 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px', fontWeight: 600 }}>Step 4</h3>
+              <p style={{ color: '#64748b', marginBottom: '5px' }}>Sign Contract</p>
+              <button 
+                disabled={!userProfile?.quiz_passed}
+                style={{ 
+                  backgroundColor: '#8b5cf6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '6px 15px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: !userProfile?.quiz_passed ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  opacity: !userProfile?.quiz_passed ? 0.7 : 1
+                }}
+              >
+                <i className="fas fa-file-signature" style={{ marginRight: '8px' }}></i>
+                Review Contract
+              </button>
+              {!userProfile?.quiz_passed && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'transparent',
+                  cursor: 'not-allowed',
+                  zIndex: 5
+                }}></div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {/* Progress Section */}
+        <div className="progress-section" style={{
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          padding: '25px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+          marginBottom: '30px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '20px', color: '#1e293b', fontWeight: 600 }}>Onboarding Progress</h3>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ fontSize: '16px', fontWeight: 600, color: '#4f46e5' }}>{steps}/4 Steps</div>
+              <div style={{ marginLeft: '15px', fontSize: '24px', fontWeight: 600, color: '#1e293b' }}>{Math.round(percentage)}%</div>
+            </div>
+          </div>
+          
+          <div className="progress-bar-container" style={{ width: '100%', backgroundColor: '#f1f5f9', height: '10px', borderRadius: '5px', overflow: 'hidden' }}>
+            <div style={{ width: `${percentage}%`, height: '100%', background: 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)', borderRadius: '5px', transition: 'width 0.5s ease' }}></div>
+          </div>
+        </div>
+        
+        {/* Guide Section */}
+        <div className="guide-section" style={{
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          padding: '25px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+          marginBottom: '30px'
+        }}>
+          <h3 style={{ fontSize: '20px', color: '#1e293b', fontWeight: 600, marginBottom: '15px' }}>Getting Started Guide</h3>
+          
+          <div className="guide-steps" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="guide-step" style={{ display: 'flex' }}>
+              <div className="step-number" style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                color: '#4f46e5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 600,
+                marginRight: '15px',
+                flexShrink: 0
+              }}>1</div>
+              <div className="step-content">
+                <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#1e293b', marginBottom: '5px' }}>Complete the training</h4>
+                <p style={{ color: '#64748b', fontSize: '14px' }}>Watch the training video and pass the quiz to understand how our platform works and what's expected from you.</p>
+              </div>
+            </div>
+            
+            <div className="guide-step" style={{ display: 'flex' }}>
+              <div className="step-number" style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                color: '#f97316',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 600,
+                marginRight: '15px',
+                flexShrink: 0
+              }}>2</div>
+              <div className="step-content">
+                <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#1e293b', marginBottom: '5px' }}>Complete your profile</h4>
+                <p style={{ color: '#64748b', fontSize: '14px' }}>Add all required personal information, including contact details, experience, and a professional photo.</p>
+              </div>
+            </div>
+            
+            <div className="guide-step" style={{ display: 'flex' }}>
+              <div className="step-number" style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                color: '#0ea5e9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 600,
+                marginRight: '15px',
+                flexShrink: 0
+              }}>3</div>
+              <div className="step-content">
+                <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#1e293b', marginBottom: '5px' }}>Add your banking details</h4>
+                <p style={{ color: '#64748b', fontSize: '14px' }}>Set up your payment information to ensure you get paid quickly for your completed tasks.</p>
+              </div>
+            </div>
+            
+            <div className="guide-step" style={{ display: 'flex' }}>
+              <div className="step-number" style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                color: '#8b5cf6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 600,
+                marginRight: '15px',
+                flexShrink: 0
+              }}>4</div>
+              <div className="step-content">
+                <h4 style={{ fontSize: '16px', fontWeight: 600, color: '#1e293b', marginBottom: '5px' }}>Review and sign the contract</h4>
+                <p style={{ color: '#64748b', fontSize: '14px' }}>Read and digitally sign the contract with all terms and conditions for working with our platform.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Training Modal */}
+      {showTrainingModal && (
+        <TrainingModal onClose={closeTrainingModal} onComplete={handleTrainingComplete} />
+      )}
+    </div>
+  );
+};
+
+export default Dashboard;
