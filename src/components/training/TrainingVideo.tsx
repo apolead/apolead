@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface TrainingVideoProps {
@@ -15,23 +16,44 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState("Preparing training video...");
   const [maxAllowedTime, setMaxAllowedTime] = useState(0);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
 
-  const videoSrc = '/training_video_1.mp4';
+  const bucketName = 'trainingvideo';
+  const filePath = 'training_one.mp4';
   
   useEffect(() => {
     let mounted = true;
     
-    async function initializeVideo() {
+    async function fetchVideoUrl() {
       if (!mounted) return;
       
       try {
         setIsLoading(true);
         setVideoError(null);
-        setLoadingMessage("Loading training video...");
+        setLoadingMessage("Loading training video from Supabase...");
         
-        console.log("TrainingVideo: Initializing video with source:", videoSrc);
+        console.log("TrainingVideo: Attempting to fetch video URL from Supabase storage");
+        console.log(`TrainingVideo: Bucket: ${bucketName}, File path: ${filePath}`);
+        
+        const { data, error } = await supabase
+          .storage
+          .from(bucketName)
+          .createSignedUrl(filePath, 60 * 60);
+        
+        if (error) {
+          console.error("TrainingVideo: Error fetching signed URL:", error);
+          throw error;
+        }
+        
+        if (!data?.signedUrl) {
+          console.error("TrainingVideo: No signed URL returned from Supabase");
+          throw new Error("Could not generate a valid URL for the training video");
+        }
+        
+        console.log("TrainingVideo: Successfully obtained signed URL:", data.signedUrl);
+        setVideoUrl(data.signedUrl);
         
         setTimeout(() => {
           if (mounted) {
@@ -42,18 +64,18 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
         console.error("TrainingVideo: Exception in video initialization:", err);
         
         if (mounted) {
-          setVideoError("There was an error loading the video. Please try refreshing the page.");
+          setVideoError("There was an error loading the video. Please try refreshing the page or contact support.");
           setIsLoading(false);
         }
       }
     }
 
-    initializeVideo();
+    fetchVideoUrl();
     
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [bucketName, filePath]);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -77,8 +99,8 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   }, []);
 
   const handlePlay = () => {
-    if (videoRef.current) {
-      console.log("TrainingVideo: Attempting to play video from URL:", videoSrc);
+    if (videoRef.current && videoUrl) {
+      console.log("TrainingVideo: Attempting to play video from URL:", videoUrl);
       const playPromise = videoRef.current.play();
       
       if (playPromise !== undefined) {
@@ -89,10 +111,16 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
           })
           .catch(error => {
             console.error("TrainingVideo: Error playing video:", error);
-            setVideoError("There was an error playing the video. Please try again.");
+            setVideoError(`There was an error playing the video: ${error.message}. Please try again.`);
             setIsPlaying(false);
           });
       }
+    } else {
+      console.error("TrainingVideo: Video reference or URL is missing", {
+        videoRefExists: !!videoRef.current,
+        videoUrl
+      });
+      setVideoError("Video cannot be played. Please refresh the page.");
     }
   };
 
@@ -141,8 +169,39 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   };
 
   const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-    console.error("TrainingVideo: Video error event:", e);
-    setVideoError("There was an error with the video. Please refresh the page or contact support.");
+    const target = e.target as HTMLVideoElement;
+    console.error("TrainingVideo: Video error event:", {
+      error: e,
+      videoElement: target,
+      errorCode: target.error?.code,
+      errorMessage: target.error?.message,
+      networkState: target.networkState,
+      readyState: target.readyState,
+      currentSrc: target.currentSrc
+    });
+    
+    let errorMessage = "There was an error with the video. Please refresh the page or contact support.";
+    
+    if (target.error) {
+      switch (target.error.code) {
+        case 1: // MEDIA_ERR_ABORTED
+          errorMessage = "The video playback was aborted. Please try again.";
+          break;
+        case 2: // MEDIA_ERR_NETWORK
+          errorMessage = "A network error occurred while loading the video. Please check your connection.";
+          break;
+        case 3: // MEDIA_ERR_DECODE
+          errorMessage = "The video could not be decoded. Please try a different browser.";
+          break;
+        case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
+          errorMessage = "The video format is not supported by your browser.";
+          break;
+        default:
+          errorMessage = `Video error: ${target.error.message}`;
+      }
+    }
+    
+    setVideoError(errorMessage);
   };
 
   const markVideoAsWatched = async () => {
@@ -167,23 +226,45 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     onComplete();
   };
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     console.log("TrainingVideo: Retrying video load");
     setVideoError(null);
-    
     setIsLoading(true);
     
-    setTimeout(() => {
-      if (videoRef.current) {
-        videoRef.current.load();
+    try {
+      const { data, error } = await supabase
+        .storage
+        .from(bucketName)
+        .createSignedUrl(filePath, 60 * 60);
+        
+      if (error) {
+        console.error("TrainingVideo: Error refreshing signed URL:", error);
+        throw error;
       }
       
-      setIsLoading(false);
+      if (!data?.signedUrl) {
+        throw new Error("Could not generate a valid URL for the training video");
+      }
+      
+      console.log("TrainingVideo: Successfully refreshed signed URL:", data.signedUrl);
+      setVideoUrl(data.signedUrl);
       
       setTimeout(() => {
-        handlePlay();
-      }, 500);
-    }, 1000);
+        if (videoRef.current) {
+          videoRef.current.load();
+        }
+        
+        setIsLoading(false);
+        
+        setTimeout(() => {
+          handlePlay();
+        }, 500);
+      }, 1000);
+    } catch (err) {
+      console.error("TrainingVideo: Exception in video retry:", err);
+      setVideoError("There was an error reloading the video. Please try refreshing the page.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -253,7 +334,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
         ) : (
           <video 
             ref={videoRef}
-            src={videoSrc}
+            src={videoUrl || undefined}
             preload="auto"
             playsInline
             style={{ 
@@ -270,7 +351,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
           </video>
         )}
         
-        {!isLoading && !isPlaying && !videoCompleted && (
+        {!isLoading && !isPlaying && !videoCompleted && videoUrl && (
           <div className="video-overlay" style={{
             position: 'absolute',
             top: 0,
