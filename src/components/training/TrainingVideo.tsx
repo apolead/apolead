@@ -23,69 +23,27 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     async function fetchVideoUrl() {
       try {
         setIsLoading(true);
-        
-        // First attempt to check if the file exists in the bucket
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from('trainingvideo')
-          .list();
-          
-        if (fileError) {
-          console.error("Error listing bucket contents:", fileError);
-          setVideoError("There was an error accessing training videos. Please contact support.");
-          setIsLoading(false);
-          return;
-        }
-        
-        console.log("Files in bucket:", fileData);
-        
-        // Use the correct file name if found, otherwise use default
-        const videoFileName = fileData?.find(file => file.name === '2025-03-19-14-24-06.mp4')?.name || '2025-03-19-14-24-06.mp4';
-        
-        console.log("Attempting to fetch video file:", videoFileName);
-        
-        // Try to get signed URL for the video
+        // Use the correct bucket name "trainingvideo" and file name "2025-03-19-14-24-06.mp4" from your screenshot
         const { data, error } = await supabase.storage
           .from('trainingvideo')
-          .createSignedUrl(videoFileName, 3600); // URL valid for 1 hour
+          .createSignedUrl('2025-03-19-14-24-06.mp4', 3600); // URL valid for 1 hour
         
         if (error) {
           console.error("Error fetching video:", error);
-          
-          // Fallback to public URL as a second attempt
-          const { data: publicUrlData } = supabase.storage
-            .from('trainingvideo')
-            .getPublicUrl(videoFileName);
-            
-          if (publicUrlData?.publicUrl) {
-            console.log("Using public URL instead:", publicUrlData.publicUrl);
-            setVideoUrl(publicUrlData.publicUrl);
-            setIsLoading(false);
-            return;
-          }
-          
-          // Fallback to local public folder as last resort
-          console.log("Trying local video file as fallback");
-          setVideoUrl('/training_video_1.mp4');
+          setVideoError("There was an error loading the training video. Please try again later.");
           setIsLoading(false);
           return;
         }
 
-        if (data?.signedUrl) {
+        if (data) {
           console.log("Video URL fetched successfully:", data.signedUrl);
           setVideoUrl(data.signedUrl);
-          setIsLoading(false);
-        } else {
-          console.error("No URL returned from Supabase");
-          setVideoError("Could not retrieve the training video. Please try again later.");
           setIsLoading(false);
         }
       } catch (err) {
         console.error("Error in video fetch:", err);
         setVideoError("There was an error loading the training video. Please try again later.");
         setIsLoading(false);
-        
-        // Fallback to local file
-        setVideoUrl('/training_video_1.mp4');
       }
     }
 
@@ -133,14 +91,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
 
   const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
     console.error("Video error:", e);
-    
-    // Try local file as fallback
-    if (videoUrl && !videoUrl.includes('/training_video_1.mp4')) {
-      console.log("Trying local video file as fallback after error");
-      setVideoUrl('/training_video_1.mp4');
-    } else {
-      setVideoError("There was an error with the video. Please refresh the page or contact support.");
-    }
+    setVideoError("There was an error with the video. Please refresh the page or contact support.");
     setIsLoading(false);
   };
 
