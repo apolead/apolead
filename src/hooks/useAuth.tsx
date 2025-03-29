@@ -40,15 +40,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Explicitly ensure boolean fields are properly typed
         const formattedProfile = {
           ...data,
-          quiz_passed: data.quiz_passed === null ? null : Boolean(data.quiz_passed),
-          training_video_watched: data.training_video_watched === null ? null : Boolean(data.training_video_watched)
+          quiz_passed: data.quiz_passed === null ? null : data.quiz_passed === true,
+          training_video_watched: data.training_video_watched === null ? null : data.training_video_watched === true
         };
         
         // Ensure quiz_passed is explicitly handled as boolean
         if (formattedProfile.quiz_passed !== undefined) {
           // Force to boolean if it somehow became a string
-          if (typeof formattedProfile.quiz_passed === 'string' && formattedProfile.quiz_passed === 'true') formattedProfile.quiz_passed = true;
-          if (typeof formattedProfile.quiz_passed === 'string' && formattedProfile.quiz_passed === 'false') formattedProfile.quiz_passed = false;
+          if (formattedProfile.quiz_passed === 'true') formattedProfile.quiz_passed = true;
+          if (formattedProfile.quiz_passed === 'false') formattedProfile.quiz_passed = false;
         }
         
         console.log('Formatted profile with boolean conversion:', formattedProfile);
