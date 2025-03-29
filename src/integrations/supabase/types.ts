@@ -394,6 +394,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_user_profile: {
+        Args: {
+          p_user_id: string
+          p_updates: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "agent" | "supervisor" | "admin"
