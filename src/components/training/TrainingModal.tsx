@@ -78,7 +78,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
     }
   };
   
-  const handleQuizComplete = async (score: number, passed: boolean) => {
+  const handleQuizComplete = async (passed: boolean, score: number) => {
     console.log(`Quiz completed with score ${score}, passed: ${passed}`);
     
     if (!user) return;
