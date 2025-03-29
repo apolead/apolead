@@ -21,8 +21,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
   global: {
     fetch: (...args) => {
       // Fix: Explicitly type the arguments and properly pass them to fetch
-      const [url, options, ...rest] = args;
-      return fetch(url, options).catch(err => {
+      return fetch(...args).catch(err => {
         console.error('Supabase fetch error:', err);
         throw err;
       });

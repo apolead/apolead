@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,28 +15,40 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const [videoCompleted, setVideoCompleted] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     async function fetchVideoUrl() {
+      setIsLoading(true);
       try {
+        console.log("Attempting to fetch video from Supabase...");
+        
+        // Try to get a signed URL for the video
         const { data, error } = await supabase.storage
-          .from('training-videos')
-          .createSignedUrl('training_video_1.mp4', 3600); // URL valid for 1 hour
+          .from('trainingvideo')
+          .createSignedUrl('training_one.mp4', 3600); // URL valid for 1 hour
         
         if (error) {
-          console.error("Error fetching video:", error);
-          setVideoError("There was an error loading the training video. Please try again later.");
-          return;
-        }
-
-        if (data) {
+          console.error("Error creating signed URL:", error);
+          
+          // Fallback to public URL if signed URL fails
+          const publicUrl = supabase.storage
+            .from('trainingvideo')
+            .getPublicUrl('training_one.mp4').data.publicUrl;
+          
+          console.log("Attempting fallback to public URL:", publicUrl);
+          setVideoUrl(publicUrl);
+        } else if (data) {
+          console.log("Successfully created signed URL");
           setVideoUrl(data.signedUrl);
         }
       } catch (err) {
-        console.error("Error in video fetch:", err);
+        console.error("Exception in video fetch:", err);
         setVideoError("There was an error loading the training video. Please try again later.");
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -82,7 +95,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   };
 
   const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-    console.error("Video error:", e);
+    console.error("Video error event:", e);
     setVideoError("There was an error with the video. Please refresh the page or contact support.");
   };
 
@@ -129,7 +142,19 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
           </div>
         )}
         
-        {videoUrl ? (
+        {isLoading ? (
+          <div style={{
+            width: '100%',
+            height: '300px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f9fafb',
+            borderRadius: '12px'
+          }}>
+            <div className="loading">Loading video...</div>
+          </div>
+        ) : videoUrl ? (
           <video 
             ref={videoRef}
             preload="auto"
@@ -146,7 +171,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
             <source src={videoUrl} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
-        ) : !videoError && (
+        ) : (
           <div style={{
             width: '100%',
             height: '300px',
@@ -156,11 +181,11 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
             backgroundColor: '#f9fafb',
             borderRadius: '12px'
           }}>
-            <div className="loading">Loading video...</div>
+            <div className="error">Failed to load video. Please try again later.</div>
           </div>
         )}
         
-        {!isPlaying && !videoCompleted && (
+        {videoUrl && !isPlaying && !videoCompleted && (
           <div className="video-overlay" style={{
             position: 'absolute',
             top: 0,
