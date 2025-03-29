@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -117,7 +116,6 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
     
     fetchQuestions();
     
-    // Reset answers every time the quiz is opened
     setAnswers({});
     setCurrentQuestionIndex(0);
     console.log('Initializing quiz with empty answers');
