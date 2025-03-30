@@ -66,7 +66,29 @@ const PublicRoute = ({ children }) => {
 
 // Protected route for supervisor access
 const SupervisorRoute = ({ children }) => {
-  return <AuthRoute>{children}</AuthRoute>;
+  const { user, userProfile, loading } = useAuth();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Only redirect after we've checked auth state and loaded the user profile
+    if (!loading) {
+      // If not authenticated, redirect to login
+      if (!user) {
+        navigate('/login', { replace: true });
+      } 
+      // If authenticated but not a supervisor, redirect to dashboard
+      else if (userProfile && userProfile.credentials !== 'supervisor') {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [user, userProfile, loading, navigate]);
+  
+  if (loading || !userProfile) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  // Only render if user is authenticated and has supervisor credentials
+  return (user && userProfile && userProfile.credentials === 'supervisor') ? children : null;
 };
 
 // Auth wrapper that includes the router to make hooks available
