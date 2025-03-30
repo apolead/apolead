@@ -73,6 +73,8 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Create a ref for interval cleanup
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Create a ref for the completeButton 
+  const completeButtonRef = useRef<HTMLElement | null>(null);
   
   // Check if component is unmounted
   useEffect(() => {
@@ -84,6 +86,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
       
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
       }
       
       // Clean up player if it exists
@@ -99,6 +102,12 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
       // Remove YouTube API callback
       if (window.onYouTubeIframeAPIReady) {
         window.onYouTubeIframeAPIReady = undefined;
+      }
+      
+      // Safely remove the complete button if it exists
+      if (completeButtonRef.current && completeButtonRef.current.parentNode) {
+        completeButtonRef.current.parentNode.removeChild(completeButtonRef.current);
+        completeButtonRef.current = null;
       }
     };
   }, []);
@@ -166,7 +175,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   
   // Initialize player when API is loaded
   useEffect(() => {
-    if (!apiLoaded) {
+    if (!apiLoaded || !isMountedRef.current) {
       return;
     }
     
@@ -192,6 +201,8 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   
   const initializeYouTubePlayer = () => {
     try {
+      if (!isMountedRef.current) return;
+      
       console.log("TrainingVideo: Creating YouTube player");
       
       // First check if we already have a container, if not, fallback
@@ -205,23 +216,23 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
       
       // We need to make sure there's a div for the player to attach to
       let playerContainer = document.getElementById('youtube-player');
-      if (!playerContainer) {
+      
+      // Check if the element already exists and if it doesn't belong to our container
+      if (playerContainer && containerRef.current && !containerRef.current.contains(playerContainer)) {
+        // If it exists elsewhere, don't use it. Create a new one with a unique ID
+        playerContainer = null;
+      }
+      
+      if (!playerContainer && containerRef.current) {
         console.log("TrainingVideo: Creating player container");
         playerContainer = document.createElement('div');
         playerContainer.id = 'youtube-player';
         playerContainer.style.width = '100%';
         playerContainer.style.height = '315px';
         
-        // Make sure containerRef.current exists
-        if (containerRef.current) {
-          containerRef.current.innerHTML = ''; // Clear any existing content
-          containerRef.current.appendChild(playerContainer);
-        } else {
-          // If containerRef still isn't available, use fallback
-          console.error("TrainingVideo: Container ref still not available");
-          useFallbackIframe();
-          return;
-        }
+        // Clear any existing content
+        containerRef.current.innerHTML = '';
+        containerRef.current.appendChild(playerContainer);
       }
       
       console.log("TrainingVideo: Creating YouTube player with video ID:", videoId);
@@ -234,6 +245,8 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
         useFallbackIframe();
         return;
       }
+      
+      if (!isMountedRef.current) return;
       
       // Create the player instance
       playerRef.current = new window.YT.Player('youtube-player', {
@@ -250,9 +263,9 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
         },
         events: {
           onReady: (event) => {
-            console.log("TrainingVideo: Player ready event received");
             if (!isMountedRef.current) return;
             
+            console.log("TrainingVideo: Player ready event received");
             setPlayerReady(true);
             setIsLoading(false);
             
@@ -405,6 +418,12 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     setVideoError(null);
     setIsLoading(true);
     
+    // Clean up the complete button if it exists
+    if (completeButtonRef.current && completeButtonRef.current.parentNode) {
+      completeButtonRef.current.parentNode.removeChild(completeButtonRef.current);
+      completeButtonRef.current = null;
+    }
+    
     // Destroy and clean up the player if it exists
     if (playerRef.current) {
       try {
@@ -426,6 +445,8 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
 
   // Function to use a direct iframe as fallback
   const useFallbackIframe = () => {
+    if (!isMountedRef.current) return;
+    
     console.log("TrainingVideo: Using fallback iframe");
     
     if (!containerRef.current) {
@@ -460,20 +481,29 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     setTimeout(() => {
       if (!containerRef.current || !isMountedRef.current) return;
       
+      // If we already have created a button, don't create another one
+      if (completeButtonRef.current) return;
+      
+      const buttonContainer = document.createElement('div');
+      buttonContainer.style.textAlign = 'center';
+      buttonContainer.style.marginTop = '15px';
+      
       const completeButton = document.createElement('button');
       completeButton.innerText = "Mark Video as Watched";
       completeButton.className = "bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors";
-      completeButton.style.marginTop = '15px';
+      
+      // Store reference to the button container so we can safely remove it
+      completeButtonRef.current = buttonContainer;
       
       completeButton.onclick = () => {
+        if (!isMountedRef.current) return;
         setVideoCompleted(true);
         markVideoAsWatched();
       };
       
-      const buttonContainer = document.createElement('div');
-      buttonContainer.style.textAlign = 'center';
       buttonContainer.appendChild(completeButton);
       
+      // Find a safe parent to add the button to
       if (containerRef.current.parentNode) {
         containerRef.current.parentNode.appendChild(buttonContainer);
       }
@@ -482,6 +512,8 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
 
   // Insert a direct iframe as fallback if player doesn't initialize after 10 seconds
   useEffect(() => {
+    if (!isMountedRef.current) return;
+    
     if (isLoading && !videoError) {
       const fallbackTimer = setTimeout(() => {
         if (isLoading && !playerReady && isMountedRef.current) {
