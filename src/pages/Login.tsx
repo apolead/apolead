@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,8 +19,16 @@ const Login = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        // If already logged in, redirect to dashboard
-        navigate('/dashboard');
+        // If already logged in, check credentials and redirect accordingly
+        const { data } = await supabase.functions.invoke('get_user_credentials', {
+          body: { user_id: session.user.id }
+        });
+        
+        if (data === 'supervisor') {
+          navigate('/supervisor');
+        } else {
+          navigate('/dashboard');
+        }
       }
     };
     
@@ -69,8 +78,18 @@ const Login = () => {
         description: "Welcome back!"
       });
 
-      // Simplified redirect - always go to dashboard
-      navigate('/dashboard');
+      // Check user credentials and redirect accordingly
+      const credentialResponse = await supabase.functions.invoke('get_user_credentials', {
+        body: { user_id: data.user.id }
+      });
+      
+      console.log('User credentials:', credentialResponse.data);
+      
+      if (credentialResponse.data === 'supervisor') {
+        navigate('/supervisor');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Login error:', error);
       toast({
