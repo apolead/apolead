@@ -33,25 +33,9 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   useEffect(() => {
     if (!userProfile) return;
     
-    console.group("🎓 TRAINING MODAL - INITIALIZATION");
     console.log("Training Modal - Initializing from user profile:", userProfile);
     console.log("quiz_passed type:", typeof userProfile.quiz_passed, "value:", userProfile.quiz_passed);
     console.log("training_video_watched type:", typeof userProfile.training_video_watched, "value:", userProfile.training_video_watched);
-    
-    // Debug boolean equality checks explicitly
-    console.log("BOOLEAN EQUALITY CHECKS:");
-    console.log("quiz_passed === true:", userProfile.quiz_passed === true);
-    console.log("quiz_passed === false:", userProfile.quiz_passed === false);
-    console.log("quiz_passed == true:", userProfile.quiz_passed == true);
-    console.log("quiz_passed == false:", userProfile.quiz_passed == false);
-    console.log("!!quiz_passed:", !!userProfile.quiz_passed);
-    
-    console.log("training_video_watched === true:", userProfile.training_video_watched === true);
-    console.log("training_video_watched === false:", userProfile.training_video_watched === false);
-    console.log("training_video_watched == true:", userProfile.training_video_watched == true);
-    console.log("training_video_watched == false:", userProfile.training_video_watched == false);
-    console.log("!!training_video_watched:", !!userProfile.training_video_watched);
-    console.groupEnd();
     
     // Ensure we're working with actual boolean values (not strings or numbers)
     const quizPassedValue = userProfile.quiz_passed === true;
@@ -63,8 +47,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       quizFailedValue,
       videoWatchedValue
     });
-    
-    console.log("Setting state based on quiz status...");
     
     if (quizPassedValue) {
       console.log("User has passed the quiz");
@@ -83,18 +65,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       console.log("User has not started training yet");
       setStep('video');
     }
-    
-    console.log("Final state after initialization:", {
-      step,
-      quizPassed,
-      quizScore
-    });
   }, [userProfile]);
-  
-  // Helper function to handle modal closing safely
-  const handleCloseModal = () => {
-    onClose();
-  };
   
   const handleVideoComplete = async () => {
     try {
@@ -114,37 +85,31 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   
   const handleQuizComplete = async (passed: boolean, score: number) => {
     try {
-      console.group("📝 QUIZ COMPLETION");
       console.log("Quiz completed. Passed:", passed, "Score:", score);
       
       setQuizPassed(passed);
       setQuizScore(score);
-      
-      console.log("Updating profile with quiz results:", {
-        quiz_passed: passed,
-        quiz_score: score
-      });
       
       await updateProfile({
         quiz_passed: passed,
         quiz_score: score
       });
       
-      console.log("Profile updated successfully");
-      console.log("Setting step to 'result'");
       setStep('result');
       
       onComplete(passed);
       
       if (passed) {
-        console.log("Quiz passed, showing schedule dialog");
         setShowScheduleDialog(true);
       }
-      console.groupEnd();
     } catch (error) {
       console.error("Error completing training:", error);
       setError("There was an error saving your quiz results. Please try again.");
     }
+  };
+  
+  const handleCloseModal = () => {
+    onClose();
   };
   
   const handleScheduleInterview = () => {
@@ -152,13 +117,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   };
   
   if (!isOpen) return null;
-  
-  console.log("TrainingModal render state:", {
-    step,
-    quizPassed,
-    quizScore,
-    userProfile
-  });
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">

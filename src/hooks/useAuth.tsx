@@ -24,9 +24,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const sanitizeProfileData = (profileData: any) => {
     if (!profileData) return null;
     
-    console.group("🧹 SANITIZATION PROCESS");
-    console.log("BEFORE sanitization:", profileData);
-    
     const cleanProfile = { ...profileData };
     
     // Define all possible boolean fields in the user profile
@@ -45,58 +42,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       'accepted_terms'
     ];
     
-    // Special detailed logging for quiz_passed
-    if ('quiz_passed' in cleanProfile) {
-      const rawValue = cleanProfile.quiz_passed;
-      console.group("⚠️ quiz_passed Detailed Analysis");
-      console.log("ORIGINAL Value:", rawValue);
-      console.log("Type:", typeof rawValue);
-      console.log("instanceof Boolean:", rawValue instanceof Boolean);
-      console.log("toString():", String(rawValue));
-      console.log("toJSON():", JSON.stringify(rawValue));
-      console.log("== true:", rawValue == true);
-      console.log("=== true:", rawValue === true);
-      console.log("== false:", rawValue == false);
-      console.log("=== false:", rawValue === false);
-      console.log("!!", !!rawValue);
-      console.groupEnd();
-    }
-    
     // Convert anything that should be boolean to actual boolean
     booleanFields.forEach(field => {
       if (field in cleanProfile) {
-        const value = cleanProfile[field];
-        
-        // Extra debugging for the quiz_passed field
-        if (field === 'quiz_passed') {
-          console.log(`Raw quiz_passed value:`, value, typeof value);
+        // Handle various formats: boolean, string 'true'/'false', numbers 0/1, etc.
+        if (typeof cleanProfile[field] === 'string') {
+          cleanProfile[field] = cleanProfile[field].toLowerCase() === 'true';
+        } else if (typeof cleanProfile[field] === 'number') {
+          cleanProfile[field] = cleanProfile[field] !== 0;
         }
-        
-        if (value === null || value === undefined) {
-          cleanProfile[field] = null;
-        } else if (typeof value === 'boolean') {
-          // Force to true/false even if already boolean
-          cleanProfile[field] = value === true;
-        } else if (typeof value === 'string') {
-          // Handle all possible PostgreSQL string representations
-          const lowerValue = String(value).toLowerCase();
-          if (['true', 't', 'yes', 'y', '1'].includes(lowerValue)) {
-            cleanProfile[field] = true;
-          } else if (['false', 'f', 'no', 'n', '0'].includes(lowerValue)) {
-            cleanProfile[field] = false;
-          } else {
-            cleanProfile[field] = null;
-          }
-        } else if (typeof value === 'number') {
-          cleanProfile[field] = value !== 0;
-        } else {
-          cleanProfile[field] = null;
-        }
-        
-        // Extra debugging for the quiz_passed field
-        if (field === 'quiz_passed') {
-          console.log(`Sanitized quiz_passed value:`, cleanProfile[field], typeof cleanProfile[field]);
-        }
+        // Already a boolean - no conversion needed
       }
     });
     
@@ -108,9 +63,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         training_video_watched: typeof cleanProfile.training_video_watched
       }
     });
-    
-    console.log("AFTER sanitization:", cleanProfile);
-    console.groupEnd();
     
     return cleanProfile;
   };
@@ -145,7 +97,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Clear all user data on sign out
           setUserProfile(null);
           localStorage.removeItem('userProfile');
-          sessionStorage.clear();
         }
       }
     );
@@ -193,27 +144,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user profile for:', userId);
       
-      // MODIFIED: Use a direct SELECT query instead of an RPC call to avoid infinite recursion
-      const { data: directData, error: directError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .limit(1);
+      // Using the get_user_profile function to avoid RLS recursion
+      const { data, error } = await supabase
+        .rpc('get_user_profile', { user_id: userId })
+        .single();
       
-      if (directError) {
-        console.error('Error fetching user profile:', directError);
-        // Don't attempt to use the function call as fallback, it's likely causing the infinite recursion
-      } else if (directData && directData.length > 0) {
-        console.group("🔍 RAW DATABASE RESPONSE");
-        console.log("FULL RESPONSE:", directData[0]);
-        console.log("quiz_passed (value):", directData[0].quiz_passed);
-        console.log("quiz_passed (type):", typeof directData[0].quiz_passed);
-        console.log("quiz_passed (JSON.stringify):", JSON.stringify(directData[0].quiz_passed));
-        console.log("quiz_passed (Object.prototype.toString):", Object.prototype.toString.call(directData[0].quiz_passed));
-        console.groupEnd();
+      if (error) {
+        console.error('Error fetching user profile:', error);
         
-        const sanitizedData = sanitizeProfileData(directData[0]);
-        console.log('User profile fetched successfully via direct query:', sanitizedData);
+        // Fallback to direct query if RPC fails
+        const { data: directData, error: directError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+          
+        if (directError) {
+          console.error('Direct query also failed:', directError);
+        } else if (directData) {
+          const sanitizedData = sanitizeProfileData(directData);
+          console.log('User profile fetched successfully via direct query:', sanitizedData);
+          
+          // Log specific quiz state values for debugging
+          console.log('Quiz state values:', {
+            quiz_passed: sanitizedData.quiz_passed,
+            training_video_watched: sanitizedData.training_video_watched,
+            types: {
+              quiz_passed: typeof sanitizedData.quiz_passed,
+              training_video_watched: typeof sanitizedData.training_video_watched
+            }
+          });
+          
+          setUserProfile(sanitizedData);
+          
+          // Cache the profile in localStorage as a stringified JSON
+          localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
+        }
+      } else if (data) {
+        const sanitizedData = sanitizeProfileData(data);
+        console.log('User profile fetched successfully via RPC:', sanitizedData);
         
         // Log specific quiz state values for debugging
         console.log('Quiz state values:', {
@@ -225,29 +194,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         });
         
-        console.group("🔄 STATE UPDATE");
-        console.log("Previous userProfile:", userProfile);
-        console.log("New userProfile:", sanitizedData);
-        console.log("quiz_passed value:", sanitizedData.quiz_passed);
-        console.log("quiz_passed type:", typeof sanitizedData.quiz_passed);
-        console.groupEnd();
-        
         setUserProfile(sanitizedData);
         
         // Cache the profile in localStorage as a stringified JSON
         localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
-        
-        // After localStorage.setItem
-        const storedData = localStorage.getItem('userProfile');
-        console.group("💾 STORAGE VERIFICATION");
-        console.log("Stored in localStorage:", storedData);
-        if (storedData) {
-          const parsed = JSON.parse(storedData);
-          console.log("Parsed from localStorage:", parsed);
-          console.log("quiz_passed after parsing:", parsed.quiz_passed);
-          console.log("quiz_passed type after parsing:", typeof parsed.quiz_passed);
-        }
-        console.groupEnd();
       } else {
         console.log('No user profile found');
       }
@@ -292,16 +242,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear state first to update UI immediately
       setUser(null);
       setUserProfile(null);
-      
-      // Clear ALL storage to ensure clean state on next login
       localStorage.removeItem('userProfile');
-      sessionStorage.clear();
       
       // Then sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      console.log('Logout successful - all storage cleared');
+      console.log('Logout successful');
     } catch (error: any) {
       console.error('Logout error:', error);
       toast({
@@ -319,16 +266,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('Updating user profile with:', data);
       
-      // MODIFIED: Use direct update instead of RPC call to avoid infinite recursion
-      const { error } = await supabase
-        .from('user_profiles')
-        .update(data)
-        .eq('user_id', user.id);
+      // Use a function call instead of direct table update to avoid RLS recursion
+      const { error } = await supabase.rpc('update_user_profile', { 
+        p_user_id: user.id,
+        p_updates: data
+      });
       
-      if (error) {
-        console.error('Direct profile update failed:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       // Update local state
       setUserProfile(prev => {

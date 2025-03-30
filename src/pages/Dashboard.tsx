@@ -38,30 +38,6 @@ const Dashboard = () => {
     };
   }, [user, userProfile]);
   
-  // Add diagnostic useEffect to track userProfile changes
-  useEffect(() => {
-    if (userProfile) {
-      console.group("📊 DASHBOARD COMPONENT");
-      console.log("Received userProfile:", userProfile);
-      console.log("quiz_passed value:", userProfile.quiz_passed);
-      console.log("quiz_passed type:", typeof userProfile.quiz_passed);
-      console.log("Strict comparisons:");
-      console.log("- userProfile?.quiz_passed === true:", userProfile.quiz_passed === true);
-      console.log("- userProfile?.quiz_passed === false:", userProfile.quiz_passed === false);
-      console.log("- userProfile?.quiz_passed == true:", userProfile.quiz_passed == true);
-      console.log("- userProfile?.quiz_passed == false:", userProfile.quiz_passed == false);
-      
-      // Try to debug string representations
-      if (typeof userProfile.quiz_passed === 'string') {
-        console.log("String value comparisons:");
-        console.log("- lowercase:", userProfile.quiz_passed.toLowerCase());
-        console.log("- === 'false':", userProfile.quiz_passed === 'false');
-        console.log("- === 'f':", userProfile.quiz_passed === 'f');
-      }
-      console.groupEnd();
-    }
-  }, [userProfile]);
-  
   const handleLogout = async () => {
     try {
       await logout();
@@ -82,17 +58,7 @@ const Dashboard = () => {
   
   const startTraining = () => {
     // Only allow starting training if it hasn't been completed already
-    console.group("▶️ START TRAINING");
-    console.log("Current userProfile:", userProfile);
-    if (userProfile) {
-      console.log("quiz_passed value:", userProfile.quiz_passed);
-      console.log("quiz_passed type:", typeof userProfile.quiz_passed);
-      console.log("quiz_passed === true:", userProfile.quiz_passed === true);
-      console.log("quiz_passed === false:", userProfile.quiz_passed === false);
-    }
-    
     if (userProfile?.quiz_passed !== true && userProfile?.quiz_passed !== false) {
-      console.log("Opening training modal - no existing quiz results");
       setShowTrainingModal(true);
     } else {
       console.log("Training already completed with result:", userProfile?.quiz_passed);
@@ -103,7 +69,6 @@ const Dashboard = () => {
           : "You have already attempted the training.",
       });
     }
-    console.groupEnd();
   };
   
   const closeTrainingModal = () => {
@@ -158,58 +123,38 @@ const Dashboard = () => {
   };
   
   const getTrainingStatus = () => {
-    const result = (() => {
-      // Handle all quiz_passed states properly with strict equality checks
-      console.group("🏆 GET TRAINING STATUS");
-      console.log("Current userProfile:", userProfile);
-      if (userProfile) {
-        console.log("quiz_passed value:", userProfile.quiz_passed);
-        console.log("quiz_passed type:", typeof userProfile.quiz_passed);
-        console.log("quiz_passed === true:", userProfile.quiz_passed === true);
-        console.log("quiz_passed === false:", userProfile.quiz_passed === false);
-      }
-      
-      if (userProfile?.quiz_passed === true) {
-        console.log("Detected: quiz passed");
-        console.groupEnd();
-        return {
-          status: 'completed',
-          color: 'green',
-          btnText: 'Completed',
-          btnIcon: 'check-circle',
-          btnColor: 'linear-gradient(90deg, #10B981 0%, #059669 100%)',
-          btnShadow: '0 4px 10px rgba(16,185,129,0.2)',
-          canClick: false
-        };
-      } else if (userProfile?.quiz_passed === false) {
-        console.log("Detected: quiz failed");
-        console.groupEnd();
-        return {
-          status: 'failed',
-          color: 'red',
-          btnText: 'Failed',
-          btnIcon: 'times-circle',
-          btnColor: 'linear-gradient(90deg, #EF4444 0%, #DC2626 100%)',
-          btnShadow: '0 4px 10px rgba(239,68,68,0.2)',
-          canClick: false
-        };
-      } else {
-        console.log("Detected: quiz pending");
-        console.groupEnd();
-        return {
-          status: 'pending',
-          color: 'blue',
-          btnText: 'Start',
-          btnIcon: 'play-circle',
-          btnColor: 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)',
-          btnShadow: '0 4px 10px rgba(79,70,229,0.2)',
-          canClick: true
-        };
-      }
-    })();
-    
-    console.log("Final training status:", result);
-    return result;
+    // Handle all quiz_passed states properly with strict equality checks
+    if (userProfile?.quiz_passed === true) {
+      return {
+        status: 'completed',
+        color: 'green',
+        btnText: 'Completed',
+        btnIcon: 'check-circle',
+        btnColor: 'linear-gradient(90deg, #10B981 0%, #059669 100%)',
+        btnShadow: '0 4px 10px rgba(16,185,129,0.2)',
+        canClick: false
+      };
+    } else if (userProfile?.quiz_passed === false) {
+      return {
+        status: 'failed',
+        color: 'red',
+        btnText: 'Failed',
+        btnIcon: 'times-circle',
+        btnColor: 'linear-gradient(90deg, #EF4444 0%, #DC2626 100%)',
+        btnShadow: '0 4px 10px rgba(239,68,68,0.2)',
+        canClick: false
+      };
+    } else {
+      return {
+        status: 'pending',
+        color: 'blue',
+        btnText: 'Start',
+        btnIcon: 'play-circle',
+        btnColor: 'linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%)',
+        btnShadow: '0 4px 10px rgba(79,70,229,0.2)',
+        canClick: true
+      };
+    }
   };
   
   const { percentage, steps } = getProgress();
