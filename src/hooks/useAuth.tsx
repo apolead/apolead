@@ -169,23 +169,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user profile for:', userId);
       
-      // Instead of using RPC or direct table access which can trigger RLS issues,
-      // use a service-role API call with a fixed SQL query
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .limit(1);
+      // Use raw PostgreSQL query to completely bypass RLS
+      // This avoids the infinite recursion issue by directly accessing the database
+      const { data, error } = await supabase.rpc(
+        'get_user_profile_direct',
+        { input_user_id: userId }
+      );
       
       if (error) {
-        console.error('Error fetching user profile with fixed query:', error);
+        console.error('Error fetching user profile with direct function:', error);
         return;
       }
       
       if (data && data.length > 0) {
-        const firstProfile = data[0];
-        const sanitizedData = sanitizeProfileData(firstProfile);
-        console.log('User profile fetched successfully with fixed query:', sanitizedData);
+        const profileData = data[0];
+        const sanitizedData = sanitizeProfileData(profileData);
+        console.log('User profile fetched successfully with direct function:', sanitizedData);
         
         // Log specific quiz state values for debugging
         console.log('Quiz state values:', {
@@ -202,7 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Cache the profile in localStorage as a stringified JSON
         localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
       } else {
-        console.log('No user profile found with fixed query');
+        console.log('No user profile found with direct function');
       }
     } catch (error) {
       console.error('Exception in fetchUserProfile:', error);
@@ -269,11 +268,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('Updating user profile with:', data);
       
-      // Use a direct update instead of RPC to avoid RLS issues
-      const { error } = await supabase
-        .from('user_profiles')
-        .update(data)
-        .eq('user_id', user.id);
+      // Use RPC function to bypass RLS
+      const { error } = await supabase.rpc(
+        'update_user_profile_direct',
+        { 
+          input_user_id: user.id,
+          input_updates: data
+        }
+      );
       
       if (error) throw error;
       

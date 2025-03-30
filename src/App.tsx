@@ -71,16 +71,6 @@ const SupervisorRoute = ({ children }) => {
 
 // Auth wrapper that includes the router to make hooks available
 const AuthWrapper = () => {
-  useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth state changed in App:", event, session?.user?.email);
-    });
-    
-    return () => {
-      data.subscription.unsubscribe();
-    };
-  }, []);
-
   return (
     <Routes>
       <Route path="/" element={
@@ -112,16 +102,15 @@ const AuthWrapper = () => {
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          {/* Using BrowserRouter with basename set to prevent refresh issues */}
-          <BrowserRouter basename="/">
+      <BrowserRouter basename="/">
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
             <AuthWrapper />
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+          </TooltipProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };
