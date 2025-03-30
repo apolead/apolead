@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -23,6 +24,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const sanitizeProfileData = (profileData: any) => {
     if (!profileData) return null;
     
+    console.group("🧹 SANITIZATION PROCESS");
+    console.log("BEFORE sanitization:", profileData);
+    
     const cleanProfile = { ...profileData };
     
     // Define all possible boolean fields in the user profile
@@ -40,6 +44,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       'complete_training',
       'accepted_terms'
     ];
+    
+    // Special detailed logging for quiz_passed
+    if ('quiz_passed' in cleanProfile) {
+      const rawValue = cleanProfile.quiz_passed;
+      console.group("⚠️ quiz_passed Detailed Analysis");
+      console.log("ORIGINAL Value:", rawValue);
+      console.log("Type:", typeof rawValue);
+      console.log("instanceof Boolean:", rawValue instanceof Boolean);
+      console.log("toString():", String(rawValue));
+      console.log("toJSON():", JSON.stringify(rawValue));
+      console.log("== true:", rawValue == true);
+      console.log("=== true:", rawValue === true);
+      console.log("== false:", rawValue == false);
+      console.log("=== false:", rawValue === false);
+      console.log("!!", !!rawValue);
+      console.groupEnd();
+    }
     
     // Convert anything that should be boolean to actual boolean
     booleanFields.forEach(field => {
@@ -87,6 +108,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         training_video_watched: typeof cleanProfile.training_video_watched
       }
     });
+    
+    console.log("AFTER sanitization:", cleanProfile);
+    console.groupEnd();
     
     return cleanProfile;
   };
@@ -186,6 +210,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (directError) {
           console.error('Direct query also failed:', directError);
         } else if (directData) {
+          console.group("🔍 RAW DATABASE RESPONSE");
+          console.log("FULL RESPONSE:", directData);
+          console.log("quiz_passed (value):", directData.quiz_passed);
+          console.log("quiz_passed (type):", typeof directData.quiz_passed);
+          console.log("quiz_passed (JSON.stringify):", JSON.stringify(directData.quiz_passed));
+          console.log("quiz_passed (Object.prototype.toString):", Object.prototype.toString.call(directData.quiz_passed));
+          console.groupEnd();
+          
           const sanitizedData = sanitizeProfileData(directData);
           console.log('User profile fetched successfully via direct query:', sanitizedData);
           
@@ -199,12 +231,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           });
           
+          console.group("🔄 STATE UPDATE");
+          console.log("Previous userProfile:", userProfile);
+          console.log("New userProfile:", sanitizedData);
+          console.log("quiz_passed value:", sanitizedData.quiz_passed);
+          console.log("quiz_passed type:", typeof sanitizedData.quiz_passed);
+          console.groupEnd();
+          
           setUserProfile(sanitizedData);
           
           // Cache the profile in localStorage as a stringified JSON
           localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
+          
+          // After localStorage.setItem
+          const storedData = localStorage.getItem('userProfile');
+          console.group("💾 STORAGE VERIFICATION");
+          console.log("Stored in localStorage:", storedData);
+          if (storedData) {
+            const parsed = JSON.parse(storedData);
+            console.log("Parsed from localStorage:", parsed);
+            console.log("quiz_passed after parsing:", parsed.quiz_passed);
+            console.log("quiz_passed type after parsing:", typeof parsed.quiz_passed);
+          }
+          console.groupEnd();
         }
       } else if (data) {
+        console.group("🔍 RAW DATABASE RESPONSE");
+        console.log("FULL RESPONSE:", data);
+        console.log("quiz_passed (value):", data.quiz_passed);
+        console.log("quiz_passed (type):", typeof data.quiz_passed);
+        console.log("quiz_passed (JSON.stringify):", JSON.stringify(data.quiz_passed));
+        console.log("quiz_passed (Object.prototype.toString):", Object.prototype.toString.call(data.quiz_passed));
+        console.groupEnd();
+        
         const sanitizedData = sanitizeProfileData(data);
         console.log('User profile fetched successfully via RPC:', sanitizedData);
         
@@ -218,10 +277,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         });
         
+        console.group("🔄 STATE UPDATE");
+        console.log("Previous userProfile:", userProfile);
+        console.log("New userProfile:", sanitizedData);
+        console.log("quiz_passed value:", sanitizedData.quiz_passed);
+        console.log("quiz_passed type:", typeof sanitizedData.quiz_passed);
+        console.groupEnd();
+        
         setUserProfile(sanitizedData);
         
         // Cache the profile in localStorage as a stringified JSON
         localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
+        
+        // After localStorage.setItem
+        const storedData = localStorage.getItem('userProfile');
+        console.group("💾 STORAGE VERIFICATION");
+        console.log("Stored in localStorage:", storedData);
+        if (storedData) {
+          const parsed = JSON.parse(storedData);
+          console.log("Parsed from localStorage:", parsed);
+          console.log("quiz_passed after parsing:", parsed.quiz_passed);
+          console.log("quiz_passed type after parsing:", typeof parsed.quiz_passed);
+        }
+        console.groupEnd();
       } else {
         console.log('No user profile found');
       }
