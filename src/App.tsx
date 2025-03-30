@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -62,7 +61,7 @@ const PublicRoute = ({ children }) => {
   return !user ? children : null;
 };
 
-// Fixed SupervisorRoute to properly handle credential checking
+// Revised SupervisorRoute with improved credential checking
 const SupervisorRoute = ({ children }) => {
   const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
@@ -70,8 +69,23 @@ const SupervisorRoute = ({ children }) => {
   const [isSupervisor, setIsSupervisor] = useState(false);
   
   useEffect(() => {
-    // First, check for cached credentials to avoid unnecessary API calls
-    const checkCachedCredentials = () => {
+    // First, make sure we have user information before checking credentials
+    if (loading) {
+      console.log("SupervisorRoute - Still loading auth state");
+      return;
+    }
+    
+    if (!user) {
+      console.log("SupervisorRoute - No user, redirecting to login");
+      navigate('/login', { replace: true });
+      setIsChecking(false);
+      return;
+    }
+    
+    console.log("SupervisorRoute - User authenticated:", user.id);
+    
+    const checkCredentials = async () => {
+      // 1. First check cached credentials in localStorage (fastest)
       const cachedData = localStorage.getItem('tempCredentials');
       if (cachedData) {
         try {
@@ -79,55 +93,36 @@ const SupervisorRoute = ({ children }) => {
           // Check if cache is valid (30 minutes validity)
           const isValid = Date.now() - timestamp < 30 * 60 * 1000;
           
-          if (isValid && userId === user?.id) {
+          if (isValid && userId === user.id) {
             console.log('SupervisorRoute - Using cached credentials:', credentials);
             if (credentials === 'supervisor') {
               setIsSupervisor(true);
               setIsChecking(false);
-              return true;
+              return;
             }
-            // If cached credentials say not supervisor, continue checking profile
+            // If cached credentials indicate not a supervisor, redirect now
+            if (credentials === 'agent') {
+              console.log("SupervisorRoute - Cached credentials show not supervisor, redirecting");
+              navigate('/dashboard', { replace: true });
+              setIsChecking(false);
+              return;
+            }
           }
         } catch (e) {
           console.error('Error parsing cached credentials:', e);
           localStorage.removeItem('tempCredentials');
         }
       }
-      return false;
-    };
-    
-    const checkCredentials = async () => {
-      // Don't do anything until auth is initialized and we have user data
-      if (loading) {
-        console.log("SupervisorRoute - Still loading auth state");
-        return;
-      }
       
-      // If no user, redirect to login
-      if (!user) {
-        console.log("SupervisorRoute - No user, redirecting to login");
-        navigate('/login', { replace: true });
-        setIsChecking(false);
-        return;
-      }
-      
-      console.log("SupervisorRoute - User authenticated:", user.id);
-      
-      // Check cached credentials first
-      if (checkCachedCredentials()) {
-        return; // Already set state based on cache
-      }
-      
-      // Check userProfile if available
-      if (userProfile) {
-        console.log("SupervisorRoute - User profile available:", userProfile);
-        console.log("SupervisorRoute - User credentials:", userProfile.credentials);
+      // 2. Next, check userProfile if available
+      if (userProfile && userProfile.credentials) {
+        console.log("SupervisorRoute - User profile available, credentials:", userProfile.credentials);
         
         if (userProfile.credentials === 'supervisor') {
           console.log("SupervisorRoute - Confirmed supervisor via profile");
           setIsSupervisor(true);
           
-          // Cache this result locally
+          // Cache this result
           localStorage.setItem('tempCredentials', JSON.stringify({
             userId: user.id,
             credentials: 'supervisor',
@@ -136,43 +131,24 @@ const SupervisorRoute = ({ children }) => {
           
           setIsChecking(false);
           return;
-        } else if (userProfile.credentials) {
-          // We have credentials in profile, but not supervisor
-          console.log("SupervisorRoute - Not a supervisor, redirecting to dashboard");
+        } else {
+          // If profile exists with non-supervisor credentials, redirect now
+          console.log("SupervisorRoute - Not a supervisor (via profile), redirecting");
           navigate('/dashboard', { replace: true });
           setIsChecking(false);
           return;
         }
-        // If profile exists but no credentials field, continue to API check
       }
       
-      console.log("SupervisorRoute - No user profile loaded yet, checking via API");
-      
-      // Call the edge function as a fallback
+      // 3. As a last resort, call the edge function
       try {
+        console.log("SupervisorRoute - No profile data, checking via API");
         const { data, error } = await supabase.functions.invoke('get_user_credentials', {
           body: { user_id: user.id }
         });
         
         if (error) {
           console.error("SupervisorRoute - API error:", error);
-          // On API error, check if we have a cached profile with credentials
-          const cachedProfile = localStorage.getItem('userProfile');
-          if (cachedProfile) {
-            try {
-              const profile = JSON.parse(cachedProfile);
-              if (profile.credentials === 'supervisor') {
-                console.log("SupervisorRoute - Using cached profile credentials (supervisor)");
-                setIsSupervisor(true);
-                setIsChecking(false);
-                return;
-              }
-            } catch (e) {
-              console.error("SupervisorRoute - Error parsing cached profile:", e);
-            }
-          }
-          
-          // Default to dashboard on error if we can't confirm supervisor status
           navigate('/dashboard', { replace: true });
           setIsChecking(false);
           return;
@@ -180,26 +156,27 @@ const SupervisorRoute = ({ children }) => {
         
         console.log("SupervisorRoute - API returned credentials:", data);
         
+        // Cache the credentials result
+        localStorage.setItem('tempCredentials', JSON.stringify({
+          userId: user.id,
+          credentials: data,
+          timestamp: Date.now()
+        }));
+        
         if (data === 'supervisor') {
           console.log("SupervisorRoute - API confirmed supervisor role");
           setIsSupervisor(true);
-          
-          // Cache this result locally to avoid repeated API calls
-          localStorage.setItem('tempCredentials', JSON.stringify({
-            userId: user.id,
-            credentials: 'supervisor',
-            timestamp: Date.now()
-          }));
+          setIsChecking(false);
         } else {
           console.log("SupervisorRoute - API says not supervisor, redirecting");
           navigate('/dashboard', { replace: true });
+          setIsChecking(false);
         }
       } catch (error) {
         console.error("SupervisorRoute - Exception checking credentials:", error);
         navigate('/dashboard', { replace: true });
+        setIsChecking(false);
       }
-      
-      setIsChecking(false);
     };
     
     checkCredentials();
