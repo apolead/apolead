@@ -26,13 +26,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const cleanProfile = { ...profileData };
     
-    // Ensure boolean properties are properly typed
-    if (typeof cleanProfile.quiz_passed === 'string') {
-      cleanProfile.quiz_passed = cleanProfile.quiz_passed === 'true';
-    }
-    if (typeof cleanProfile.training_video_watched === 'string') {
-      cleanProfile.training_video_watched = cleanProfile.training_video_watched === 'true';
-    }
+    // Define all possible boolean fields in the user profile
+    const booleanFields = [
+      'quiz_passed', 
+      'training_video_watched',
+      'has_headset',
+      'has_quiet_place',
+      'sales_experience',
+      'service_experience',
+      'meet_obligation',
+      'login_discord',
+      'check_emails',
+      'solve_problems',
+      'complete_training',
+      'accepted_terms'
+    ];
+    
+    // Convert anything that should be boolean to actual boolean
+    booleanFields.forEach(field => {
+      if (field in cleanProfile) {
+        // Handle various formats: boolean, string 'true'/'false', numbers 0/1, etc.
+        if (typeof cleanProfile[field] === 'string') {
+          cleanProfile[field] = cleanProfile[field].toLowerCase() === 'true';
+        } else if (typeof cleanProfile[field] === 'number') {
+          cleanProfile[field] = cleanProfile[field] !== 0;
+        }
+        // Already a boolean - no conversion needed
+      }
+    });
+    
+    console.log('Sanitized profile data:', {
+      quiz_passed: cleanProfile.quiz_passed,
+      training_video_watched: cleanProfile.training_video_watched,
+      types: {
+        quiz_passed: typeof cleanProfile.quiz_passed,
+        training_video_watched: typeof cleanProfile.training_video_watched
+      }
+    });
     
     return cleanProfile;
   };
@@ -134,17 +164,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (directData) {
           const sanitizedData = sanitizeProfileData(directData);
           console.log('User profile fetched successfully via direct query:', sanitizedData);
+          
+          // Log specific quiz state values for debugging
+          console.log('Quiz state values:', {
+            quiz_passed: sanitizedData.quiz_passed,
+            training_video_watched: sanitizedData.training_video_watched,
+            types: {
+              quiz_passed: typeof sanitizedData.quiz_passed,
+              training_video_watched: typeof sanitizedData.training_video_watched
+            }
+          });
+          
           setUserProfile(sanitizedData);
           
-          // Cache the profile in localStorage
+          // Cache the profile in localStorage as a stringified JSON
           localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
         }
       } else if (data) {
         const sanitizedData = sanitizeProfileData(data);
         console.log('User profile fetched successfully via RPC:', sanitizedData);
+        
+        // Log specific quiz state values for debugging
+        console.log('Quiz state values:', {
+          quiz_passed: sanitizedData.quiz_passed,
+          training_video_watched: sanitizedData.training_video_watched,
+          types: {
+            quiz_passed: typeof sanitizedData.quiz_passed,
+            training_video_watched: typeof sanitizedData.training_video_watched
+          }
+        });
+        
         setUserProfile(sanitizedData);
         
-        // Cache the profile in localStorage
+        // Cache the profile in localStorage as a stringified JSON
         localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
       } else {
         console.log('No user profile found');
