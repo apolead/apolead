@@ -62,7 +62,7 @@ const PublicRoute = ({ children }) => {
   return !user ? children : null;
 };
 
-// Enhanced SupervisorRoute with more robust credential checking
+// Fixed SupervisorRoute to properly handle credential checking
 const SupervisorRoute = ({ children }) => {
   const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
@@ -70,13 +70,11 @@ const SupervisorRoute = ({ children }) => {
   
   useEffect(() => {
     const checkCredentials = async () => {
-      console.log("SupervisorRoute check - User:", user?.id);
-      console.log("SupervisorRoute check - Profile:", userProfile);
-      console.log("SupervisorRoute check - Loading:", loading);
-      console.log("SupervisorRoute check - Checking:", isChecking);
-      
-      // Wait for auth to initialize
-      if (loading) return;
+      // Don't do anything until auth is initialized and we have user data
+      if (loading) {
+        console.log("SupervisorRoute - Still loading auth state");
+        return;
+      }
       
       // If no user, redirect to login
       if (!user) {
@@ -86,61 +84,76 @@ const SupervisorRoute = ({ children }) => {
         return;
       }
       
-      // If we have userProfile data, check credentials directly
+      console.log("SupervisorRoute - User authenticated:", user.id);
+      
+      // Check userProfile if available
       if (userProfile) {
-        console.log("SupervisorRoute - Checking userProfile credentials:", userProfile.credentials);
+        console.log("SupervisorRoute - User profile available:", userProfile);
+        console.log("SupervisorRoute - User credentials:", userProfile.credentials);
         
         if (userProfile.credentials !== 'supervisor') {
-          console.log("SupervisorRoute - Not supervisor, redirecting to dashboard");
+          console.log("SupervisorRoute - Not a supervisor, redirecting to dashboard");
           navigate('/dashboard', { replace: true });
         } else {
-          console.log("SupervisorRoute - User is confirmed supervisor, staying on page");
+          console.log("SupervisorRoute - Confirmed supervisor via profile");
         }
         
         setIsChecking(false);
         return;
       }
       
-      // If we reach here, we have a user but no profile yet
-      // Make a direct API call to check credentials
+      console.log("SupervisorRoute - No user profile loaded yet, checking via API");
+      
+      // Call the edge function directly as a fallback
       try {
-        console.log("SupervisorRoute - No profile yet, checking credentials via API");
         const { data, error } = await supabase.functions.invoke('get_user_credentials', {
           body: { user_id: user.id }
         });
         
-        console.log("SupervisorRoute - API response:", data);
-        
         if (error) {
           console.error("SupervisorRoute - API error:", error);
-          // On error, we'll let the user stay on the page for now
+          // Default to dashboard on error
+          navigate('/dashboard', { replace: true });
           setIsChecking(false);
           return;
         }
+        
+        console.log("SupervisorRoute - API returned credentials:", data);
         
         if (data !== 'supervisor') {
           console.log("SupervisorRoute - API says not supervisor, redirecting");
           navigate('/dashboard', { replace: true });
         } else {
-          console.log("SupervisorRoute - API confirms user is supervisor");
+          console.log("SupervisorRoute - API confirmed supervisor role");
+          // Cache this result locally to avoid repeated API calls
+          localStorage.setItem('tempCredentials', JSON.stringify({
+            userId: user.id,
+            credentials: 'supervisor',
+            timestamp: Date.now()
+          }));
         }
-        
-        setIsChecking(false);
       } catch (error) {
-        console.error("SupervisorRoute - Exception in credential check:", error);
-        setIsChecking(false);
+        console.error("SupervisorRoute - Exception checking credentials:", error);
+        navigate('/dashboard', { replace: true });
       }
+      
+      setIsChecking(false);
     };
     
     checkCredentials();
-  }, [user, userProfile, loading, navigate, isChecking]);
+  }, [user, userProfile, loading, navigate]);
   
   // Show loading while checking credentials
   if (loading || isChecking) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return <div className="flex items-center justify-center h-screen">
+      <div className="flex flex-col items-center gap-2">
+        <div className="text-lg font-medium">Verifying credentials...</div>
+        <div className="text-sm text-gray-500">Please wait</div>
+      </div>
+    </div>;
   }
   
-  // At this point we've verified the user is a supervisor
+  // At this point we've verified the user can access this route
   return children;
 };
 

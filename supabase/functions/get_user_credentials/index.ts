@@ -32,6 +32,7 @@ serve(async (req) => {
     const { user_id } = await req.json();
 
     if (!user_id) {
+      console.log('Edge Function: Missing user_id parameter');
       return new Response(
         JSON.stringify({ error: 'Missing user_id parameter' }),
         { 
@@ -47,7 +48,7 @@ serve(async (req) => {
     try {
       const { data: funcData, error: funcError } = await supabaseClient.rpc('get_user_credentials', { user_id });
       
-      if (funcData && !funcError) {
+      if (funcData !== null && !funcError) {
         console.log('Edge Function: Credentials found via RPC:', funcData);
         return new Response(
           JSON.stringify(funcData || 'agent'),
