@@ -169,8 +169,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user profile for:', userId);
       
-      // Use the new RPC function that bypasses RLS
-      const { data, error } = await supabase.rpc('get_user_profile_direct', {
+      // Use type assertion to bypass TypeScript error for the RPC function name
+      const { data, error } = await (supabase.rpc as any)('get_user_profile_direct', {
         input_user_id: userId
       });
       
@@ -266,8 +266,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('Updating user profile with:', data);
       
-      // Use the new RPC function to bypass RLS
-      const { error } = await supabase.rpc('update_user_profile_direct', {
+      // Use type assertion to bypass TypeScript error for the RPC function name
+      const { error } = await (supabase.rpc as any)('update_user_profile_direct', {
         input_user_id: user.id,
         input_updates: data
       });
