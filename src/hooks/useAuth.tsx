@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -45,13 +44,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Convert anything that should be boolean to actual boolean
     booleanFields.forEach(field => {
       if (field in cleanProfile) {
-        // Handle various formats: boolean, string 'true'/'false', numbers 0/1, etc.
-        if (typeof cleanProfile[field] === 'string') {
-          cleanProfile[field] = cleanProfile[field].toLowerCase() === 'true';
-        } else if (typeof cleanProfile[field] === 'number') {
-          cleanProfile[field] = cleanProfile[field] !== 0;
+        const value = cleanProfile[field];
+        
+        if (value === null || value === undefined) {
+          // Keep null values as null
+          cleanProfile[field] = null;
+        } else if (typeof value === 'boolean') {
+          // Already a boolean, do nothing
+        } else if (typeof value === 'string') {
+          // Handle PostgreSQL boolean string representations
+          const lowerValue = value.toLowerCase();
+          if (lowerValue === 'true' || lowerValue === 't') {
+            cleanProfile[field] = true;
+          } else if (lowerValue === 'false' || lowerValue === 'f') {
+            cleanProfile[field] = false;
+          }
+        } else if (typeof value === 'number') {
+          cleanProfile[field] = value !== 0;
         }
-        // Already a boolean - no conversion needed
       }
     });
     
