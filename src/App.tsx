@@ -64,28 +64,31 @@ const PublicRoute = ({ children }) => {
   return !user ? children : null;
 };
 
-// Protected route for supervisor access
+// Fixed SupervisorRoute - prevent redirecting supervisor to dashboard
 const SupervisorRoute = ({ children }) => {
   const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
+  const [checkedCredentials, setCheckedCredentials] = useState(false);
   
   useEffect(() => {
     console.log("SupervisorRoute check - Profile:", userProfile);
     
-    // Only redirect after we've checked auth state and loaded the user profile
-    if (!loading) {
+    // Only perform redirection checks once and only after profile is loaded
+    if (!loading && userProfile && !checkedCredentials) {
+      setCheckedCredentials(true);
+      
       // If not authenticated, redirect to login
       if (!user) {
         console.log("SupervisorRoute - No user, redirecting to login");
         navigate('/login', { replace: true });
       } 
       // If authenticated but not a supervisor, redirect to dashboard
-      else if (userProfile && userProfile.credentials !== 'supervisor') {
+      else if (userProfile.credentials !== 'supervisor') {
         console.log("SupervisorRoute - Not supervisor, redirecting to dashboard. Credentials:", userProfile.credentials);
         navigate('/dashboard', { replace: true });
       }
     }
-  }, [user, userProfile, loading, navigate]);
+  }, [user, userProfile, loading, navigate, checkedCredentials]);
   
   if (loading || !userProfile) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
