@@ -70,14 +70,18 @@ const SupervisorRoute = ({ children }) => {
   const navigate = useNavigate();
   
   useEffect(() => {
+    console.log("SupervisorRoute check - Profile:", userProfile);
+    
     // Only redirect after we've checked auth state and loaded the user profile
     if (!loading) {
       // If not authenticated, redirect to login
       if (!user) {
+        console.log("SupervisorRoute - No user, redirecting to login");
         navigate('/login', { replace: true });
       } 
       // If authenticated but not a supervisor, redirect to dashboard
       else if (userProfile && userProfile.credentials !== 'supervisor') {
+        console.log("SupervisorRoute - Not supervisor, redirecting to dashboard. Credentials:", userProfile.credentials);
         navigate('/dashboard', { replace: true });
       }
     }
