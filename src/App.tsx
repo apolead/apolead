@@ -20,7 +20,7 @@ import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 
 const queryClient = new QueryClient();
 
-// Improved protected route that uses the useAuth hook - must be used within AuthContext
+// Improved protected route that uses the useAuth hook
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -39,7 +39,7 @@ const ProtectedRoute = ({ children }) => {
   return user ? children : null;
 };
 
-// Route wrapper components that use ProtectedRoute - must be used within AuthContext
+// Simplified versions that use our improved ProtectedRoute
 const AuthRoute = ({ children }) => {
   return (
     <ProtectedRoute>{children}</ProtectedRoute>
@@ -70,43 +70,58 @@ const SupervisorRoute = ({ children }) => {
 };
 
 // Auth wrapper that includes the router to make hooks available
-// IMPORTANT: This component is now defined inside App to ensure it's within AuthProvider
+const AuthWrapper = () => {
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed in App:", event, session?.user?.email);
+    });
+    
+    return () => {
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  return (
+    <Routes>
+      <Route path="/" element={
+        <PublicRoute>
+          <Index />
+        </PublicRoute>
+      } />
+      <Route path="/signup" element={<SignUp />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/dashboard" element={
+        <AuthRoute>
+          <Dashboard />
+        </AuthRoute>
+      } />
+      <Route path="/supervisor" element={
+        <SupervisorRoute>
+          <SupervisorDashboard />
+        </SupervisorRoute>
+      } />
+      <Route path="/confirmation" element={<ConfirmationScreen />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
+      {/* The "catch-all" route - this must be last */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        {/* Using BrowserRouter with basename set to prevent refresh issues */}
-        <BrowserRouter basename="/">
-          <AuthProvider>
-            <Routes>
-              <Route path="/" element={
-                <PublicRoute>
-                  <Index />
-                </PublicRoute>
-              } />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/dashboard" element={
-                <AuthRoute>
-                  <Dashboard />
-                </AuthRoute>
-              } />
-              <Route path="/supervisor" element={
-                <SupervisorRoute>
-                  <SupervisorDashboard />
-                </SupervisorRoute>
-              } />
-              <Route path="/confirmation" element={<ConfirmationScreen />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/terms-of-service" element={<TermsOfService />} />
-              {/* The "catch-all" route - this must be last */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          {/* Using BrowserRouter with basename set to prevent refresh issues */}
+          <BrowserRouter basename="/">
+            <AuthWrapper />
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };
