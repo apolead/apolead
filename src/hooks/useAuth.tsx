@@ -145,6 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Clear all user data on sign out
           setUserProfile(null);
           localStorage.removeItem('userProfile');
+          sessionStorage.clear();
         }
       }
     );
@@ -192,80 +193,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user profile for:', userId);
       
-      // Using the get_user_profile function to avoid RLS recursion
-      const { data, error } = await supabase
-        .rpc('get_user_profile', { user_id: userId })
-        .single();
+      // MODIFIED: Use a direct SELECT query instead of an RPC call to avoid infinite recursion
+      const { data: directData, error: directError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .limit(1);
       
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        
-        // Fallback to direct query if RPC fails
-        const { data: directData, error: directError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-          
-        if (directError) {
-          console.error('Direct query also failed:', directError);
-        } else if (directData) {
-          console.group("🔍 RAW DATABASE RESPONSE");
-          console.log("FULL RESPONSE:", directData);
-          console.log("quiz_passed (value):", directData.quiz_passed);
-          console.log("quiz_passed (type):", typeof directData.quiz_passed);
-          console.log("quiz_passed (JSON.stringify):", JSON.stringify(directData.quiz_passed));
-          console.log("quiz_passed (Object.prototype.toString):", Object.prototype.toString.call(directData.quiz_passed));
-          console.groupEnd();
-          
-          const sanitizedData = sanitizeProfileData(directData);
-          console.log('User profile fetched successfully via direct query:', sanitizedData);
-          
-          // Log specific quiz state values for debugging
-          console.log('Quiz state values:', {
-            quiz_passed: sanitizedData.quiz_passed,
-            training_video_watched: sanitizedData.training_video_watched,
-            types: {
-              quiz_passed: typeof sanitizedData.quiz_passed,
-              training_video_watched: typeof sanitizedData.training_video_watched
-            }
-          });
-          
-          console.group("🔄 STATE UPDATE");
-          console.log("Previous userProfile:", userProfile);
-          console.log("New userProfile:", sanitizedData);
-          console.log("quiz_passed value:", sanitizedData.quiz_passed);
-          console.log("quiz_passed type:", typeof sanitizedData.quiz_passed);
-          console.groupEnd();
-          
-          setUserProfile(sanitizedData);
-          
-          // Cache the profile in localStorage as a stringified JSON
-          localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
-          
-          // After localStorage.setItem
-          const storedData = localStorage.getItem('userProfile');
-          console.group("💾 STORAGE VERIFICATION");
-          console.log("Stored in localStorage:", storedData);
-          if (storedData) {
-            const parsed = JSON.parse(storedData);
-            console.log("Parsed from localStorage:", parsed);
-            console.log("quiz_passed after parsing:", parsed.quiz_passed);
-            console.log("quiz_passed type after parsing:", typeof parsed.quiz_passed);
-          }
-          console.groupEnd();
-        }
-      } else if (data) {
+      if (directError) {
+        console.error('Error fetching user profile:', directError);
+        // Don't attempt to use the function call as fallback, it's likely causing the infinite recursion
+      } else if (directData && directData.length > 0) {
         console.group("🔍 RAW DATABASE RESPONSE");
-        console.log("FULL RESPONSE:", data);
-        console.log("quiz_passed (value):", data.quiz_passed);
-        console.log("quiz_passed (type):", typeof data.quiz_passed);
-        console.log("quiz_passed (JSON.stringify):", JSON.stringify(data.quiz_passed));
-        console.log("quiz_passed (Object.prototype.toString):", Object.prototype.toString.call(data.quiz_passed));
+        console.log("FULL RESPONSE:", directData[0]);
+        console.log("quiz_passed (value):", directData[0].quiz_passed);
+        console.log("quiz_passed (type):", typeof directData[0].quiz_passed);
+        console.log("quiz_passed (JSON.stringify):", JSON.stringify(directData[0].quiz_passed));
+        console.log("quiz_passed (Object.prototype.toString):", Object.prototype.toString.call(directData[0].quiz_passed));
         console.groupEnd();
         
-        const sanitizedData = sanitizeProfileData(data);
-        console.log('User profile fetched successfully via RPC:', sanitizedData);
+        const sanitizedData = sanitizeProfileData(directData[0]);
+        console.log('User profile fetched successfully via direct query:', sanitizedData);
         
         // Log specific quiz state values for debugging
         console.log('Quiz state values:', {
@@ -344,13 +292,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear state first to update UI immediately
       setUser(null);
       setUserProfile(null);
+      
+      // Clear ALL storage to ensure clean state on next login
       localStorage.removeItem('userProfile');
+      sessionStorage.clear();
       
       // Then sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      console.log('Logout successful');
+      console.log('Logout successful - all storage cleared');
     } catch (error: any) {
       console.error('Logout error:', error);
       toast({
@@ -368,13 +319,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('Updating user profile with:', data);
       
-      // Use a function call instead of direct table update to avoid RLS recursion
-      const { error } = await supabase.rpc('update_user_profile', { 
-        p_user_id: user.id,
-        p_updates: data
-      });
+      // MODIFIED: Use direct update instead of RPC call to avoid infinite recursion
+      const { error } = await supabase
+        .from('user_profiles')
+        .update(data)
+        .eq('user_id', user.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Direct profile update failed:', error);
+        throw error;
+      }
       
       // Update local state
       setUserProfile(prev => {

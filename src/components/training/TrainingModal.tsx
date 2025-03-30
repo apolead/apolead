@@ -91,6 +91,11 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
     });
   }, [userProfile]);
   
+  // Helper function to handle modal closing safely
+  const handleCloseModal = () => {
+    onClose();
+  };
+  
   const handleVideoComplete = async () => {
     try {
       await updateProfile({
@@ -140,6 +145,10 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       console.error("Error completing training:", error);
       setError("There was an error saving your quiz results. Please try again.");
     }
+  };
+  
+  const handleScheduleInterview = () => {
+    setShowScheduleDialog(true);
   };
   
   if (!isOpen) return null;
