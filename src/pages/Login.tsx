@@ -21,6 +21,27 @@ const Login = () => {
       if (session) {
         // If already logged in, check credentials and redirect accordingly
         try {
+          // First check if we have cached credentials
+          const cachedData = localStorage.getItem('tempCredentials');
+          if (cachedData) {
+            try {
+              const { userId, credentials, timestamp } = JSON.parse(cachedData);
+              // Check if cache is valid (30 minutes validity)
+              const isValid = Date.now() - timestamp < 30 * 60 * 1000;
+              
+              if (isValid && userId === session.user.id) {
+                console.log('Login - Using cached credentials:', credentials);
+                if (credentials === 'supervisor') {
+                  navigate('/supervisor');
+                  return;
+                }
+              }
+            } catch (e) {
+              console.error('Error parsing cached credentials:', e);
+              localStorage.removeItem('tempCredentials');
+            }
+          }
+          
           const { data, error } = await supabase.functions.invoke('get_user_credentials', {
             body: { user_id: session.user.id }
           });
@@ -28,6 +49,12 @@ const Login = () => {
           console.log('Checking existing session - credentials:', data);
           
           if (data === 'supervisor') {
+            // Cache the supervisor credentials
+            localStorage.setItem('tempCredentials', JSON.stringify({
+              userId: session.user.id,
+              credentials: 'supervisor',
+              timestamp: Date.now()
+            }));
             navigate('/supervisor');
           } else {
             navigate('/dashboard');
@@ -80,11 +107,6 @@ const Login = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Login successful",
-        description: "Welcome back!"
-      });
-
       // Check user credentials and redirect accordingly
       try {
         const credentialResponse = await supabase.functions.invoke('get_user_credentials', {
@@ -92,6 +114,13 @@ const Login = () => {
         });
         
         console.log('Login successful - User credentials:', credentialResponse.data);
+        
+        // Cache the credentials in localStorage for faster access
+        localStorage.setItem('tempCredentials', JSON.stringify({
+          userId: data.user.id,
+          credentials: credentialResponse.data,
+          timestamp: Date.now()
+        }));
         
         // Force caching the credentials in localStorage to avoid any RLS issues
         if (credentialResponse.data) {
@@ -108,6 +137,11 @@ const Login = () => {
           }
         }
         
+        toast({
+          title: "Login successful",
+          description: "Welcome back!"
+        });
+        
         if (credentialResponse.data === 'supervisor') {
           navigate('/supervisor');
         } else {
@@ -115,6 +149,10 @@ const Login = () => {
         }
       } catch (error) {
         console.error('Error getting user credentials:', error);
+        toast({
+          title: "Login successful",
+          description: "Welcome back!"
+        });
         navigate('/dashboard');
       }
     } catch (error) {
