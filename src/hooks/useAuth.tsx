@@ -169,19 +169,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user profile for:', userId);
       
-      // Use raw PostgreSQL query to completely bypass RLS
-      // This avoids the infinite recursion issue by directly accessing the database
-      const { data, error } = await supabase.rpc(
-        'get_user_profile_direct',
-        { input_user_id: userId }
-      );
+      // Use the new RPC function that bypasses RLS
+      const { data, error } = await supabase.rpc('get_user_profile_direct', {
+        input_user_id: userId
+      });
       
       if (error) {
         console.error('Error fetching user profile with direct function:', error);
         return;
       }
       
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data) && data.length > 0) {
         const profileData = data[0];
         const sanitizedData = sanitizeProfileData(profileData);
         console.log('User profile fetched successfully with direct function:', sanitizedData);
@@ -268,14 +266,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('Updating user profile with:', data);
       
-      // Use RPC function to bypass RLS
-      const { error } = await supabase.rpc(
-        'update_user_profile_direct',
-        { 
-          input_user_id: user.id,
-          input_updates: data
-        }
-      );
+      // Use the new RPC function to bypass RLS
+      const { error } = await supabase.rpc('update_user_profile_direct', {
+        input_user_id: user.id,
+        input_updates: data
+      });
       
       if (error) throw error;
       

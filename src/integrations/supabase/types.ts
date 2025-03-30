@@ -402,6 +402,58 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_user_profile_direct: {
+        Args: {
+          input_user_id: string
+        }
+        Returns: {
+          accepted_terms: boolean | null
+          agent_id: string | null
+          agent_standing: string | null
+          application_date: string | null
+          application_status: string | null
+          available_days: string[] | null
+          available_hours: string[] | null
+          birth_day: string | null
+          check_emails: boolean | null
+          complete_training: boolean | null
+          cpu_type: string | null
+          created_at: string | null
+          credentials: string | null
+          day_hours: Json | null
+          email: string
+          first_name: string
+          gov_id_image: string | null
+          gov_id_number: string | null
+          has_headset: boolean | null
+          has_quiet_place: boolean | null
+          id: string
+          last_name: string
+          lead_source: string | null
+          login_discord: boolean | null
+          meet_obligation: boolean | null
+          personal_statement: string | null
+          quiz_passed: boolean | null
+          quiz_score: number | null
+          ram_amount: string | null
+          sales_company: string | null
+          sales_experience: boolean | null
+          sales_months: string | null
+          sales_product: string | null
+          service_company: string | null
+          service_experience: boolean | null
+          service_months: string | null
+          service_product: string | null
+          solve_problems: boolean | null
+          speed_test: string | null
+          start_date: string | null
+          supervisor_notes: string | null
+          system_settings: string | null
+          training_video_watched: boolean | null
+          updated_at: string | null
+          user_id: string
+        }[]
+      }
       get_user_role: {
         Args: {
           user_id: string
@@ -425,6 +477,13 @@ export type Database = {
         Args: {
           p_user_id: string
           p_updates: Json
+        }
+        Returns: undefined
+      }
+      update_user_profile_direct: {
+        Args: {
+          input_user_id: string
+          input_updates: Json
         }
         Returns: undefined
       }
