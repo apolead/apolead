@@ -43,7 +43,28 @@ serve(async (req) => {
 
     console.log('Edge Function: Getting credentials for user_id:', user_id);
 
-    // Call the database function directly to avoid RLS issues
+    // First try direct query to avoid RLS issues
+    const { data: directData, error: directError } = await supabaseClient.from('user_profiles')
+      .select('credentials')
+      .eq('user_id', user_id)
+      .single();
+      
+    if (directData && !directError) {
+      console.log('Edge Function: Credentials found directly:', directData.credentials);
+      return new Response(
+        JSON.stringify(directData.credentials || 'agent'),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    }
+    
+    if (directError) {
+      console.log('Direct query error, falling back to RPC:', directError);
+    }
+
+    // Fall back to the database function if direct query fails
     const { data, error } = await supabaseClient.rpc('get_user_credentials', { user_id });
 
     if (error) {
@@ -58,7 +79,7 @@ serve(async (req) => {
     }
 
     // Log the data being returned
-    console.log('Edge Function: Credentials found:', data);
+    console.log('Edge Function: Credentials found via RPC:', data);
 
     // Return the credentials or 'agent' as default
     return new Response(

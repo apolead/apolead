@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,7 +25,6 @@ const ProtectedRoute = ({ children }) => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Only redirect after we've checked auth state
     if (!loading && !user) {
       navigate('/login', { replace: true });
     }
@@ -51,7 +49,6 @@ const PublicRoute = ({ children }) => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Only redirect after auth state check is complete
     if (!loading && user) {
       navigate('/dashboard', { replace: true });
     }
@@ -64,37 +61,67 @@ const PublicRoute = ({ children }) => {
   return !user ? children : null;
 };
 
-// Fixed SupervisorRoute - prevent redirecting supervisor to dashboard
+// Enhanced SupervisorRoute with more robust credential checking
 const SupervisorRoute = ({ children }) => {
   const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
   const [checkedCredentials, setCheckedCredentials] = useState(false);
   
   useEffect(() => {
+    console.log("SupervisorRoute check - User:", user?.id);
     console.log("SupervisorRoute check - Profile:", userProfile);
+    console.log("SupervisorRoute check - Loading:", loading);
+    console.log("SupervisorRoute check - Already checked:", checkedCredentials);
     
-    // Only perform redirection checks once and only after profile is loaded
     if (!loading && userProfile && !checkedCredentials) {
       setCheckedCredentials(true);
       
-      // If not authenticated, redirect to login
       if (!user) {
         console.log("SupervisorRoute - No user, redirecting to login");
         navigate('/login', { replace: true });
       } 
-      // If authenticated but not a supervisor, redirect to dashboard
       else if (userProfile.credentials !== 'supervisor') {
         console.log("SupervisorRoute - Not supervisor, redirecting to dashboard. Credentials:", userProfile.credentials);
         navigate('/dashboard', { replace: true });
+      } else {
+        console.log("SupervisorRoute - User is supervisor, staying on page");
       }
     }
   }, [user, userProfile, loading, navigate, checkedCredentials]);
+  
+  useEffect(() => {
+    if (loading && user && !userProfile && !checkedCredentials) {
+      console.log("SupervisorRoute - Attempting direct credentials check");
+      
+      const directCredentialCheck = async () => {
+        try {
+          const { data } = await supabase.functions.invoke('get_user_credentials', {
+            body: { user_id: user.id }
+          });
+          
+          console.log("Direct credential check result:", data);
+          
+          if (data !== 'supervisor') {
+            console.log("SupervisorRoute - Direct check - Not supervisor, redirecting");
+            navigate('/dashboard', { replace: true });
+            setCheckedCredentials(true);
+          } else {
+            console.log("SupervisorRoute - Direct check - User is supervisor");
+          }
+        } catch (error) {
+          console.error("Error in direct credential check:", error);
+        }
+      };
+      
+      const timeoutId = setTimeout(directCredentialCheck, 2000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [loading, user, userProfile, navigate, checkedCredentials]);
   
   if (loading || !userProfile) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
   
-  // Only render if user is authenticated and has supervisor credentials
   return (user && userProfile && userProfile.credentials === 'supervisor') ? children : null;
 };
 
@@ -122,7 +149,6 @@ const AuthWrapper = () => {
       <Route path="/confirmation" element={<ConfirmationScreen />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
-      {/* The "catch-all" route - this must be last */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

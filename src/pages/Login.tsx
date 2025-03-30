@@ -20,13 +20,20 @@ const Login = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         // If already logged in, check credentials and redirect accordingly
-        const { data } = await supabase.functions.invoke('get_user_credentials', {
-          body: { user_id: session.user.id }
-        });
-        
-        if (data === 'supervisor') {
-          navigate('/supervisor');
-        } else {
+        try {
+          const { data, error } = await supabase.functions.invoke('get_user_credentials', {
+            body: { user_id: session.user.id }
+          });
+          
+          console.log('Checking existing session - credentials:', data);
+          
+          if (data === 'supervisor') {
+            navigate('/supervisor');
+          } else {
+            navigate('/dashboard');
+          }
+        } catch (error) {
+          console.error('Error checking user credentials:', error);
           navigate('/dashboard');
         }
       }
@@ -79,15 +86,35 @@ const Login = () => {
       });
 
       // Check user credentials and redirect accordingly
-      const credentialResponse = await supabase.functions.invoke('get_user_credentials', {
-        body: { user_id: data.user.id }
-      });
-      
-      console.log('User credentials:', credentialResponse.data);
-      
-      if (credentialResponse.data === 'supervisor') {
-        navigate('/supervisor');
-      } else {
+      try {
+        const credentialResponse = await supabase.functions.invoke('get_user_credentials', {
+          body: { user_id: data.user.id }
+        });
+        
+        console.log('Login successful - User credentials:', credentialResponse.data);
+        
+        // Force caching the credentials in localStorage to avoid any RLS issues
+        if (credentialResponse.data) {
+          const cachedProfile = localStorage.getItem('userProfile');
+          if (cachedProfile) {
+            try {
+              const profile = JSON.parse(cachedProfile);
+              profile.credentials = credentialResponse.data;
+              localStorage.setItem('userProfile', JSON.stringify(profile));
+              console.log('Updated credentials in cached profile');
+            } catch (error) {
+              console.error('Error updating cached profile:', error);
+            }
+          }
+        }
+        
+        if (credentialResponse.data === 'supervisor') {
+          navigate('/supervisor');
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error('Error getting user credentials:', error);
         navigate('/dashboard');
       }
     } catch (error) {
