@@ -46,21 +46,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (field in cleanProfile) {
         const value = cleanProfile[field];
         
+        // Extra debugging for the quiz_passed field
+        if (field === 'quiz_passed') {
+          console.log(`Raw quiz_passed value:`, value, typeof value);
+        }
+        
         if (value === null || value === undefined) {
-          // Keep null values as null
           cleanProfile[field] = null;
         } else if (typeof value === 'boolean') {
-          // Already a boolean, do nothing
+          // Force to true/false even if already boolean
+          cleanProfile[field] = value === true;
         } else if (typeof value === 'string') {
-          // Handle PostgreSQL boolean string representations
-          const lowerValue = value.toLowerCase();
-          if (lowerValue === 'true' || lowerValue === 't') {
+          // Handle all possible PostgreSQL string representations
+          const lowerValue = String(value).toLowerCase();
+          if (['true', 't', 'yes', 'y', '1'].includes(lowerValue)) {
             cleanProfile[field] = true;
-          } else if (lowerValue === 'false' || lowerValue === 'f') {
+          } else if (['false', 'f', 'no', 'n', '0'].includes(lowerValue)) {
             cleanProfile[field] = false;
+          } else {
+            cleanProfile[field] = null;
           }
         } else if (typeof value === 'number') {
           cleanProfile[field] = value !== 0;
+        } else {
+          cleanProfile[field] = null;
+        }
+        
+        // Extra debugging for the quiz_passed field
+        if (field === 'quiz_passed') {
+          console.log(`Sanitized quiz_passed value:`, cleanProfile[field], typeof cleanProfile[field]);
         }
       }
     });
