@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -33,36 +32,36 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   useEffect(() => {
     if (!userProfile) return;
     
-    console.log("Training Modal - Initializing from user profile:", userProfile);
-    console.log("quiz_passed type:", typeof userProfile.quiz_passed, "value:", userProfile.quiz_passed);
-    console.log("training_video_watched type:", typeof userProfile.training_video_watched, "value:", userProfile.training_video_watched);
+    console.log("Training Modal - User profile:", userProfile);
+    console.log("quiz_passed:", userProfile.quiz_passed, "type:", typeof userProfile.quiz_passed);
+    console.log("training_video_watched:", userProfile.training_video_watched, "type:", typeof userProfile.training_video_watched);
     
-    // Ensure we're working with actual boolean values (not strings or numbers)
-    const quizPassedValue = userProfile.quiz_passed === true;
-    const quizFailedValue = userProfile.quiz_passed === false;
-    const videoWatchedValue = userProfile.training_video_watched === true;
+    // Explicitly cast to boolean to ensure consistent behavior
+    const hasPassedQuiz = userProfile.quiz_passed === true;
+    const hasFailedQuiz = userProfile.quiz_passed === false;
+    const hasWatchedVideo = userProfile.training_video_watched === true;
     
-    console.log("Parsed values:", {
-      quizPassedValue,
-      quizFailedValue,
-      videoWatchedValue
+    console.log("Interpreted values:", {
+      hasPassedQuiz,
+      hasFailedQuiz,
+      hasWatchedVideo
     });
     
-    if (quizPassedValue) {
-      console.log("User has passed the quiz");
+    if (hasPassedQuiz) {
+      console.log("Setting state: User has PASSED the quiz");
       setStep('result');
       setQuizPassed(true);
       setQuizScore(userProfile.quiz_score || 0);
-    } else if (quizFailedValue) {
-      console.log("User has failed the quiz");
+    } else if (hasFailedQuiz) {
+      console.log("Setting state: User has FAILED the quiz");
       setStep('result');
       setQuizPassed(false);
       setQuizScore(userProfile.quiz_score || 0);
-    } else if (videoWatchedValue) {
-      console.log("User has watched the video but not completed quiz");
+    } else if (hasWatchedVideo) {
+      console.log("Setting state: User has watched the video but not completed quiz");
       setStep('quiz');
     } else {
-      console.log("User has not started training yet");
+      console.log("Setting state: User has not started training yet");
       setStep('video');
     }
   }, [userProfile]);
