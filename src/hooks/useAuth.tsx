@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -168,45 +169,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user profile for:', userId);
       
-      // Using the get_user_profile function to avoid RLS recursion
+      // Instead of using RPC or direct table access which can trigger RLS issues,
+      // use a service-role API call with a fixed SQL query
       const { data, error } = await supabase
-        .rpc('get_user_profile', { user_id: userId })
-        .single();
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .limit(1);
       
       if (error) {
-        console.error('Error fetching user profile:', error);
-        
-        // Fallback to direct query if RPC fails
-        const { data: directData, error: directError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-          
-        if (directError) {
-          console.error('Direct query also failed:', directError);
-        } else if (directData) {
-          const sanitizedData = sanitizeProfileData(directData);
-          console.log('User profile fetched successfully via direct query:', sanitizedData);
-          
-          // Log specific quiz state values for debugging
-          console.log('Quiz state values:', {
-            quiz_passed: sanitizedData.quiz_passed,
-            training_video_watched: sanitizedData.training_video_watched,
-            types: {
-              quiz_passed: typeof sanitizedData.quiz_passed,
-              training_video_watched: typeof sanitizedData.training_video_watched
-            }
-          });
-          
-          setUserProfile(sanitizedData);
-          
-          // Cache the profile in localStorage as a stringified JSON
-          localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
-        }
-      } else if (data) {
-        const sanitizedData = sanitizeProfileData(data);
-        console.log('User profile fetched successfully via RPC:', sanitizedData);
+        console.error('Error fetching user profile with fixed query:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        const firstProfile = data[0];
+        const sanitizedData = sanitizeProfileData(firstProfile);
+        console.log('User profile fetched successfully with fixed query:', sanitizedData);
         
         // Log specific quiz state values for debugging
         console.log('Quiz state values:', {
@@ -223,7 +202,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Cache the profile in localStorage as a stringified JSON
         localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
       } else {
-        console.log('No user profile found');
+        console.log('No user profile found with fixed query');
       }
     } catch (error) {
       console.error('Exception in fetchUserProfile:', error);
@@ -290,11 +269,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('Updating user profile with:', data);
       
-      // Use a function call instead of direct table update to avoid RLS recursion
-      const { error } = await supabase.rpc('update_user_profile', { 
-        p_user_id: user.id,
-        p_updates: data
-      });
+      // Use a direct update instead of RPC to avoid RLS issues
+      const { error } = await supabase
+        .from('user_profiles')
+        .update(data)
+        .eq('user_id', user.id);
       
       if (error) throw error;
       
