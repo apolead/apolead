@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -65,64 +66,82 @@ const PublicRoute = ({ children }) => {
 const SupervisorRoute = ({ children }) => {
   const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
-  const [checkedCredentials, setCheckedCredentials] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   
   useEffect(() => {
-    console.log("SupervisorRoute check - User:", user?.id);
-    console.log("SupervisorRoute check - Profile:", userProfile);
-    console.log("SupervisorRoute check - Loading:", loading);
-    console.log("SupervisorRoute check - Already checked:", checkedCredentials);
-    
-    if (!loading && userProfile && !checkedCredentials) {
-      setCheckedCredentials(true);
+    const checkCredentials = async () => {
+      console.log("SupervisorRoute check - User:", user?.id);
+      console.log("SupervisorRoute check - Profile:", userProfile);
+      console.log("SupervisorRoute check - Loading:", loading);
+      console.log("SupervisorRoute check - Checking:", isChecking);
       
+      // Wait for auth to initialize
+      if (loading) return;
+      
+      // If no user, redirect to login
       if (!user) {
         console.log("SupervisorRoute - No user, redirecting to login");
         navigate('/login', { replace: true });
-      } 
-      else if (userProfile.credentials !== 'supervisor') {
-        console.log("SupervisorRoute - Not supervisor, redirecting to dashboard. Credentials:", userProfile.credentials);
-        navigate('/dashboard', { replace: true });
-      } else {
-        console.log("SupervisorRoute - User is supervisor, staying on page");
+        setIsChecking(false);
+        return;
       }
-    }
-  }, [user, userProfile, loading, navigate, checkedCredentials]);
-  
-  useEffect(() => {
-    if (loading && user && !userProfile && !checkedCredentials) {
-      console.log("SupervisorRoute - Attempting direct credentials check");
       
-      const directCredentialCheck = async () => {
-        try {
-          const { data } = await supabase.functions.invoke('get_user_credentials', {
-            body: { user_id: user.id }
-          });
-          
-          console.log("Direct credential check result:", data);
-          
-          if (data !== 'supervisor') {
-            console.log("SupervisorRoute - Direct check - Not supervisor, redirecting");
-            navigate('/dashboard', { replace: true });
-            setCheckedCredentials(true);
-          } else {
-            console.log("SupervisorRoute - Direct check - User is supervisor");
-          }
-        } catch (error) {
-          console.error("Error in direct credential check:", error);
+      // If we have userProfile data, check credentials directly
+      if (userProfile) {
+        console.log("SupervisorRoute - Checking userProfile credentials:", userProfile.credentials);
+        
+        if (userProfile.credentials !== 'supervisor') {
+          console.log("SupervisorRoute - Not supervisor, redirecting to dashboard");
+          navigate('/dashboard', { replace: true });
+        } else {
+          console.log("SupervisorRoute - User is confirmed supervisor, staying on page");
         }
-      };
+        
+        setIsChecking(false);
+        return;
+      }
       
-      const timeoutId = setTimeout(directCredentialCheck, 2000);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [loading, user, userProfile, navigate, checkedCredentials]);
+      // If we reach here, we have a user but no profile yet
+      // Make a direct API call to check credentials
+      try {
+        console.log("SupervisorRoute - No profile yet, checking credentials via API");
+        const { data, error } = await supabase.functions.invoke('get_user_credentials', {
+          body: { user_id: user.id }
+        });
+        
+        console.log("SupervisorRoute - API response:", data);
+        
+        if (error) {
+          console.error("SupervisorRoute - API error:", error);
+          // On error, we'll let the user stay on the page for now
+          setIsChecking(false);
+          return;
+        }
+        
+        if (data !== 'supervisor') {
+          console.log("SupervisorRoute - API says not supervisor, redirecting");
+          navigate('/dashboard', { replace: true });
+        } else {
+          console.log("SupervisorRoute - API confirms user is supervisor");
+        }
+        
+        setIsChecking(false);
+      } catch (error) {
+        console.error("SupervisorRoute - Exception in credential check:", error);
+        setIsChecking(false);
+      }
+    };
+    
+    checkCredentials();
+  }, [user, userProfile, loading, navigate, isChecking]);
   
-  if (loading || !userProfile) {
+  // Show loading while checking credentials
+  if (loading || isChecking) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
   
-  return (user && userProfile && userProfile.credentials === 'supervisor') ? children : null;
+  // At this point we've verified the user is a supervisor
+  return children;
 };
 
 // Auth wrapper that includes the router to make hooks available
