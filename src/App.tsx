@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -61,12 +62,13 @@ const PublicRoute = ({ children }) => {
   return !user ? children : null;
 };
 
-// Revised SupervisorRoute with improved credential checking
+// Completely revised SupervisorRoute with improved credential checking and error handling
 const SupervisorRoute = ({ children }) => {
   const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
   const [isSupervisor, setIsSupervisor] = useState(false);
+  const [checkAttempts, setCheckAttempts] = useState(0);
   
   useEffect(() => {
     // First, make sure we have user information before checking credentials
@@ -78,6 +80,14 @@ const SupervisorRoute = ({ children }) => {
     if (!user) {
       console.log("SupervisorRoute - No user, redirecting to login");
       navigate('/login', { replace: true });
+      setIsChecking(false);
+      return;
+    }
+    
+    // Multiple retry attempts for better reliability
+    if (checkAttempts > 3) {
+      console.log("SupervisorRoute - Max check attempts reached, defaulting to agent");
+      navigate('/dashboard', { replace: true });
       setIsChecking(false);
       return;
     }
@@ -115,7 +125,7 @@ const SupervisorRoute = ({ children }) => {
       }
       
       // 2. Next, check userProfile if available
-      if (userProfile && userProfile.credentials) {
+      if (userProfile && userProfile.credentials && !userProfile.error) {
         console.log("SupervisorRoute - User profile available, credentials:", userProfile.credentials);
         
         if (userProfile.credentials === 'supervisor') {
@@ -149,8 +159,8 @@ const SupervisorRoute = ({ children }) => {
         
         if (error) {
           console.error("SupervisorRoute - API error:", error);
-          navigate('/dashboard', { replace: true });
-          setIsChecking(false);
+          // Don't redirect yet, increment attempts and let it try again
+          setCheckAttempts(prev => prev + 1);
           return;
         }
         
@@ -174,13 +184,13 @@ const SupervisorRoute = ({ children }) => {
         }
       } catch (error) {
         console.error("SupervisorRoute - Exception checking credentials:", error);
-        navigate('/dashboard', { replace: true });
-        setIsChecking(false);
+        // Increment attempt counter but don't redirect yet, let it try again
+        setCheckAttempts(prev => prev + 1);
       }
     };
     
     checkCredentials();
-  }, [user, userProfile, loading, navigate]);
+  }, [user, userProfile, loading, navigate, checkAttempts]);
   
   // Show loading while checking credentials
   if (loading || isChecking) {

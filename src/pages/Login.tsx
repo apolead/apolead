@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,9 +23,9 @@ const Login = () => {
         console.log("Login - Found existing session, checking credentials");
         
         // First check if we have cached credentials (fastest route)
-        const cachedData = localStorage.getItem('tempCredentials');
-        if (cachedData) {
-          try {
+        try {
+          const cachedData = localStorage.getItem('tempCredentials');
+          if (cachedData) {
             const { userId, credentials, timestamp } = JSON.parse(cachedData);
             // Check if cache is valid (30 minutes validity)
             const isValid = Date.now() - timestamp < 30 * 60 * 1000;
@@ -39,10 +40,10 @@ const Login = () => {
                 return;
               }
             }
-          } catch (e) {
-            console.error('Error parsing cached credentials:', e);
-            localStorage.removeItem('tempCredentials');
           }
+        } catch (e) {
+          console.error('Error parsing cached credentials:', e);
+          localStorage.removeItem('tempCredentials');
         }
         
         // If no valid cache, fetch from API
@@ -69,7 +70,10 @@ const Login = () => {
           }
         } catch (error) {
           console.error('Error checking user credentials:', error);
-          navigate('/dashboard', { replace: true }); // Fallback to dashboard
+          // Even if we have an error, still redirect the user somewhere
+          setTimeout(() => {
+            navigate('/dashboard', { replace: true }); // Fallback to dashboard
+          }, 100);
         }
       }
       setIsCheckingSession(false);
@@ -123,51 +127,69 @@ const Login = () => {
 
       // Check user credentials and redirect accordingly
       try {
-        const { data: credentialData, error: credentialError } = await supabase.functions.invoke('get_user_credentials', {
-          body: { user_id: data.user.id }
-        });
-        
-        if (credentialError) throw credentialError;
-        
-        console.log('Login successful - User credentials:', credentialData);
-        
-        // Cache the credentials in localStorage for faster access
-        localStorage.setItem('tempCredentials', JSON.stringify({
-          userId: data.user.id,
-          credentials: credentialData,
-          timestamp: Date.now()
-        }));
-        
-        // Force caching the credentials in localStorage to avoid any RLS issues
-        if (credentialData) {
-          const cachedProfile = localStorage.getItem('userProfile');
-          if (cachedProfile) {
-            try {
-              const profile = JSON.parse(cachedProfile);
-              profile.credentials = credentialData;
-              localStorage.setItem('userProfile', JSON.stringify(profile));
-              console.log('Updated credentials in cached profile');
-            } catch (error) {
-              console.error('Error updating cached profile:', error);
+        // Make multiple attempts with timeouts to ensure we get a valid credential check
+        let attempts = 0;
+        const maxAttempts = 3;
+        const checkCredentials = async () => {
+          try {
+            const { data: credentialData, error: credentialError } = await supabase.functions.invoke('get_user_credentials', {
+              body: { user_id: data.user.id }
+            });
+            
+            if (credentialError) throw credentialError;
+            
+            console.log('Login successful - User credentials:', credentialData);
+            
+            // Cache the credentials in localStorage for faster access
+            localStorage.setItem('tempCredentials', JSON.stringify({
+              userId: data.user.id,
+              credentials: credentialData,
+              timestamp: Date.now()
+            }));
+            
+            // Force caching the credentials in localStorage to avoid any RLS issues
+            if (credentialData) {
+              const cachedProfile = localStorage.getItem('userProfile');
+              if (cachedProfile) {
+                try {
+                  const profile = JSON.parse(cachedProfile);
+                  profile.credentials = credentialData;
+                  localStorage.setItem('userProfile', JSON.stringify(profile));
+                  console.log('Updated credentials in cached profile');
+                } catch (error) {
+                  console.error('Error updating cached profile:', error);
+                }
+              }
+            }
+            
+            if (credentialData === 'supervisor') {
+              // Redirect with delay to ensure all state updates are processed
+              navigate('/supervisor', { replace: true });
+            } else {
+              navigate('/dashboard', { replace: true });
+            }
+          } catch (error) {
+            console.error(`Error getting user credentials (attempt ${attempts+1}/${maxAttempts}):`, error);
+            attempts++;
+            if (attempts < maxAttempts) {
+              // Try again after a short delay
+              setTimeout(checkCredentials, 500);
+            } else {
+              // After max attempts, default to dashboard
+              console.log('Max credential check attempts reached, defaulting to dashboard');
+              navigate('/dashboard', { replace: true });
             }
           }
-        }
+        };
         
-        if (credentialData === 'supervisor') {
-          // Use setTimeout to ensure any other redirect effects don't interfere
-          setTimeout(() => {
-            navigate('/supervisor', { replace: true });
-          }, 0);
-        } else {
-          setTimeout(() => {
-            navigate('/dashboard', { replace: true });
-          }, 0);
-        }
+        // Start the credential check process
+        checkCredentials();
+        
       } catch (error) {
         console.error('Error getting user credentials:', error);
         setTimeout(() => {
           navigate('/dashboard', { replace: true });
-        }, 0);
+        }, 500);
       }
     } catch (error) {
       console.error('Login error:', error);
