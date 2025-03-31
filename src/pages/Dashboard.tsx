@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import TrainingModal from '@/components/training/TrainingModal';
@@ -495,7 +495,8 @@ const Dashboard = () => {
             }}></i>
           </a>
           
-          <a href="#" className="nav-item locked" style={{
+          {/* Modified Billing Information menu item - removed 'locked' class and changed to Link */}
+          <Link to="/billing" className="nav-item" style={{
             display: 'flex',
             alignItems: 'center',
             padding: sidebarCollapsed ? '12px 0' : '12px 20px',
@@ -508,7 +509,7 @@ const Dashboard = () => {
             whiteSpace: 'nowrap',
             position: 'relative',
             boxSizing: 'border-box',
-            cursor: 'not-allowed',
+            cursor: 'pointer',
             justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
           }}>
             <i className="fas fa-file-invoice-dollar" style={{
@@ -527,17 +528,7 @@ const Dashboard = () => {
               overflow: sidebarCollapsed ? 'hidden' : 'visible',
               position: sidebarCollapsed ? 'absolute' : 'static'
             }}>Billing Information</span>
-            <i className="fas fa-lock menu-lock-icon" style={{
-              display: 'none',
-              position: 'absolute',
-              left: sidebarCollapsed ? '50%' : '50%',
-              top: '50%',
-              transform: sidebarCollapsed ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
-              color: '#94A3B8',
-              fontSize: sidebarCollapsed ? '12px' : '18px',
-              zIndex: 5
-            }}></i>
-          </a>
+          </Link>
           
           <div className="nav-divider" style={{
             height: '1px',
