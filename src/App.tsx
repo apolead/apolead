@@ -17,6 +17,7 @@ import SupervisorDashboard from "./pages/SupervisorDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
+import BillingInformation from "./pages/BillingInformation";
 
 const queryClient = new QueryClient();
 
@@ -220,6 +221,11 @@ const AuthWrapper = () => {
       <Route path="/dashboard" element={
         <AuthRoute>
           <Dashboard />
+        </AuthRoute>
+      } />
+      <Route path="/billing" element={
+        <AuthRoute>
+          <BillingInformation />
         </AuthRoute>
       } />
       <Route path="/supervisor" element={
