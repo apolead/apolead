@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -37,7 +36,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
     console.log("quiz_passed type:", typeof userProfile.quiz_passed, "value:", userProfile.quiz_passed);
     console.log("training_video_watched type:", typeof userProfile.training_video_watched, "value:", userProfile.training_video_watched);
     
-    // Ensure we're working with actual boolean values (not strings or numbers)
     const quizPassedValue = userProfile.quiz_passed === true;
     const quizFailedValue = userProfile.quiz_passed === false;
     const videoWatchedValue = userProfile.training_video_watched === true;
@@ -244,15 +242,9 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
               Please select a date and time that works for you.
             </DialogDescription>
           </DialogHeader>
-          <div className="w-full h-[500px] border rounded-lg mt-4">
-            <iframe 
-              src="https://calendly.com/embedded-widget" 
-              width="100%" 
-              height="100%" 
-              frameBorder="0" 
-              title="Schedule Interview"
-              className="rounded-lg"
-            ></iframe>
+          <div className="w-full h-[700px] border rounded-lg mt-4">
+            <div className="calendly-inline-widget" data-url="https://calendly.com/apolead-support/apolead-agent-interview" style={{ minWidth: "320px", height: "700px" }}></div>
+            <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
           </div>
         </DialogContent>
       </Dialog>
