@@ -13,7 +13,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   const handleScheduleInterview = () => {
-    setShowTrainingModal(true);
+    window.open('https://calendly.com/apolead-support/apolead-agent-interview', '_blank');
   };
   
   useEffect(() => {
@@ -57,7 +57,6 @@ const Dashboard = () => {
   };
   
   const startTraining = () => {
-    // Only allow starting training if it hasn't been completed already
     if (userProfile?.quiz_passed !== true && userProfile?.quiz_passed !== false) {
       setShowTrainingModal(true);
     } else {
@@ -82,6 +81,10 @@ const Dashboard = () => {
         description: "You have successfully completed the training and can now proceed to the next step.",
       });
     }
+  };
+  
+  const navigateToBillingInformation = () => {
+    navigate('/billing-information');
   };
   
   const getUserInitials = () => {
@@ -123,7 +126,6 @@ const Dashboard = () => {
   };
   
   const getTrainingStatus = () => {
-    // Handle all quiz_passed states properly with strict equality checks
     if (userProfile?.quiz_passed === true) {
       return {
         status: 'completed',
@@ -1033,7 +1035,7 @@ const Dashboard = () => {
             overflow: 'hidden',
             boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
             position: 'relative',
-            opacity: 0.7,
+            opacity: userProfile?.quiz_passed === true ? 1 : 0.7,
             pointerEvents: userProfile?.quiz_passed === true ? 'auto' : 'none',
           }}>
             <div className="task-header" style={{
