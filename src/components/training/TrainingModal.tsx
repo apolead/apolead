@@ -114,6 +114,19 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
     setShowScheduleDialog(true);
   };
   
+  useEffect(() => {
+    if (showScheduleDialog) {
+      const script = document.createElement('script');
+      script.src = 'https://assets.calendly.com/assets/external/widget.js';
+      script.async = true;
+      document.body.appendChild(script);
+      
+      return () => {
+        document.body.removeChild(script);
+      };
+    }
+  }, [showScheduleDialog]);
+  
   if (!isOpen) return null;
   
   return (
@@ -243,8 +256,14 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             </DialogDescription>
           </DialogHeader>
           <div className="w-full h-[700px] border rounded-lg mt-4">
-            <div className="calendly-inline-widget" data-url="https://calendly.com/apolead-support/apolead-agent-interview" style={{ minWidth: "320px", height: "700px" }}></div>
-            <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+            <iframe
+              src="https://calendly.com/apolead-support/apolead-agent-interview"
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              title="Schedule Interview"
+              className="rounded-lg"
+            ></iframe>
           </div>
         </DialogContent>
       </Dialog>
