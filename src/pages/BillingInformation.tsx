@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -6,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
-import { Receipt, Save, X, ShieldCheck } from 'lucide-react';
+import { Receipt, Save, X, ShieldCheck, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -32,6 +33,10 @@ const BillingInformation = () => {
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [maskedRoutingNumber, setMaskedRoutingNumber] = useState('');
+  const [maskedAccountNumber, setMaskedAccountNumber] = useState('');
   
   // Add Font Awesome and Poppins font imports
   useEffect(() => {
@@ -52,9 +57,9 @@ const BillingInformation = () => {
   }, []);
 
   const defaultValues: Partial<BillingFormValues> = {
-    routingNumber: userProfile?.routing_number || '',
-    accountNumber: userProfile?.account_number || '',
-    confirmAccountNumber: userProfile?.account_number || '',
+    routingNumber: '',
+    accountNumber: '',
+    confirmAccountNumber: '',
     accountType: userProfile?.account_type as any || ''
   };
 
@@ -64,12 +69,27 @@ const BillingInformation = () => {
     mode: 'onChange'
   });
 
+  // Create masked versions of sensitive data
+  const maskNumber = (number: string) => {
+    if (!number) return '';
+    const lastFour = number.slice(-4);
+    const masked = '*'.repeat(number.length - 4) + lastFour;
+    return masked;
+  };
+
   useEffect(() => {
     if (userProfile) {
-      form.setValue('routingNumber', userProfile.routing_number || '');
-      form.setValue('accountNumber', userProfile.account_number || '');
-      form.setValue('confirmAccountNumber', userProfile.account_number || '');
+      // Only set the account type from the database
       form.setValue('accountType', userProfile.account_type as any || '');
+      
+      // Create masked versions for display
+      if (userProfile.routing_number) {
+        setMaskedRoutingNumber(maskNumber(userProfile.routing_number));
+      }
+      
+      if (userProfile.account_number) {
+        setMaskedAccountNumber(maskNumber(userProfile.account_number));
+      }
     }
   }, [userProfile, form]);
 
@@ -83,6 +103,7 @@ const BillingInformation = () => {
       return;
     }
     setIsSubmitting(true);
+    setSaveSuccess(false);
     try {
       const { error } = await supabase.rpc('update_user_profile_direct', {
         input_user_id: user.id,
@@ -93,6 +114,20 @@ const BillingInformation = () => {
         }
       });
       if (error) throw error;
+      
+      // Update masked values after successful save
+      setMaskedRoutingNumber(maskNumber(data.routingNumber));
+      setMaskedAccountNumber(maskNumber(data.accountNumber));
+      
+      // Clear sensitive form fields
+      form.setValue('routingNumber', '');
+      form.setValue('accountNumber', '');
+      form.setValue('confirmAccountNumber', '');
+      
+      // Set success state
+      setSaveSuccess(true);
+      setIsEditing(false);
+      
       toast({
         title: "Success",
         description: "Your billing information has been updated successfully."
@@ -107,6 +142,11 @@ const BillingInformation = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+    setSaveSuccess(false);
   };
 
   const getUserInitials = () => {
@@ -178,122 +218,166 @@ const BillingInformation = () => {
             </div>
           </div>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[600px]">
-              <FormField 
-                control={form.control} 
-                name="routingNumber" 
-                render={({ field }) => (
-                  <FormItem className="mb-6">
-                    <FormLabel className="font-medium text-[#334155]">Routing Number</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Enter your 9-digit routing number" 
-                        {...field} 
-                        className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
-                        maxLength={9} 
-                        onChange={e => {
-                          const value = e.target.value.replace(/[^\d]/g, '').slice(0, 9);
-                          field.onChange(value);
-                        }} 
-                      />
-                    </FormControl>
-                    <p className="text-xs text-gray-500 mt-1">The 9-digit number on the bottom left of your check</p>
-                    <FormMessage className="text-xs text-red-500 mt-1" />
-                  </FormItem>
-                )} 
-              />
-
-              <FormField 
-                control={form.control} 
-                name="accountNumber" 
-                render={({ field }) => (
-                  <FormItem className="mb-6">
-                    <FormLabel className="font-medium text-[#334155]">Account Number</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Enter your account number" 
-                        {...field} 
-                        className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
-                        onChange={e => {
-                          const value = e.target.value.replace(/[^\d]/g, '');
-                          field.onChange(value);
-                        }} 
-                      />
-                    </FormControl>
-                    <p className="text-xs text-gray-500 mt-1">Your account number is typically 10-12 digits</p>
-                    <FormMessage className="text-xs text-red-500 mt-1" />
-                  </FormItem>
-                )} 
-              />
-
-              <FormField 
-                control={form.control} 
-                name="confirmAccountNumber" 
-                render={({ field }) => (
-                  <FormItem className="mb-6">
-                    <FormLabel className="font-medium text-[#334155]">Confirm Account Number</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Re-enter your account number" 
-                        {...field} 
-                        className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
-                        onChange={e => {
-                          const value = e.target.value.replace(/[^\d]/g, '');
-                          field.onChange(value);
-                        }} 
-                      />
-                    </FormControl>
-                    <FormMessage className="text-xs text-red-500 mt-1" />
-                  </FormItem>
-                )} 
-              />
-
-              <FormField 
-                control={form.control} 
-                name="accountType" 
-                render={({ field }) => (
-                  <FormItem className="mb-6">
-                    <FormLabel className="font-medium text-[#334155]">Account Type</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3">
-                          <SelectValue placeholder="Select account type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="checking">Checking</SelectItem>
-                        <SelectItem value="savings">Savings</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-xs text-red-500 mt-1" />
-                  </FormItem>
-                )} 
-              />
-
-              <div className="flex gap-4 mt-10">
-                <Button 
-                  type="submit" 
-                  className="bg-gradient-to-r from-indigo-600 to-[#00c2cb] hover:translate-y-[-3px] transition-all shadow-md hover:shadow-lg rounded-xl text-zinc-100"
-                  disabled={isSubmitting}
-                >
-                  <Save className="mr-2 h-4 w-4" /> Save Banking Information
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => form.reset(defaultValues)}
-                  className="bg-[#f1f5f9] text-gray-500 hover:bg-[#e2e8f0] hover:text-[#334155] rounded-xl border-none"
-                >
-                  <X className="mr-2 h-4 w-4" /> Cancel
-                </Button>
+          {!isEditing && (userProfile?.routing_number || userProfile?.account_number) ? (
+            <div className="max-w-[600px] mb-8">
+              <div className="mb-6">
+                <h4 className="font-medium text-[#334155] mb-2">Routing Number</h4>
+                <div className="flex items-center">
+                  <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3 flex-1">
+                    {maskedRoutingNumber}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">The 9-digit number on the bottom left of your check</p>
               </div>
-            </form>
-          </Form>
+              
+              <div className="mb-6">
+                <h4 className="font-medium text-[#334155] mb-2">Account Number</h4>
+                <div className="flex items-center">
+                  <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3 flex-1">
+                    {maskedAccountNumber}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <h4 className="font-medium text-[#334155] mb-2">Account Type</h4>
+                <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3">
+                  {userProfile?.account_type === 'checking' ? 'Checking' : 'Savings'}
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleEditClick}
+                className="mt-6 bg-gradient-to-r from-indigo-600 to-[#00c2cb] hover:translate-y-[-3px] transition-all shadow-md hover:shadow-lg rounded-xl text-zinc-100"
+              >
+                <Edit className="mr-2 h-4 w-4" /> Update Banking Information
+              </Button>
+            </div>
+          ) : (
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[600px]">
+                <FormField 
+                  control={form.control} 
+                  name="routingNumber" 
+                  render={({ field }) => (
+                    <FormItem className="mb-6">
+                      <FormLabel className="font-medium text-[#334155]">Routing Number</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Enter your 9-digit routing number" 
+                          {...field} 
+                          className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
+                          maxLength={9} 
+                          onChange={e => {
+                            const value = e.target.value.replace(/[^\d]/g, '').slice(0, 9);
+                            field.onChange(value);
+                          }} 
+                        />
+                      </FormControl>
+                      <p className="text-xs text-gray-500 mt-1">The 9-digit number on the bottom left of your check</p>
+                      <FormMessage className="text-xs text-red-500 mt-1" />
+                    </FormItem>
+                  )} 
+                />
+
+                <FormField 
+                  control={form.control} 
+                  name="accountNumber" 
+                  render={({ field }) => (
+                    <FormItem className="mb-6">
+                      <FormLabel className="font-medium text-[#334155]">Account Number</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Enter your account number" 
+                          {...field} 
+                          className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
+                          onChange={e => {
+                            const value = e.target.value.replace(/[^\d]/g, '');
+                            field.onChange(value);
+                          }} 
+                        />
+                      </FormControl>
+                      <p className="text-xs text-gray-500 mt-1">Your account number is typically 10-12 digits</p>
+                      <FormMessage className="text-xs text-red-500 mt-1" />
+                    </FormItem>
+                  )} 
+                />
+
+                <FormField 
+                  control={form.control} 
+                  name="confirmAccountNumber" 
+                  render={({ field }) => (
+                    <FormItem className="mb-6">
+                      <FormLabel className="font-medium text-[#334155]">Confirm Account Number</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Re-enter your account number" 
+                          {...field} 
+                          className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
+                          onChange={e => {
+                            const value = e.target.value.replace(/[^\d]/g, '');
+                            field.onChange(value);
+                          }} 
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-500 mt-1" />
+                    </FormItem>
+                  )} 
+                />
+
+                <FormField 
+                  control={form.control} 
+                  name="accountType" 
+                  render={({ field }) => (
+                    <FormItem className="mb-6">
+                      <FormLabel className="font-medium text-[#334155]">Account Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3">
+                            <SelectValue placeholder="Select account type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="checking">Checking</SelectItem>
+                          <SelectItem value="savings">Savings</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs text-red-500 mt-1" />
+                    </FormItem>
+                  )} 
+                />
+
+                <div className="flex gap-4 mt-10">
+                  <Button 
+                    type="submit" 
+                    className={`${
+                      saveSuccess 
+                        ? "bg-green-500 hover:bg-green-600" 
+                        : "bg-gradient-to-r from-indigo-600 to-[#00c2cb]"
+                    } hover:translate-y-[-3px] transition-all shadow-md hover:shadow-lg rounded-xl text-zinc-100`}
+                    disabled={isSubmitting}
+                  >
+                    <Save className="mr-2 h-4 w-4" /> 
+                    {saveSuccess ? "Saved" : "Save Banking Information"}
+                  </Button>
+                  {isEditing && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsEditing(false)}
+                      className="bg-[#f1f5f9] text-gray-500 hover:bg-[#e2e8f0] hover:text-[#334155] rounded-xl border-none"
+                    >
+                      <X className="mr-2 h-4 w-4" /> Cancel
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </Form>
+          )}
         </div>
       </div>
     </div>
