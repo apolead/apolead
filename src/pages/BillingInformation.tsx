@@ -100,11 +100,39 @@ const BillingInformation = () => {
     setIsSubmitting(true);
     setSaveSuccess(false);
     try {
-      await updateProfile({
-        routing_number: data.routingNumber,
-        account_number: data.accountNumber,
-        account_type: data.accountType
+      // Call the dedicated billing information function directly
+      const { error } = await supabase.rpc('update_billing_information', {
+        p_user_id: user.id,
+        p_bank_name: userProfile?.bank_name || "Default Bank", 
+        p_account_number: data.accountNumber,
+        p_routing_number: data.routingNumber,
+        p_account_holder_name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim(),
+        p_account_type: data.accountType,
+        p_address_line1: userProfile?.address_line1 || "",
+        p_address_line2: userProfile?.address_line2 || "",
+        p_city: userProfile?.city || "",
+        p_state: userProfile?.state || "",
+        p_zip_code: userProfile?.zip_code || "",
+        p_ssn_last_four: userProfile?.ssn_last_four || ""
       });
+      
+      if (error) {
+        console.error('Error updating billing information via direct RPC:', error);
+        
+        // Fallback to the profile update method if direct RPC fails
+        await updateProfile({
+          routing_number: data.routingNumber,
+          account_number: data.accountNumber,
+          account_type: data.accountType
+        });
+      } else {
+        // Also update local profile to ensure consistency
+        await updateProfile({
+          routing_number: data.routingNumber,
+          account_number: data.accountNumber,
+          account_type: data.accountType
+        });
+      }
       
       setMaskedRoutingNumber(maskNumber(data.routingNumber));
       setMaskedAccountNumber(maskNumber(data.accountNumber));
