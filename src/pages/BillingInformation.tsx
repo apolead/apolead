@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -7,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
-import { FileInvoiceDollar, Save, X, ShieldCheck } from 'lucide-react';
+import { Receipt, Save, X, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -26,7 +25,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// Form schema for validation
 const billingFormSchema = z.object({
   routingNumber: z.string().min(9, 'Must be exactly 9 digits').max(9, 'Must be exactly 9 digits').regex(/^\d+$/, 'Must contain only numbers'),
   accountNumber: z.string().min(5, 'Must be at least 5 digits').regex(/^\d+$/, 'Must contain only numbers'),
@@ -34,7 +32,6 @@ const billingFormSchema = z.object({
   accountType: z.enum(['checking', 'savings'], { required_error: 'Please select an account type' }),
 });
 
-// Add confirmation validation
 const formSchema = billingFormSchema.refine(
   (data) => data.accountNumber === data.confirmAccountNumber,
   {
@@ -50,7 +47,6 @@ const BillingInformation = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Default form values
   const defaultValues: Partial<BillingFormValues> = {
     routingNumber: userProfile?.routing_number || '',
     accountNumber: userProfile?.account_number || '',
@@ -64,7 +60,6 @@ const BillingInformation = () => {
     mode: 'onChange',
   });
 
-  // Update form values when user profile is loaded
   useEffect(() => {
     if (userProfile) {
       form.setValue('routingNumber', userProfile.routing_number || '');
@@ -87,7 +82,6 @@ const BillingInformation = () => {
     setIsSubmitting(true);
 
     try {
-      // Use update_user_profile_direct RPC function to update the profile
       const { error } = await supabase.rpc('update_user_profile_direct', {
         input_user_id: user.id,
         input_updates: {
@@ -115,7 +109,6 @@ const BillingInformation = () => {
     }
   };
 
-  // Get user initials for the avatar
   const getUserInitials = () => {
     if (!userProfile) return "?";
     const firstName = userProfile.first_name || "";
@@ -128,7 +121,6 @@ const BillingInformation = () => {
       <DashboardSidebar activeItem="billing" />
 
       <div className="flex-1 p-8 md:p-10">
-        {/* Header */}
         <div className="flex justify-between items-center mb-10">
           <div className="text-2xl font-semibold text-[#1e293b]">
             Billing <span className="text-indigo-600 relative after:content-[''] after:absolute after:bottom-[-5px] after:left-0 after:w-full after:h-[3px] after:bg-gradient-to-r after:from-indigo-600 after:to-[#00c2cb] after:rounded-md">Information</span>
@@ -171,7 +163,6 @@ const BillingInformation = () => {
           </div>
         </div>
 
-        {/* Billing Information Form */}
         <div className="bg-white rounded-2xl p-10 shadow-sm mb-10 relative overflow-hidden">
           <div className="mb-8">
             <h3 className="text-xl font-medium text-[#1e293b] mb-2">Bank Account Information</h3>

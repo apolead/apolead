@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,7 +10,7 @@ import {
   Trophy,
   Settings,
   LogOut,
-  FileInvoiceDollar
+  Receipt
 } from 'lucide-react';
 
 interface DashboardSidebarProps {
@@ -313,7 +312,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
           fontWeight: activeItem === 'billing' ? 500 : 'normal',
           justifyContent: collapsed ? 'center' : 'flex-start'
         }}>
-          <FileInvoiceDollar size={18} style={{ marginRight: collapsed ? 0 : '12px', minWidth: '24px', textAlign: 'center' }} />
+          <Receipt size={18} style={{ marginRight: collapsed ? 0 : '12px', minWidth: '24px', textAlign: 'center' }} />
           <span style={{ 
             display: collapsed ? 'none' : 'block',
             opacity: collapsed ? 0 : 1,
