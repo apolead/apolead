@@ -192,21 +192,14 @@ export type Database = {
       user_profiles: {
         Row: {
           accepted_terms: boolean | null
-          account_holder_name: string | null
-          account_number: string | null
-          account_type: string | null
-          address_line1: string | null
-          address_line2: string | null
           agent_id: string | null
           agent_standing: string | null
           application_date: string | null
           application_status: string | null
           available_days: string[] | null
           available_hours: string[] | null
-          bank_name: string | null
           birth_day: string | null
           check_emails: boolean | null
-          city: string | null
           complete_training: boolean | null
           cpu_type: string | null
           created_at: string | null
@@ -227,7 +220,6 @@ export type Database = {
           quiz_passed: boolean | null
           quiz_score: number | null
           ram_amount: string | null
-          routing_number: string | null
           sales_company: string | null
           sales_experience: boolean | null
           sales_months: string | null
@@ -238,33 +230,23 @@ export type Database = {
           service_product: string | null
           solve_problems: boolean | null
           speed_test: string | null
-          ssn_last_four: string | null
           start_date: string | null
-          state: string | null
           supervisor_notes: string | null
           system_settings: string | null
           training_video_watched: boolean | null
           updated_at: string | null
           user_id: string
-          zip_code: string | null
         }
         Insert: {
           accepted_terms?: boolean | null
-          account_holder_name?: string | null
-          account_number?: string | null
-          account_type?: string | null
-          address_line1?: string | null
-          address_line2?: string | null
           agent_id?: string | null
           agent_standing?: string | null
           application_date?: string | null
           application_status?: string | null
           available_days?: string[] | null
           available_hours?: string[] | null
-          bank_name?: string | null
           birth_day?: string | null
           check_emails?: boolean | null
-          city?: string | null
           complete_training?: boolean | null
           cpu_type?: string | null
           created_at?: string | null
@@ -285,7 +267,6 @@ export type Database = {
           quiz_passed?: boolean | null
           quiz_score?: number | null
           ram_amount?: string | null
-          routing_number?: string | null
           sales_company?: string | null
           sales_experience?: boolean | null
           sales_months?: string | null
@@ -296,33 +277,23 @@ export type Database = {
           service_product?: string | null
           solve_problems?: boolean | null
           speed_test?: string | null
-          ssn_last_four?: string | null
           start_date?: string | null
-          state?: string | null
           supervisor_notes?: string | null
           system_settings?: string | null
           training_video_watched?: boolean | null
           updated_at?: string | null
           user_id: string
-          zip_code?: string | null
         }
         Update: {
           accepted_terms?: boolean | null
-          account_holder_name?: string | null
-          account_number?: string | null
-          account_type?: string | null
-          address_line1?: string | null
-          address_line2?: string | null
           agent_id?: string | null
           agent_standing?: string | null
           application_date?: string | null
           application_status?: string | null
           available_days?: string[] | null
           available_hours?: string[] | null
-          bank_name?: string | null
           birth_day?: string | null
           check_emails?: boolean | null
-          city?: string | null
           complete_training?: boolean | null
           cpu_type?: string | null
           created_at?: string | null
@@ -343,7 +314,6 @@ export type Database = {
           quiz_passed?: boolean | null
           quiz_score?: number | null
           ram_amount?: string | null
-          routing_number?: string | null
           sales_company?: string | null
           sales_experience?: boolean | null
           sales_months?: string | null
@@ -354,15 +324,12 @@ export type Database = {
           service_product?: string | null
           solve_problems?: boolean | null
           speed_test?: string | null
-          ssn_last_four?: string | null
           start_date?: string | null
-          state?: string | null
           supervisor_notes?: string | null
           system_settings?: string | null
           training_video_watched?: boolean | null
           updated_at?: string | null
           user_id?: string
-          zip_code?: string | null
         }
         Relationships: []
       }
@@ -389,21 +356,14 @@ export type Database = {
         }
         Returns: {
           accepted_terms: boolean | null
-          account_holder_name: string | null
-          account_number: string | null
-          account_type: string | null
-          address_line1: string | null
-          address_line2: string | null
           agent_id: string | null
           agent_standing: string | null
           application_date: string | null
           application_status: string | null
           available_days: string[] | null
           available_hours: string[] | null
-          bank_name: string | null
           birth_day: string | null
           check_emails: boolean | null
-          city: string | null
           complete_training: boolean | null
           cpu_type: string | null
           created_at: string | null
@@ -424,7 +384,6 @@ export type Database = {
           quiz_passed: boolean | null
           quiz_score: number | null
           ram_amount: string | null
-          routing_number: string | null
           sales_company: string | null
           sales_experience: boolean | null
           sales_months: string | null
@@ -435,15 +394,12 @@ export type Database = {
           service_product: string | null
           solve_problems: boolean | null
           speed_test: string | null
-          ssn_last_four: string | null
           start_date: string | null
-          state: string | null
           supervisor_notes: string | null
           system_settings: string | null
           training_video_watched: boolean | null
           updated_at: string | null
           user_id: string
-          zip_code: string | null
         }[]
       }
       get_user_profile_direct: {
@@ -452,21 +408,14 @@ export type Database = {
         }
         Returns: {
           accepted_terms: boolean | null
-          account_holder_name: string | null
-          account_number: string | null
-          account_type: string | null
-          address_line1: string | null
-          address_line2: string | null
           agent_id: string | null
           agent_standing: string | null
           application_date: string | null
           application_status: string | null
           available_days: string[] | null
           available_hours: string[] | null
-          bank_name: string | null
           birth_day: string | null
           check_emails: boolean | null
-          city: string | null
           complete_training: boolean | null
           cpu_type: string | null
           created_at: string | null
@@ -487,7 +436,6 @@ export type Database = {
           quiz_passed: boolean | null
           quiz_score: number | null
           ram_amount: string | null
-          routing_number: string | null
           sales_company: string | null
           sales_experience: boolean | null
           sales_months: string | null
@@ -498,15 +446,12 @@ export type Database = {
           service_product: string | null
           solve_problems: boolean | null
           speed_test: string | null
-          ssn_last_four: string | null
           start_date: string | null
-          state: string | null
           supervisor_notes: string | null
           system_settings: string | null
           training_video_watched: boolean | null
           updated_at: string | null
           user_id: string
-          zip_code: string | null
         }[]
       }
       get_user_role: {
@@ -527,23 +472,6 @@ export type Database = {
           profile_user_id: string
         }
         Returns: boolean
-      }
-      update_billing_information: {
-        Args: {
-          p_user_id: string
-          p_bank_name: string
-          p_account_number: string
-          p_routing_number: string
-          p_account_holder_name: string
-          p_account_type: string
-          p_address_line1: string
-          p_address_line2: string
-          p_city: string
-          p_state: string
-          p_zip_code: string
-          p_ssn_last_four: string
-        }
-        Returns: undefined
       }
       update_user_profile: {
         Args: {
