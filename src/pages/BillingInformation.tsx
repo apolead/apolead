@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
+import { Lock } from 'lucide-react';
 
 const billingFormSchema = z.object({
   accountNumber: z.string().min(4, { message: "Account number must be at least 4 digits" }),
