@@ -1,24 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import {
-  Play,
-  ChartPieIcon,
-  Wrench,
-  DollarSign,
-  LineChart,
-  Trophy,
-  Settings,
-  LogOut,
-  Receipt
-} from 'lucide-react';
 
 interface DashboardSidebarProps {
   activeItem?: string;
 }
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashboard' }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -32,12 +21,12 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
   };
 
   const toggleSidebar = () => {
-    setCollapsed(!collapsed);
+    setSidebarCollapsed(!sidebarCollapsed);
   };
 
   return (
-    <div className={`sidebar ${collapsed ? 'collapsed' : ''}`} style={{ 
-      width: collapsed ? '60px' : '240px',
+    <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} style={{
+      width: sidebarCollapsed ? '60px' : '240px',
       backgroundColor: 'white',
       borderRight: '1px solid #eaeaea',
       padding: '25px 0',
@@ -47,27 +36,33 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
       transition: 'all 0.3s ease',
       position: 'relative',
       zIndex: 10,
-      textAlign: 'left'
+      textAlign: 'left',
+      boxSizing: 'border-box'
     }}>
       <div className="logo" style={{
-        padding: collapsed ? '25px 0' : '0 25px 25px',
+        padding: sidebarCollapsed ? '25px 0 25px 0' : '0 25px 25px',
         borderBottom: '1px solid #eaeaea',
         marginBottom: '25px',
         display: 'flex',
-        justifyContent: collapsed ? 'center' : 'space-between',
+        justifyContent: sidebarCollapsed ? 'center' : 'space-between',
         alignItems: 'center',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        width: sidebarCollapsed ? '100%' : 'auto',
+        textAlign: sidebarCollapsed ? 'center' : 'left',
+        margin: sidebarCollapsed ? '0 auto' : 'inherit',
+        position: sidebarCollapsed ? 'relative' : 'static'
       }}>
         <h1 style={{
-          fontSize: '28px',
-          fontWeight: 700,
-          opacity: collapsed ? 0 : 1,
-          position: collapsed ? 'absolute' : 'relative',
-          left: collapsed ? '-9999px' : 'auto',
-          width: collapsed ? 0 : 'auto',
-          height: collapsed ? 0 : 'auto',
-          overflow: collapsed ? 'hidden' : 'visible',
-          visibility: collapsed ? 'hidden' : 'visible'
+          fontSize: '28px', 
+          fontWeight: 700, 
+          transition: 'opacity 0.3s',
+          opacity: sidebarCollapsed ? 0 : 1,
+          position: sidebarCollapsed ? 'absolute' : 'static',
+          left: sidebarCollapsed ? '-9999px' : 'auto',
+          width: sidebarCollapsed ? 0 : 'auto',
+          height: sidebarCollapsed ? 0 : 'auto',
+          overflow: sidebarCollapsed ? 'hidden' : 'visible',
+          visibility: sidebarCollapsed ? 'hidden' : 'visible'
         }}>
           <span style={{ color: '#00c2cb' }}>Apo</span>
           <span style={{ color: '#4f46e5' }}>Lead</span>
@@ -79,37 +74,39 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
             cursor: 'pointer',
             fontSize: '12px',
             color: '#64748b',
-            width: collapsed ? '30px' : '20px',
-            height: collapsed ? '30px' : '20px',
+            width: sidebarCollapsed ? '30px' : '20px',
+            height: sidebarCollapsed ? '30px' : '20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: '50%',
             transition: 'all 0.3s',
-            position: collapsed ? 'absolute' : 'relative',
-            right: collapsed ? '-15px' : 'auto',
-            top: collapsed ? '20px' : 'auto',
-            backgroundColor: collapsed ? 'white' : 'transparent',
-            boxShadow: collapsed ? '0 0 8px rgba(0,0,0,0.1)' : 'none',
-            border: collapsed ? '1px solid #eaeaea' : 'none'
+            position: sidebarCollapsed ? 'absolute' : 'relative',
+            right: sidebarCollapsed ? '-15px' : 'auto',
+            top: sidebarCollapsed ? '20px' : 'auto',
+            backgroundColor: sidebarCollapsed ? 'white' : 'transparent',
+            boxShadow: sidebarCollapsed ? '0 0 8px rgba(0,0,0,0.1)' : 'none',
+            border: sidebarCollapsed ? '1px solid #eaeaea' : 'none',
+            zIndex: 20
           }}
         >
-          <i className={`fas fa-angle-${collapsed ? 'right' : 'left'}`} style={{ fontSize: collapsed ? '12px' : '12px' }}></i>
+          <i className={`fas fa-angle-${sidebarCollapsed ? 'right' : 'left'}`}></i>
         </div>
       </div>
-
+      
       <div className="nav-menu" style={{
         display: 'flex',
         flexDirection: 'column',
         flexGrow: 1,
-        padding: collapsed ? '0' : '0 15px',
+        padding: sidebarCollapsed ? 0 : '0 15px',
         overflowX: 'hidden',
-        alignItems: collapsed ? 'center' : 'flex-start'
+        width: sidebarCollapsed ? '100%' : 'auto',
+        alignItems: sidebarCollapsed ? 'center' : 'stretch'
       }}>
         <Link to="/dashboard" className={`nav-item ${activeItem === 'getting-started' ? 'active' : ''}`} style={{
           display: 'flex',
           alignItems: 'center',
-          padding: collapsed ? '12px 0' : '12px 20px',
+          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
           color: activeItem === 'getting-started' ? '#4f46e5' : '#64748b',
           textDecoration: 'none',
           transition: 'all 0.3s',
@@ -118,25 +115,33 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
           width: '100%',
           whiteSpace: 'nowrap',
           position: 'relative',
+          boxSizing: 'border-box',
           backgroundColor: activeItem === 'getting-started' ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
           fontWeight: activeItem === 'getting-started' ? 500 : 'normal',
-          justifyContent: collapsed ? 'center' : 'flex-start'
+          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
         }}>
-          <Play size={18} style={{ marginRight: collapsed ? 0 : '12px', minWidth: '24px', textAlign: 'center' }} />
-          <span style={{ 
-            display: collapsed ? 'none' : 'block',
-            opacity: collapsed ? 0 : 1,
-            visibility: collapsed ? 'hidden' : 'visible',
-            width: collapsed ? 0 : 'auto',
-            height: collapsed ? 0 : 'auto',
-            overflow: collapsed ? 'hidden' : 'visible'
+          <i className="fas fa-play-circle" style={{
+            marginRight: sidebarCollapsed ? 0 : '12px',
+            fontSize: '18px',
+            width: '24px',
+            textAlign: 'center',
+            flexShrink: 0
+          }}></i>
+          <span style={{
+            display: sidebarCollapsed ? 'none' : 'inline-block',
+            opacity: sidebarCollapsed ? 0 : 1,
+            visibility: sidebarCollapsed ? 'hidden' : 'visible',
+            width: sidebarCollapsed ? 0 : 'auto',
+            height: sidebarCollapsed ? 0 : 'auto',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible',
+            position: sidebarCollapsed ? 'absolute' : 'static'
           }}>Getting Started</span>
         </Link>
-
+        
         <Link to="/dashboard" className={`nav-item ${activeItem === 'dashboard' ? 'active' : ''}`} style={{
           display: 'flex',
           alignItems: 'center',
-          padding: collapsed ? '12px 0' : '12px 20px',
+          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
           color: activeItem === 'dashboard' ? '#4f46e5' : '#64748b',
           textDecoration: 'none',
           transition: 'all 0.3s',
@@ -145,25 +150,33 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
           width: '100%',
           whiteSpace: 'nowrap',
           position: 'relative',
+          boxSizing: 'border-box',
           backgroundColor: activeItem === 'dashboard' ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
           fontWeight: activeItem === 'dashboard' ? 500 : 'normal',
-          justifyContent: collapsed ? 'center' : 'flex-start'
+          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
         }}>
-          <ChartPieIcon size={18} style={{ marginRight: collapsed ? 0 : '12px', minWidth: '24px', textAlign: 'center' }} />
-          <span style={{ 
-            display: collapsed ? 'none' : 'block',
-            opacity: collapsed ? 0 : 1,
-            visibility: collapsed ? 'hidden' : 'visible',
-            width: collapsed ? 0 : 'auto',
-            height: collapsed ? 0 : 'auto',
-            overflow: collapsed ? 'hidden' : 'visible'
+          <i className="fas fa-chart-pie" style={{
+            marginRight: sidebarCollapsed ? 0 : '12px',
+            fontSize: '18px',
+            width: '24px',
+            textAlign: 'center',
+            flexShrink: 0
+          }}></i>
+          <span style={{
+            display: sidebarCollapsed ? 'none' : 'inline-block',
+            opacity: sidebarCollapsed ? 0 : 1,
+            visibility: sidebarCollapsed ? 'hidden' : 'visible',
+            width: sidebarCollapsed ? 0 : 'auto',
+            height: sidebarCollapsed ? 0 : 'auto',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible',
+            position: sidebarCollapsed ? 'absolute' : 'static'
           }}>Dashboard</span>
         </Link>
-
+        
         <div className={`nav-item locked`} style={{
           display: 'flex',
           alignItems: 'center',
-          padding: collapsed ? '12px 0' : '12px 20px',
+          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
           color: '#64748b',
           textDecoration: 'none',
           transition: 'all 0.3s',
@@ -172,32 +185,42 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
           width: '100%',
           whiteSpace: 'nowrap',
           position: 'relative',
+          boxSizing: 'border-box',
           cursor: 'not-allowed',
-          justifyContent: collapsed ? 'center' : 'flex-start'
+          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
         }}>
-          <Wrench size={18} style={{ marginRight: collapsed ? 0 : '12px', minWidth: '24px', textAlign: 'center' }} />
-          <span style={{ 
-            display: collapsed ? 'none' : 'block',
-            opacity: collapsed ? 0 : 1,
-            visibility: collapsed ? 'hidden' : 'visible',
-            width: collapsed ? 0 : 'auto',
-            height: collapsed ? 0 : 'auto',
-            overflow: collapsed ? 'hidden' : 'visible'
+          <i className="fas fa-tools" style={{
+            marginRight: sidebarCollapsed ? 0 : '12px',
+            fontSize: '18px',
+            width: '24px',
+            textAlign: 'center',
+            flexShrink: 0
+          }}></i>
+          <span style={{
+            display: sidebarCollapsed ? 'none' : 'inline-block',
+            opacity: sidebarCollapsed ? 0 : 1,
+            visibility: sidebarCollapsed ? 'hidden' : 'visible',
+            width: sidebarCollapsed ? 0 : 'auto',
+            height: sidebarCollapsed ? 0 : 'auto',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible',
+            position: sidebarCollapsed ? 'absolute' : 'static'
           }}>Tool Page</span>
-          <i className="fas fa-lock menu-lock-icon" style={{ 
-            position: 'absolute', 
-            right: collapsed ? '50%' : '10px',
-            top: collapsed ? '50%' : '50%',
-            transform: collapsed ? 'translate(50%, -50%)' : 'translateY(-50%)',
-            fontSize: '10px',
-            color: '#94a3b8'
+          <i className="fas fa-lock menu-lock-icon" style={{
+            display: 'none',
+            position: 'absolute',
+            left: sidebarCollapsed ? '50%' : '50%',
+            top: '50%',
+            transform: sidebarCollapsed ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
+            color: '#94A3B8',
+            fontSize: sidebarCollapsed ? '12px' : '18px',
+            zIndex: 5
           }}></i>
         </div>
-
+        
         <div className={`nav-item locked`} style={{
           display: 'flex',
           alignItems: 'center',
-          padding: collapsed ? '12px 0' : '12px 20px',
+          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
           color: '#64748b',
           textDecoration: 'none',
           transition: 'all 0.3s',
@@ -206,32 +229,42 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
           width: '100%',
           whiteSpace: 'nowrap',
           position: 'relative',
+          boxSizing: 'border-box',
           cursor: 'not-allowed',
-          justifyContent: collapsed ? 'center' : 'flex-start'
+          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
         }}>
-          <DollarSign size={18} style={{ marginRight: collapsed ? 0 : '12px', minWidth: '24px', textAlign: 'center' }} />
-          <span style={{ 
-            display: collapsed ? 'none' : 'block',
-            opacity: collapsed ? 0 : 1,
-            visibility: collapsed ? 'hidden' : 'visible',
-            width: collapsed ? 0 : 'auto',
-            height: collapsed ? 0 : 'auto',
-            overflow: collapsed ? 'hidden' : 'visible'
+          <i className="fas fa-money-bill-wave" style={{
+            marginRight: sidebarCollapsed ? 0 : '12px',
+            fontSize: '18px',
+            width: '24px',
+            textAlign: 'center',
+            flexShrink: 0
+          }}></i>
+          <span style={{
+            display: sidebarCollapsed ? 'none' : 'inline-block',
+            opacity: sidebarCollapsed ? 0 : 1,
+            visibility: sidebarCollapsed ? 'hidden' : 'visible',
+            width: sidebarCollapsed ? 0 : 'auto',
+            height: sidebarCollapsed ? 0 : 'auto',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible',
+            position: sidebarCollapsed ? 'absolute' : 'static'
           }}>Payment History</span>
-          <i className="fas fa-lock menu-lock-icon" style={{ 
-            position: 'absolute', 
-            right: collapsed ? '50%' : '10px',
-            top: collapsed ? '50%' : '50%',
-            transform: collapsed ? 'translate(50%, -50%)' : 'translateY(-50%)',
-            fontSize: '10px',
-            color: '#94a3b8'
+          <i className="fas fa-lock menu-lock-icon" style={{
+            display: 'none',
+            position: 'absolute',
+            left: sidebarCollapsed ? '50%' : '50%',
+            top: '50%',
+            transform: sidebarCollapsed ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
+            color: '#94A3B8',
+            fontSize: sidebarCollapsed ? '12px' : '18px',
+            zIndex: 5
           }}></i>
         </div>
-
+        
         <div className={`nav-item locked`} style={{
           display: 'flex',
           alignItems: 'center',
-          padding: collapsed ? '12px 0' : '12px 20px',
+          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
           color: '#64748b',
           textDecoration: 'none',
           transition: 'all 0.3s',
@@ -240,32 +273,42 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
           width: '100%',
           whiteSpace: 'nowrap',
           position: 'relative',
+          boxSizing: 'border-box',
           cursor: 'not-allowed',
-          justifyContent: collapsed ? 'center' : 'flex-start'
+          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
         }}>
-          <LineChart size={18} style={{ marginRight: collapsed ? 0 : '12px', minWidth: '24px', textAlign: 'center' }} />
-          <span style={{ 
-            display: collapsed ? 'none' : 'block',
-            opacity: collapsed ? 0 : 1,
-            visibility: collapsed ? 'hidden' : 'visible',
-            width: collapsed ? 0 : 'auto',
-            height: collapsed ? 0 : 'auto',
-            overflow: collapsed ? 'hidden' : 'visible'
+          <i className="fas fa-chart-line" style={{
+            marginRight: sidebarCollapsed ? 0 : '12px',
+            fontSize: '18px',
+            width: '24px',
+            textAlign: 'center',
+            flexShrink: 0
+          }}></i>
+          <span style={{
+            display: sidebarCollapsed ? 'none' : 'inline-block',
+            opacity: sidebarCollapsed ? 0 : 1,
+            visibility: sidebarCollapsed ? 'hidden' : 'visible',
+            width: sidebarCollapsed ? 0 : 'auto',
+            height: sidebarCollapsed ? 0 : 'auto',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible',
+            position: sidebarCollapsed ? 'absolute' : 'static'
           }}>Performance</span>
-          <i className="fas fa-lock menu-lock-icon" style={{ 
-            position: 'absolute', 
-            right: collapsed ? '50%' : '10px',
-            top: collapsed ? '50%' : '50%',
-            transform: collapsed ? 'translate(50%, -50%)' : 'translateY(-50%)',
-            fontSize: '10px',
-            color: '#94a3b8'
+          <i className="fas fa-lock menu-lock-icon" style={{
+            display: 'none',
+            position: 'absolute',
+            left: sidebarCollapsed ? '50%' : '50%',
+            top: '50%',
+            transform: sidebarCollapsed ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
+            color: '#94A3B8',
+            fontSize: sidebarCollapsed ? '12px' : '18px',
+            zIndex: 5
           }}></i>
         </div>
-
+        
         <div className={`nav-item locked`} style={{
           display: 'flex',
           alignItems: 'center',
-          padding: collapsed ? '12px 0' : '12px 20px',
+          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
           color: '#64748b',
           textDecoration: 'none',
           transition: 'all 0.3s',
@@ -274,32 +317,42 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
           width: '100%',
           whiteSpace: 'nowrap',
           position: 'relative',
+          boxSizing: 'border-box',
           cursor: 'not-allowed',
-          justifyContent: collapsed ? 'center' : 'flex-start'
+          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
         }}>
-          <Trophy size={18} style={{ marginRight: collapsed ? 0 : '12px', minWidth: '24px', textAlign: 'center' }} />
-          <span style={{ 
-            display: collapsed ? 'none' : 'block',
-            opacity: collapsed ? 0 : 1,
-            visibility: collapsed ? 'hidden' : 'visible',
-            width: collapsed ? 0 : 'auto',
-            height: collapsed ? 0 : 'auto',
-            overflow: collapsed ? 'hidden' : 'visible'
+          <i className="fas fa-trophy" style={{
+            marginRight: sidebarCollapsed ? 0 : '12px',
+            fontSize: '18px',
+            width: '24px',
+            textAlign: 'center',
+            flexShrink: 0
+          }}></i>
+          <span style={{
+            display: sidebarCollapsed ? 'none' : 'inline-block',
+            opacity: sidebarCollapsed ? 0 : 1,
+            visibility: sidebarCollapsed ? 'hidden' : 'visible',
+            width: sidebarCollapsed ? 0 : 'auto',
+            height: sidebarCollapsed ? 0 : 'auto',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible',
+            position: sidebarCollapsed ? 'absolute' : 'static'
           }}>Ranking</span>
-          <i className="fas fa-lock menu-lock-icon" style={{ 
-            position: 'absolute', 
-            right: collapsed ? '50%' : '10px',
-            top: collapsed ? '50%' : '50%',
-            transform: collapsed ? 'translate(50%, -50%)' : 'translateY(-50%)',
-            fontSize: '10px',
-            color: '#94a3b8'
+          <i className="fas fa-lock menu-lock-icon" style={{
+            display: 'none',
+            position: 'absolute',
+            left: sidebarCollapsed ? '50%' : '50%',
+            top: '50%',
+            transform: sidebarCollapsed ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
+            color: '#94A3B8',
+            fontSize: sidebarCollapsed ? '12px' : '18px',
+            zIndex: 5
           }}></i>
         </div>
-
+        
         <Link to="/billing" className={`nav-item ${activeItem === 'billing' ? 'active' : ''}`} style={{
           display: 'flex',
           alignItems: 'center',
-          padding: collapsed ? '12px 0' : '12px 20px',
+          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
           color: activeItem === 'billing' ? '#4f46e5' : '#64748b',
           textDecoration: 'none',
           transition: 'all 0.3s',
@@ -308,32 +361,40 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
           width: '100%',
           whiteSpace: 'nowrap',
           position: 'relative',
+          boxSizing: 'border-box',
           backgroundColor: activeItem === 'billing' ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
           fontWeight: activeItem === 'billing' ? 500 : 'normal',
-          justifyContent: collapsed ? 'center' : 'flex-start'
+          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
         }}>
-          <Receipt size={18} style={{ marginRight: collapsed ? 0 : '12px', minWidth: '24px', textAlign: 'center' }} />
-          <span style={{ 
-            display: collapsed ? 'none' : 'block',
-            opacity: collapsed ? 0 : 1,
-            visibility: collapsed ? 'hidden' : 'visible',
-            width: collapsed ? 0 : 'auto',
-            height: collapsed ? 0 : 'auto',
-            overflow: collapsed ? 'hidden' : 'visible'
+          <i className="fas fa-file-invoice-dollar" style={{
+            marginRight: sidebarCollapsed ? 0 : '12px',
+            fontSize: '18px',
+            width: '24px',
+            textAlign: 'center',
+            flexShrink: 0
+          }}></i>
+          <span style={{
+            display: sidebarCollapsed ? 'none' : 'inline-block',
+            opacity: sidebarCollapsed ? 0 : 1,
+            visibility: sidebarCollapsed ? 'hidden' : 'visible',
+            width: sidebarCollapsed ? 0 : 'auto',
+            height: sidebarCollapsed ? 0 : 'auto',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible',
+            position: sidebarCollapsed ? 'absolute' : 'static'
           }}>Billing Information</span>
         </Link>
-
+        
         <div className="nav-divider" style={{
           height: '1px',
           backgroundColor: '#eaeaea',
-          margin: '15px 10px',
+          margin: '15px 10px 15px',
           width: 'calc(100% - 20px)'
         }}></div>
-
+        
         <div className={`nav-item locked`} style={{
           display: 'flex',
           alignItems: 'center',
-          padding: collapsed ? '12px 0' : '12px 20px',
+          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
           color: '#64748b',
           textDecoration: 'none',
           transition: 'all 0.3s',
@@ -342,67 +403,88 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashb
           width: '100%',
           whiteSpace: 'nowrap',
           position: 'relative',
+          boxSizing: 'border-box',
           cursor: 'not-allowed',
-          justifyContent: collapsed ? 'center' : 'flex-start'
+          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
         }}>
-          <Settings size={18} style={{ marginRight: collapsed ? 0 : '12px', minWidth: '24px', textAlign: 'center' }} />
-          <span style={{ 
-            display: collapsed ? 'none' : 'block',
-            opacity: collapsed ? 0 : 1,
-            visibility: collapsed ? 'hidden' : 'visible',
-            width: collapsed ? 0 : 'auto',
-            height: collapsed ? 0 : 'auto',
-            overflow: collapsed ? 'hidden' : 'visible'
+          <i className="fas fa-cog" style={{
+            marginRight: sidebarCollapsed ? 0 : '12px',
+            fontSize: '18px',
+            width: '24px',
+            textAlign: 'center',
+            flexShrink: 0
+          }}></i>
+          <span style={{
+            display: sidebarCollapsed ? 'none' : 'inline-block',
+            opacity: sidebarCollapsed ? 0 : 1,
+            visibility: sidebarCollapsed ? 'hidden' : 'visible',
+            width: sidebarCollapsed ? 0 : 'auto',
+            height: sidebarCollapsed ? 0 : 'auto',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible',
+            position: sidebarCollapsed ? 'absolute' : 'static'
           }}>Settings</span>
-          <i className="fas fa-lock menu-lock-icon" style={{ 
-            position: 'absolute', 
-            right: collapsed ? '50%' : '10px',
-            top: collapsed ? '50%' : '50%',
-            transform: collapsed ? 'translate(50%, -50%)' : 'translateY(-50%)',
-            fontSize: '10px',
-            color: '#94a3b8'
+          <i className="fas fa-lock menu-lock-icon" style={{
+            display: 'none',
+            position: 'absolute',
+            left: sidebarCollapsed ? '50%' : '50%',
+            top: '50%',
+            transform: sidebarCollapsed ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
+            color: '#94A3B8',
+            fontSize: sidebarCollapsed ? '12px' : '18px',
+            zIndex: 5
           }}></i>
         </div>
-
-        <div className="nav-item" onClick={handleLogout} style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: collapsed ? '12px 0' : '12px 20px',
-          color: '#64748b',
-          textDecoration: 'none',
-          transition: 'all 0.3s',
-          marginBottom: '8px',
-          borderRadius: '10px',
-          width: '100%',
-          whiteSpace: 'nowrap',
-          position: 'relative',
-          cursor: 'pointer',
-          justifyContent: collapsed ? 'center' : 'flex-start'
-        }}>
-          <LogOut size={18} style={{ marginRight: collapsed ? 0 : '12px', minWidth: '24px', textAlign: 'center' }} />
-          <span style={{ 
-            display: collapsed ? 'none' : 'block',
-            opacity: collapsed ? 0 : 1,
-            visibility: collapsed ? 'hidden' : 'visible',
-            width: collapsed ? 0 : 'auto',
-            height: collapsed ? 0 : 'auto',
-            overflow: collapsed ? 'hidden' : 'visible'
+        
+        <div 
+          onClick={handleLogout}
+          className="nav-item" 
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            transition: 'all 0.3s',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            position: 'relative',
+            boxSizing: 'border-box',
+            cursor: 'pointer',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
+          }}
+        >
+          <i className="fas fa-sign-out-alt" style={{
+            marginRight: sidebarCollapsed ? 0 : '12px',
+            fontSize: '18px',
+            width: '24px',
+            textAlign: 'center',
+            flexShrink: 0
+          }}></i>
+          <span style={{
+            display: sidebarCollapsed ? 'none' : 'inline-block',
+            opacity: sidebarCollapsed ? 0 : 1,
+            visibility: sidebarCollapsed ? 'hidden' : 'visible',
+            width: sidebarCollapsed ? 0 : 'auto',
+            height: sidebarCollapsed ? 0 : 'auto',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible',
+            position: sidebarCollapsed ? 'absolute' : 'static'
           }}>Log Out</span>
         </div>
-
+        
         <div style={{ flexGrow: 1 }}></div>
       </div>
-
+      
       <div className="sidebar-footer" style={{
-        padding: collapsed ? 0 : '20px 25px',
-        borderTop: collapsed ? 'none' : '1px solid #eaeaea',
+        padding: sidebarCollapsed ? 0 : '20px 25px',
+        borderTop: sidebarCollapsed ? 'none' : '1px solid #eaeaea',
         color: '#64748b',
         fontSize: '14px',
         transition: 'opacity 0.3s',
-        opacity: collapsed ? 0 : 1,
-        visibility: collapsed ? 'hidden' : 'visible',
-        height: collapsed ? 0 : 'auto',
-        overflow: 'hidden'
+        opacity: sidebarCollapsed ? 0 : 1,
+        visibility: sidebarCollapsed ? 'hidden' : 'visible',
+        height: sidebarCollapsed ? 0 : 'auto'
       }}>
         <i className="fas fa-info-circle"></i> Need help? <a href="#" style={{ color: '#4f46e5', textDecoration: 'none' }}>Support Center</a>
       </div>
