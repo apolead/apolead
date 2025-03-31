@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { DashboardSidebar } from '@/components/DashboardSidebar';
 
 const billingFormSchema = z.object({
   accountNumber: z.string().min(4, { message: "Account number must be at least 4 digits" }),
@@ -65,143 +67,103 @@ const BillingInformation: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-      <div className="main-content" style={{ flex: 1, padding: '40px' }}>
-        <div className="header" style={{ marginBottom: '30px' }}>
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="back-button"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              color: '#4f46e5',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '16px',
-              padding: '0',
-              marginBottom: '20px'
-            }}
-          >
-            <i className="fas fa-arrow-left" style={{ marginRight: '8px' }}></i>
-            Back to Dashboard
-          </button>
-          
-          <h1 style={{ fontSize: '28px', fontWeight: 600, color: '#1e293b', marginBottom: '10px' }}>
-            Billing Information
-          </h1>
-          <p style={{ fontSize: '16px', color: '#64748b', marginBottom: '30px' }}>
-            Add your bank account information for receiving payments
-          </p>
-        </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-[#f8fafc]">
+        <DashboardSidebar />
+        <div className="main-content flex-1 p-10">
+          <div className="header mb-8">
+            <h1 className="text-2xl font-semibold text-[#1e293b] mb-2">
+              Billing Information
+            </h1>
+            <p className="text-[#64748b] mb-6">
+              Add your bank account information for receiving payments
+            </p>
+          </div>
 
-        <div className="billing-form-container" style={{
-          backgroundColor: 'white',
-          borderRadius: '15px',
-          padding: '30px',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-          maxWidth: '600px'
-        }}>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="accountNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account Number</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="Enter your account number" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Enter the account number where you want to receive payments.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="confirmAccountNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Account Number</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="Confirm your account number" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Please re-enter your account number to confirm.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="routingNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Routing Number</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="Enter your routing number" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Enter the 9-digit routing number for your bank.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  backgroundColor: '#4f46e5',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                  opacity: isSubmitting ? 0.7 : 1,
-                  transition: 'all 0.3s',
-                  marginTop: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {isSubmitting ? (
-                  <>
-                    <i className="fas fa-circle-notch fa-spin" style={{ marginRight: '8px' }}></i>
-                    Saving...
-                  </>
-                ) : (
-                  "Save Banking Information"
-                )}
-              </button>
-            </form>
-          </Form>
-          
-          <div style={{ 
-            marginTop: '20px', 
-            padding: '15px', 
-            backgroundColor: '#f8fafc', 
-            borderRadius: '8px',
-            fontSize: '14px',
-            color: '#64748b'
-          }}>
-            <i className="fas fa-lock" style={{ marginRight: '8px', color: '#4f46e5' }}></i>
-            Your banking information is encrypted and stored securely.
+          <div className="billing-form-container bg-white rounded-xl p-8 shadow-sm max-w-2xl">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="accountNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account Number</FormLabel>
+                      <FormControl>
+                        <Input type="text" placeholder="Enter your account number" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Enter the account number where you want to receive payments.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="confirmAccountNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Account Number</FormLabel>
+                      <FormControl>
+                        <Input type="text" placeholder="Confirm your account number" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Please re-enter your account number to confirm.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="routingNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Routing Number</FormLabel>
+                      <FormControl>
+                        <Input type="text" placeholder="Enter your routing number" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Enter the 9-digit routing number for your bank.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-3 bg-indigo-600 text-white rounded-lg font-medium flex items-center justify-center transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Banking Information"
+                  )}
+                </button>
+              </form>
+            </Form>
+            
+            <div className="mt-5 p-4 bg-[#f8fafc] rounded-lg text-sm text-[#64748b]">
+              <svg xmlns="http://www.w3.org/2000/svg" className="inline-block h-4 w-4 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Your banking information is encrypted and stored securely.
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
