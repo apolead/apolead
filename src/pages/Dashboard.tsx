@@ -1,16 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import TrainingModal from '@/components/training/TrainingModal';
-import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, userProfile, logout } = useAuth();
-  const { toast } = useToast();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showTrainingModal, setShowTrainingModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

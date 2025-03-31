@@ -1,5 +1,4 @@
 
-
 -- This function retrieves the credentials value for a specific user
 CREATE OR REPLACE FUNCTION public.get_user_credentials(user_id UUID)
 RETURNS TEXT
@@ -54,4 +53,3 @@ $$;
 -- Grant access to the billing function for authenticated users
 GRANT EXECUTE ON FUNCTION public.get_billing_information TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_billing_information TO service_role;
-

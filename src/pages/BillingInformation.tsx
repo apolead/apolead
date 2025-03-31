@@ -75,23 +75,20 @@ export default function BillingInformation() {
     setIsLoading(true);
 
     try {
-      // Instead of calling the stored procedure directly, update the user profile
-      // using the update_user_profile_direct function that already exists
-      const { error } = await supabase.rpc('update_user_profile_direct', {
-        input_user_id: user.id,
-        input_updates: {
-          bank_name: data.bank_name,
-          account_number: data.account_number,
-          routing_number: data.routing_number,
-          account_holder_name: data.account_holder_name,
-          account_type: data.account_type,
-          address_line1: data.address_line1,
-          address_line2: data.address_line2 || "",
-          city: data.city,
-          state: data.state,
-          zip_code: data.zip_code,
-          ssn_last_four: data.ssn_last_four
-        }
+      // Call the stored procedure to update billing information
+      const { error } = await supabase.rpc('update_billing_information', {
+        p_user_id: user.id,
+        p_bank_name: data.bank_name,
+        p_account_number: data.account_number,
+        p_routing_number: data.routing_number,
+        p_account_holder_name: data.account_holder_name,
+        p_account_type: data.account_type,
+        p_address_line1: data.address_line1,
+        p_address_line2: data.address_line2 || "",
+        p_city: data.city,
+        p_state: data.state,
+        p_zip_code: data.zip_code,
+        p_ssn_last_four: data.ssn_last_four
       });
 
       if (error) throw error;
