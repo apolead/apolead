@@ -1,322 +1,314 @@
 
-import React, { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { DashboardSidebar } from '@/components/DashboardSidebar';
+import React, { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface BillingFormData {
-  bankName: string;
-  accountNumber: string;
-  confirmAccountNumber: string;
-  routingNumber: string;
-  accountHolderName: string;
-  accountType: string;
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  ssnLastFour: string;
-}
+// Define form schema
+const billingFormSchema = z.object({
+  bank_name: z.string().min(2, { message: "Bank name is required" }),
+  account_number: z.string().min(4, { message: "Account number is required" }),
+  routing_number: z.string().min(8, { message: "Routing number is required" }),
+  account_holder_name: z.string().min(2, { message: "Account holder name is required" }),
+  account_type: z.string().min(1, { message: "Account type is required" }),
+  address_line1: z.string().min(1, { message: "Address line 1 is required" }),
+  address_line2: z.string().optional(),
+  city: z.string().min(1, { message: "City is required" }),
+  state: z.string().min(1, { message: "State is required" }),
+  zip_code: z.string().min(5, { message: "ZIP code is required" }),
+  ssn_last_four: z.string().length(4, { message: "Last 4 digits of SSN required" }),
+});
 
-const BillingInformation = () => {
-  const { toast } = useToast();
+type BillingFormValues = z.infer<typeof billingFormSchema>;
+
+export default function BillingInformation() {
   const { user, userProfile } = useAuth();
-  const [formData, setFormData] = useState<BillingFormData>({
-    bankName: '',
-    accountNumber: '',
-    confirmAccountNumber: '',
-    routingNumber: '',
-    accountHolderName: '',
-    accountType: '',
-    addressLine1: '',
-    addressLine2: '', 
-    city: '', 
-    state: '', 
-    zipCode: '',
-    ssnLastFour: ''
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Set default values from user profile if available
+  const defaultValues: Partial<BillingFormValues> = {
+    bank_name: userProfile?.bank_name || "",
+    account_number: userProfile?.account_number || "",
+    routing_number: userProfile?.routing_number || "",
+    account_holder_name: userProfile?.account_holder_name || "",
+    account_type: userProfile?.account_type || "",
+    address_line1: userProfile?.address_line1 || "",
+    address_line2: userProfile?.address_line2 || "",
+    city: userProfile?.city || "",
+    state: userProfile?.state || "",
+    zip_code: userProfile?.zip_code || "",
+    ssn_last_four: userProfile?.ssn_last_four || "",
+  };
+
+  const form = useForm<BillingFormValues>({
+    resolver: zodResolver(billingFormSchema),
+    defaultValues,
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (userProfile) {
-      setFormData({
-        bankName: userProfile.bank_name || '',
-        accountNumber: userProfile.account_number || '',
-        confirmAccountNumber: userProfile.account_number || '',
-        routingNumber: userProfile.routing_number || '',
-        accountHolderName: userProfile.account_holder_name || '',
-        accountType: userProfile.account_type || '',
-        addressLine1: userProfile.address_line1 || '',
-        addressLine2: userProfile.address_line2 || '',
-        city: userProfile.city || '',
-        state: userProfile.state || '',
-        zipCode: userProfile.zip_code || '',
-        ssnLastFour: userProfile.ssn_last_four || ''
-      });
-    }
-  }, [userProfile]);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
-    // Validate routing number (must be 9 digits)
-    if (!/^\d{9}$/.test(formData.routingNumber.trim())) {
-      newErrors.routingNumber = 'Please enter a valid 9-digit routing number';
-    }
-    
-    // Validate account number (must not be empty and be at least 5 digits)
-    if (!/^\d{5,}$/.test(formData.accountNumber.trim())) {
-      newErrors.accountNumber = 'Please enter a valid account number (at least 5 digits)';
-    }
-    
-    // Validate confirm account number (must match account number)
-    if (formData.confirmAccountNumber.trim() !== formData.accountNumber.trim()) {
-      newErrors.confirmAccountNumber = 'Account numbers do not match';
-    }
-    
-    // Validate account type (must be selected)
-    if (!formData.accountType) {
-      newErrors.accountType = 'Please select an account type';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    let formattedValue = value;
-
-    // Handle special formatting for numerical fields
-    if (name === 'routingNumber' || name === 'accountNumber' || name === 'confirmAccountNumber' || name === 'ssnLastFour') {
-      formattedValue = value.replace(/[^\d]/g, '');
-    }
-
-    // Limit SSN to 4 digits
-    if (name === 'ssnLastFour' && formattedValue.length > 4) {
-      formattedValue = formattedValue.slice(0, 4);
-    }
-
-    // Limit routing number to 9 digits
-    if (name === 'routingNumber' && formattedValue.length > 9) {
-      formattedValue = formattedValue.slice(0, 9);
-    }
-
-    setFormData({
-      ...formData,
-      [name]: formattedValue
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
+  async function onSubmit(data: BillingFormValues) {
     if (!user) {
-      toast({ 
-        title: "Authentication Error", 
-        description: "You must be logged in to update billing information.",
-        variant: "destructive" 
+      toast({
+        title: "Error",
+        description: "You must be logged in to update billing information",
+        variant: "destructive",
       });
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
 
     try {
-      // Use the Supabase RPC function to update the profile
-      const { error } = await supabase.rpc('update_user_profile_direct', {
-        input_user_id: user.id,
-        input_updates: {
-          bank_name: formData.bankName,
-          account_number: formData.accountNumber, 
-          routing_number: formData.routingNumber,
-          account_holder_name: formData.accountHolderName,
-          account_type: formData.accountType,
-          address_line1: formData.addressLine1,
-          address_line2: formData.addressLine2,
-          city: formData.city,
-          state: formData.state,
-          zip_code: formData.zipCode,
-          ssn_last_four: formData.ssnLastFour
-        }
+      // Call the stored procedure to update billing information
+      const { error } = await supabase.rpc('update_billing_information', {
+        p_user_id: user.id,
+        p_bank_name: data.bank_name,
+        p_account_number: data.account_number,
+        p_routing_number: data.routing_number,
+        p_account_holder_name: data.account_holder_name,
+        p_account_type: data.account_type,
+        p_address_line1: data.address_line1,
+        p_address_line2: data.address_line2 || "",
+        p_city: data.city,
+        p_state: data.state,
+        p_zip_code: data.zip_code,
+        p_ssn_last_four: data.ssn_last_four
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Your billing information has been saved.",
+        description: "Your billing information has been updated",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating billing information:", error);
       toast({
         title: "Error",
-        description: "Failed to save billing information. Please try again.",
-        variant: "destructive"
+        description: error.message || "Failed to update billing information",
+        variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  };
-
-  const getInitials = () => {
-    if (!userProfile) return '';
-    return `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase();
-  };
+  }
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc]">
-      <DashboardSidebar activePage="billing" />
-      
-      <div className="flex-1 p-8 ml-[240px]">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-10">
-          <div className="text-2xl font-semibold">
-            Billing <span className="relative text-indigo-600 after:content-[''] after:absolute after:bottom-[-5px] after:left-0 after:w-full after:h-[3px] after:bg-gradient-to-r after:from-indigo-600 after:to-[#00c2cb] after:rounded-md">Information</span>
-          </div>
-          
-          <div className="flex items-center">
-            <div className="flex gap-4 mr-5">
-              <button className="w-[42px] h-[42px] rounded-xl bg-white flex items-center justify-center shadow-sm hover:translate-y-[-3px] transition-all hover:shadow-md text-gray-500 hover:text-indigo-600">
-                <i className="fas fa-search"></i>
-              </button>
-              <button className="w-[42px] h-[42px] rounded-xl bg-white flex items-center justify-center shadow-sm hover:translate-y-[-3px] transition-all hover:shadow-md text-gray-500 hover:text-indigo-600 relative">
-                <i className="fas fa-bell"></i>
-                <span className="absolute top-[10px] right-[10px] w-[8px] h-[8px] bg-red-500 border-2 border-white rounded-full"></span>
-              </button>
-              <button className="w-[42px] h-[42px] rounded-xl bg-white flex items-center justify-center shadow-sm hover:translate-y-[-3px] transition-all hover:shadow-md text-gray-500 hover:text-indigo-600">
-                <i className="fas fa-cog"></i>
-              </button>
-            </div>
-            
-            <div className="flex items-center bg-white px-[15px] py-[8px] rounded-[50px] shadow-sm hover:shadow-md transition-all hover:translate-y-[-3px] cursor-pointer">
-              <div className="w-[36px] h-[36px] rounded-full bg-gradient-to-r from-indigo-600 to-[#00c2cb] text-white flex items-center justify-center font-semibold text-[16px] mr-[10px]">
-                {getInitials()}
+    <div className="container mx-auto py-8">
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl">Billing Information</CardTitle>
+          <CardDescription>
+            Enter your banking details to receive payments. Your information is securely stored.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Bank Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Bank Information</h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="bank_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bank Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter bank name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="account_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter account number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="routing_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Routing Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter routing number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="account_holder_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account Holder Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter account holder name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="account_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select account type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="checking">Checking</SelectItem>
+                            <SelectItem value="savings">Savings</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="ssn_last_four"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last 4 Digits of SSN</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Last 4 digits of SSN" 
+                            maxLength={4} 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          For tax reporting purposes
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Address Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Billing Address</h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="address_line1"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address Line 1</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter street address" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="address_line2"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address Line 2 (Optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Apt, Suite, Unit, etc." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter city" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter state" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="zip_code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ZIP Code</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter ZIP code" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
-              <div className="font-medium text-gray-800">
-                {userProfile?.first_name} {userProfile?.last_name}
-              </div>
-              <i className="fas fa-chevron-down text-gray-500 ml-2"></i>
-            </div>
-          </div>
-        </div>
-        
-        {/* Billing Form Container */}
-        <div className="bg-white rounded-2xl p-10 shadow-sm mb-10 relative overflow-hidden">
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Bank Account Information</h3>
-            <p className="text-gray-500 text-sm">Please enter your bank account details below. This information is used to process your payments.</p>
-          </div>
-          
-          <div className="flex items-center p-5 bg-indigo-50 rounded-xl mb-8">
-            <div className="text-indigo-600 text-xl mr-4">
-              <i className="fas fa-shield-alt"></i>
-            </div>
-            <div className="text-gray-500 text-sm">
-              <strong className="text-gray-800">Your information is secure.</strong> We use industry-standard encryption to protect your sensitive data. Your banking information is never stored on our servers.
-            </div>
-          </div>
-          
-          <form onSubmit={handleSubmit} className="max-w-[600px]">
-            <div className="mb-6">
-              <label htmlFor="routingNumber" className="block mb-2 font-medium text-gray-700 text-[15px]">
-                Routing Number
-              </label>
-              <input
-                type="text"
-                id="routingNumber"
-                name="routingNumber"
-                value={formData.routingNumber}
-                onChange={handleChange}
-                placeholder="Enter your 9-digit routing number"
-                maxLength={9}
-                className={`w-full p-3 border ${errors.routingNumber ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all`}
-              />
-              <div className="text-xs text-gray-500 mt-1">The 9-digit number on the bottom left of your check</div>
-              {errors.routingNumber && <div className="text-xs text-red-500 mt-1">{errors.routingNumber}</div>}
-            </div>
-            
-            <div className="mb-6">
-              <label htmlFor="accountNumber" className="block mb-2 font-medium text-gray-700 text-[15px]">
-                Account Number
-              </label>
-              <input
-                type="password"
-                id="accountNumber"
-                name="accountNumber"
-                value={formData.accountNumber}
-                onChange={handleChange}
-                placeholder="Enter your account number"
-                className={`w-full p-3 border ${errors.accountNumber ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all`}
-              />
-              <div className="text-xs text-gray-500 mt-1">Your account number is typically 10-12 digits</div>
-              {errors.accountNumber && <div className="text-xs text-red-500 mt-1">{errors.accountNumber}</div>}
-            </div>
-            
-            <div className="mb-6">
-              <label htmlFor="confirmAccountNumber" className="block mb-2 font-medium text-gray-700 text-[15px]">
-                Confirm Account Number
-              </label>
-              <input
-                type="password"
-                id="confirmAccountNumber"
-                name="confirmAccountNumber"
-                value={formData.confirmAccountNumber}
-                onChange={handleChange}
-                placeholder="Re-enter your account number"
-                className={`w-full p-3 border ${errors.confirmAccountNumber ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all`}
-              />
-              {errors.confirmAccountNumber && <div className="text-xs text-red-500 mt-1">{errors.confirmAccountNumber}</div>}
-            </div>
-            
-            <div className="mb-6">
-              <label htmlFor="accountType" className="block mb-2 font-medium text-gray-700 text-[15px]">
-                Account Type
-              </label>
-              <select
-                id="accountType"
-                name="accountType"
-                value={formData.accountType}
-                onChange={handleChange}
-                className={`w-full p-3 border ${errors.accountType ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all`}
-              >
-                <option value="">Select account type</option>
-                <option value="checking">Checking</option>
-                <option value="savings">Savings</option>
-              </select>
-              {errors.accountType && <div className="text-xs text-red-500 mt-1">{errors.accountType}</div>}
-            </div>
-            
-            <div className="flex gap-4 mt-10">
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-[#00c2cb] text-white font-medium rounded-xl shadow-md hover:translate-y-[-3px] hover:shadow-lg transition-all flex items-center justify-center"
-              >
-                <i className="fas fa-save mr-2"></i> 
-                {loading ? 'Saving...' : 'Save Banking Information'}
-              </button>
-              <button 
-                type="button" 
-                className="px-6 py-3 bg-gray-100 text-gray-500 font-medium rounded-xl hover:bg-gray-200 hover:text-gray-700 transition-all flex items-center justify-center"
-              >
-                <i className="fas fa-times mr-2"></i> Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+              
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Saving..." : "Save Billing Information"}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
-};
-
-export default BillingInformation;
+}

@@ -223,15 +223,15 @@ const AuthWrapper = () => {
           <Dashboard />
         </AuthRoute>
       } />
-      <Route path="/billing" element={
-        <AuthRoute>
-          <BillingInformation />
-        </AuthRoute>
-      } />
       <Route path="/supervisor" element={
         <SupervisorRoute>
           <SupervisorDashboard />
         </SupervisorRoute>
+      } />
+      <Route path="/billing" element={
+        <AuthRoute>
+          <BillingInformation />
+        </AuthRoute>
       } />
       <Route path="/confirmation" element={<ConfirmationScreen />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
