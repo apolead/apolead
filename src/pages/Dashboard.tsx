@@ -239,6 +239,7 @@ function Dashboard() {
 
       {showModal && (
         <TrainingModal 
+          isOpen={showModal}
           onClose={() => setShowModal(false)} 
           onComplete={handleVideoComplete}
         />

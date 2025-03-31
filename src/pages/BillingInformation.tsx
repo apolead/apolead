@@ -5,10 +5,25 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardSidebar } from '@/components/DashboardSidebar';
 
+interface BillingFormData {
+  bankName: string;
+  accountNumber: string;
+  confirmAccountNumber: string;
+  routingNumber: string;
+  accountHolderName: string;
+  accountType: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  ssnLastFour: string;
+}
+
 const BillingInformation = () => {
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<BillingFormData>({
     bankName: '',
     accountNumber: '',
     confirmAccountNumber: '',
@@ -22,7 +37,7 @@ const BillingInformation = () => {
     zipCode: '',
     ssnLastFour: ''
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -45,7 +60,7 @@ const BillingInformation = () => {
   }, [userProfile]);
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
     
     // Validate routing number (must be 9 digits)
     if (!/^\d{9}$/.test(formData.routingNumber.trim())) {
@@ -71,7 +86,7 @@ const BillingInformation = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     let formattedValue = value;
 
@@ -96,7 +111,7 @@ const BillingInformation = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!validateForm()) {
