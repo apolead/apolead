@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 const billingFormSchema = z.object({
   routingNumber: z.string().min(9, 'Must be exactly 9 digits').max(9, 'Must be exactly 9 digits').regex(/^\d+$/, 'Must contain only numbers'),
   accountNumber: z.string().min(5, 'Must be at least 5 digits').regex(/^\d+$/, 'Must contain only numbers'),
@@ -19,31 +20,50 @@ const billingFormSchema = z.object({
     required_error: 'Please select an account type'
   })
 });
+
 const formSchema = billingFormSchema.refine(data => data.accountNumber === data.confirmAccountNumber, {
   message: "Account numbers don't match",
   path: ["confirmAccountNumber"]
 });
+
 type BillingFormValues = z.infer<typeof formSchema>;
+
 const BillingInformation = () => {
-  const {
-    user,
-    userProfile
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user, userProfile } = useAuth();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Add Font Awesome and Poppins font imports
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css';
+    document.head.appendChild(link);
+
+    const fontLink = document.createElement('link');
+    fontLink.rel = 'stylesheet';
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap';
+    document.head.appendChild(fontLink);
+
+    return () => {
+      document.head.removeChild(link);
+      document.head.removeChild(fontLink);
+    };
+  }, []);
+
   const defaultValues: Partial<BillingFormValues> = {
     routingNumber: userProfile?.routing_number || '',
     accountNumber: userProfile?.account_number || '',
     confirmAccountNumber: userProfile?.account_number || '',
     accountType: userProfile?.account_type as any || ''
   };
+
   const form = useForm<BillingFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
     mode: 'onChange'
   });
+
   useEffect(() => {
     if (userProfile) {
       form.setValue('routingNumber', userProfile.routing_number || '');
@@ -52,6 +72,7 @@ const BillingInformation = () => {
       form.setValue('accountType', userProfile.account_type as any || '');
     }
   }, [userProfile, form]);
+
   const onSubmit = async (data: BillingFormValues) => {
     if (!user) {
       toast({
@@ -63,9 +84,7 @@ const BillingInformation = () => {
     }
     setIsSubmitting(true);
     try {
-      const {
-        error
-      } = await supabase.rpc('update_user_profile_direct', {
+      const { error } = await supabase.rpc('update_user_profile_direct', {
         input_user_id: user.id,
         input_updates: {
           routing_number: data.routingNumber,
@@ -89,13 +108,16 @@ const BillingInformation = () => {
       setIsSubmitting(false);
     }
   };
+
   const getUserInitials = () => {
     if (!userProfile) return "?";
     const firstName = userProfile.first_name || "";
     const lastName = userProfile.last_name || "";
     return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
   };
-  return <div className="flex min-h-screen bg-[#f8fafc]">
+
+  return (
+    <div className="flex min-h-screen bg-[#f8fafc]">
       <DashboardSidebar activeItem="billing" />
 
       <div className="flex-1 p-8 md:p-10">
@@ -158,52 +180,86 @@ const BillingInformation = () => {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[600px]">
-              <FormField control={form.control} name="routingNumber" render={({
-              field
-            }) => <FormItem className="mb-6">
+              <FormField 
+                control={form.control} 
+                name="routingNumber" 
+                render={({ field }) => (
+                  <FormItem className="mb-6">
                     <FormLabel className="font-medium text-[#334155]">Routing Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your 9-digit routing number" {...field} className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" maxLength={9} onChange={e => {
-                  const value = e.target.value.replace(/[^\d]/g, '').slice(0, 9);
-                  field.onChange(value);
-                }} />
+                      <Input 
+                        placeholder="Enter your 9-digit routing number" 
+                        {...field} 
+                        className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
+                        maxLength={9} 
+                        onChange={e => {
+                          const value = e.target.value.replace(/[^\d]/g, '').slice(0, 9);
+                          field.onChange(value);
+                        }} 
+                      />
                     </FormControl>
                     <p className="text-xs text-gray-500 mt-1">The 9-digit number on the bottom left of your check</p>
                     <FormMessage className="text-xs text-red-500 mt-1" />
-                  </FormItem>} />
+                  </FormItem>
+                )} 
+              />
 
-              <FormField control={form.control} name="accountNumber" render={({
-              field
-            }) => <FormItem className="mb-6">
+              <FormField 
+                control={form.control} 
+                name="accountNumber" 
+                render={({ field }) => (
+                  <FormItem className="mb-6">
                     <FormLabel className="font-medium text-[#334155]">Account Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your account number" {...field} className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" onChange={e => {
-                  const value = e.target.value.replace(/[^\d]/g, '');
-                  field.onChange(value);
-                }} />
+                      <Input 
+                        placeholder="Enter your account number" 
+                        {...field} 
+                        className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
+                        onChange={e => {
+                          const value = e.target.value.replace(/[^\d]/g, '');
+                          field.onChange(value);
+                        }} 
+                      />
                     </FormControl>
                     <p className="text-xs text-gray-500 mt-1">Your account number is typically 10-12 digits</p>
                     <FormMessage className="text-xs text-red-500 mt-1" />
-                  </FormItem>} />
+                  </FormItem>
+                )} 
+              />
 
-              <FormField control={form.control} name="confirmAccountNumber" render={({
-              field
-            }) => <FormItem className="mb-6">
+              <FormField 
+                control={form.control} 
+                name="confirmAccountNumber" 
+                render={({ field }) => (
+                  <FormItem className="mb-6">
                     <FormLabel className="font-medium text-[#334155]">Confirm Account Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="Re-enter your account number" {...field} className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" onChange={e => {
-                  const value = e.target.value.replace(/[^\d]/g, '');
-                  field.onChange(value);
-                }} />
+                      <Input 
+                        placeholder="Re-enter your account number" 
+                        {...field} 
+                        className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
+                        onChange={e => {
+                          const value = e.target.value.replace(/[^\d]/g, '');
+                          field.onChange(value);
+                        }} 
+                      />
                     </FormControl>
                     <FormMessage className="text-xs text-red-500 mt-1" />
-                  </FormItem>} />
+                  </FormItem>
+                )} 
+              />
 
-              <FormField control={form.control} name="accountType" render={({
-              field
-            }) => <FormItem className="mb-6">
+              <FormField 
+                control={form.control} 
+                name="accountType" 
+                render={({ field }) => (
+                  <FormItem className="mb-6">
                     <FormLabel className="font-medium text-[#334155]">Account Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3">
                           <SelectValue placeholder="Select account type" />
@@ -215,13 +271,24 @@ const BillingInformation = () => {
                       </SelectContent>
                     </Select>
                     <FormMessage className="text-xs text-red-500 mt-1" />
-                  </FormItem>} />
+                  </FormItem>
+                )} 
+              />
 
               <div className="flex gap-4 mt-10">
-                <Button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-indigo-600 to-[#00c2cb] hover:translate-y-[-3px] transition-all shadow-md hover:shadow-lg rounded-xl text-zinc-100">
+                <Button 
+                  type="submit" 
+                  className="bg-gradient-to-r from-indigo-600 to-[#00c2cb] hover:translate-y-[-3px] transition-all shadow-md hover:shadow-lg rounded-xl text-zinc-100"
+                  disabled={isSubmitting}
+                >
                   <Save className="mr-2 h-4 w-4" /> Save Banking Information
                 </Button>
-                <Button type="button" variant="outline" onClick={() => form.reset(defaultValues)} className="bg-[#f1f5f9] text-gray-500 hover:bg-[#e2e8f0] hover:text-[#334155] rounded-xl border-none">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => form.reset(defaultValues)}
+                  className="bg-[#f1f5f9] text-gray-500 hover:bg-[#e2e8f0] hover:text-[#334155] rounded-xl border-none"
+                >
                   <X className="mr-2 h-4 w-4" /> Cancel
                 </Button>
               </div>
@@ -229,6 +296,8 @@ const BillingInformation = () => {
           </Form>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default BillingInformation;
