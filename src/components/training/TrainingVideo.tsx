@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -63,7 +62,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const { toast } = useToast();
   
   // YouTube video ID from the provided URL
-  const videoId = "WYJEoLDhI2I";
+  const videoId = "DNv_QDiKho8";
   
   // Create a ref to hold the YouTube player instance
   const playerRef = useRef<YTPlayer | null>(null);
