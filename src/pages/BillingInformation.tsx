@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -30,7 +29,7 @@ const formSchema = billingFormSchema.refine(data => data.accountNumber === data.
 type BillingFormValues = z.infer<typeof formSchema>;
 
 const BillingInformation = () => {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, updateProfile } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -38,7 +37,6 @@ const BillingInformation = () => {
   const [maskedRoutingNumber, setMaskedRoutingNumber] = useState('');
   const [maskedAccountNumber, setMaskedAccountNumber] = useState('');
   
-  // Add Font Awesome and Poppins font imports
   useEffect(() => {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
@@ -69,7 +67,6 @@ const BillingInformation = () => {
     mode: 'onChange'
   });
 
-  // Create masked versions of sensitive data
   const maskNumber = (number: string) => {
     if (!number) return '';
     const lastFour = number.slice(-4);
@@ -79,10 +76,8 @@ const BillingInformation = () => {
 
   useEffect(() => {
     if (userProfile) {
-      // Only set the account type from the database
       form.setValue('accountType', userProfile.account_type as any || '');
       
-      // Create masked versions for display
       if (userProfile.routing_number) {
         setMaskedRoutingNumber(maskNumber(userProfile.routing_number));
       }
@@ -105,26 +100,19 @@ const BillingInformation = () => {
     setIsSubmitting(true);
     setSaveSuccess(false);
     try {
-      const { error } = await supabase.rpc('update_user_profile_direct', {
-        input_user_id: user.id,
-        input_updates: {
-          routing_number: data.routingNumber,
-          account_number: data.accountNumber,
-          account_type: data.accountType
-        }
+      await updateProfile({
+        routing_number: data.routingNumber,
+        account_number: data.accountNumber,
+        account_type: data.accountType
       });
-      if (error) throw error;
       
-      // Update masked values after successful save
       setMaskedRoutingNumber(maskNumber(data.routingNumber));
       setMaskedAccountNumber(maskNumber(data.accountNumber));
       
-      // Clear sensitive form fields
       form.setValue('routingNumber', '');
       form.setValue('accountNumber', '');
       form.setValue('confirmAccountNumber', '');
       
-      // Set success state
       setSaveSuccess(true);
       setIsEditing(false);
       

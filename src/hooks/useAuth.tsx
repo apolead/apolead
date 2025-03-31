@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -194,6 +193,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         });
         
+        // Check for bank information
+        if (sanitizedData.routing_number) {
+          console.log('Bank information found in profile:', {
+            routing_number_length: sanitizedData.routing_number.length,
+            account_number_length: sanitizedData.account_number ? sanitizedData.account_number.length : 0
+          });
+        }
+        
         setUserProfile(sanitizedData);
         
         // Cache the profile in localStorage as a stringified JSON
@@ -292,12 +299,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Profile updated",
         description: "Your profile has been updated successfully",
       });
+      
+      // Fetch the updated profile to ensure we have the latest data
+      fetchUserProfile(user.id);
+      
     } catch (error: any) {
       console.error('Profile update error:', error);
       toast({
         title: "Update failed",
         description: error.message || "Failed to update profile",
-        variant: "destructive",
+        variant: "destructive"
       });
       throw error;
     }
