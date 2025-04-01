@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -126,17 +125,23 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
   
-  const uploadFile = async (file: File | null) => {
+  const uploadFile = async (file: File | null, useServiceRole = false) => {
     try {
       if (!file) return null;
       
-      const { data: { session } } = await supabase.auth.getSession();
+      let userId = 'temp';
       
-      if (!session) {
-        throw new Error('User is not authenticated');
+      // If we need to use session, get the current session
+      if (!useServiceRole) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          throw new Error('User is not authenticated');
+        }
+        
+        userId = session.user.id;
       }
       
-      const userId = session.user.id;
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}_${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${fileName}`;
@@ -212,93 +217,47 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Continue anyway
       }
       
+      // First, determine application status before anything else
+      const applicationStatus = determineApplicationStatus();
+      console.log('Application status determined:', applicationStatus);
+      
       // Upload both government ID and speed test images first
+      // We'll use service role for uploading if no session exists
       console.log('Starting file uploads...');
       
       let govIdImageUrl = null;
       if (userData.govIdImage) {
         console.log('Uploading government ID image:', userData.govIdImage.name);
-        govIdImageUrl = await uploadFile(userData.govIdImage);
+        govIdImageUrl = await uploadFile(userData.govIdImage, true);
         console.log('Government ID image uploaded, URL:', govIdImageUrl);
       }
       
       let speedTestUrl = null;
       if (userData.speedTest) {
         console.log('Uploading speed test image:', userData.speedTest.name);
-        speedTestUrl = await uploadFile(userData.speedTest);
+        speedTestUrl = await uploadFile(userData.speedTest, true);
         console.log('Speed test image uploaded, URL:', speedTestUrl);
       }
       
       let systemSettingsUrl = null;
       if (userData.systemSettings) {
         console.log('Uploading system settings image:', userData.systemSettings.name);
-        systemSettingsUrl = await uploadFile(userData.systemSettings);
+        systemSettingsUrl = await uploadFile(userData.systemSettings, true);
         console.log('System settings image uploaded, URL:', systemSettingsUrl);
       }
-      
-      const applicationStatus = determineApplicationStatus();
-      console.log('Application status determined:', applicationStatus);
       
       // Get current session
       const { data: { session } } = await supabase.auth.getSession();
       
-      // If no session, need to sign up the user first
-      if (!session) {
+      // For rejected applications, we'll store the data but not create a user
+      if (applicationStatus === 'rejected') {
         try {
-          console.log('No session found, creating user account with email:', userData.email);
+          console.log('Application rejected, storing data without creating user account');
           
-          // Create the user account with all user data in metadata
-          const { data, error } = await supabase.auth.signUp({
-            email: userData.email,
-            password: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2), // Generate a random secure password
-            options: {
-              data: {
-                first_name: userData.firstName,
-                last_name: userData.lastName,
-                birth_day: userData.birthDay,
-                gov_id_number: userData.govIdNumber,
-                gov_id_image: govIdImageUrl,
-                cpu_type: userData.cpuType,
-                ram_amount: userData.ramAmount,
-                has_headset: userData.hasHeadset,
-                has_quiet_place: userData.hasQuietPlace,
-                speed_test: speedTestUrl,
-                system_settings: systemSettingsUrl,
-                available_hours: userData.availableHours,
-                available_days: userData.availableDays,
-                day_hours: userData.dayHours,
-                sales_experience: userData.salesExperience,
-                sales_months: userData.salesMonths,
-                sales_company: userData.salesCompany,
-                sales_product: userData.salesProduct,
-                service_experience: userData.serviceExperience,
-                service_months: userData.serviceMonths,
-                service_company: userData.serviceCompany,
-                service_product: userData.serviceProduct,
-                meet_obligation: userData.meetObligation,
-                login_discord: userData.loginDiscord,
-                check_emails: userData.checkEmails,
-                solve_problems: userData.solveProblems,
-                complete_training: userData.completeTraining,
-                personal_statement: userData.personalStatement,
-                accepted_terms: userData.acceptedTerms,
-                application_status: applicationStatus
-              },
-            },
-          });
-          
-          if (error) throw error;
-          
-          console.log('User created successfully:', data);
-          
-          // If we don't have a session after signup, that's okay - we'll create the profile record directly
-          // and then redirect to the appropriate page
-          if (!data.session) {
-            console.log('No session returned after signup, proceeding with profile creation anyway');
-            
-            // Create user_profiles record with service role
-            const profileData = {
-              user_id: data.user.id, // Critical: Include the user_id field
+          // Store in applicant_profiles table instead
+          const { error } = await supabase
+            .from('applicant_profiles')
+            .insert({
               first_name: userData.firstName,
               last_name: userData.lastName,
               email: userData.email,
@@ -330,25 +289,97 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               personal_statement: userData.personalStatement,
               accepted_terms: userData.acceptedTerms,
               application_status: applicationStatus
-            };
+            });
             
-            const { error: insertError } = await supabase
-              .from('user_profiles')
-              .insert(profileData);
-              
-            if (insertError) throw insertError;
+          if (error) throw error;
+          
+          // Redirect to rejection page
+          setIsSubmitting(false);
+          navigate('/confirmation?status=rejected');
+          return;
+        } catch (error: any) {
+          console.error('Error storing rejected application:', error);
+          toast({
+            title: "Submission failed",
+            description: error.message || "There was an error submitting your application",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
+      // If no session and application is approved, create user account
+      if (!session && applicationStatus === 'approved') {
+        try {
+          console.log('No session found, creating user account with email:', userData.email);
+          
+          // Create the user account with all user data in metadata
+          // For approved applications, we'll create the user and send confirmation email
+          const { data, error } = await supabase.auth.signUp({
+            email: userData.email,
+            password: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2), // Generate a random secure password
+            options: {
+              data: {
+                first_name: userData.firstName,
+                last_name: userData.lastName,
+                application_status: applicationStatus
+              },
+              // We want the confirmation email to be sent because this is an approved application
+              emailRedirectTo: `${window.location.origin}/confirm`,
+            },
+          });
+          
+          if (error) throw error;
+          
+          console.log('User created successfully:', data);
+          
+          // Create user_profiles record right away
+          const profileData = {
+            user_id: data.user.id,
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            email: userData.email,
+            birth_day: userData.birthDay,
+            gov_id_number: userData.govIdNumber,
+            gov_id_image: govIdImageUrl,
+            cpu_type: userData.cpuType,
+            ram_amount: userData.ramAmount,
+            has_headset: userData.hasHeadset,
+            has_quiet_place: userData.hasQuietPlace,
+            speed_test: speedTestUrl,
+            system_settings: systemSettingsUrl,
+            available_hours: userData.availableHours,
+            available_days: userData.availableDays,
+            day_hours: userData.dayHours,
+            sales_experience: userData.salesExperience,
+            sales_months: userData.salesMonths,
+            sales_company: userData.salesCompany,
+            sales_product: userData.salesProduct,
+            service_experience: userData.serviceExperience,
+            service_months: userData.serviceMonths,
+            service_company: userData.serviceCompany,
+            service_product: userData.serviceProduct,
+            meet_obligation: userData.meetObligation,
+            login_discord: userData.loginDiscord,
+            check_emails: userData.checkEmails,
+            solve_problems: userData.solveProblems,
+            complete_training: userData.completeTraining,
+            personal_statement: userData.personalStatement,
+            accepted_terms: userData.acceptedTerms,
+            application_status: applicationStatus
+          };
+          
+          const { error: insertError } = await supabase
+            .from('user_profiles')
+            .insert(profileData);
             
-            // Redirect based on application status
-            setIsSubmitting(false);
-            
-            if (applicationStatus === 'rejected') {
-              navigate('/confirmation?status=rejected');
-            } else {
-              navigate('/confirmation?status=approved');
-            }
-            
-            return;
-          }
+          if (insertError) throw insertError;
+          
+          // Redirect to approval page
+          setIsSubmitting(false);
+          navigate('/confirmation?status=approved');
+          return;
         } catch (error: any) {
           console.error('Error creating user account:', error);
           toast({
@@ -361,58 +392,52 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
       
-      // Get the current session again (could be new or existing)
+      // If we have an existing session, update the user profile
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       
-      if (!currentSession) {
-        // Even if we don't have a session, we'll let the form submission continue
-        // as we've already determined the application status and uploaded files
-        console.log('No session available, but continuing with form submission');
-      }
-      
-      const userId = currentSession?.user?.id;
-      
-      // Always include user_id in the data object
-      const data = {
-        user_id: userId, // Fix: Adding the required user_id field
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        email: userData.email,
-        birth_day: userData.birthDay,
-        gov_id_number: userData.govIdNumber,
-        gov_id_image: govIdImageUrl,
-        cpu_type: userData.cpuType,
-        ram_amount: userData.ramAmount,
-        has_headset: userData.hasHeadset,
-        has_quiet_place: userData.hasQuietPlace,
-        speed_test: speedTestUrl,
-        system_settings: systemSettingsUrl,
-        available_hours: userData.availableHours,
-        available_days: userData.availableDays,
-        day_hours: userData.dayHours,
-        sales_experience: userData.salesExperience,
-        sales_months: userData.salesMonths,
-        sales_company: userData.salesCompany,
-        sales_product: userData.salesProduct,
-        service_experience: userData.serviceExperience,
-        service_months: userData.serviceMonths,
-        service_company: userData.serviceCompany,
-        service_product: userData.serviceProduct,
-        meet_obligation: userData.meetObligation,
-        login_discord: userData.loginDiscord,
-        check_emails: userData.checkEmails,
-        solve_problems: userData.solveProblems,
-        complete_training: userData.completeTraining,
-        personal_statement: userData.personalStatement,
-        accepted_terms: userData.acceptedTerms,
-        application_status: applicationStatus
-      };
-      
-      console.log('Updating user profile with data:', data);
-      
-      let updateError = null;
-      
-      if (userId) {
+      if (currentSession) {
+        const userId = currentSession.user.id;
+        
+        // Prepare the data object
+        const data = {
+          user_id: userId,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          email: userData.email,
+          birth_day: userData.birthDay,
+          gov_id_number: userData.govIdNumber,
+          gov_id_image: govIdImageUrl,
+          cpu_type: userData.cpuType,
+          ram_amount: userData.ramAmount,
+          has_headset: userData.hasHeadset,
+          has_quiet_place: userData.hasQuietPlace,
+          speed_test: speedTestUrl,
+          system_settings: systemSettingsUrl,
+          available_hours: userData.availableHours,
+          available_days: userData.availableDays,
+          day_hours: userData.dayHours,
+          sales_experience: userData.salesExperience,
+          sales_months: userData.salesMonths,
+          sales_company: userData.salesCompany,
+          sales_product: userData.salesProduct,
+          service_experience: userData.serviceExperience,
+          service_months: userData.serviceMonths,
+          service_company: userData.serviceCompany,
+          service_product: userData.serviceProduct,
+          meet_obligation: userData.meetObligation,
+          login_discord: userData.loginDiscord,
+          check_emails: userData.checkEmails,
+          solve_problems: userData.solveProblems,
+          complete_training: userData.completeTraining,
+          personal_statement: userData.personalStatement,
+          accepted_terms: userData.acceptedTerms,
+          application_status: applicationStatus
+        };
+        
+        console.log('Updating user profile with data:', data);
+        
+        let updateError = null;
+        
         // First check if profile exists
         const { data: existingProfile, error: profileCheckError } = await supabase
           .from('user_profiles')
@@ -442,33 +467,30 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             
           updateError = error;
         }
+        
+        if (updateError) {
+          console.error('Error updating/inserting user profile:', updateError);
+          throw updateError;
+        }
+        
+        // Redirect based on application status
+        if (applicationStatus === 'rejected') {
+          await supabase.auth.signOut();
+          navigate('/confirmation?status=rejected');
+          return;
+        }
+        
+        navigate('/confirmation?status=approved');
       } else {
-        // If we somehow don't have a user ID at this point, show an error
-        console.error('No user ID available for profile creation');
+        // This is a fallback, but should not normally be reached
+        console.error('No session available for profile update');
         toast({
-          title: "Error creating profile",
-          description: "Could not determine user ID for profile creation",
+          title: "Error updating profile",
+          description: "Could not determine user session for profile update",
           variant: "destructive",
         });
         setIsSubmitting(false);
-        return;
       }
-      
-      if (updateError) {
-        console.error('Error updating/inserting user profile:', updateError);
-        throw updateError;
-      }
-      
-      // Redirect based on application status
-      if (applicationStatus === 'rejected') {
-        if (currentSession) {
-          await supabase.auth.signOut();
-        }
-        navigate('/confirmation?status=rejected');
-        return;
-      }
-      
-      navigate('/confirmation?status=approved');
     } catch (error: any) {
       console.error('Error submitting application:', error);
       toast({
