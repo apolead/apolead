@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
 const StepZero = ({
   userData,
   updateUserData,
@@ -16,24 +17,27 @@ const StepZero = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  
   const handleEmailChange = e => {
     setEmail(e.target.value);
   };
+  
   const handlePasswordChange = e => {
     setPassword(e.target.value);
   };
+  
   const handleConfirmPasswordChange = e => {
     setConfirmPassword(e.target.value);
   };
+  
   const validateEmail = email => {
     if (!email.endsWith('@gmail.com')) {
       return 'Only Gmail accounts are allowed';
     }
     return null;
   };
+  
   const handleSignUp = async e => {
     e.preventDefault();
 
@@ -57,15 +61,21 @@ const StepZero = ({
       });
       return;
     }
+    
     setIsLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.auth.signUp({
+      // Change: Add emailRedirectTo: false to prevent immediate confirmation email
+      const { data, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          emailRedirectTo: false,
+          data: {
+            email
+          }
+        }
       });
+      
       if (error) throw error;
 
       // Update userData with email
@@ -92,6 +102,7 @@ const StepZero = ({
       setIsLoading(false);
     }
   };
+  
   return <div className="flex flex-col md:flex-row w-full h-screen">
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
@@ -191,4 +202,5 @@ const StepZero = ({
       </div>
     </div>;
 };
+
 export default StepZero;

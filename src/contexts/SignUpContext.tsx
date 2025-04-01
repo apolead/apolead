@@ -1,10 +1,8 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-// Define the shape of our user data
 interface UserData {
   firstName: string;
   lastName: string;
@@ -39,7 +37,6 @@ interface UserData {
   applicationStatus: string;
 }
 
-// Initial user data state
 const initialUserData: UserData = {
   firstName: '',
   lastName: '',
@@ -74,7 +71,6 @@ const initialUserData: UserData = {
   applicationStatus: 'pending'
 };
 
-// Define the context type
 interface SignUpContextType {
   currentStep: number;
   isSubmitting: boolean;
@@ -86,10 +82,8 @@ interface SignUpContextType {
   handleSubmit: () => Promise<void>;
 }
 
-// Create the context
 const SignUpContext = createContext<SignUpContextType | undefined>(undefined);
 
-// Custom hook to use the context
 export const useSignUp = () => {
   const context = useContext(SignUpContext);
   if (!context) {
@@ -98,7 +92,6 @@ export const useSignUp = () => {
   return context;
 };
 
-// Provider component
 export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -188,7 +181,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       setIsSubmitting(true);
       
-      // Check only user_profiles table for existing gov ID
       try {
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
@@ -209,10 +201,8 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       } catch (error) {
         console.error('Error verifying government ID:', error);
-        // Continue anyway
       }
       
-      // Upload both government ID and speed test images first
       console.log('Starting file uploads...');
       
       let govIdImageUrl = null;
@@ -239,18 +229,20 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const applicationStatus = determineApplicationStatus();
       console.log('Application status determined:', applicationStatus);
       
-      // Get current session
       const { data: { session } } = await supabase.auth.getSession();
       
-      // If no session, need to sign up the user first
+      const moveToNextStep = () => {
+        setCurrentStep(4);
+        window.scrollTo(0, 0);
+      };
+      
       if (!session) {
         try {
           console.log('No session found, creating user account with email:', userData.email);
           
-          // Create the user account with all user data in metadata
           const { data, error } = await supabase.auth.signUp({
             email: userData.email,
-            password: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2), // Generate a random secure password
+            password: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2),
             options: {
               data: {
                 first_name: userData.firstName,
@@ -291,14 +283,11 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           
           console.log('User created successfully:', data);
           
-          // If we don't have a session after signup, that's okay - we'll create the profile record directly
-          // and then redirect to the appropriate page
           if (!data.session) {
             console.log('No session returned after signup, proceeding with profile creation anyway');
             
-            // Create user_profiles record with service role
             const profileData = {
-              user_id: data.user.id, // Critical: Include the user_id field
+              user_id: data.user.id,
               first_name: userData.firstName,
               last_name: userData.lastName,
               email: userData.email,
@@ -338,7 +327,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               
             if (insertError) throw insertError;
             
-            // Redirect based on application status
             setIsSubmitting(false);
             
             if (applicationStatus === 'rejected') {
@@ -361,20 +349,16 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
       
-      // Get the current session again (could be new or existing)
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       
       if (!currentSession) {
-        // Even if we don't have a session, we'll let the form submission continue
-        // as we've already determined the application status and uploaded files
         console.log('No session available, but continuing with form submission');
       }
       
       const userId = currentSession?.user?.id;
       
-      // Always include user_id in the data object
       const data = {
-        user_id: userId, // Fix: Adding the required user_id field
+        user_id: userId,
         first_name: userData.firstName,
         last_name: userData.lastName,
         email: userData.email,
@@ -413,7 +397,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       let updateError = null;
       
       if (userId) {
-        // First check if profile exists
         const { data: existingProfile, error: profileCheckError } = await supabase
           .from('user_profiles')
           .select('id')
@@ -425,7 +408,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
         
         if (existingProfile) {
-          // Update existing profile
           console.log('Updating existing profile for user:', userId);
           const { error } = await supabase
             .from('user_profiles')
@@ -434,7 +416,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             
           updateError = error;
         } else {
-          // Insert new profile
           console.log('Creating new profile for user:', userId);
           const { error } = await supabase
             .from('user_profiles')
@@ -443,7 +424,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           updateError = error;
         }
       } else {
-        // If we somehow don't have a user ID at this point, show an error
         console.error('No user ID available for profile creation');
         toast({
           title: "Error creating profile",
@@ -459,16 +439,15 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         throw updateError;
       }
       
-      // Redirect based on application status
       if (applicationStatus === 'rejected') {
         if (currentSession) {
           await supabase.auth.signOut();
         }
-        navigate('/confirmation?status=rejected');
+        moveToNextStep();
         return;
       }
       
-      navigate('/confirmation?status=approved');
+      moveToNextStep();
     } catch (error: any) {
       console.error('Error submitting application:', error);
       toast({
