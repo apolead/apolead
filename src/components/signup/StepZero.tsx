@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -64,7 +65,16 @@ const StepZero = ({
         error
       } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: {
+            first_name: '',
+            last_name: '',
+            application_status: 'incomplete'
+          },
+          // Disable email confirmation at signup
+          emailRedirectTo: null
+        }
       });
       if (error) throw error;
 

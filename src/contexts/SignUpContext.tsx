@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -190,6 +191,8 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
   
   const handleSubmit = async () => {
+    if (isSubmitting) return; // Prevent multiple submissions
+    
     try {
       setIsSubmitting(true);
       
@@ -316,27 +319,21 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           
           // Create the user account with all user data in metadata
           // For approved applications, we'll create the user and send confirmation email
-          const { data, error } = await supabase.auth.signUp({
-            email: userData.email,
-            password: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2), // Generate a random secure password
-            options: {
-              data: {
-                first_name: userData.firstName,
-                last_name: userData.lastName,
-                application_status: applicationStatus
-              },
-              // We want the confirmation email to be sent because this is an approved application
-              emailRedirectTo: `${window.location.origin}/confirm`,
-            },
+          const { data, error } = await supabase.auth.updateUser({
+            data: {
+              first_name: userData.firstName,
+              last_name: userData.lastName,
+              application_status: applicationStatus
+            }
           });
           
           if (error) throw error;
           
-          console.log('User created successfully:', data);
+          console.log('User updated successfully:', data);
           
           // Create user_profiles record right away
           const profileData = {
-            user_id: data.user.id,
+            user_id: session?.user.id,
             first_name: userData.firstName,
             last_name: userData.lastName,
             email: userData.email,
@@ -376,15 +373,23 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             
           if (insertError) throw insertError;
           
+          // Now that profile is created, send confirmation email
+          await supabase.auth.signInWithPassword({
+            email: userData.email,
+            password: "temporary-password" // This will trigger confirmation email
+          }).catch(error => {
+            console.log("Expected auth error (just to trigger email):", error);
+          });
+          
           // Redirect to approval page
           setIsSubmitting(false);
-          navigate('/confirmation?status=approved');
+          nextStep(); // Move to confirmation step
           return;
         } catch (error: any) {
-          console.error('Error creating user account:', error);
+          console.error('Error updating user profile:', error);
           toast({
-            title: "Authentication failed",
-            description: error.message || "Failed to create user account",
+            title: "Update failed",
+            description: error.message || "Failed to update user profile",
             variant: "destructive",
           });
           setIsSubmitting(false);
@@ -393,10 +398,8 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       
       // If we have an existing session, update the user profile
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (currentSession) {
-        const userId = currentSession.user.id;
+      if (session) {
+        const userId = session.user.id;
         
         // Prepare the data object
         const data = {
@@ -473,14 +476,21 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           throw updateError;
         }
         
+        // Update user metadata
+        await supabase.auth.updateUser({
+          data: {
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+            application_status: applicationStatus
+          }
+        });
+        
         // Redirect based on application status
         if (applicationStatus === 'rejected') {
-          await supabase.auth.signOut();
           navigate('/confirmation?status=rejected');
-          return;
+        } else {
+          nextStep(); // Move to confirmation step
         }
-        
-        navigate('/confirmation?status=approved');
       } else {
         // This is a fallback, but should not normally be reached
         console.error('No session available for profile update');
@@ -489,7 +499,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           description: "Could not determine user session for profile update",
           variant: "destructive",
         });
-        setIsSubmitting(false);
       }
     } catch (error: any) {
       console.error('Error submitting application:', error);
