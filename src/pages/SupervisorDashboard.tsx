@@ -1709,49 +1709,8 @@ const SupervisorDashboard = () => {
             <div style={{
             marginBottom: '20px'
           }}>
-              <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: 500,
-              color: '#1e293b'
-            }}>
-                Agent Standing
-              </label>
-              <div style={{
-              display: 'flex',
-              gap: '15px'
-            }}>
-                <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer'
-              }}>
-                  <input type="radio" name="agent_standing" value="Active" checked={editForm.agent_standing === 'Active'} onChange={handleInputChange} style={{
-                  marginRight: '8px'
-                }} />
-                  Active
-                </label>
-                <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer'
-              }}>
-                  <input type="radio" name="agent_standing" value="Probation" checked={editForm.agent_standing === 'Probation'} onChange={handleInputChange} style={{
-                  marginRight: '8px'
-                }} />
-                  Probation
-                </label>
-                <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer'
-              }}>
-                  <input type="radio" name="agent_standing" value="Waitlist" checked={editForm.agent_standing === 'Waitlist'} onChange={handleInputChange} style={{
-                  marginRight: '8px'
-                }} />
-                  Waitlist
-                </label>
-              </div>
+              
+              
             </div>
 
             <div style={{
