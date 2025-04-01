@@ -32,32 +32,3 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session?.user?.email);
 });
-
-// Initialize storage bucket if needed
-(async function initStorage() {
-  try {
-    // Check if bucket exists
-    const { data: buckets, error } = await supabase.storage.listBuckets();
-    
-    if (error) {
-      console.error('Error checking for storage buckets:', error);
-      return;
-    }
-    
-    // Create user_documents bucket if it doesn't exist
-    if (!buckets?.find(bucket => bucket.name === 'user_documents')) {
-      console.log('Creating user_documents storage bucket');
-      await supabase.storage.createBucket('user_documents', {
-        public: false,
-        fileSizeLimit: 5242880 // 5MB
-      });
-      
-      // Set policy for the bucket using SQL function if needed
-      // We removed the RPC call that caused the error
-      // Bucket permissions can be managed through the Supabase dashboard instead
-      // or through proper SQL scripts
-    }
-  } catch (err) {
-    console.error('Error initializing storage:', err);
-  }
-})();

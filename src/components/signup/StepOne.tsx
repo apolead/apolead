@@ -1,17 +1,13 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId = false }) => {
   const [errorMessage, setErrorMessage] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   const handleBackToHome = async (e) => {
     e.preventDefault();
@@ -26,89 +22,72 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
   const handleContinue = async (e) => {
     e.preventDefault();
     setErrorMessage('');
-    setIsVerifying(true);
     
+    // Validate form - comprehensive checks
+    if (!userData.firstName || !userData.firstName.trim()) {
+      setErrorMessage('Please enter your first name');
+      return;
+    }
+    
+    if (!userData.lastName || !userData.lastName.trim()) {
+      setErrorMessage('Please enter your last name');
+      return;
+    }
+    
+    if (!userData.email || !userData.email.trim()) {
+      setErrorMessage('Please enter your email address');
+      return;
+    }
+    
+    if (!userData.birthDay) {
+      setErrorMessage('Please enter your birth date');
+      return;
+    }
+    
+    if (!userData.govIdImage) {
+      setErrorMessage('Please upload a picture of your government ID');
+      return;
+    }
+    
+    if (!userData.govIdNumber || !userData.govIdNumber.trim()) {
+      setErrorMessage('Please enter your government ID number');
+      return;
+    }
+    
+    // Verify government ID number against user_profiles table ONLY
     try {
-      // Validate form - comprehensive checks
-      if (!userData.firstName || !userData.firstName.trim()) {
-        setErrorMessage('Please enter your first name');
-        return;
-      }
+      console.log('Checking government ID:', userData.govIdNumber);
       
-      if (!userData.lastName || !userData.lastName.trim()) {
-        setErrorMessage('Please enter your last name');
-        return;
-      }
-      
-      if (!userData.email || !userData.email.trim()) {
-        setErrorMessage('Please enter your email address');
-        return;
-      }
-      
-      if (!userData.birthDay) {
-        setErrorMessage('Please enter your birth date');
-        return;
-      }
-      
-      if (!userData.govIdImage) {
-        setErrorMessage('Please upload a picture of your government ID');
-        return;
-      }
-      
-      if (!userData.govIdNumber || !userData.govIdNumber.trim()) {
-        setErrorMessage('Please enter your government ID number');
-        return;
-      }
-      
-      // Verify government ID number against user_profiles table ONLY
-      try {
-        console.log('Checking government ID:', userData.govIdNumber);
+      // Check ONLY if the government ID has been used before in user_profiles
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('gov_id_number')
+        .eq('gov_id_number', userData.govIdNumber)
+        .maybeSingle();
         
-        // Check ONLY if the government ID has been used before in user_profiles
-        const { data: profileData, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('gov_id_number')
-          .eq('gov_id_number', userData.govIdNumber)
-          .maybeSingle();
-          
-        console.log('Profile check result:', { profileData, profileError });
-          
-        if (profileError) {
-          console.error('Error checking government ID in profiles:', profileError);
-          // Continue anyway - don't block the user for database errors
-          nextStep();
-          return;
-        }
+      console.log('Profile check result:', { profileData, profileError });
         
-        // If we found a matching gov ID in profiles, show error
-        if (profileData && profileData.gov_id_number === userData.govIdNumber) {
-          setErrorMessage('This government ID has already been registered in our system.');
-          toast({
-            title: "ID Already Registered",
-            description: "This government ID has already been registered in our system.",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        // No matching gov ID was found, continue to next step
-        console.log('Government ID verified successfully, proceeding to next step');
+      if (profileError) {
+        console.error('Error checking government ID in profiles:', profileError);
+        // Continue anyway - don't block the user for database errors
         nextStep();
-      } catch (error) {
-        console.error('Error checking government ID:', error);
-        // Show error but allow to continue
-        toast({
-          title: "Verification Warning",
-          description: "Could not verify ID uniqueness, but you may continue",
-          variant: "default" // Changed from "warning" to "default" to match available variants
-        });
-        nextStep();
+        return;
       }
+      
+      // If we found a matching gov ID in profiles, show error
+      if (profileData && profileData.gov_id_number === userData.govIdNumber) {
+        setErrorMessage('This government ID has already been registered in our system.');
+        return;
+      }
+      
+      // No matching gov ID was found, continue to next step
+      console.log('Government ID verified successfully, proceeding to next step');
+      nextStep();
     } catch (error) {
-      console.error('Error in form validation:', error);
-      setErrorMessage('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsVerifying(false);
+      console.error('Error checking government ID:', error);
+      // Continue anyway - don't block the user for errors
+      nextStep();
+      return;
     }
   };
   
@@ -264,7 +243,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
           <div>
             <label htmlFor="step1-govIdNumber" className="block text-sm font-medium text-gray-700 mb-1">
               Government ID Number
-              {(isVerifying || isCheckingGovId) && (
+              {isCheckingGovId && (
                 <span className="ml-2 inline-flex items-center text-amber-500">
                   <Loader2 className="h-3 w-3 animate-spin mr-1" />
                   Validating...
@@ -276,9 +255,9 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
               id="step1-govIdNumber" 
               value={userData.govIdNumber}
               onChange={(e) => updateUserData({ govIdNumber: e.target.value })}
-              className={`w-full ${isVerifying || isCheckingGovId ? 'bg-gray-50' : ''}`}
+              className={`w-full ${isCheckingGovId ? 'bg-gray-50' : ''}`}
               placeholder="Enter your ID number"
-              disabled={isVerifying || isCheckingGovId}
+              disabled={isCheckingGovId}
             />
             <p className="mt-1 text-xs text-gray-500">This will be verified for uniqueness</p>
           </div>
@@ -295,9 +274,9 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
             <Button
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              disabled={isVerifying || isCheckingGovId}
+              disabled={isCheckingGovId}
             >
-              {isVerifying || isCheckingGovId ? (
+              {isCheckingGovId ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Validating...
