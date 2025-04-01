@@ -256,7 +256,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const { data: { session } } = await supabase.auth.getSession();
       
       // For rejected applications, we'll store the data but not create a user
-      if (applicationStatus === "rejected") {
+      if (applicationStatus === 'rejected') {
         try {
           console.log('Application rejected, storing data without creating user account');
           
@@ -320,7 +320,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       
       // If no session and application is approved, create user account
-      if (!session && applicationStatus === "approved") {
+      if (!session && applicationStatus === 'approved') {
         try {
           console.log('No session found, creating user account with email:', userData.email);
           
@@ -380,16 +380,17 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             
           if (insertError) throw insertError;
           
-          // Now that profile is created, send confirmation email
-          // Only for approved applications
-          await supabase.auth.signInWithPassword({
-            email: userData.email,
-            password: "temporary-password" // This will trigger confirmation email
-          }).catch(error => {
-            console.log("Expected auth error (just to trigger email):", error);
-          });
+          // Only send confirmation email for approved applications
+          if (applicationStatus === 'approved') {
+            await supabase.auth.signInWithPassword({
+              email: userData.email,
+              password: "temporary-password" // This will trigger confirmation email
+            }).catch(error => {
+              console.log("Expected auth error (just to trigger email):", error);
+            });
+          }
           
-          // Redirect to approval page
+          // Redirect to appropriate page based on status
           setIsSubmitting(false);
           nextStep(); // Move to confirmation step
           return;
@@ -494,10 +495,11 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
         
         // Redirect based on application status
-        if (applicationStatus === "rejected") {
+        if (applicationStatus === 'rejected') {
           navigate('/confirmation?status=rejected');
         } else {
-          nextStep(); // Move to confirmation step
+          // Only move to confirmation step if approved
+          nextStep();
         }
       } else {
         // This is a fallback, but should not normally be reached
