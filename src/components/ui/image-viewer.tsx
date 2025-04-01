@@ -17,11 +17,11 @@ const ImageViewer = ({ isOpen, onClose, imageUrl, title }: ImageViewerProps) => 
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-md max-h-[80vh] flex flex-col">
         <DialogHeader className="mb-2">
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="flex-1 max-h-[60vh]">
+        <ScrollArea className="flex-1 max-h-[50vh]">
           <div className="flex flex-col items-center justify-center">
             {imageUrl ? (
               <div className="relative overflow-hidden rounded-md">

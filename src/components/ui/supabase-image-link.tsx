@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import { ImageViewer } from '@/components/ui/image-viewer';
-import { supabase, getSupabasePublicUrl } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SupabaseImageLinkProps {
   imagePath: string | null;
