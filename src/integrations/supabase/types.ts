@@ -207,7 +207,6 @@ export type Database = {
           birth_day: string | null
           check_emails: boolean | null
           city: string | null
-          communication_rating: string | null
           complete_training: boolean | null
           cpu_type: string | null
           created_at: string | null
@@ -233,7 +232,6 @@ export type Database = {
           sales_experience: boolean | null
           sales_months: string | null
           sales_product: string | null
-          sales_skills: string | null
           service_company: string | null
           service_experience: boolean | null
           service_months: string | null
@@ -267,7 +265,6 @@ export type Database = {
           birth_day?: string | null
           check_emails?: boolean | null
           city?: string | null
-          communication_rating?: string | null
           complete_training?: boolean | null
           cpu_type?: string | null
           created_at?: string | null
@@ -293,7 +290,6 @@ export type Database = {
           sales_experience?: boolean | null
           sales_months?: string | null
           sales_product?: string | null
-          sales_skills?: string | null
           service_company?: string | null
           service_experience?: boolean | null
           service_months?: string | null
@@ -327,7 +323,6 @@ export type Database = {
           birth_day?: string | null
           check_emails?: boolean | null
           city?: string | null
-          communication_rating?: string | null
           complete_training?: boolean | null
           cpu_type?: string | null
           created_at?: string | null
@@ -353,7 +348,6 @@ export type Database = {
           sales_experience?: boolean | null
           sales_months?: string | null
           sales_product?: string | null
-          sales_skills?: string | null
           service_company?: string | null
           service_experience?: boolean | null
           service_months?: string | null
@@ -410,7 +404,6 @@ export type Database = {
           birth_day: string | null
           check_emails: boolean | null
           city: string | null
-          communication_rating: string | null
           complete_training: boolean | null
           cpu_type: string | null
           created_at: string | null
@@ -436,7 +429,6 @@ export type Database = {
           sales_experience: boolean | null
           sales_months: string | null
           sales_product: string | null
-          sales_skills: string | null
           service_company: string | null
           service_experience: boolean | null
           service_months: string | null
@@ -475,7 +467,6 @@ export type Database = {
           birth_day: string | null
           check_emails: boolean | null
           city: string | null
-          communication_rating: string | null
           complete_training: boolean | null
           cpu_type: string | null
           created_at: string | null
@@ -501,7 +492,6 @@ export type Database = {
           sales_experience: boolean | null
           sales_months: string | null
           sales_product: string | null
-          sales_skills: string | null
           service_company: string | null
           service_experience: boolean | null
           service_months: string | null
