@@ -39,7 +39,7 @@ interface UserData {
   applicationStatus: string;
 }
 
-// Define application status type for type safety
+// Define application status type for type safety with literal string union
 type ApplicationStatus = 'pending' | 'approved' | 'rejected';
 
 // Initial user data state
@@ -152,6 +152,15 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       console.log('Uploading file:', file.name, 'to path:', filePath);
       
+      // Check if bucket exists, create if it doesn't
+      const { data: buckets } = await supabase.storage.listBuckets();
+      if (!buckets || !buckets.find(bucket => bucket.name === 'user_documents')) {
+        await supabase.storage.createBucket('user_documents', {
+          public: false,
+          fileSizeLimit: 5242880 // 5MB
+        });
+      }
+      
       const fileArrayBuffer = await file.arrayBuffer();
       
       const { data, error } = await supabase.storage
@@ -228,7 +237,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.log('Application status determined:', applicationStatus);
       
       // Upload both government ID and speed test images first
-      // We'll use service role for uploading if no session exists
       console.log('Starting file uploads...');
       
       let govIdImageUrl = null;

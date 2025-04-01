@@ -32,3 +32,37 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session?.user?.email);
 });
+
+// Initialize storage bucket if needed
+(async function initStorage() {
+  try {
+    // Check if bucket exists
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    
+    if (error) {
+      console.error('Error checking for storage buckets:', error);
+      return;
+    }
+    
+    // Create user_documents bucket if it doesn't exist
+    if (!buckets?.find(bucket => bucket.name === 'user_documents')) {
+      console.log('Creating user_documents storage bucket');
+      await supabase.storage.createBucket('user_documents', {
+        public: false,
+        fileSizeLimit: 5242880 // 5MB
+      });
+      
+      // Set policy for the bucket
+      await supabase.rpc('create_storage_policy', {
+        bucket_name: 'user_documents',
+        policy_name: 'Allow public access',
+        definition: 'true', 
+        operation: 'SELECT'
+      }).catch(err => {
+        console.error('Error setting bucket policy:', err);
+      });
+    }
+  } catch (err) {
+    console.error('Error initializing storage:', err);
+  }
+})();
