@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -5,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Link } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2 } from 'lucide-react';
 
 const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitting }) => {
   const [errorMessage, setErrorMessage] = useState('');
@@ -120,10 +120,11 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
     setLoading(true);
     
     try {
-      handleSubmit();
+      await handleSubmit();
     } catch (error) {
       console.error('Error submitting form:', error);
       setErrorMessage('There was an error submitting your application. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -392,12 +393,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
                 className="bg-indigo-600 hover:bg-[#00c2cb] text-white"
                 disabled={isSubmitting || loading}
               >
-                {isSubmitting || loading ? (
-                  <div className="flex items-center justify-center">
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Submitting...
-                  </div>
-                ) : "Submit Application"}
+                {isSubmitting || loading ? "Submitting..." : "Submit Application"}
               </Button>
             </div>
           </form>

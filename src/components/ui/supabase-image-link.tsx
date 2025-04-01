@@ -29,31 +29,29 @@ export const SupabaseImageLink = ({ imagePath, title }: SupabaseImageLinkProps) 
 
       // For paths in Supabase storage
       // First try to get a public URL
-      const { data } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from('public')
         .getPublicUrl(imagePath);
       
-      if (data.publicUrl) {
-        setImageUrl(data.publicUrl);
-        setIsViewerOpen(true);
-      } else {
+      if (error) {
+        console.error("Error getting public URL:", error);
+        
         // If that fails, try to get a signed URL (works for private buckets)
-        try {
-          const { data: signedData, error: signedError } = await supabase.storage
-            .from('public')
-            .createSignedUrl(imagePath, 60); // 60 seconds expiry
-            
-          if (signedError) {
-            console.error("Error getting signed URL:", signedError);
-            return;
-          }
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from('public')
+          .createSignedUrl(imagePath, 60); // 60 seconds expiry
           
-          setImageUrl(signedData.signedUrl);
-          setIsViewerOpen(true);
-        } catch (signedUrlError) {
-          console.error("Error creating signed URL:", signedUrlError);
+        if (signedError) {
+          console.error("Error getting signed URL:", signedError);
+          return;
         }
+        
+        setImageUrl(signedData.signedUrl);
+      } else {
+        setImageUrl(data.publicUrl);
       }
+      
+      setIsViewerOpen(true);
     } catch (error) {
       console.error("Error loading image:", error);
     }
