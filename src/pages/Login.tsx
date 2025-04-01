@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -45,13 +46,54 @@ const Login = () => {
           localStorage.removeItem('tempCredentials');
         }
         
-        // If no valid cache, fetch directly from DB using RPC (more reliable)
+        // If no valid cache, try using the is_supervisor function (most reliable)
         try {
-          const { data, error } = await supabase.rpc('get_user_credentials', {
+          console.log('Checking supervisor status for user ID:', session.user.id);
+          const { data: isSupervisor, error: supervisorError } = await supabase.rpc('is_supervisor', {
+            check_user_id: session.user.id
+          });
+          
+          if (supervisorError) {
+            console.error('Supervisor check error:', supervisorError);
+            // Fall back to the get_user_credentials if is_supervisor fails
+          } else {
+            console.log('Login checkSession - Is supervisor:', isSupervisor);
+            
+            // Cache the credentials
+            localStorage.setItem('tempCredentials', JSON.stringify({
+              userId: session.user.id,
+              credentials: isSupervisor ? 'supervisor' : 'agent',
+              timestamp: Date.now()
+            }));
+            
+            if (isSupervisor) {
+              console.log('Navigating to supervisor dashboard');
+              navigate('/supervisor', { replace: true });
+              setIsCheckingSession(false);
+              return;
+            } else {
+              console.log('Navigating to regular dashboard');
+              navigate('/dashboard', { replace: true });
+              setIsCheckingSession(false);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Error checking supervisor status:', error);
+          // Continue to the next approach
+        }
+        
+        // If that fails too, fetch from API as last resort
+        try {
+          console.log('Fetching credentials for user ID:', session.user.id);
+          const { data, error } = await (supabase.rpc as any)('get_user_credentials', {
             user_id: session.user.id
           });
           
-          if (error) throw error;
+          if (error) {
+            console.error('RPC error:', error);
+            throw error;
+          }
           
           console.log('Login checkSession - User credentials:', data);
           
@@ -63,14 +105,18 @@ const Login = () => {
           }));
           
           if (data === 'supervisor') {
+            console.log('Navigating to supervisor dashboard');
             navigate('/supervisor', { replace: true });
           } else {
+            console.log('Navigating to regular dashboard');
             navigate('/dashboard', { replace: true });
           }
         } catch (error) {
           console.error('Error checking user credentials:', error);
-          // Default to dashboard on error
-          navigate('/dashboard', { replace: true });
+          // Even if we have an error, still redirect the user somewhere
+          setTimeout(() => {
+            navigate('/dashboard', { replace: true }); // Fallback to dashboard
+          }, 100);
         }
       }
       setIsCheckingSession(false);
@@ -124,31 +170,110 @@ const Login = () => {
 
       // Check user credentials and redirect accordingly
       try {
-        // Direct DB query is most reliable
-        const { data: credentialData, error: credentialError } = await supabase.rpc('get_user_credentials', {
-          user_id: data.user.id
+        // First try the is_supervisor function (most reliable)
+        const { data: isSupervisor, error: supervisorError } = await supabase.rpc('is_supervisor', {
+          check_user_id: data.user.id
         });
         
-        if (credentialError) throw credentialError;
-        
-        console.log('Login successful - User credentials:', credentialData);
-        
-        // Cache the credentials in localStorage for faster access
-        localStorage.setItem('tempCredentials', JSON.stringify({
-          userId: data.user.id,
-          credentials: credentialData,
-          timestamp: Date.now()
-        }));
-        
-        if (credentialData === 'supervisor') {
-          navigate('/supervisor', { replace: true });
+        if (supervisorError) {
+          console.error('Supervisor check error:', supervisorError);
+          // Fall back to the get_user_credentials if is_supervisor fails
         } else {
-          navigate('/dashboard', { replace: true });
+          console.log('Login successful - Is supervisor:', isSupervisor);
+          
+          // Cache the credentials
+          localStorage.setItem('tempCredentials', JSON.stringify({
+            userId: data.user.id,
+            credentials: isSupervisor ? 'supervisor' : 'agent',
+            timestamp: Date.now()
+          }));
+          
+          if (isSupervisor) {
+            console.log('Redirecting to supervisor dashboard');
+            navigate('/supervisor', { replace: true });
+            return;
+          } else {
+            console.log('Redirecting to regular dashboard');
+            navigate('/dashboard', { replace: true });
+            return;
+          }
         }
       } catch (error) {
+        console.error('Error checking supervisor status:', error);
+        // Continue to the next approach if this fails
+      }
+        
+      // Try with regular get_user_credentials as fallback
+      try {
+        // Make multiple attempts with timeouts to ensure we get a valid credential check
+        let attempts = 0;
+        const maxAttempts = 3;
+        const checkCredentials = async () => {
+          try {
+            console.log('Checking credentials for user ID:', data.user.id);
+            const { data: credentialData, error: credentialError } = await (supabase.rpc as any)('get_user_credentials', {
+              user_id: data.user.id
+            });
+            
+            if (credentialError) {
+              console.error('RPC error:', credentialError);
+              throw credentialError;
+            }
+            
+            console.log('Login successful - User credentials:', credentialData);
+            
+            // Cache the credentials in localStorage for faster access
+            localStorage.setItem('tempCredentials', JSON.stringify({
+              userId: data.user.id,
+              credentials: credentialData,
+              timestamp: Date.now()
+            }));
+            
+            // Force caching the credentials in localStorage to avoid any RLS issues
+            if (credentialData) {
+              const cachedProfile = localStorage.getItem('userProfile');
+              if (cachedProfile) {
+                try {
+                  const profile = JSON.parse(cachedProfile);
+                  profile.credentials = credentialData;
+                  localStorage.setItem('userProfile', JSON.stringify(profile));
+                  console.log('Updated credentials in cached profile');
+                } catch (error) {
+                  console.error('Error updating cached profile:', error);
+                }
+              }
+            }
+            
+            if (credentialData === 'supervisor') {
+              // Redirect with delay to ensure all state updates are processed
+              console.log('Redirecting to supervisor dashboard');
+              navigate('/supervisor', { replace: true });
+            } else {
+              console.log('Redirecting to regular dashboard');
+              navigate('/dashboard', { replace: true });
+            }
+          } catch (error) {
+            console.error(`Error getting user credentials (attempt ${attempts+1}/${maxAttempts}):`, error);
+            attempts++;
+            if (attempts < maxAttempts) {
+              // Try again after a short delay
+              setTimeout(checkCredentials, 500);
+            } else {
+              // After max attempts, default to dashboard
+              console.log('Max credential check attempts reached, defaulting to dashboard');
+              navigate('/dashboard', { replace: true });
+            }
+          }
+        };
+        
+        // Start the credential check process
+        checkCredentials();
+        
+      } catch (error) {
         console.error('Error getting user credentials:', error);
-        // Default to dashboard on error
-        navigate('/dashboard', { replace: true });
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 500);
       }
     } catch (error) {
       console.error('Login error:', error);
