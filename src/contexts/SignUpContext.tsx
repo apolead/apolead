@@ -257,10 +257,11 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
           console.log('Application rejected, storing data without creating user account');
           
-          // Store in applicant_profiles table instead
+          // Store in user_applications table instead of non-existent applicant_profiles
           const { error } = await supabase
-            .from('applicant_profiles')
+            .from('user_applications')
             .insert({
+              user_id: session?.user?.id || 'temp-' + Math.random().toString(36).substring(2),
               first_name: userData.firstName,
               last_name: userData.lastName,
               email: userData.email,
