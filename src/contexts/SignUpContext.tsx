@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +38,9 @@ interface UserData {
   acceptedTerms: boolean;
   applicationStatus: string;
 }
+
+// Define application status type for type safety
+type ApplicationStatus = 'pending' | 'approved' | 'rejected';
 
 // Initial user data state
 const initialUserData: UserData = {
@@ -175,7 +179,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
   
-  const determineApplicationStatus = () => {
+  const determineApplicationStatus = (): ApplicationStatus => {
     if (!userData.hasHeadset || !userData.hasQuietPlace) {
       return 'rejected';
     }
@@ -256,11 +260,14 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
           console.log('Application rejected, storing data without creating user account');
           
-          // Store in user_applications table instead of non-existent applicant_profiles
+          // Generate temporary user ID for rejected applications
+          const tempUserId = session?.user?.id || 'temp-' + Math.random().toString(36).substring(2);
+          
+          // Store in user_applications table
           const { error } = await supabase
             .from('user_applications')
             .insert({
-              user_id: session?.user?.id || 'temp-' + Math.random().toString(36).substring(2),
+              user_id: tempUserId,
               first_name: userData.firstName,
               last_name: userData.lastName,
               email: userData.email,
@@ -333,7 +340,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           
           // Create user_profiles record right away
           const profileData = {
-            user_id: session?.user.id,
+            user_id: session?.user?.id || 'temp-' + Math.random().toString(36).substring(2),
             first_name: userData.firstName,
             last_name: userData.lastName,
             email: userData.email,
@@ -374,6 +381,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           if (insertError) throw insertError;
           
           // Now that profile is created, send confirmation email
+          // Only for approved applications
           await supabase.auth.signInWithPassword({
             email: userData.email,
             password: "temporary-password" // This will trigger confirmation email
