@@ -45,7 +45,7 @@ const Login = () => {
           localStorage.removeItem('tempCredentials');
         }
         
-        // If no valid cache, fetch from API
+        // If no valid cache, fetch directly from DB using RPC (more reliable)
         try {
           const { data, error } = await supabase.rpc('get_user_credentials', {
             user_id: session.user.id
@@ -69,10 +69,8 @@ const Login = () => {
           }
         } catch (error) {
           console.error('Error checking user credentials:', error);
-          // Even if we have an error, still redirect the user somewhere
-          setTimeout(() => {
-            navigate('/dashboard', { replace: true }); // Fallback to dashboard
-          }, 100);
+          // Default to dashboard on error
+          navigate('/dashboard', { replace: true });
         }
       }
       setIsCheckingSession(false);
@@ -126,69 +124,31 @@ const Login = () => {
 
       // Check user credentials and redirect accordingly
       try {
-        // Make multiple attempts with timeouts to ensure we get a valid credential check
-        let attempts = 0;
-        const maxAttempts = 3;
-        const checkCredentials = async () => {
-          try {
-            const { data: credentialData, error: credentialError } = await supabase.rpc('get_user_credentials', {
-              user_id: data.user.id
-            });
-            
-            if (credentialError) throw credentialError;
-            
-            console.log('Login successful - User credentials:', credentialData);
-            
-            // Cache the credentials in localStorage for faster access
-            localStorage.setItem('tempCredentials', JSON.stringify({
-              userId: data.user.id,
-              credentials: credentialData,
-              timestamp: Date.now()
-            }));
-            
-            // Force caching the credentials in localStorage to avoid any RLS issues
-            if (credentialData) {
-              const cachedProfile = localStorage.getItem('userProfile');
-              if (cachedProfile) {
-                try {
-                  const profile = JSON.parse(cachedProfile);
-                  profile.credentials = credentialData;
-                  localStorage.setItem('userProfile', JSON.stringify(profile));
-                  console.log('Updated credentials in cached profile');
-                } catch (error) {
-                  console.error('Error updating cached profile:', error);
-                }
-              }
-            }
-            
-            if (credentialData === 'supervisor') {
-              // Redirect with delay to ensure all state updates are processed
-              navigate('/supervisor', { replace: true });
-            } else {
-              navigate('/dashboard', { replace: true });
-            }
-          } catch (error) {
-            console.error(`Error getting user credentials (attempt ${attempts+1}/${maxAttempts}):`, error);
-            attempts++;
-            if (attempts < maxAttempts) {
-              // Try again after a short delay
-              setTimeout(checkCredentials, 500);
-            } else {
-              // After max attempts, default to dashboard
-              console.log('Max credential check attempts reached, defaulting to dashboard');
-              navigate('/dashboard', { replace: true });
-            }
-          }
-        };
+        // Direct DB query is most reliable
+        const { data: credentialData, error: credentialError } = await supabase.rpc('get_user_credentials', {
+          user_id: data.user.id
+        });
         
-        // Start the credential check process
-        checkCredentials();
+        if (credentialError) throw credentialError;
         
+        console.log('Login successful - User credentials:', credentialData);
+        
+        // Cache the credentials in localStorage for faster access
+        localStorage.setItem('tempCredentials', JSON.stringify({
+          userId: data.user.id,
+          credentials: credentialData,
+          timestamp: Date.now()
+        }));
+        
+        if (credentialData === 'supervisor') {
+          navigate('/supervisor', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       } catch (error) {
         console.error('Error getting user credentials:', error);
-        setTimeout(() => {
-          navigate('/dashboard', { replace: true });
-        }, 500);
+        // Default to dashboard on error
+        navigate('/dashboard', { replace: true });
       }
     } catch (error) {
       console.error('Login error:', error);
