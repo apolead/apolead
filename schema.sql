@@ -19,3 +19,4 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_user_credentials TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_user_credentials TO anon;
 GRANT EXECUTE ON FUNCTION public.get_user_credentials TO service_role;
+

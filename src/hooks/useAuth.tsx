@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -251,39 +250,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setUserProfile(null);
       localStorage.removeItem('userProfile');
-      localStorage.removeItem('tempCredentials');
       
-      // Check if we have an active session before trying to sign out
-      const { data: { session } } = await supabase.auth.getSession();
+      // Then sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       
-      if (session) {
-        // If we have a session, sign out from Supabase
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-        console.log('Logout from Supabase successful');
-      } else {
-        // If we don't have a session, just log and consider it a success
-        console.log('No active session found, client-side logout completed');
-      }
-      
-      toast({
-        title: "Logout successful",
-        description: "You have been logged out successfully"
-      });
+      console.log('Logout successful');
     } catch (error: any) {
       console.error('Logout error:', error);
-      
-      // Even if there's an error with Supabase, still clear local state
-      setUser(null);
-      setUserProfile(null);
-      localStorage.removeItem('userProfile');
-      localStorage.removeItem('tempCredentials');
-      
       toast({
-        title: "Partial logout",
-        description: "You've been logged out locally, but there was an issue with the server logout",
-        variant: "default"
+        title: "Logout failed",
+        description: error.message || "An error occurred during logout",
+        variant: "destructive",
       });
+      throw error;
     }
   };
 
