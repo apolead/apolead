@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import StepZero from '@/components/signup/StepZero';
 import StepOne from '@/components/signup/StepOne';
 import StepTwo from '@/components/signup/StepTwo';
@@ -9,11 +9,6 @@ import { useSignUp } from '@/contexts/SignUpContext';
 
 const SignUpRenderer: React.FC = () => {
   const { currentStep, userData, updateUserData, nextStep, prevStep, handleSubmit, isSubmitting, isCheckingGovId } = useSignUp();
-  
-  // Scroll to top when step changes
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [currentStep]);
   
   const renderStep = () => {
     if (currentStep === 0) {
