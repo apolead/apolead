@@ -64,11 +64,10 @@ const PublicRoute = ({ children }) => {
 
 // Completely revised SupervisorRoute with improved credential checking and error handling
 const SupervisorRoute = ({ children }) => {
-  const { user, userProfile, loading } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
   const [isSupervisor, setIsSupervisor] = useState(false);
-  const [checkAttempts, setCheckAttempts] = useState(0);
   
   useEffect(() => {
     // First, make sure we have user information before checking credentials
@@ -84,21 +83,13 @@ const SupervisorRoute = ({ children }) => {
       return;
     }
     
-    // Multiple retry attempts for better reliability
-    if (checkAttempts > 3) {
-      console.log("SupervisorRoute - Max check attempts reached, defaulting to agent");
-      navigate('/dashboard', { replace: true });
-      setIsChecking(false);
-      return;
-    }
-    
     console.log("SupervisorRoute - User authenticated:", user.id);
     
     const checkCredentials = async () => {
       // 1. First check cached credentials in localStorage (fastest)
-      const cachedData = localStorage.getItem('tempCredentials');
-      if (cachedData) {
-        try {
+      try {
+        const cachedData = localStorage.getItem('tempCredentials');
+        if (cachedData) {
           const { userId, credentials, timestamp } = JSON.parse(cachedData);
           // Check if cache is valid (30 minutes validity)
           const isValid = Date.now() - timestamp < 30 * 60 * 1000;
@@ -109,100 +100,35 @@ const SupervisorRoute = ({ children }) => {
               setIsSupervisor(true);
               setIsChecking(false);
               return;
-            }
-            // If cached credentials indicate not a supervisor, redirect now
-            if (credentials === 'agent') {
+            } else {
+              // If cached credentials indicate not a supervisor, redirect now
               console.log("SupervisorRoute - Cached credentials show not supervisor, redirecting");
               navigate('/dashboard', { replace: true });
               setIsChecking(false);
               return;
             }
           }
-        } catch (e) {
-          console.error('Error parsing cached credentials:', e);
-          localStorage.removeItem('tempCredentials');
         }
+      } catch (e) {
+        console.error('Error parsing cached credentials:', e);
+        localStorage.removeItem('tempCredentials');
       }
       
-      // 2. Try the is_supervisor function (now that it's fixed)
+      // 2. Direct DB query as most reliable method
       try {
-        console.log('Checking supervisor status for user ID:', user.id);
-        const { data: isSupervisor, error: supervisorError } = await supabase.rpc('is_supervisor', {
-          check_user_id: user.id
-        });
-        
-        if (supervisorError) {
-          console.error('Supervisor check error:', supervisorError);
-          // Fall back to next method if error
-          setCheckAttempts(prev => prev + 1);
-          return;
-        } 
-        
-        console.log('SupervisorRoute - Is supervisor check result:', isSupervisor);
-        
-        // Cache this result
-        localStorage.setItem('tempCredentials', JSON.stringify({
-          userId: user.id,
-          credentials: isSupervisor ? 'supervisor' : 'agent',
-          timestamp: Date.now()
-        }));
-        
-        if (isSupervisor) {
-          console.log("SupervisorRoute - Confirmed supervisor role");
-          setIsSupervisor(true);
-          setIsChecking(false);
-          return;
-        } else {
-          console.log("SupervisorRoute - Not a supervisor, redirecting");
-          navigate('/dashboard', { replace: true });
-          setIsChecking(false);
-          return;
-        }
-      } catch (error) {
-        console.error('Error checking supervisor status:', error);
-        // Continue to the next approach if this fails
-      }
-      
-      // 3. Next, check userProfile if available
-      if (userProfile && userProfile.credentials) {
-        console.log("SupervisorRoute - User profile available, credentials:", userProfile.credentials);
-        
-        if (userProfile.credentials === 'supervisor') {
-          console.log("SupervisorRoute - Confirmed supervisor via profile");
-          setIsSupervisor(true);
-          
-          // Cache this result
-          localStorage.setItem('tempCredentials', JSON.stringify({
-            userId: user.id,
-            credentials: 'supervisor',
-            timestamp: Date.now()
-          }));
-          
-          setIsChecking(false);
-          return;
-        } else {
-          // If profile exists with non-supervisor credentials, redirect now
-          console.log("SupervisorRoute - Not a supervisor (via profile), redirecting");
-          navigate('/dashboard', { replace: true });
-          setIsChecking(false);
-          return;
-        }
-      }
-      
-      // 4. As a last resort, call the edge function
-      try {
-        console.log("SupervisorRoute - Trying get_user_credentials RPC");
-        const { data, error } = await (supabase.rpc as any)('get_user_credentials', {
+        console.log("SupervisorRoute - Checking via direct RPC function");
+        const { data, error } = await supabase.rpc('get_user_credentials', {
           user_id: user.id
         });
         
         if (error) {
-          console.error("SupervisorRoute - get_user_credentials error:", error);
-          setCheckAttempts(prev => prev + 1);
+          console.error("SupervisorRoute - RPC error:", error);
+          navigate('/dashboard', { replace: true });
+          setIsChecking(false);
           return;
         }
         
-        console.log("SupervisorRoute - get_user_credentials returned:", data);
+        console.log("SupervisorRoute - RPC returned credentials:", data);
         
         // Cache the credentials result
         localStorage.setItem('tempCredentials', JSON.stringify({
@@ -212,23 +138,23 @@ const SupervisorRoute = ({ children }) => {
         }));
         
         if (data === 'supervisor') {
-          console.log("SupervisorRoute - Confirmed supervisor via get_user_credentials");
+          console.log("SupervisorRoute - RPC confirmed supervisor role");
           setIsSupervisor(true);
           setIsChecking(false);
         } else {
-          console.log("SupervisorRoute - Not supervisor via get_user_credentials, redirecting");
+          console.log("SupervisorRoute - RPC says not supervisor, redirecting");
           navigate('/dashboard', { replace: true });
           setIsChecking(false);
         }
       } catch (error) {
         console.error("SupervisorRoute - Exception checking credentials:", error);
-        // Increment attempt counter but don't redirect yet, let it try again
-        setCheckAttempts(prev => prev + 1);
+        navigate('/dashboard', { replace: true });
+        setIsChecking(false);
       }
     };
     
     checkCredentials();
-  }, [user, userProfile, loading, navigate, checkAttempts]);
+  }, [user, loading, navigate]);
   
   // Show loading while checking credentials
   if (loading || isChecking) {

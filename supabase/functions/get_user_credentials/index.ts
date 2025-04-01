@@ -44,29 +44,7 @@ serve(async (req) => {
 
     console.log('Edge Function: Getting credentials for user_id:', user_id);
 
-    // Try using the is_supervisor function first (most reliable approach)
-    try {
-      const { data: isSupervisor, error: supervisorError } = await supabaseClient.rpc('is_supervisor', {
-        check_user_id: user_id
-      });
-      
-      if (supervisorError) {
-        console.log('is_supervisor function error:', supervisorError);
-      } else if (isSupervisor !== null) {
-        console.log('Edge Function: Supervisor check result:', isSupervisor);
-        return new Response(
-          JSON.stringify(isSupervisor ? 'supervisor' : 'agent'),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200
-          }
-        );
-      }
-    } catch (fnError) {
-      console.log('is_supervisor try/catch error:', fnError);
-    }
-
-    // Try using the get_user_credentials function as fallback
+    // Try the get_user_credentials function (primary approach)
     try {
       const { data: funcData, error: funcError } = await supabaseClient.rpc('get_user_credentials', { user_id });
       
@@ -86,7 +64,7 @@ serve(async (req) => {
       console.log('RPC try/catch error:', rpcError);
     }
 
-    // If RPC fails, try direct query as last resort
+    // If RPC fails, try direct query as fallback
     try {
       const { data: directData, error: directError } = await supabaseClient.from('user_profiles')
         .select('credentials')
