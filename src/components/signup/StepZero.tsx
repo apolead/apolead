@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -64,12 +65,13 @@ const StepZero = ({
     
     setIsLoading(true);
     try {
-      // Change: Add emailRedirectTo: false to prevent immediate confirmation email
+      // Change: Fix the type error by removing emailRedirectTo since it's not needed
+      // or setting it to a string URL if needed
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: false,
+          // Remove the emailRedirectTo: false that was causing the type error
           data: {
             email
           }
