@@ -528,12 +528,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_supervisor: {
-        Args: {
-          check_user_id: string
-        }
-        Returns: boolean
-      }
       update_billing_information: {
         Args: {
           p_user_id: string
