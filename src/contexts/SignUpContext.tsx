@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -253,7 +252,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const { data: { session } } = await supabase.auth.getSession();
       
       // For rejected applications, we'll store the data but not create a user
-      if (applicationStatus === 'rejected') {
+      if (applicationStatus === "rejected") {
         try {
           console.log('Application rejected, storing data without creating user account');
           
@@ -314,7 +313,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       
       // If no session and application is approved, create user account
-      if (!session && applicationStatus === 'approved') {
+      if (!session && applicationStatus === "approved") {
         try {
           console.log('No session found, creating user account with email:', userData.email);
           
@@ -487,7 +486,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
         
         // Redirect based on application status
-        if (applicationStatus === 'rejected') {
+        if (applicationStatus === "rejected") {
           navigate('/confirmation?status=rejected');
         } else {
           nextStep(); // Move to confirmation step
