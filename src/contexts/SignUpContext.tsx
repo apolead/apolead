@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -460,7 +459,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       
       // Redirect based on application status
-      if (applicationStatus === 'rejected') {
+      if (applicationStatus === 'pending' || applicationStatus === 'approved') {
         if (currentSession) {
           await supabase.auth.signOut();
         }
