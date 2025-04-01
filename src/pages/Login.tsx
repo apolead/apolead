@@ -47,11 +47,15 @@ const Login = () => {
         
         // If no valid cache, fetch from API
         try {
-          const { data, error } = await supabase.rpc('get_user_credentials', {
+          console.log('Fetching credentials for user ID:', session.user.id);
+          const { data, error } = await (supabase.rpc as any)('get_user_credentials', {
             user_id: session.user.id
           });
           
-          if (error) throw error;
+          if (error) {
+            console.error('RPC error:', error);
+            throw error;
+          }
           
           console.log('Login checkSession - User credentials:', data);
           
@@ -63,8 +67,10 @@ const Login = () => {
           }));
           
           if (data === 'supervisor') {
+            console.log('Navigating to supervisor dashboard');
             navigate('/supervisor', { replace: true });
           } else {
+            console.log('Navigating to regular dashboard');
             navigate('/dashboard', { replace: true });
           }
         } catch (error) {
@@ -131,11 +137,15 @@ const Login = () => {
         const maxAttempts = 3;
         const checkCredentials = async () => {
           try {
-            const { data: credentialData, error: credentialError } = await supabase.rpc('get_user_credentials', {
+            console.log('Checking credentials for user ID:', data.user.id);
+            const { data: credentialData, error: credentialError } = await (supabase.rpc as any)('get_user_credentials', {
               user_id: data.user.id
             });
             
-            if (credentialError) throw credentialError;
+            if (credentialError) {
+              console.error('RPC error:', credentialError);
+              throw credentialError;
+            }
             
             console.log('Login successful - User credentials:', credentialData);
             
@@ -163,8 +173,10 @@ const Login = () => {
             
             if (credentialData === 'supervisor') {
               // Redirect with delay to ensure all state updates are processed
+              console.log('Redirecting to supervisor dashboard');
               navigate('/supervisor', { replace: true });
             } else {
+              console.log('Redirecting to regular dashboard');
               navigate('/dashboard', { replace: true });
             }
           } catch (error) {
