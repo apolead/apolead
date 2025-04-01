@@ -124,8 +124,47 @@ const SupervisorRoute = ({ children }) => {
         }
       }
       
-      // 2. Next, check userProfile if available
-      if (userProfile && userProfile.credentials && !userProfile.error) {
+      // 2. Try the is_supervisor function (now that it's fixed)
+      try {
+        console.log('Checking supervisor status for user ID:', user.id);
+        const { data: isSupervisor, error: supervisorError } = await supabase.rpc('is_supervisor', {
+          check_user_id: user.id
+        });
+        
+        if (supervisorError) {
+          console.error('Supervisor check error:', supervisorError);
+          // Fall back to next method if error
+          setCheckAttempts(prev => prev + 1);
+          return;
+        } 
+        
+        console.log('SupervisorRoute - Is supervisor check result:', isSupervisor);
+        
+        // Cache this result
+        localStorage.setItem('tempCredentials', JSON.stringify({
+          userId: user.id,
+          credentials: isSupervisor ? 'supervisor' : 'agent',
+          timestamp: Date.now()
+        }));
+        
+        if (isSupervisor) {
+          console.log("SupervisorRoute - Confirmed supervisor role");
+          setIsSupervisor(true);
+          setIsChecking(false);
+          return;
+        } else {
+          console.log("SupervisorRoute - Not a supervisor, redirecting");
+          navigate('/dashboard', { replace: true });
+          setIsChecking(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking supervisor status:', error);
+        // Continue to the next approach if this fails
+      }
+      
+      // 3. Next, check userProfile if available
+      if (userProfile && userProfile.credentials) {
         console.log("SupervisorRoute - User profile available, credentials:", userProfile.credentials);
         
         if (userProfile.credentials === 'supervisor') {
@@ -150,21 +189,20 @@ const SupervisorRoute = ({ children }) => {
         }
       }
       
-      // 3. As a last resort, call the edge function
+      // 4. As a last resort, call the edge function
       try {
-        console.log("SupervisorRoute - No profile data, checking via API");
-        const { data, error } = await supabase.functions.invoke('get_user_credentials', {
-          body: { user_id: user.id }
+        console.log("SupervisorRoute - Trying get_user_credentials RPC");
+        const { data, error } = await (supabase.rpc as any)('get_user_credentials', {
+          user_id: user.id
         });
         
         if (error) {
-          console.error("SupervisorRoute - API error:", error);
-          // Don't redirect yet, increment attempts and let it try again
+          console.error("SupervisorRoute - get_user_credentials error:", error);
           setCheckAttempts(prev => prev + 1);
           return;
         }
         
-        console.log("SupervisorRoute - API returned credentials:", data);
+        console.log("SupervisorRoute - get_user_credentials returned:", data);
         
         // Cache the credentials result
         localStorage.setItem('tempCredentials', JSON.stringify({
@@ -174,11 +212,11 @@ const SupervisorRoute = ({ children }) => {
         }));
         
         if (data === 'supervisor') {
-          console.log("SupervisorRoute - API confirmed supervisor role");
+          console.log("SupervisorRoute - Confirmed supervisor via get_user_credentials");
           setIsSupervisor(true);
           setIsChecking(false);
         } else {
-          console.log("SupervisorRoute - API says not supervisor, redirecting");
+          console.log("SupervisorRoute - Not supervisor via get_user_credentials, redirecting");
           navigate('/dashboard', { replace: true });
           setIsChecking(false);
         }
