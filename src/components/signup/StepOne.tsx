@@ -100,7 +100,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
         toast({
           title: "Verification Warning",
           description: "Could not verify ID uniqueness, but you may continue",
-          variant: "warning"
+          variant: "default" // Changed from "warning" to "default" to match available variants
         });
         nextStep();
       }

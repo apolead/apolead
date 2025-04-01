@@ -36,7 +36,7 @@ interface UserData {
   completeTraining: boolean | null;
   personalStatement: string;
   acceptedTerms: boolean;
-  applicationStatus: string;
+  applicationStatus: ApplicationStatus;
 }
 
 // Define application status type for type safety with literal string union
@@ -152,7 +152,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       console.log('Uploading file:', file.name, 'to path:', filePath);
       
-      // Check if bucket exists, create if it doesn't
+      // Check if bucket exists
       const { data: buckets } = await supabase.storage.listBuckets();
       if (!buckets || !buckets.find(bucket => bucket.name === 'user_documents')) {
         await supabase.storage.createBucket('user_documents', {

@@ -52,15 +52,10 @@ supabase.auth.onAuthStateChange((event, session) => {
         fileSizeLimit: 5242880 // 5MB
       });
       
-      // Set policy for the bucket
-      await supabase.rpc('create_storage_policy', {
-        bucket_name: 'user_documents',
-        policy_name: 'Allow public access',
-        definition: 'true', 
-        operation: 'SELECT'
-      }).catch(err => {
-        console.error('Error setting bucket policy:', err);
-      });
+      // Set policy for the bucket using SQL function if needed
+      // We removed the RPC call that caused the error
+      // Bucket permissions can be managed through the Supabase dashboard instead
+      // or through proper SQL scripts
     }
   } catch (err) {
     console.error('Error initializing storage:', err);
