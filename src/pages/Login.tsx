@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -48,8 +47,8 @@ const Login = () => {
         
         // If no valid cache, fetch from API
         try {
-          const { data, error } = await supabase.functions.invoke('get_user_credentials', {
-            body: { user_id: session.user.id }
+          const { data, error } = await supabase.rpc('get_user_credentials', {
+            user_id: session.user.id
           });
           
           if (error) throw error;
@@ -132,8 +131,8 @@ const Login = () => {
         const maxAttempts = 3;
         const checkCredentials = async () => {
           try {
-            const { data: credentialData, error: credentialError } = await supabase.functions.invoke('get_user_credentials', {
-              body: { user_id: data.user.id }
+            const { data: credentialData, error: credentialError } = await supabase.rpc('get_user_credentials', {
+              user_id: data.user.id
             });
             
             if (credentialError) throw credentialError;
