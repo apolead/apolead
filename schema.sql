@@ -1,3 +1,4 @@
+
 -- This function retrieves the credentials value for a specific user
 CREATE OR REPLACE FUNCTION public.get_user_credentials(user_id UUID)
 RETURNS TEXT
@@ -25,15 +26,21 @@ RETURNS TRIGGER AS $$
 BEGIN
   -- Check if the user profile already exists
   IF NOT EXISTS (SELECT 1 FROM public.user_profiles WHERE user_id = NEW.id) THEN
-    -- Insert new user profile
+    -- Insert new user profile with all fields initially NULL except for required ones
     INSERT INTO public.user_profiles (
       user_id,
       email,
-      application_status
+      application_status,
+      credentials,
+      onboarding_completed,
+      eligible_for_training
     ) VALUES (
       NEW.id,
       NEW.email,
-      'approved'
+      'pending',
+      'agent',
+      FALSE,
+      FALSE
     );
   END IF;
   RETURN NEW;

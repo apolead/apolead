@@ -28,13 +28,39 @@ const Dashboard = () => {
       navigate('/login');
     }
     
-    // Check if onboarding is completed
+    // Check if onboarding is completed based on user profile data
     if (userProfile) {
-      // If user has filled out personal details, set onboarding as completed
-      if (userProfile.first_name && userProfile.last_name && userProfile.birth_day && 
-          userProfile.gov_id_number && userProfile.gov_id_image) {
-        setOnboardingCompleted(true);
+      console.log("Dashboard: User profile loaded", {
+        first_name: userProfile.first_name,
+        last_name: userProfile.last_name,
+        birth_day: userProfile.birth_day,
+        gov_id_number: userProfile.gov_id_number,
+        gov_id_image: userProfile.gov_id_image,
+        onboarding_completed: userProfile.onboarding_completed
+      });
+      
+      // Check if the user has completed the basic onboarding fields
+      const hasCompletedBasicInfo = userProfile.first_name && 
+                                    userProfile.last_name && 
+                                    userProfile.birth_day && 
+                                    userProfile.gov_id_number && 
+                                    userProfile.gov_id_image;
+      
+      // Use direct onboarding_completed flag if available, otherwise check required fields
+      const isOnboardingCompleted = userProfile.onboarding_completed || hasCompletedBasicInfo;
+      
+      setOnboardingCompleted(isOnboardingCompleted);
+      
+      // Update onboarding progress based on completed fields
+      if (isOnboardingCompleted) {
         setOnboardingProgress(100);
+      } else if (hasCompletedBasicInfo) {
+        setOnboardingProgress(80);
+      } else if (userProfile.first_name || userProfile.last_name) {
+        setOnboardingProgress(40);
+      } else {
+        // Just signed up, only has email
+        setOnboardingProgress(20);
       }
     }
   }, [user, loading, userProfile, navigate]);
@@ -48,24 +74,30 @@ const Dashboard = () => {
     
     // Refresh user profile to check if onboarding was completed
     if (user) {
-      supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-        .then(({ data, error }) => {
-          if (!error && data) {
-            if (data.first_name && data.last_name && data.birth_day && 
-                data.gov_id_number && data.gov_id_image) {
-              setOnboardingCompleted(true);
-              setOnboardingProgress(100);
-              toast({
-                title: "Onboarding completed",
-                description: "You can now proceed to the training."
-              });
-            }
+      // Since userProfile is managed by the useAuth hook, we don't need to
+      // directly fetch it here. The hook will handle refreshing the profile.
+      // We just need to update our local state based on the outcome.
+      
+      if (userProfile && userProfile.first_name && userProfile.last_name && 
+          userProfile.birth_day && userProfile.gov_id_number && userProfile.gov_id_image) {
+        
+        // If profile has basic required fields, update onboarding status in DB
+        supabase.rpc('update_user_profile_direct', {
+          input_user_id: user.id,
+          input_updates: { onboarding_completed: true }
+        }).then(({ error }) => {
+          if (error) {
+            console.error('Error updating onboarding status:', error);
+          } else {
+            setOnboardingCompleted(true);
+            setOnboardingProgress(100);
+            toast({
+              title: "Onboarding completed",
+              description: "You can now proceed to the next steps."
+            });
           }
         });
+      }
     }
   };
   
