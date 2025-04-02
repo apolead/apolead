@@ -40,7 +40,7 @@ BEGIN
     NEW.eligible_for_training := FALSE;
   END IF;
   
-  -- If all required fields for onboarding are filled out, mark onboarding as completed
+  -- If all required fields for onboarding are filled out AND all required questions answered, mark onboarding as completed
   IF (
     NEW.first_name IS NOT NULL AND NEW.first_name != '' AND
     NEW.last_name IS NOT NULL AND NEW.last_name != '' AND
