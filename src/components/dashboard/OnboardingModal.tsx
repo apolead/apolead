@@ -446,7 +446,7 @@ const OnboardingModal = ({
               <Button type="button" variant="outline" onClick={handleBack}>
                 Back
               </Button>
-              <Button type="button" onClick={handleNext}>
+              <Button type="button" onClick={handleNext} className="text-slate-50">
                 Next
               </Button>
             </div>
