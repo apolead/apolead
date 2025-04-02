@@ -17,10 +17,21 @@ const ConfirmationScreen = () => {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [processingPassword, setProcessingPassword] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(15); // Extended countdown time
+  const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { confirmationSent } = useSignUp();
+  
+  // Get the context if available, but don't throw an error if not
+  const signUpContext = (() => {
+    try {
+      return useSignUp();
+    } catch (e) {
+      return { confirmationSent: false };
+    }
+  })();
+  
+  const { confirmationSent } = signUpContext;
 
   // Check for token in URL query parameters
   useEffect(() => {
@@ -62,6 +73,13 @@ const ConfirmationScreen = () => {
           return;
         } else if (status === 'approved') {
           setIsApproved(true);
+          
+          // Send confirmation email immediately if status is approved
+          // and email hasn't been sent yet
+          if (!confirmationSent && !emailConfirmationSent) {
+            await sendConfirmationEmail();
+          }
+          
           setIsLoading(false);
           return;
         }
@@ -81,6 +99,13 @@ const ConfirmationScreen = () => {
           
           if (profiles && profiles.application_status === 'rejected') {
             setIsApproved(false);
+          } else if (profiles && profiles.application_status === 'approved') {
+            setIsApproved(true);
+            
+            // Send confirmation email if approved and email hasn't been sent yet
+            if (!confirmationSent && !emailConfirmationSent) {
+              await sendConfirmationEmail();
+            }
           } else {
             setIsApproved(true);
           }
@@ -99,7 +124,60 @@ const ConfirmationScreen = () => {
     };
     
     checkApplicationStatus();
-  }, [navigate]);
+  }, [navigate, confirmationSent, emailConfirmationSent]);
+
+  // Async function to send confirmation email
+  const sendConfirmationEmail = async () => {
+    try {
+      console.log('Sending confirmation email...');
+      
+      // Get user email from current session or from URL parameter
+      const { data: { session } } = await supabase.auth.getSession();
+      const url = new URL(window.location.href);
+      const emailParam = url.searchParams.get('email');
+      
+      const userEmail = session?.user?.email || emailParam;
+      
+      if (!userEmail) {
+        console.error('No user email found');
+        return;
+      }
+      
+      // Call our edge function to send the confirmation email
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-confirmation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ 
+          email: userEmail,
+          redirectUrl: `${window.location.origin}/confirmation?status=approved`
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error calling send-confirmation function:', errorText);
+        return false;
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        console.error('Error sending confirmation email:', result.error);
+        return false;
+      }
+      
+      console.log('Confirmation email sent successfully');
+      setEmailConfirmationSent(true);
+      return true;
+      
+    } catch (error) {
+      console.error('Exception sending confirmation email:', error);
+      return false;
+    }
+  };
 
   // Countdown timer for redirection
   useEffect(() => {
@@ -284,7 +362,7 @@ const ConfirmationScreen = () => {
               <div className="p-4 bg-blue-50 rounded-md text-left border border-blue-100">
                 <h3 className="font-semibold text-blue-800 mb-2">What happens next?</h3>
                 <p className="text-sm text-blue-700">
-                  {confirmationSent ? (
+                  {confirmationSent || emailConfirmationSent ? (
                     <>
                       <div className="flex items-start my-2">
                         <Mail className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />

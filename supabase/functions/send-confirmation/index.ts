@@ -23,11 +23,13 @@ serve(async (req) => {
   }
 
   try {
+    console.log("🔵 Starting send-confirmation function", new Date().toISOString());
+    
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing Supabase environment variables");
+      console.error("❌ Missing Supabase environment variables");
       throw new Error("Missing Supabase environment variables");
     }
 
@@ -38,12 +40,12 @@ serve(async (req) => {
     const { email, redirectUrl } = await req.json();
     
     if (!email) {
-      console.error("Email is required but was not provided");
+      console.error("❌ Email is required but was not provided");
       throw new Error("Email is required");
     }
 
-    console.log(`Generating signup link for: ${email}`);
-    console.log(`Redirect URL: ${redirectUrl || "Not provided, using default"}`);
+    console.log(`📧 Generating signup link for: ${email}`);
+    console.log(`🔗 Redirect URL: ${redirectUrl || "Not provided, using default"}`);
 
     // Generate signup link with a temporary password (required by Supabase)
     const { data, error } = await supabase.auth.admin.generateLink({
@@ -56,12 +58,12 @@ serve(async (req) => {
     });
 
     if (error) {
-      console.error("Error generating signup link:", error.message);
+      console.error("❌ Error generating signup link:", error.message);
       throw error;
     }
 
-    console.log("Generated signup link successfully");
-    console.log("Link properties:", {
+    console.log("✅ Generated signup link successfully");
+    console.log("🔍 Link properties:", {
       hrefLength: data?.properties?.action_link?.length,
       linkExists: !!data?.properties?.action_link
     });
@@ -69,9 +71,9 @@ serve(async (req) => {
     // The link should be automatically sent via email since Supabase is configured with Resend SMTP
     // Let's log additional information for debugging
     if (data?.properties?.action_link) {
-      console.log("Email with signup link should be sent automatically via Resend SMTP");
+      console.log("📨 Email with signup link should be sent automatically via Resend SMTP");
     } else {
-      console.error("No action link was generated");
+      console.error("❌ No action link was generated");
     }
     
     // Check if we're in development environment - use Deno.env instead of process.env
@@ -90,7 +92,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error in send-confirmation function:", error);
+    console.error("❌ Error in send-confirmation function:", error);
     
     return new Response(
       JSON.stringify({
