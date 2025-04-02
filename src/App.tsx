@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 import BillingInformation from "./pages/BillingInformation";
+import { SignUpProvider } from "@/contexts/SignUpContext";
 
 const queryClient = new QueryClient();
 
@@ -270,7 +272,11 @@ const AuthWrapper = () => {
           <SupervisorDashboard />
         </SupervisorRoute>
       } />
-      <Route path="/confirmation" element={<ConfirmationScreen />} />
+      <Route path="/confirmation" element={
+        <SignUpProvider>
+          <ConfirmationScreen />
+        </SignUpProvider>
+      } />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="*" element={<NotFound />} />

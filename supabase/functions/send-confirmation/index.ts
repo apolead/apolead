@@ -45,11 +45,15 @@ serve(async (req) => {
     console.log(`Generating signup link for: ${email}`);
     console.log(`Redirect URL: ${redirectUrl || "Not provided, using default"}`);
 
-    // Generate signup link with a temporary password (required by Supabase)
+    // Generate a temporary password
+    const tempPassword = generateTempPassword();
+    console.log(`Generated temporary password: ${tempPassword}`);
+
+    // Generate signup link with the temporary password
     const { data, error } = await supabase.auth.admin.generateLink({
       type: "signup",
       email,
-      password: crypto.randomUUID(), // Generate a random temporary password
+      password: tempPassword, // Use the generated temp password
       options: {
         redirectTo: redirectUrl || `${req.headers.get("origin")}/confirmation?status=approved`,
       }
@@ -81,8 +85,9 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: "Confirmation email sent successfully",
-        // Only include the link in non-production environments for debugging
-        link: isDevelopment ? data?.properties?.action_link : undefined
+        // Only include the link and password in non-production environments for debugging
+        link: isDevelopment ? data?.properties?.action_link : undefined,
+        tempPassword: isDevelopment ? tempPassword : undefined
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -104,3 +109,14 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to generate a random temporary password
+function generateTempPassword(length = 12) {
+  const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+  let password = "";
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * charset.length);
+    password += charset[randomIndex];
+  }
+  return password;
+}

@@ -12,6 +12,8 @@ import { useSignUp } from '@/contexts/SignUpContext';
 const ConfirmationScreen = () => {
   const [isApproved, setIsApproved] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -106,7 +108,7 @@ const ConfirmationScreen = () => {
     let timer: number;
     
     // Start countdown for redirection if approved and not showing password form
-    if (isApproved && !showPasswordForm && !isLoading) {
+    if (isApproved && !showPasswordForm && !isLoading && !emailSent) {
       timer = window.setInterval(() => {
         setRedirectCountdown(prev => {
           if (prev <= 1) {
@@ -122,7 +124,7 @@ const ConfirmationScreen = () => {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [isApproved, showPasswordForm, isLoading, navigate]);
+  }, [isApproved, showPasswordForm, isLoading, navigate, emailSent]);
 
   const handlePasswordSetup = async (e) => {
     e.preventDefault();
@@ -192,6 +194,50 @@ const ConfirmationScreen = () => {
       });
     } finally {
       setProcessingPassword(false);
+    }
+  };
+
+  const handleSendConfirmation = async () => {
+    setIsSendingEmail(true);
+    
+    try {
+      // Get the user email from the URL or context
+      const url = new URL(window.location.href);
+      
+      // Send a request to the edge function for confirmation email
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-confirmation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: url.searchParams.get('email') || '',
+          redirectUrl: `${window.location.origin}/confirmation`
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send confirmation email');
+      }
+      
+      toast({
+        title: "Confirmation Email Sent",
+        description: "Please check your email for login instructions and your temporary password",
+      });
+      
+      setEmailSent(true);
+      
+    } catch (error) {
+      console.error('Error sending confirmation email:', error);
+      toast({
+        title: "Error Sending Email",
+        description: error.message || "An error occurred while sending the confirmation email",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -284,11 +330,11 @@ const ConfirmationScreen = () => {
               <div className="p-4 bg-blue-50 rounded-md text-left border border-blue-100">
                 <h3 className="font-semibold text-blue-800 mb-2">What happens next?</h3>
                 <p className="text-sm text-blue-700">
-                  {confirmationSent ? (
+                  {confirmationSent || emailSent ? (
                     <>
                       <div className="flex items-start my-2">
                         <Mail className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
-                        <span>Please check your email for a confirmation link with the subject <strong>"Confirm Your Signup"</strong></span>
+                        <span>Please check your email for login instructions and your temporary password. The email subject is <strong>"Confirm Your Signup"</strong></span>
                       </div>
                       <div className="pl-7 space-y-2 mt-2">
                         <div className="flex items-center">
@@ -316,9 +362,33 @@ const ConfirmationScreen = () => {
                 </p>
               </div>
             </div>
-            <p className="text-sm text-gray-500 mt-6">
-              Redirecting to homepage in {redirectCountdown} seconds...
-            </p>
+            
+            {/* Join Today button */}
+            {isApproved && !confirmationSent && !emailSent && (
+              <Button 
+                onClick={handleSendConfirmation}
+                disabled={isSendingEmail}
+                className="w-full mb-4 bg-green-600 hover:bg-green-700 text-white py-2"
+              >
+                {isSendingEmail ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Sending email...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <Mail className="mr-2 h-5 w-5" />
+                    Join Today
+                  </div>
+                )}
+              </Button>
+            )}
+            
+            {!showPasswordForm && !emailSent && (
+              <p className="text-sm text-gray-500 mt-6">
+                Redirecting to homepage in {redirectCountdown} seconds...
+              </p>
+            )}
           </>
         ) : (
           <>
