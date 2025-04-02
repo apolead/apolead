@@ -33,10 +33,12 @@ serve(async (req) => {
 
     console.log(`Generating signup link for: ${email}`);
 
-    // Generate signup link
+    // Generate signup link with a temporary password (required by Supabase)
+    // The user will set their own password during the signup flow
     const { data, error } = await supabase.auth.admin.generateLink({
       type: "signup",
       email,
+      password: crypto.randomUUID(), // Generate a random temporary password
       options: {
         redirectTo: redirectUrl || `${req.headers.get("origin")}/confirmation?status=approved`,
       }

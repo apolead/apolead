@@ -210,7 +210,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       
       // Insert into user_applications table
-      // FIX: Remove the requirement for user_id, as it's not required in this case
       const { data: applicationData, error: applicationError } = await supabase
         .from('user_applications')
         .insert([{
@@ -284,24 +283,44 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             })
           });
           
-          const result = await response.json();
-          
-          if (!result.success) {
-            console.error('Error sending confirmation email:', result.error);
-            // Continue with the flow even if email sending fails
-          } else {
-            console.log('Signup link generated successfully:', result);
-            // In a real app, you would send this link via email
-            // For now, we'll just show a toast with instructions
+          if (!response.ok) {
+            console.error('Error calling send-confirmation function:', await response.text());
             toast({
-              title: "Application Approved",
-              description: "Check your email for instructions to complete your registration.",
+              title: "Email Notification Error",
+              description: "There was an issue sending your confirmation email. Please contact support.",
+              variant: "destructive",
               duration: 8000,
             });
+          } else {
+            const result = await response.json();
+            
+            if (!result.success) {
+              console.error('Error sending confirmation email:', result.error);
+              toast({
+                title: "Email Notification Error",
+                description: "There was an issue sending your confirmation email. Please contact support.",
+                variant: "destructive",
+                duration: 8000,
+              });
+            } else {
+              console.log('Signup link generated successfully:', result);
+              // In a real app, you would send this link via email
+              // For now, we'll just show a toast with instructions
+              toast({
+                title: "Application Approved",
+                description: "Check your email for instructions to complete your registration.",
+                duration: 8000,
+              });
+            }
           }
         } catch (emailError) {
           console.error('Error sending confirmation email:', emailError);
-          // Continue with the flow even if email sending fails
+          toast({
+            title: "Email Notification Error",
+            description: "There was an issue sending your confirmation email. Please contact support.",
+            variant: "destructive",
+            duration: 8000,
+          });
         }
       }
       
