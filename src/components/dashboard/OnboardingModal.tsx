@@ -259,15 +259,16 @@ const OnboardingModal = ({
         solve_problems: userData.solveProblems,
         complete_training: userData.completeTraining,
         personal_statement: userData.personalStatement,
-        accepted_terms: userData.acceptedTerms
+        accepted_terms: userData.acceptedTerms,
+        onboarding_completed: hasCompletedBasicInfo && hasAnsweredAllQuestions
       };
       
       if (Array.isArray(userData.availableDays) && userData.availableDays.length > 0) {
-        profileData.available_days = userData.availableDays;
+        profileData['available_days'] = userData.availableDays;
       }
       
-      if (typeof userData.dayHours === 'object' && Object.keys(userData.dayHours).length > 0) {
-        profileData.day_hours = userData.dayHours;
+      if (typeof userData.dayHours === 'object' && userData.dayHours !== null && Object.keys(userData.dayHours).length > 0) {
+        profileData['day_hours'] = userData.dayHours;
       }
 
       await updateProfile(profileData);

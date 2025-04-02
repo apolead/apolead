@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,6 +25,7 @@ const Dashboard = () => {
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [onboardingProgress, setOnboardingProgress] = useState(20); // Default to 20% (signup completed)
   const [onboardingStatus, setOnboardingStatus] = useState('not_started'); // 'not_started', 'incomplete', 'ineligible', 'completed'
+  const [trainingStatus, setTrainingStatus] = useState('not_started'); // 'not_started', 'failed', 'completed'
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -48,7 +50,9 @@ const Dashboard = () => {
         login_discord: userProfile.login_discord,
         check_emails: userProfile.check_emails,
         solve_problems: userProfile.solve_problems,
-        complete_training: userProfile.complete_training
+        complete_training: userProfile.complete_training,
+        quiz_passed: userProfile.quiz_passed,
+        training_video_watched: userProfile.training_video_watched
       });
       
       // Check if the database flag for onboarding_completed is set
@@ -57,11 +61,23 @@ const Dashboard = () => {
       // Check if eligible based on the database field directly
       const isEligible = userProfile.eligible_for_training === true;
       
+      // Determine training status
+      if (userProfile.quiz_passed === true) {
+        setTrainingStatus('completed');
+      } else if (userProfile.quiz_passed === false) {
+        setTrainingStatus('failed');
+      } else {
+        setTrainingStatus('not_started');
+      }
+      
       console.log("Dashboard: Eligibility check", {
         isOnboardingCompletedFlag,
         isEligible,
         eligible_for_training_type: typeof userProfile.eligible_for_training,
-        onboarding_completed_type: typeof userProfile.onboarding_completed
+        onboarding_completed_type: typeof userProfile.onboarding_completed,
+        trainingStatus,
+        quiz_passed: userProfile.quiz_passed,
+        quiz_passed_type: typeof userProfile.quiz_passed
       });
       
       // Determine onboarding status - prioritize the database flags
@@ -172,6 +188,39 @@ const Dashboard = () => {
         return <CheckCircle className="mr-[8px] text-[16px]" />;
       default:
         return null;
+    }
+  };
+  
+  const getTrainingButtonStyle = () => {
+    switch (trainingStatus) {
+      case 'completed':
+        return 'button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]';
+      case 'failed':
+        return 'button-ineligible p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(239,68,68,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(239,68,68,0.3)]';
+      default:
+        return 'button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]';
+    }
+  };
+  
+  const getTrainingButtonText = () => {
+    switch (trainingStatus) {
+      case 'completed':
+        return 'Training Completed';
+      case 'failed':
+        return 'Training Failed';
+      default:
+        return 'Start Training';
+    }
+  };
+  
+  const getTrainingIcon = () => {
+    switch (trainingStatus) {
+      case 'completed':
+        return <CheckCircle className="mr-[8px] text-[16px]" />;
+      case 'failed':
+        return <XCircle className="mr-[8px] text-[16px]" />;
+      default:
+        return <CheckCircle className="mr-[8px] text-[16px]" />;
     }
   };
   
@@ -334,7 +383,11 @@ const Dashboard = () => {
             
             {/* Step 2: Initial Training - Locked/Greyed out or Enabled */}
             <div className={`action-card ${userProfile?.eligible_for_training !== true ? 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50' : 'bg-white border border-[#10B981]'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${userProfile?.eligible_for_training === true ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : ''}`}>
-              <div className={`step-number locked absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${userProfile?.eligible_for_training === true ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 'bg-gradient-to-r from-[#94A3B8] to-[#64748B]'} text-white flex items-center justify-center font-[600] text-[16px] ${userProfile?.eligible_for_training !== true ? 'shadow-none' : ''} z-[3] border-[3px] border-white`}>
+              <div className={`step-number locked absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
+                trainingStatus === 'completed' ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 
+                trainingStatus === 'failed' ? 'bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_4px_10px_rgba(239,68,68,0.3)]' : 
+                userProfile?.eligible_for_training === true ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 'bg-gradient-to-r from-[#94A3B8] to-[#64748B]'
+              } text-white flex items-center justify-center font-[600] text-[16px] ${userProfile?.eligible_for_training !== true ? 'shadow-none' : ''} z-[3] border-[3px] border-white`}>
                 2
               </div>
               {userProfile?.eligible_for_training !== true && (
@@ -342,17 +395,32 @@ const Dashboard = () => {
                   <Lock size={14} />
                 </div>
               )}
-              <div className={`action-icon ${userProfile?.eligible_for_training === true ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 'locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B] shadow-none'} text-white flex items-center justify-center text-[30px] relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
+              <div className={`action-icon ${
+                trainingStatus === 'completed' ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 
+                trainingStatus === 'failed' ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_8px_20px_rgba(239,68,68,0.2)]' : 
+                userProfile?.eligible_for_training === true ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 'locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B] shadow-none'
+              } text-white flex items-center justify-center text-[30px] relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
                 <i className="fas fa-book-reader"></i>
               </div>
               <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Initial Training</h3>
-              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Complete the initial training module to unlock the next step. This will teach you the fundamentals.</p>
+              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">
+                {trainingStatus === 'failed' 
+                  ? "You did not pass the training quiz. You cannot move forward in the application process." 
+                  : "Complete the initial training module to unlock the next step. This will teach you the fundamentals."}
+              </p>
               <button 
-                className={`card-button ${userProfile?.eligible_for_training === true ? 'button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]' : 'button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70'}`}
-                onClick={userProfile?.eligible_for_training === true ? openTrainingModal : undefined}
+                className={`card-button ${
+                  userProfile?.eligible_for_training === true 
+                    ? getTrainingButtonStyle()
+                    : 'button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70'
+                }`}
+                onClick={userProfile?.eligible_for_training === true && trainingStatus !== 'failed' ? openTrainingModal : undefined}
+                disabled={trainingStatus === 'failed'}
               >
                 {userProfile?.eligible_for_training === true ? (
-                  <><CheckCircle className="mr-[8px] text-[16px]" /> Start Training</>
+                  <>
+                    {getTrainingIcon()} {getTrainingButtonText()}
+                  </>
                 ) : (
                   <><i className="fas fa-lock mr-[8px] text-[16px]"></i> Locked</>
                 )}

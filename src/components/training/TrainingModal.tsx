@@ -166,7 +166,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             </Alert>
           )}
           
-          {step === 'video' && quizPassed === null && (
+          {step === 'video' && (
             <>
               <TrainingVideo onComplete={handleVideoComplete} />
               {userProfile?.training_video_watched === true && (
@@ -179,7 +179,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             </>
           )}
           
-          {step === 'quiz' && quizPassed === null && (
+          {step === 'quiz' && (
             <TrainingQuiz onComplete={handleQuizComplete} />
           )}
           
