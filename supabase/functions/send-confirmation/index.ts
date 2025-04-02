@@ -1,3 +1,4 @@
+
 // Add polyfill for process.env
 if (typeof globalThis.process === "undefined") {
   globalThis.process = { env: {} };
@@ -50,7 +51,7 @@ serve(async (req) => {
       email,
       password: crypto.randomUUID(), // Generate a random temporary password
       options: {
-        redirectTo: redirectUrl || `${req.headers.get("origin")}/confirmation?status=approved`,
+        redirectTo: redirectUrl || `${req.headers.get("origin")}/confirmation`,
       }
     });
 

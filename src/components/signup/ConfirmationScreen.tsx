@@ -210,6 +210,12 @@ const ConfirmationScreen = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className={`max-w-md w-full ${isApproved ? 'bg-white' : 'bg-red-50'} rounded-lg shadow-md p-8 text-center`}>
+        <div className="mb-8 text-center">
+          <h2 className="text-3xl font-bold inline">
+            <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+          </h2>
+        </div>
+        
         <div className={`h-16 w-16 rounded-full ${isApproved ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center mx-auto mb-6`}>
           {isApproved ? (
             <Check className={`h-8 w-8 text-green-600`} />
@@ -222,7 +228,7 @@ const ConfirmationScreen = () => {
           <>
             <h2 className="text-2xl font-bold mb-4">Set Your Password</h2>
             <p className="text-gray-600 mb-6">
-              Your application has been approved! Please set a password to complete your registration.
+              Please create a secure password for your ApoLead account. This will be used for all future logins.
             </p>
             <form onSubmit={handlePasswordSetup} className="space-y-4 text-left">
               <div>
@@ -234,6 +240,8 @@ const ConfirmationScreen = () => {
                   onChange={(e) => setPassword(e.target.value)} 
                   required 
                   disabled={processingPassword}
+                  className="bg-white"
+                  placeholder="Enter new password"
                 />
               </div>
               <div>
@@ -245,11 +253,13 @@ const ConfirmationScreen = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)} 
                   required 
                   disabled={processingPassword}
+                  className="bg-white"
+                  placeholder="Confirm new password"
                 />
               </div>
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full bg-indigo-600 hover:bg-indigo-700" 
                 disabled={processingPassword}
               >
                 {processingPassword ? (
@@ -260,7 +270,7 @@ const ConfirmationScreen = () => {
                 ) : (
                   <div className="flex items-center justify-center">
                     <Key className="mr-2 h-4 w-4" />
-                    Set Password and Complete Registration
+                    Set Password & Complete Registration
                   </div>
                 )}
               </Button>
