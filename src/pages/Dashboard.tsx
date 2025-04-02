@@ -5,76 +5,25 @@ import { useNavigate } from 'react-router-dom';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import { Loader2 } from 'lucide-react';
 import TrainingModal from '@/components/training/TrainingModal';
-import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
-  const { user, userProfile, loading, updateProfile } = useAuth();
+  const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
   const [isTrainingModalOpen, setIsTrainingModalOpen] = useState(false);
-  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
-      return;
     }
-    
-    // If user exists but profile doesn't exist, create a basic profile
-    if (!loading && user && !userProfile) {
-      createBasicProfile();
-    }
-  }, [user, userProfile, loading, navigate]);
-  
-  const createBasicProfile = async () => {
-    try {
-      if (!user) return;
-      
-      console.log("Creating basic profile for user:", user.id);
-      setIsCreatingProfile(true);
-      
-      // Create a minimal profile with just the email
-      const basicProfile = {
-        firstName: user.email?.split('@')[0] || 'User',
-        lastName: '',
-        email: user.email || '',
-        onboarding_completed: false,
-        application_status: 'pending',
-        eligible_for_training: false
-      };
-      
-      // Use the updateProfile function from useAuth 
-      await updateProfile(basicProfile);
-      
-      console.log("Basic profile created successfully");
-      toast({
-        title: "Profile Created",
-        description: "A basic profile has been created for you. Please complete your onboarding.",
-        variant: "default",
-      });
-      
-      // Redirect to onboarding after a brief delay
-      setTimeout(() => {
-        navigate('/onboarding');
-      }, 2000);
-      
-    } catch (error) {
-      console.error("Error creating basic profile:", error);
-      toast({
-        title: "Profile Creation Failed",
-        description: "We couldn't create your profile. Please try refreshing the page.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingProfile(false);
-    }
-  };
+  }, [user, loading, navigate]);
   
   const handleOpenTrainingModal = () => {
     if (!userProfile?.eligible_for_training && !userProfile?.onboarding_completed) {
       toast({
         title: "Onboarding Required",
-        description: "You must complete your onboarding process first."
+        description: "You must complete your onboarding process first.",
+        variant: "destructive"
       });
       return;
     }
@@ -91,17 +40,12 @@ const Dashboard = () => {
     // The modal will handle updating the user profile
   };
   
-  if (loading || isCreatingProfile || !userProfile) {
+  if (loading || !userProfile) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <div className="text-lg font-medium">
-            {isCreatingProfile ? "Creating your profile..." : "Loading dashboard..."}
-          </div>
-          <div className="text-sm text-gray-500">
-            {isCreatingProfile ? "This will just take a moment" : "Please wait"}
-          </div>
+          <div className="text-lg font-medium">Loading dashboard...</div>
         </div>
       </div>
     );

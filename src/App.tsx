@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,7 +17,6 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 import BillingInformation from "./pages/BillingInformation";
-import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -260,11 +258,6 @@ const AuthWrapper = () => {
       <Route path="/dashboard" element={
         <AuthRoute>
           <Dashboard />
-        </AuthRoute>
-      } />
-      <Route path="/onboarding" element={
-        <AuthRoute>
-          <Onboarding />
         </AuthRoute>
       } />
       <Route path="/billing" element={
