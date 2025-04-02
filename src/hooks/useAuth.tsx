@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -92,6 +93,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    console.log("AuthProvider useEffect running - setting up auth state listeners");
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -167,6 +170,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserProfile = async (userId: string) => {
     try {
       console.log('Fetching user profile for:', userId);
+      
+      // Attempt to create a profile if it doesn't exist
+      try {
+        const { error } = await (supabase.rpc as any)('update_user_profile_direct', {
+          input_user_id: userId,
+          input_updates: {
+            // Only update if fields are missing
+            email: user?.email || null
+          }
+        });
+        
+        if (error) {
+          console.error('Error creating fallback profile:', error);
+        }
+      } catch (err) {
+        console.error('Exception in fallback profile creation:', err);
+      }
       
       // Use type assertion to bypass TypeScript error for the RPC function name
       const { data, error } = await (supabase.rpc as any)('get_user_profile_direct', {
