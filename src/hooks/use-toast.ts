@@ -1,15 +1,16 @@
-
 import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast"
 import * as React from "react"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 2000  // Changed from 1000000 to 5000 (5 seconds)
+const TOAST_REMOVE_DELAY = 2000  // 2 seconds to remove after dismissal
+const DEFAULT_TOAST_DURATION = 3000  // 3 seconds visibility before auto-dismiss
 
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  duration?: number  // Added duration property
 }
 
 const actionTypes = {
@@ -51,10 +52,13 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+const dismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>()  // Added for auto-dismiss
 
 const addToRemoveQueue = (toastId: string) => {
+  // Clear any existing timeout
   if (toastTimeouts.has(toastId)) {
-    return
+    clearTimeout(toastTimeouts.get(toastId))
+    toastTimeouts.delete(toastId)
   }
 
   const timeout = setTimeout(() => {
@@ -66,6 +70,28 @@ const addToRemoveQueue = (toastId: string) => {
   }, TOAST_REMOVE_DELAY)
 
   toastTimeouts.set(toastId, timeout)
+}
+
+// New function to add auto-dismiss timeout
+const addToDismissQueue = (toastId: string, duration: number = DEFAULT_TOAST_DURATION) => {
+  // Don't auto-dismiss if duration is Infinity
+  if (duration === Infinity) return
+  
+  // Clear any existing timeout
+  if (dismissTimeouts.has(toastId)) {
+    clearTimeout(dismissTimeouts.get(toastId))
+    dismissTimeouts.delete(toastId)
+  }
+
+  const timeout = setTimeout(() => {
+    dispatch({
+      type: actionTypes.DISMISS_TOAST,
+      toastId: toastId,
+    })
+    dismissTimeouts.delete(toastId)
+  }, duration)
+
+  dismissTimeouts.set(toastId, timeout)
 }
 
 export const reducer = (state: State, action: Action): State => {
@@ -140,7 +166,7 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+function toast({ duration = DEFAULT_TOAST_DURATION, ...props }: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -148,18 +174,42 @@ function toast({ ...props }: Toast) {
       type: actionTypes.UPDATE_TOAST,
       toast: { ...props, id },
     })
-  const dismiss = () => dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
+    
+  const dismiss = () => {
+    // Clear any auto-dismiss timeouts when manually dismissed
+    if (dismissTimeouts.has(id)) {
+      clearTimeout(dismissTimeouts.get(id))
+      dismissTimeouts.delete(id)
+    }
+    dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
+  }
+  
+  // Enhanced event handler for better X button support
+  const handleOpenChange = (open: boolean) => {
+    // Make sure we properly call the original onOpenChange if provided
+    if (props.onOpenChange) {
+      props.onOpenChange(open)
+    }
+    
+    // And also handle the dismiss if closed
+    if (!open) {
+      dismiss()
+    }
+  }
 
   dispatch({
     type: actionTypes.ADD_TOAST,
     toast: {
       ...props,
+      id,
+      duration,
       open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss()
-      },
+      onOpenChange: handleOpenChange,
     },
   })
+
+  // Auto-dismiss the toast after the specified duration
+  addToDismissQueue(id, duration)
 
   return {
     id: id,
