@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
 const StepZero = ({
   userData,
   updateUserData,
@@ -19,25 +20,29 @@ const StepZero = ({
   const {
     toast
   } = useToast();
+
   const handleEmailChange = e => {
     setEmail(e.target.value);
   };
+
   const handlePasswordChange = e => {
     setPassword(e.target.value);
   };
+
   const handleConfirmPasswordChange = e => {
     setConfirmPassword(e.target.value);
   };
+
   const validateEmail = email => {
     if (!email.endsWith('@gmail.com')) {
       return 'Only Gmail accounts are allowed';
     }
     return null;
   };
+
   const handleSignUp = async e => {
     e.preventDefault();
 
-    // Validate email domain
     const emailError = validateEmail(email);
     if (emailError) {
       toast({
@@ -48,7 +53,6 @@ const StepZero = ({
       return;
     }
 
-    // Check password match
     if (password !== confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -68,18 +72,15 @@ const StepZero = ({
       });
       if (error) throw error;
 
-      // Update userData with email
       await updateUserData({
         email
       });
 
-      // Successful signup
       toast({
-        title: "Signup successful",
+        title: "Information saved",
         description: "Please proceed with your application"
       });
 
-      // Move to the next step
       nextStep();
     } catch (error) {
       console.error('Signup error:', error);
@@ -92,6 +93,7 @@ const StepZero = ({
       setIsLoading(false);
     }
   };
+
   return <div className="flex flex-col md:flex-row w-full h-screen">
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
@@ -170,7 +172,7 @@ const StepZero = ({
               {isLoading ? <div className="flex items-center justify-center">
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Signing up...
-                </div> : "Sign up"}
+                </div> : "Continue"}
             </Button>
           </form>
           
@@ -191,4 +193,5 @@ const StepZero = ({
       </div>
     </div>;
 };
+
 export default StepZero;

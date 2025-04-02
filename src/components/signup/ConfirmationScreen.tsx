@@ -1,14 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Check, X, Loader2 } from 'lucide-react';
+import { Check, X, Loader2, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const ConfirmationScreen = () => {
   const [isApproved, setIsApproved] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkApplicationStatus = async () => {
@@ -66,6 +69,56 @@ const ConfirmationScreen = () => {
     checkApplicationStatus();
   }, [navigate]);
 
+  const handleSendConfirmation = async () => {
+    try {
+      setIsSendingEmail(true);
+      
+      // Get current session email if available
+      const { data: { session } } = await supabase.auth.getSession();
+      let userEmail = '';
+      
+      if (session && session.user) {
+        userEmail = session.user.email;
+      } else {
+        // Try to get email from URL if available
+        const url = new URL(window.location.href);
+        userEmail = url.searchParams.get('email') || '';
+      }
+      
+      if (!userEmail) {
+        toast({
+          title: "Error",
+          description: "No email found for confirmation. Please sign up again.",
+          variant: "destructive"
+        });
+        navigate('/signup');
+        return;
+      }
+      
+      // Send confirmation email
+      const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Confirmation sent",
+        description: "Please check your email to complete your registration.",
+      });
+      
+    } catch (error) {
+      console.error('Error sending confirmation:', error);
+      toast({
+        title: "Failed to send confirmation",
+        description: error.message || "An error occurred while sending the confirmation email.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -99,11 +152,49 @@ const ConfirmationScreen = () => {
               <div className="p-4 bg-blue-50 rounded-md text-left">
                 <h3 className="font-semibold text-blue-800 mb-2">What happens next?</h3>
                 <p className="text-sm text-blue-700">
-                  1. Check your Gmail inbox for a confirmation email<br />
+                  1. Click the "Join Today" button below to receive your confirmation email<br />
                   2. Complete any verification steps in the email<br />
                   3. Our team will review your application<br />
                   4. You'll receive instructions for onboarding if approved
                 </p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <Button 
+                onClick={handleSendConfirmation}
+                className="bg-indigo-600 hover:bg-indigo-700 w-full"
+                disabled={isSendingEmail}
+              >
+                {isSendingEmail ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Sending...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <Mail className="mr-2 h-5 w-5" />
+                    Join Today
+                  </div>
+                )}
+              </Button>
+              
+              <div className="flex space-x-4">
+                <Button 
+                  asChild
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Link to="/">Return to Homepage</Link>
+                </Button>
+                
+                <Button 
+                  asChild
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Link to="/login">Go to Login</Link>
+                </Button>
               </div>
             </div>
           </>
@@ -124,26 +215,15 @@ const ConfirmationScreen = () => {
                 </p>
               </div>
             </div>
-          </>
-        )}
-        
-        <div className="space-x-4">
-          <Button 
-            asChild
-            className={isApproved ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"}
-          >
-            <Link to="/">Return to Homepage</Link>
-          </Button>
-          
-          {isApproved && (
+            
             <Button 
               asChild
-              variant="outline"
+              className="bg-gray-600 hover:bg-gray-700"
             >
-              <Link to="/login">Go to Login</Link>
+              <Link to="/">Return to Homepage</Link>
             </Button>
-          )}
-        </div>
+          </>
+        )}
       </div>
       
       <div className="mt-8 text-center text-sm text-gray-500">
