@@ -7,26 +7,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import { 
-  ChevronDown, 
-  Check, 
-  Search, 
-  Bell, 
-  Settings, 
-  User, 
-  Clipboard, 
   GraduationCap, 
   Calendar, 
   Star, 
-  Award,
+  ClipboardList,
   ChevronUp,
-  Lock,
+  CheckCircle,
   UserPlus,
   BookOpen,
   Users,
   School,
-  Rocket
+  Rocket,
+  Lock,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 const Dashboard = () => {
   const { user, userProfile, loading } = useAuth();
@@ -88,7 +85,7 @@ const Dashboard = () => {
   
   return (
     <div className="flex w-full min-h-screen bg-gray-50">
-      <DashboardSidebar />
+      <DashboardSidebar activeItem="dashboard" />
       
       <div className="flex-1 p-6 md:p-8">
         {/* Header */}
@@ -98,16 +95,13 @@ const Dashboard = () => {
           </div>
           
           <div className="user-info flex items-center">
-            <div className="action-buttons flex gap-4 mr-5">
+            <div className="action-buttons hidden md:flex gap-4 mr-5">
               <button className="action-button w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-gray-500 hover:text-indigo-600 transition-all hover:transform hover:-translate-y-1 hover:shadow-md">
-                <Search size={18} />
+                <ClipboardList size={18} />
               </button>
               <button className="action-button notification w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-gray-500 hover:text-indigo-600 transition-all hover:transform hover:-translate-y-1 hover:shadow-md relative">
-                <Bell size={18} />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <button className="action-button w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-gray-500 hover:text-indigo-600 transition-all hover:transform hover:-translate-y-1 hover:shadow-md">
-                <Settings size={18} />
+                <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></div>
+                <Calendar size={18} />
               </button>
             </div>
             
@@ -115,216 +109,219 @@ const Dashboard = () => {
               <div className="user-avatar w-8 h-8 rounded-full bg-gradient-to-r from-indigo-600 to-[#00c2cb] text-white flex items-center justify-center font-semibold text-sm mr-2">
                 {userProfile?.first_name ? userProfile.first_name[0] : user?.email ? user.email[0].toUpperCase() : 'U'}
               </div>
-              <span className="user-name font-medium text-gray-800">{userProfile?.first_name || user?.email?.split('@')[0] || 'User'}</span>
-              <ChevronDown size={16} className="dropdown-icon ml-1 text-gray-500" />
+              <span className="user-name font-medium text-gray-800 hidden md:block">{userProfile?.first_name || user?.email?.split('@')[0] || 'User'}</span>
             </div>
           </div>
         </div>
         
         {/* Page Title */}
-        <div className="page-title flex items-center mb-6">
-          <div className="page-title-icon w-8 h-8 rounded-lg bg-gradient-to-r from-indigo-600 to-[#00c2cb] text-white flex items-center justify-center mr-3">
-            <Clipboard size={16} />
+        <div className="page-title flex items-center mb-8">
+          <div className="rounded-lg bg-blue-500 text-white w-10 h-10 flex items-center justify-center mr-3">
+            <ClipboardList size={20} />
           </div>
-          <h2 className="text-xl font-bold text-gray-800">Onboarding Process</h2>
-          <div className="page-subtitle ml-4 pl-4 border-l-2 border-gray-200 text-gray-500 text-sm">Complete all steps to start earning</div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">Onboarding Process</h2>
+            <div className="text-gray-500 text-sm">Complete all steps to start earning</div>
+          </div>
         </div>
         
         {/* Stats Section */}
-        <div className="stats grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="stat-card bg-white p-6 rounded-xl shadow-sm flex items-center relative overflow-hidden hover:transform hover:-translate-y-2 transition-transform duration-300 hover:shadow-md">
-            <div className="stat-icon w-14 h-14 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mr-5 relative after:content-[''] after:absolute after:w-full after:h-full after:bg-gradient-to-br after:from-indigo-600 after:to-[#00c2cb] after:opacity-20 after:rounded-lg">
-              <GraduationCap size={24} />
-            </div>
-            <div className="stat-info">
-              <h3 className="text-2xl font-semibold text-gray-800 mb-1">{onboardingProgress}%</h3>
-              <p className="text-gray-500 text-sm flex items-center">
-                <ChevronUp className="h-3 w-3 mr-1 text-indigo-600" />
-                Onboarding Progress
-              </p>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-white border-none shadow-md overflow-hidden">
+            <CardContent className="p-5 flex items-center">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-500 flex items-center justify-center mr-4">
+                <GraduationCap size={24} />
+              </div>
+              <div>
+                <div className="text-2xl font-semibold">20%</div>
+                <div className="text-gray-500 text-sm flex items-center">
+                  <ChevronUp className="h-4 w-4 mr-1 text-blue-500" />
+                  Onboarding Progress
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
-          <div className="stat-card bg-white p-6 rounded-xl shadow-sm flex items-center relative overflow-hidden hover:transform hover:-translate-y-2 transition-transform duration-300 hover:shadow-md">
-            <div className="stat-icon w-14 h-14 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mr-5 relative after:content-[''] after:absolute after:w-full after:h-full after:bg-gradient-to-br after:from-indigo-600 after:to-[#00c2cb] after:opacity-20 after:rounded-lg">
-              <Check size={24} />
-            </div>
-            <div className="stat-info">
-              <h3 className="text-2xl font-semibold text-gray-800 mb-1">{onboardingCompleted ? '1/5' : '0/5'}</h3>
-              <p className="text-gray-500 text-sm flex items-center">
-                <Check className="h-3 w-3 mr-1 text-indigo-600" />
-                Steps Completed
-              </p>
-            </div>
-          </div>
+          <Card className="bg-white border-none shadow-md overflow-hidden">
+            <CardContent className="p-5 flex items-center">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-500 flex items-center justify-center mr-4">
+                <CheckCircle size={24} />
+              </div>
+              <div>
+                <div className="text-2xl font-semibold">1/5</div>
+                <div className="text-gray-500 text-sm flex items-center">
+                  <Check className="h-4 w-4 mr-1 text-blue-500" />
+                  Steps Completed
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
-          <div className="stat-card bg-white p-6 rounded-xl shadow-sm flex items-center relative overflow-hidden hover:transform hover:-translate-y-2 transition-transform duration-300 hover:shadow-md">
-            <div className="stat-icon w-14 h-14 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mr-5 relative after:content-[''] after:absolute after:w-full after:h-full after:bg-gradient-to-br after:from-indigo-600 after:to-[#00c2cb] after:opacity-20 after:rounded-lg">
-              <Calendar size={24} />
-            </div>
-            <div className="stat-info">
-              <h3 className="text-2xl font-semibold text-gray-800 mb-1">7 days</h3>
-              <p className="text-gray-500 text-sm flex items-center">
-                <Calendar className="h-3 w-3 mr-1 text-indigo-600" />
-                Until Deadline
-              </p>
-            </div>
-          </div>
+          <Card className="bg-white border-none shadow-md overflow-hidden">
+            <CardContent className="p-5 flex items-center">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-500 flex items-center justify-center mr-4">
+                <Calendar size={24} />
+              </div>
+              <div>
+                <div className="text-2xl font-semibold">7 days</div>
+                <div className="text-gray-500 text-sm flex items-center">
+                  <Calendar className="h-4 w-4 mr-1 text-blue-500" />
+                  Until Deadline
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
-          <div className="stat-card bg-white p-6 rounded-xl shadow-sm flex items-center relative overflow-hidden hover:transform hover:-translate-y-2 transition-transform duration-300 hover:shadow-md">
-            <div className="stat-icon w-14 h-14 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mr-5 relative after:content-[''] after:absolute after:w-full after:h-full after:bg-gradient-to-br after:from-indigo-600 after:to-[#00c2cb] after:opacity-20 after:rounded-lg">
-              <Award size={24} />
-            </div>
-            <div className="stat-info">
-              <h3 className="text-2xl font-semibold text-gray-800 mb-1">-</h3>
-              <p className="text-gray-500 text-sm flex items-center">
-                <Star className="h-3 w-3 mr-1 text-indigo-600" />
-                Assessment Score
-              </p>
-            </div>
-          </div>
+          <Card className="bg-white border-none shadow-md overflow-hidden">
+            <CardContent className="p-5 flex items-center">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-500 flex items-center justify-center mr-4">
+                <Star size={24} />
+              </div>
+              <div>
+                <div className="text-2xl font-semibold">-</div>
+                <div className="text-gray-500 text-sm flex items-center">
+                  <Star className="h-4 w-4 mr-1 text-blue-500" />
+                  Assessment Score
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
         
-        {/* Action Cards */}
-        <div className="action-cards-container bg-white rounded-xl p-6 shadow-sm mb-8">
-          <div className="action-cards-header flex justify-between items-center mb-6">
+        {/* Action Cards Container */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <div className="flex justify-between items-center mb-6">
             <div className="flex items-center">
-              <div className="header-icon w-7 h-7 rounded-lg bg-gradient-to-r from-indigo-600 to-[#00c2cb] text-white flex items-center justify-center mr-2">
-                <Check size={14} />
+              <div className="w-8 h-8 rounded-lg bg-blue-500 text-white flex items-center justify-center mr-2">
+                <ClipboardList size={16} />
               </div>
               <h2 className="text-lg font-semibold text-gray-800">Complete These Steps</h2>
             </div>
             
-            <div className="progress-indicator flex items-center bg-gray-100 rounded-full px-4 py-2">
-              <div className="progress-bar w-36 h-2 bg-gray-200 rounded-full mr-3 overflow-hidden">
+            <div className="flex items-center bg-gray-100 rounded-full px-4 py-2">
+              <div className="w-36 h-2 bg-gray-200 rounded-full mr-3 overflow-hidden">
                 <div 
-                  className="progress-fill h-full bg-gradient-to-r from-indigo-600 to-[#00c2cb] rounded-full" 
-                  style={{ width: `${onboardingProgress/5}%` }}
+                  className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full" 
+                  style={{ width: `${onboardingProgress}%` }}
                 ></div>
               </div>
-              <div className="progress-text text-sm text-gray-600 flex items-center">
-                <Check className="h-3 w-3 mr-1 text-green-500" />
-                {onboardingCompleted ? '1' : '0'} of 5 completed
+              <div className="text-sm text-gray-600 flex items-center">
+                <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                1 of 5 completed
               </div>
             </div>
           </div>
           
-          <div className="action-cards grid grid-cols-1 md:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             {/* Step 1: Initial Onboarding */}
-            <div className="action-card relative bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center text-center shadow-sm transition-all hover:transform hover:-translate-y-2 hover:shadow-md">
-              <div className={`step-number absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full ${onboardingCompleted ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-indigo-600 to-[#00c2cb]'} text-white flex items-center justify-center font-semibold text-sm border-2 border-white shadow-md z-10`}>
+            <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center text-center shadow-sm relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-semibold text-sm border-2 border-white shadow-md z-10">
                 1
               </div>
               
-              <div className={`action-icon w-20 h-20 rounded-full ${onboardingCompleted ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-indigo-600 to-[#00c2cb]'} text-white flex items-center justify-center text-3xl mb-5 shadow-lg relative overflow-hidden`}>
-                <UserPlus size={30} />
-                <div className="absolute top-0 left-0 w-full h-full bg-white opacity-30 blur-lg"></div>
+              <div className="w-16 h-16 rounded-full bg-green-500 text-white flex items-center justify-center mb-4">
+                <UserPlus size={24} />
               </div>
               
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Initial Onboarding</h3>
-              <p className="text-gray-500 text-sm mb-5 flex-grow">Complete your profile setup and account verification to get started with ApoLead.</p>
+              <h3 className="text-base font-semibold text-gray-800 mb-2">Initial Onboarding</h3>
+              <p className="text-gray-500 text-sm mb-4 flex-grow">Complete your profile setup and account verification to get started with ApoLead.</p>
               
               <Button 
-                className={`w-full ${onboardingCompleted ? 'bg-green-500 hover:bg-green-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                className="w-full bg-green-500 hover:bg-green-600 flex items-center justify-center"
                 onClick={openOnboardingModal}
               >
-                {onboardingCompleted ? (
-                  <>
-                    <Check size={16} className="mr-2" />
-                    Completed
-                  </>
-                ) : 'Complete Profile'}
+                <Check size={16} className="mr-2" />
+                Completed
               </Button>
             </div>
             
             {/* Step 2: Initial Training - Locked/Greyed out */}
-            <div className="action-card locked relative bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center text-center opacity-60 grayscale">
-              <div className="step-number locked absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-semibold text-sm border-2 border-white shadow-sm z-10">
+            <div className="bg-gray-100 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center text-center opacity-60 grayscale relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-semibold text-sm border-2 border-white shadow-sm z-10">
                 2
               </div>
               
-              <div className="lock-icon absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center shadow-sm z-20">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center shadow-sm z-20">
                 <Lock size={14} />
               </div>
               
-              <div className="action-icon locked w-20 h-20 rounded-full bg-gray-400 text-white flex items-center justify-center text-3xl mb-5 shadow-sm relative overflow-hidden">
-                <BookOpen size={30} />
+              <div className="w-16 h-16 rounded-full bg-gray-400 text-white flex items-center justify-center mb-4">
+                <BookOpen size={24} />
               </div>
               
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Initial Training</h3>
-              <p className="text-gray-500 text-sm mb-5 flex-grow">Complete the initial training module to unlock the next step. This will teach you the fundamentals.</p>
+              <h3 className="text-base font-semibold text-gray-800 mb-2">Initial Training</h3>
+              <p className="text-gray-500 text-sm mb-4 flex-grow">Complete the initial training module to unlock the next step. This will teach you the fundamentals.</p>
               
-              <Button disabled className="w-full bg-gray-400 cursor-not-allowed">
+              <Button disabled className="w-full bg-gray-400 cursor-not-allowed flex items-center justify-center">
                 <Lock size={16} className="mr-2" />
                 Locked
               </Button>
             </div>
             
-            {/* Steps 3-5: Also locked */}
             {/* Step 3: Interview */}
-            <div className="action-card locked relative bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center text-center opacity-60 grayscale">
-              <div className="step-number locked absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-semibold text-sm border-2 border-white shadow-sm z-10">
+            <div className="bg-gray-100 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center text-center opacity-60 grayscale relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-semibold text-sm border-2 border-white shadow-sm z-10">
                 3
               </div>
               
-              <div className="lock-icon absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center shadow-sm z-20">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center shadow-sm z-20">
                 <Lock size={14} />
               </div>
               
-              <div className="action-icon locked w-20 h-20 rounded-full bg-gray-400 text-white flex items-center justify-center text-3xl mb-5 shadow-sm">
-                <Users size={30} />
+              <div className="w-16 h-16 rounded-full bg-gray-400 text-white flex items-center justify-center mb-4">
+                <Users size={24} />
               </div>
               
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Schedule Interview</h3>
-              <p className="text-gray-500 text-sm mb-5 flex-grow">Once your training is reviewed, you'll be able to schedule your interview with our team.</p>
+              <h3 className="text-base font-semibold text-gray-800 mb-2">Schedule Interview</h3>
+              <p className="text-gray-500 text-sm mb-4 flex-grow">Once your training is reviewed, you'll be able to schedule your interview with our team.</p>
               
-              <Button disabled className="w-full bg-gray-400 cursor-not-allowed">
+              <Button disabled className="w-full bg-gray-400 cursor-not-allowed flex items-center justify-center">
                 <Lock size={16} className="mr-2" />
                 Locked
               </Button>
             </div>
             
             {/* Step 4: Additional Training */}
-            <div className="action-card locked relative bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center text-center opacity-60 grayscale">
-              <div className="step-number locked absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-semibold text-sm border-2 border-white shadow-sm z-10">
+            <div className="bg-gray-100 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center text-center opacity-60 grayscale relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-semibold text-sm border-2 border-white shadow-sm z-10">
                 4
               </div>
               
-              <div className="lock-icon absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center shadow-sm z-20">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center shadow-sm z-20">
                 <Lock size={14} />
               </div>
               
-              <div className="action-icon locked w-20 h-20 rounded-full bg-gray-400 text-white flex items-center justify-center text-3xl mb-5 shadow-sm">
-                <School size={30} />
+              <div className="w-16 h-16 rounded-full bg-gray-400 text-white flex items-center justify-center mb-4">
+                <School size={24} />
               </div>
               
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Additional Training</h3>
-              <p className="text-gray-500 text-sm mb-5 flex-grow">After your interview, complete additional training modules to refine your skills.</p>
+              <h3 className="text-base font-semibold text-gray-800 mb-2">Additional Training</h3>
+              <p className="text-gray-500 text-sm mb-4 flex-grow">After your interview, complete additional training modules to refine your skills.</p>
               
-              <Button disabled className="w-full bg-gray-400 cursor-not-allowed">
+              <Button disabled className="w-full bg-gray-400 cursor-not-allowed flex items-center justify-center">
                 <Lock size={16} className="mr-2" />
                 Locked
               </Button>
             </div>
             
             {/* Step 5: Kickoff and Setup */}
-            <div className="action-card locked relative bg-gray-50 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center text-center opacity-60 grayscale">
-              <div className="step-number locked absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-semibold text-sm border-2 border-white shadow-sm z-10">
+            <div className="bg-gray-100 border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center text-center opacity-60 grayscale relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-semibold text-sm border-2 border-white shadow-sm z-10">
                 5
               </div>
               
-              <div className="lock-icon absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center shadow-sm z-20">
+              <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center shadow-sm z-20">
                 <Lock size={14} />
               </div>
               
-              <div className="action-icon locked w-20 h-20 rounded-full bg-gray-400 text-white flex items-center justify-center text-3xl mb-5 shadow-sm">
-                <Rocket size={30} />
+              <div className="w-16 h-16 rounded-full bg-gray-400 text-white flex items-center justify-center mb-4">
+                <Rocket size={24} />
               </div>
               
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Kickoff & Setup</h3>
-              <p className="text-gray-500 text-sm mb-5 flex-grow">Add your banking info, join Discord, and complete final onboarding steps to get started.</p>
+              <h3 className="text-base font-semibold text-gray-800 mb-2">Kickoff & Setup</h3>
+              <p className="text-gray-500 text-sm mb-4 flex-grow">Add your banking info, join Discord, and complete final onboarding steps to get started.</p>
               
-              <Button disabled className="w-full bg-gray-400 cursor-not-allowed">
+              <Button disabled className="w-full bg-gray-400 cursor-not-allowed flex items-center justify-center">
                 <Lock size={16} className="mr-2" />
                 Locked
               </Button>
