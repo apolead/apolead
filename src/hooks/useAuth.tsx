@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (value === null || value === undefined) {
           cleanProfile[field] = null;
         } else if (typeof value === 'boolean') {
-          cleanProfile[field] = value === true;
+          cleanProfile[field] = value;
         } else if (typeof value === 'string') {
           const lowerValue = String(value).toLowerCase();
           if (['true', 't', 'yes', 'y', '1'].includes(lowerValue)) {
@@ -183,7 +183,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           login_discord: sanitizedData.login_discord,
           check_emails: sanitizedData.check_emails,
           solve_problems: sanitizedData.solve_problems,
-          complete_training: sanitizedData.complete_training
+          complete_training: sanitizedData.complete_training,
+          has_headset: sanitizedData.has_headset,
+          has_quiet_place: sanitizedData.has_quiet_place
         });
         
         setUserProfile(sanitizedData);
@@ -293,6 +295,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "Your profile has been updated successfully",
       });
       
+      // Fetch the updated profile to get the latest state, especially for fields calculated on the server
+      // like eligible_for_training which is determined by a trigger
       fetchUserProfile(user.id);
       
     } catch (error: any) {

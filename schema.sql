@@ -20,6 +20,36 @@ GRANT EXECUTE ON FUNCTION public.get_user_credentials TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_user_credentials TO anon;
 GRANT EXECUTE ON FUNCTION public.get_user_credentials TO service_role;
 
+-- Function to check user eligibility for training
+CREATE OR REPLACE FUNCTION public.check_user_eligibility()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Check if all required yes/no questions are answered as "yes"
+  -- If all are "yes", set eligible_for_training to true
+  IF (
+    NEW.meet_obligation IS TRUE AND
+    NEW.login_discord IS TRUE AND
+    NEW.check_emails IS TRUE AND
+    NEW.solve_problems IS TRUE AND
+    NEW.complete_training IS TRUE AND
+    NEW.has_headset IS TRUE AND
+    NEW.has_quiet_place IS TRUE
+  ) THEN
+    NEW.eligible_for_training := TRUE;
+  ELSE
+    NEW.eligible_for_training := FALSE;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Add trigger for eligibility checking if it doesn't exist
+DROP TRIGGER IF EXISTS check_eligibility_on_update ON public.user_profiles;
+CREATE TRIGGER check_eligibility_on_update
+  BEFORE UPDATE ON public.user_profiles
+  FOR EACH ROW EXECUTE FUNCTION public.check_user_eligibility();
+
 -- Function to automatically create user profiles when a new user is authenticated
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$

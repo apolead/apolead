@@ -7,12 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const OnboardingModal = ({ isOpen, onClose, user, initialUserData }) => {
   const [currentTab, setCurrentTab] = useState('personalDetails');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const { toast } = useToast();
+  const { updateProfile } = useAuth();
   
   const [userData, setUserData] = useState({
     firstName: initialUserData?.first_name || '',
@@ -220,43 +222,94 @@ const OnboardingModal = ({ isOpen, onClose, user, initialUserData }) => {
         systemSettingsUrl = await uploadFile(userData.systemSettings, 'user-documents', 'system-settings');
       }
       
-      // Update user profile in database
-      const { error } = await supabase
-        .from('user_profiles')
-        .upsert({
-          user_id: user.id,
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          email: userData.email,
-          birth_day: userData.birthDay,
-          gov_id_number: userData.govIdNumber,
-          gov_id_image: govIdImageUrl,
-          cpu_type: userData.cpuType,
-          ram_amount: userData.ramAmount,
-          has_headset: userData.hasHeadset,
-          has_quiet_place: userData.hasQuietPlace,
-          speed_test: speedTestUrl,
-          system_settings: systemSettingsUrl,
-          meet_obligation: userData.meetObligation,
-          login_discord: userData.loginDiscord,
-          check_emails: userData.checkEmails,
-          solve_problems: userData.solveProblems,
-          complete_training: userData.completeTraining,
-          personal_statement: userData.personalStatement,
-          available_days: userData.availableDays,
-          day_hours: userData.dayHours,
-          accepted_terms: userData.acceptedTerms,
-          updated_at: new Date().toISOString()
-        });
+      // Check if all required questions have been answered
+      const hasCompletedBasicInfo = 
+        userData.firstName && 
+        userData.lastName && 
+        userData.birthDay && 
+        userData.govIdNumber && 
+        (govIdImageUrl || userData.govIdImageUrl);
       
-      if (error) {
-        throw error;
-      }
+      const hasAnsweredAllQuestions = 
+        userData.hasHeadset !== null && 
+        userData.hasQuietPlace !== null &&
+        userData.meetObligation !== null &&
+        userData.loginDiscord !== null &&
+        userData.checkEmails !== null &&
+        userData.solveProblems !== null && 
+        userData.completeTraining !== null;
       
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully"
+      // Determine onboarding completion status
+      const onboardingCompleted = hasCompletedBasicInfo && hasAnsweredAllQuestions;
+      
+      // Determine eligibility based on question answers
+      const isEligible = 
+        userData.hasHeadset === true && 
+        userData.hasQuietPlace === true &&
+        userData.meetObligation === true &&
+        userData.loginDiscord === true &&
+        userData.checkEmails === true &&
+        userData.solveProblems === true && 
+        userData.completeTraining === true;
+      
+      console.log('Onboarding submission:', {
+        hasCompletedBasicInfo,
+        hasAnsweredAllQuestions,
+        onboardingCompleted,
+        isEligible,
+        answersData: {
+          hasHeadset: userData.hasHeadset,
+          hasQuietPlace: userData.hasQuietPlace,
+          meetObligation: userData.meetObligation,
+          loginDiscord: userData.loginDiscord,
+          checkEmails: userData.checkEmails,
+          solveProblems: userData.solveProblems,
+          completeTraining: userData.completeTraining
+        }
       });
+      
+      // Update user profile in database using the updateProfile function from useAuth
+      await updateProfile({
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        email: userData.email,
+        birth_day: userData.birthDay,
+        gov_id_number: userData.govIdNumber,
+        gov_id_image: govIdImageUrl,
+        cpu_type: userData.cpuType,
+        ram_amount: userData.ramAmount,
+        has_headset: userData.hasHeadset,
+        has_quiet_place: userData.hasQuietPlace,
+        speed_test: speedTestUrl,
+        system_settings: systemSettingsUrl,
+        meet_obligation: userData.meetObligation,
+        login_discord: userData.loginDiscord,
+        check_emails: userData.checkEmails,
+        solve_problems: userData.solveProblems,
+        complete_training: userData.completeTraining,
+        personal_statement: userData.personalStatement,
+        available_days: userData.availableDays,
+        day_hours: userData.dayHours,
+        accepted_terms: userData.acceptedTerms,
+        onboarding_completed: onboardingCompleted
+      });
+      
+      // Show eligibility toast message if onboarding is completed
+      if (onboardingCompleted) {
+        if (isEligible) {
+          toast({
+            title: "You're eligible!",
+            description: "You've successfully completed onboarding and are eligible for training.",
+            variant: "default"
+          });
+        } else {
+          toast({
+            title: "Not eligible",
+            description: "You've completed onboarding but are not eligible for training based on your answers.",
+            variant: "destructive"
+          });
+        }
+      }
       
       onClose();
       

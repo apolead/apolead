@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -52,10 +51,10 @@ const Dashboard = () => {
       
       // Check if the user has completed the basic onboarding fields
       const hasCompletedBasicInfo = userProfile.first_name && 
-                                    userProfile.last_name && 
-                                    userProfile.birth_day && 
-                                    userProfile.gov_id_number && 
-                                    userProfile.gov_id_image;
+                                   userProfile.last_name && 
+                                   userProfile.birth_day && 
+                                   userProfile.gov_id_number && 
+                                   userProfile.gov_id_image;
       
       // Check if all required questions have been answered
       const hasAnsweredAllQuestions = userProfile.has_headset !== null && 
@@ -69,8 +68,20 @@ const Dashboard = () => {
       // Check if eligible based on the database field directly
       const isEligible = userProfile.eligible_for_training === true;
       
+      // Check if onboarding is marked as completed in the database
+      const isOnboardingCompleted = userProfile.onboarding_completed === true;
+      
+      console.log("Dashboard: Eligibility check", {
+        hasCompletedBasicInfo,
+        hasAnsweredAllQuestions,
+        isEligible,
+        isOnboardingCompleted,
+        eligible_for_training_type: typeof userProfile.eligible_for_training,
+        onboarding_completed_type: typeof userProfile.onboarding_completed
+      });
+      
       // Determine onboarding status
-      if (userProfile.onboarding_completed === true && hasCompletedBasicInfo && hasAnsweredAllQuestions) {
+      if (isOnboardingCompleted && hasCompletedBasicInfo && hasAnsweredAllQuestions) {
         if (isEligible) {
           setOnboardingStatus('completed');
         } else {
@@ -97,7 +108,7 @@ const Dashboard = () => {
       
       console.log("Dashboard: Onboarding status set to", onboardingStatus, "Progress:", onboardingProgress);
     }
-  }, [user, loading, userProfile, navigate]);
+  }, [user, loading, userProfile, navigate, onboardingStatus]);
   
   const openOnboardingModal = () => {
     setIsModalOpen(true);
@@ -105,40 +116,6 @@ const Dashboard = () => {
   
   const closeOnboardingModal = () => {
     setIsModalOpen(false);
-    
-    // Refresh user profile to check if onboarding was completed
-    if (user) {
-      // Since userProfile is managed by the useAuth hook, we don't need to
-      // directly fetch it here. The hook will handle refreshing the profile.
-      // We just need to update our local state based on the outcome.
-      
-      if (userProfile && userProfile.first_name && userProfile.last_name && 
-          userProfile.birth_day && userProfile.gov_id_number && userProfile.gov_id_image) {
-        
-        const hasAnsweredAllQuestions = userProfile.has_headset !== null && 
-                                       userProfile.has_quiet_place !== null &&
-                                       userProfile.meet_obligation !== null &&
-                                       userProfile.login_discord !== null &&
-                                       userProfile.check_emails !== null &&
-                                       userProfile.solve_problems !== null && 
-                                       userProfile.complete_training !== null;
-        
-        if (hasAnsweredAllQuestions) {
-          // If profile has basic required fields, update onboarding status in DB
-          supabase.rpc('update_user_profile_direct', {
-            input_user_id: user.id,
-            input_updates: { onboarding_completed: true }
-          }).then(({ error }) => {
-            if (error) {
-              console.error('Error updating onboarding status:', error);
-            } else {
-              // We'll let the useAuth hook's profile refresh handle updating the state
-              console.log('Onboarding completed status updated in database');
-            }
-          });
-        }
-      }
-    }
   };
   
   const getOnboardingButtonText = () => {
@@ -315,7 +292,7 @@ const Dashboard = () => {
           {/* Action Cards */}
           <div className="action-cards grid grid-cols-5 gap-[25px] py-[20px] relative">
             {/* Step 1: Initial Onboarding */}
-            <div className={`action-card bg-white rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border ${onboardingStatus === 'completed' || onboardingStatus === 'ineligible' ? 'border-[#e2e8f0]' : 'border-[#f59e0b]'} shadow-[0_4px_15px_rgba(0,0,0,0.05)] relative z-[2] transition-all h-full hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.1)]`}>
+            <div className={`action-card bg-white rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border ${onboardingStatus === 'completed' || onboardingStatus === 'ineligible' ? 'border-[#e2e8f0]' : 'border-[#f59e0b]'} shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all h-full hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.1)]`}>
               <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
                 onboardingStatus === 'completed' ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 
                 onboardingStatus === 'ineligible' ? 'bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_4px_10px_rgba(239,68,68,0.3)]' : 
