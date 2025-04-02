@@ -132,15 +132,15 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-lg">
-        <div className={`sticky top-0 z-10 flex items-center justify-between p-4 border-b ${
+      <div className="relative w-full max-w-xl max-h-[80vh] overflow-y-auto bg-white rounded-lg shadow-lg">
+        <div className={`sticky top-0 z-10 flex items-center justify-between p-3 border-b ${
           (quizPassed === true) 
             ? 'bg-gradient-to-r from-green-600 to-green-500' 
             : (quizPassed === false)
               ? 'bg-gradient-to-r from-red-600 to-red-500'
               : 'bg-gradient-to-r from-blue-600 to-cyan-500'
         } text-white rounded-t-lg`}>
-          <h2 className="text-xl font-semibold flex items-center">
+          <h2 className="text-lg font-semibold flex items-center">
             {step === 'video' && 'Initial Training: Training Video'}
             {step === 'quiz' && 'Initial Training: Knowledge Quiz'}
             {step === 'result' && `Quiz Result: ${quizPassed ? 'Passed' : 'Failed'}`}
@@ -150,11 +150,11 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
             aria-label="Close modal"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
         
-        <div className="p-6">
+        <div className="p-4 overflow-y-auto max-h-[calc(80vh-56px)]">
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertTitle>Error</AlertTitle>
@@ -166,7 +166,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             <>
               <TrainingVideo onComplete={handleVideoComplete} />
               {userProfile?.training_video_watched === true && (
-                <div className="mt-6 flex justify-end">
+                <div className="mt-4 flex justify-end">
                   <Button onClick={handleContinueToQuiz} className="text-white">
                     Continue to Quiz
                   </Button>
@@ -180,33 +180,33 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
           )}
           
           {step === 'result' && (
-            <div className="text-center py-6">
+            <div className="text-center py-4">
               {quizPassed ? (
                 <>
-                  <div className="flex justify-center mb-4">
-                    <CheckCircle className="h-20 w-20 text-green-500" />
+                  <div className="flex justify-center mb-3">
+                    <CheckCircle className="h-16 w-16 text-green-500" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 text-green-600">
+                  <h3 className="text-xl font-bold mb-3 text-green-600">
                     Congratulations!
                   </h3>
-                  <p className="text-lg mb-4">
+                  <p className="text-md mb-3">
                     You passed the training quiz successfully!
                   </p>
-                  <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
-                    <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
-                    <p className="text-sm text-gray-600">
+                  <div className="bg-gray-100 p-3 rounded-lg inline-block mb-4">
+                    <p className="text-md">Your score: <span className="font-bold">{quizScore}%</span></p>
+                    <p className="text-xs text-gray-600">
                       You answered all questions correctly!
                     </p>
                   </div>
                   
-                  <div className="border-t pt-6 mt-4">
-                    <h4 className="text-xl font-semibold mb-2">Next Steps</h4>
-                    <p className="mb-4">
+                  <div className="border-t pt-4 mt-3">
+                    <h4 className="text-lg font-semibold mb-2">Next Steps</h4>
+                    <p className="mb-3">
                       Your training is complete! You can now schedule your interview.
                     </p>
                     <Button 
                       onClick={handleScheduleInterview}
-                      className="px-6 py-2 rounded-full text-white font-medium mt-2 bg-green-600 hover:bg-green-700 transition-colors"
+                      className="px-5 py-2 rounded-full text-white font-medium mt-2 bg-green-600 hover:bg-green-700 transition-colors"
                     >
                       Schedule Interview
                     </Button>
@@ -214,21 +214,21 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
                 </>
               ) : (
                 <>
-                  <div className="flex justify-center mb-4">
-                    <XCircle className="h-20 w-20 text-red-500" />
+                  <div className="flex justify-center mb-3">
+                    <XCircle className="h-16 w-16 text-red-500" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 text-red-600">
+                  <h3 className="text-xl font-bold mb-3 text-red-600">
                     Unfortunately
                   </h3>
-                  <p className="text-lg mb-4">
+                  <p className="text-md mb-3">
                     You did not pass the training quiz.
                   </p>
-                  <p className="text-md mb-6">
+                  <p className="text-sm mb-4">
                     You cannot move forward in the application process.
                   </p>
-                  <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
-                    <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
-                    <p className="text-sm text-gray-600">
+                  <div className="bg-gray-100 p-3 rounded-lg inline-block mb-4">
+                    <p className="text-md">Your score: <span className="font-bold">{quizScore}%</span></p>
+                    <p className="text-xs text-gray-600">
                       You need to answer all questions correctly to pass.
                     </p>
                   </div>
@@ -237,7 +237,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
               
               <button
                 onClick={handleCloseModal}
-                className={`px-6 py-2 rounded-full text-white font-medium mt-6 ${
+                className={`px-5 py-2 rounded-full text-white font-medium mt-4 ${
                   quizPassed ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
                 } transition-colors`}
               >
@@ -249,14 +249,14 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       </div>
       
       <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Schedule Your Interview</DialogTitle>
             <DialogDescription>
               Please select a date and time that works for you.
             </DialogDescription>
           </DialogHeader>
-          <div className="w-full h-[700px] border rounded-lg mt-4">
+          <div className="w-full h-[500px] border rounded-lg mt-3">
             <iframe
               src="https://calendly.com/apolead-support/apolead-agent-interview"
               width="100%"
