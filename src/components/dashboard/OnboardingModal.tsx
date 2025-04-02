@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+
 const OnboardingModal = ({
   isOpen,
   onClose,
@@ -17,12 +18,9 @@ const OnboardingModal = ({
   const [currentTab, setCurrentTab] = useState('personalDetails');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const {
-    toast
-  } = useToast();
-  const {
-    updateProfile
-  } = useAuth();
+  const { toast } = useToast();
+  const { updateProfile } = useAuth();
+  
   const [userData, setUserData] = useState({
     firstName: initialUserData?.first_name || '',
     lastName: initialUserData?.last_name || '',
@@ -49,12 +47,14 @@ const OnboardingModal = ({
     dayHours: initialUserData?.day_hours || {},
     acceptedTerms: initialUserData?.accepted_terms || false
   });
+
   const handleChange = (field, value) => {
     setUserData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleFileChange = async (field, e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -63,6 +63,7 @@ const OnboardingModal = ({
       [field]: file
     }));
   };
+
   const validatePersonalDetails = () => {
     if (!userData.firstName || !userData.firstName.trim()) {
       setErrorMessage('Please enter your first name');
@@ -86,6 +87,7 @@ const OnboardingModal = ({
     }
     return true;
   };
+
   const validateSystemRequirements = () => {
     if (!userData.cpuType || !userData.cpuType.trim()) {
       setErrorMessage('Please enter your CPU type');
@@ -113,6 +115,7 @@ const OnboardingModal = ({
     }
     return true;
   };
+
   const validateCommitments = () => {
     const commitments = ['meetObligation', 'loginDiscord', 'checkEmails', 'solveProblems', 'completeTraining'];
     for (const commitment of commitments) {
@@ -131,6 +134,7 @@ const OnboardingModal = ({
     }
     return true;
   };
+
   const handleNext = () => {
     setErrorMessage('');
     if (currentTab === 'personalDetails') {
@@ -143,6 +147,7 @@ const OnboardingModal = ({
       }
     }
   };
+
   const handleBack = () => {
     if (currentTab === 'systemRequirements') {
       setCurrentTab('personalDetails');
@@ -150,6 +155,7 @@ const OnboardingModal = ({
       setCurrentTab('systemRequirements');
     }
   };
+
   const uploadFile = async (file, bucket, path) => {
     if (!file) return null;
     try {
@@ -173,6 +179,7 @@ const OnboardingModal = ({
       throw error;
     }
   };
+
   const handleSubmit = async () => {
     setErrorMessage('');
     if (!validateCommitments()) {
@@ -180,33 +187,47 @@ const OnboardingModal = ({
     }
     setIsSubmitting(true);
     try {
-      // Upload files if needed
       let govIdImageUrl = userData.govIdImageUrl;
       let speedTestUrl = userData.speedTestUrl;
       let systemSettingsUrl = userData.systemSettingsUrl;
+      
       if (userData.govIdImage) {
         govIdImageUrl = await uploadFile(userData.govIdImage, 'user-documents', 'gov-ids');
       }
+      
       if (userData.speedTest) {
         speedTestUrl = await uploadFile(userData.speedTest, 'user-documents', 'speed-tests');
       }
+      
       if (userData.systemSettings) {
         systemSettingsUrl = await uploadFile(userData.systemSettings, 'user-documents', 'system-settings');
       }
 
-      // Check if all required questions have been answered
-      const hasCompletedBasicInfo = userData.firstName && userData.lastName && userData.birthDay && userData.govIdNumber && (govIdImageUrl || userData.govIdImageUrl);
-      const hasAnsweredAllQuestions = userData.hasHeadset !== null && userData.hasQuietPlace !== null && userData.meetObligation !== null && userData.loginDiscord !== null && userData.checkEmails !== null && userData.solveProblems !== null && userData.completeTraining !== null;
+      const hasCompletedBasicInfo = userData.firstName && 
+                                   userData.lastName && 
+                                   userData.birthDay && 
+                                   userData.govIdNumber && 
+                                   (govIdImageUrl || userData.govIdImageUrl);
+                                   
+      const hasAnsweredAllQuestions = userData.hasHeadset !== null && 
+                                     userData.hasQuietPlace !== null && 
+                                     userData.meetObligation !== null && 
+                                     userData.loginDiscord !== null && 
+                                     userData.checkEmails !== null && 
+                                     userData.solveProblems !== null && 
+                                     userData.completeTraining !== null;
 
-      // Determine onboarding completion status
-      const onboardingCompleted = hasCompletedBasicInfo && hasAnsweredAllQuestions;
-
-      // Determine eligibility based on question answers
-      const isEligible = userData.hasHeadset === true && userData.hasQuietPlace === true && userData.meetObligation === true && userData.loginDiscord === true && userData.checkEmails === true && userData.solveProblems === true && userData.completeTraining === true;
+      const isEligible = userData.hasHeadset === true && 
+                         userData.hasQuietPlace === true && 
+                         userData.meetObligation === true && 
+                         userData.loginDiscord === true && 
+                         userData.checkEmails === true && 
+                         userData.solveProblems === true && 
+                         userData.completeTraining === true;
+                         
       console.log('Onboarding submission:', {
         hasCompletedBasicInfo,
         hasAnsweredAllQuestions,
-        onboardingCompleted,
         isEligible,
         answersData: {
           hasHeadset: userData.hasHeadset,
@@ -219,7 +240,6 @@ const OnboardingModal = ({
         }
       });
 
-      // Update user profile in database using the updateProfile function from useAuth
       await updateProfile({
         first_name: userData.firstName,
         last_name: userData.lastName,
@@ -239,14 +259,12 @@ const OnboardingModal = ({
         solve_problems: userData.solveProblems,
         complete_training: userData.completeTraining,
         personal_statement: userData.personalStatement,
-        available_days: userData.availableDays,
-        day_hours: userData.dayHours,
-        accepted_terms: userData.acceptedTerms,
-        onboarding_completed: onboardingCompleted
+        available_days: userData.availableDays || [],
+        day_hours: userData.dayHours || {},
+        accepted_terms: userData.acceptedTerms
       });
 
-      // Show eligibility toast message if onboarding is completed
-      if (onboardingCompleted) {
+      if (hasCompletedBasicInfo && hasAnsweredAllQuestions) {
         if (isEligible) {
           toast({
             title: "You're eligible!",
@@ -261,6 +279,7 @@ const OnboardingModal = ({
           });
         }
       }
+      
       onClose();
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -269,6 +288,7 @@ const OnboardingModal = ({
       setIsSubmitting(false);
     }
   };
+
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -557,4 +577,5 @@ const OnboardingModal = ({
       </DialogContent>
     </Dialog>;
 };
+
 export default OnboardingModal;

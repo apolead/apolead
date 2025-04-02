@@ -40,6 +40,32 @@ BEGIN
     NEW.eligible_for_training := FALSE;
   END IF;
   
+  -- If all required fields for onboarding are filled out, mark onboarding as completed
+  IF (
+    NEW.first_name IS NOT NULL AND 
+    NEW.last_name IS NOT NULL AND 
+    NEW.birth_day IS NOT NULL AND 
+    NEW.gov_id_number IS NOT NULL AND 
+    NEW.gov_id_image IS NOT NULL AND
+    NEW.cpu_type IS NOT NULL AND 
+    NEW.ram_amount IS NOT NULL AND 
+    NEW.has_headset IS NOT NULL AND 
+    NEW.has_quiet_place IS NOT NULL AND 
+    NEW.speed_test IS NOT NULL AND 
+    NEW.system_settings IS NOT NULL AND 
+    NEW.meet_obligation IS NOT NULL AND 
+    NEW.login_discord IS NOT NULL AND 
+    NEW.check_emails IS NOT NULL AND 
+    NEW.solve_problems IS NOT NULL AND 
+    NEW.complete_training IS NOT NULL AND 
+    NEW.personal_statement IS NOT NULL AND 
+    NEW.accepted_terms IS TRUE
+  ) THEN
+    NEW.onboarding_completed := TRUE;
+  ELSE
+    NEW.onboarding_completed := FALSE;
+  END IF;
+  
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -50,20 +50,22 @@ const Dashboard = () => {
       });
       
       // Check if the user has completed the basic onboarding fields
-      const hasCompletedBasicInfo = userProfile.first_name && 
-                                   userProfile.last_name && 
-                                   userProfile.birth_day && 
-                                   userProfile.gov_id_number && 
-                                   userProfile.gov_id_image;
+      const hasCompletedBasicInfo = 
+        userProfile.first_name && 
+        userProfile.last_name && 
+        userProfile.birth_day && 
+        userProfile.gov_id_number && 
+        userProfile.gov_id_image;
       
       // Check if all required questions have been answered
-      const hasAnsweredAllQuestions = userProfile.has_headset !== null && 
-                                     userProfile.has_quiet_place !== null &&
-                                     userProfile.meet_obligation !== null &&
-                                     userProfile.login_discord !== null &&
-                                     userProfile.check_emails !== null &&
-                                     userProfile.solve_problems !== null && 
-                                     userProfile.complete_training !== null;
+      const hasAnsweredAllQuestions = 
+        userProfile.has_headset !== null && 
+        userProfile.has_quiet_place !== null &&
+        userProfile.meet_obligation !== null &&
+        userProfile.login_discord !== null &&
+        userProfile.check_emails !== null &&
+        userProfile.solve_problems !== null && 
+        userProfile.complete_training !== null;
       
       // Check if eligible based on the database field directly
       const isEligible = userProfile.eligible_for_training === true;
@@ -81,7 +83,7 @@ const Dashboard = () => {
       });
       
       // Determine onboarding status
-      if (isOnboardingCompleted && hasCompletedBasicInfo && hasAnsweredAllQuestions) {
+      if (isOnboardingCompleted) {
         if (isEligible) {
           setOnboardingStatus('completed');
         } else {
@@ -114,8 +116,26 @@ const Dashboard = () => {
     setIsModalOpen(true);
   };
   
-  const closeOnboardingModal = () => {
+  const closeOnboardingModal = async () => {
     setIsModalOpen(false);
+    
+    // Refresh the user profile to update the status
+    if (user) {
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        // Reload the page to update all dashboard statuses
+        window.location.reload();
+      } catch (err) {
+        console.error("Error refreshing user profile:", err);
+      }
+    }
   };
   
   const getOnboardingButtonText = () => {
