@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -213,7 +212,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       try {
         // Create a temporary record to store the application
         const { data, error } = await supabase
-          .from('applications')
+          .from('user_applications')
           .insert({
             email: userData.email,
             first_name: userData.firstName,
@@ -245,7 +244,8 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             complete_training: userData.completeTraining,
             personal_statement: userData.personalStatement,
             accepted_terms: userData.acceptedTerms,
-            application_status: 'pending'
+            application_status: 'pending',
+            user_id: crypto.randomUUID()
           });
         
         if (error) throw error;
