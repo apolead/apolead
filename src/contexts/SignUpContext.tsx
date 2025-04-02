@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -212,8 +211,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Generate a temporary user_id - this is required by the database schema
       const tempUserId = crypto.randomUUID();
       
-      // We need to use service_key to bypass RLS policies for public access inserts
-      // Since we're creating a pending application before the user is registered
+      // Insert into user_applications table - this is now allowed for anonymous users due to updated RLS policy
       const { data: applicationData, error: applicationError } = await supabase
         .from('user_applications')
         .insert({

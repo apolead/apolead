@@ -51,8 +51,8 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         }
       });
       
-      // If the response has data, it means the email exists
-      if (signInData?.user) {
+      // If the OTP email was sent successfully, it means the email exists in the auth system
+      if (!signInError) {
         setErrorMessage('This email is already registered in our system');
         setIsChecking(false);
         return;
@@ -84,6 +84,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         return;
       }
       
+      // If we reach here, email is available
       console.log('Email is available for use');
       updateUserData({ email });
       nextStep();
