@@ -127,29 +127,20 @@ const ConfirmationScreen = () => {
           </>
         )}
         
-        <div className="space-y-4">
-          {isApproved ? (
-            <>
-              <Button 
-                asChild
-                className="w-full bg-indigo-600 hover:bg-indigo-700"
-              >
-                <Link to="/signup">Start Signing Up</Link>
-              </Button>
-              
-              <Button 
-                asChild
-                variant="outline"
-              >
-                <Link to="/">Return to Homepage</Link>
-              </Button>
-            </>
-          ) : (
+        <div className="space-x-4">
+          <Button 
+            asChild
+            className={isApproved ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"}
+          >
+            <Link to="/">Return to Homepage</Link>
+          </Button>
+          
+          {isApproved && (
             <Button 
               asChild
-              className="bg-gray-600 hover:bg-gray-700"
+              variant="outline"
             >
-              <Link to="/">Return to Homepage</Link>
+              <Link to="/login">Go to Login</Link>
             </Button>
           )}
         </div>
