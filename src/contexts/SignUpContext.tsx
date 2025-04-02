@@ -209,11 +209,11 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       
-      // Insert into user_applications table - with no user_id field
+      // Insert into user_applications table
+      // FIX: Remove the requirement for user_id, as it's not required in this case
       const { data: applicationData, error: applicationError } = await supabase
         .from('user_applications')
-        .insert({
-          // Removed user_id field
+        .insert([{
           first_name: userData.firstName,
           last_name: userData.lastName,
           email: userData.email,
@@ -245,7 +245,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           personal_statement: userData.personalStatement,
           accepted_terms: userData.acceptedTerms,
           application_status: 'pending'
-        });
+        }]);
       
       if (applicationError) {
         console.error('Application submission error:', applicationError);
@@ -271,20 +271,26 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       if (isAutomaticallyApproved) {
         try {
-          // Generate a signup link using Supabase Auth
-          const { data: signupData, error: signupError } = await supabase.auth.admin.generateLink({
-            type: 'signup',
-            email: userData.email,
-            options: {
-              redirectTo: `${window.location.origin}/confirmation?status=approved`
-            }
+          // Call our edge function instead of using generateLink directly
+          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-confirmation`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({ 
+              email: userData.email,
+              redirectUrl: `${window.location.origin}/confirmation?status=approved`
+            })
           });
           
-          if (signupError) {
-            console.error('Error generating signup link:', signupError);
+          const result = await response.json();
+          
+          if (!result.success) {
+            console.error('Error sending confirmation email:', result.error);
             // Continue with the flow even if email sending fails
-          } else if (signupData) {
-            console.log('Signup link generated successfully:', signupData);
+          } else {
+            console.log('Signup link generated successfully:', result);
             // In a real app, you would send this link via email
             // For now, we'll just show a toast with instructions
             toast({
