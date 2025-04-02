@@ -3,14 +3,12 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId = false }) => {
   const [errorMessage, setErrorMessage] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -57,22 +55,6 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
     
     if (!userData.govIdNumber || !userData.govIdNumber.trim()) {
       setErrorMessage('Please enter your government ID number');
-      return;
-    }
-    
-    // Password validation
-    if (!userData.password) {
-      setErrorMessage('Please enter a password');
-      return;
-    }
-    
-    if (userData.password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long');
-      return;
-    }
-    
-    if (userData.password !== userData.confirmPassword) {
-      setErrorMessage('Passwords do not match');
       return;
     }
     
@@ -193,14 +175,6 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
     } finally {
       setIsUploading(false);
     }
-  };
-  
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-  
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
   };
   
   return (
@@ -376,63 +350,6 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
             <p className="mt-1 text-xs text-gray-500">This will be verified for uniqueness</p>
           </div>
 
-          {/* Password Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="step1-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  id="step1-password" 
-                  value={userData.password}
-                  onChange={(e) => updateUserData({ password: e.target.value })}
-                  className="w-full pr-10"
-                  placeholder="Enter password"
-                  minLength={6}
-                />
-                <button 
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={togglePasswordVisibility}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              <p className="mt-1 text-xs text-gray-500">Minimum 6 characters</p>
-            </div>
-            
-            <div>
-              <label htmlFor="step1-confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-              <div className="relative">
-                <Input
-                  type={showConfirmPassword ? "text" : "password"}
-                  id="step1-confirmPassword" 
-                  value={userData.confirmPassword}
-                  onChange={(e) => updateUserData({ confirmPassword: e.target.value })}
-                  className="w-full pr-10"
-                  placeholder="Confirm password"
-                  minLength={6}
-                />
-                <button 
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={toggleConfirmPasswordVisibility}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              <p className="mt-1 text-xs text-gray-500">Passwords must match</p>
-            </div>
-          </div>
-          
           <div className="flex justify-between mt-8">
             <Button
               type="button"
