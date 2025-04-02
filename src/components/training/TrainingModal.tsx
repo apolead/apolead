@@ -33,8 +33,6 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
     if (!userProfile) return;
     
     console.log("Training Modal - Initializing from user profile:", userProfile);
-    console.log("quiz_passed type:", typeof userProfile.quiz_passed, "value:", userProfile.quiz_passed);
-    console.log("training_video_watched type:", typeof userProfile.training_video_watched, "value:", userProfile.training_video_watched);
     
     const quizPassedValue = userProfile.quiz_passed === true;
     const quizFailedValue = userProfile.quiz_passed === false;

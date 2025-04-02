@@ -63,159 +63,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_applications: {
-        Row: {
-          accepted_terms: boolean | null
-          application_date: string | null
-          application_status: string | null
-          available_days: string[] | null
-          available_hours: string[] | null
-          birth_day: string | null
-          check_emails: boolean | null
-          complete_training: boolean | null
-          cpu_type: string | null
-          created_at: string | null
-          day_hours: Json | null
-          email: string
-          first_name: string
-          gov_id_image: string | null
-          gov_id_number: string | null
-          has_headset: boolean | null
-          has_quiet_place: boolean | null
-          id: string
-          last_name: string
-          login_discord: boolean | null
-          meet_obligation: boolean | null
-          personal_statement: string | null
-          ram_amount: string | null
-          sales_company: string | null
-          sales_experience: boolean | null
-          sales_months: string | null
-          sales_product: string | null
-          service_company: string | null
-          service_experience: boolean | null
-          service_months: string | null
-          service_product: string | null
-          solve_problems: boolean | null
-          speed_test: string | null
-          system_settings: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          accepted_terms?: boolean | null
-          application_date?: string | null
-          application_status?: string | null
-          available_days?: string[] | null
-          available_hours?: string[] | null
-          birth_day?: string | null
-          check_emails?: boolean | null
-          complete_training?: boolean | null
-          cpu_type?: string | null
-          created_at?: string | null
-          day_hours?: Json | null
-          email: string
-          first_name: string
-          gov_id_image?: string | null
-          gov_id_number?: string | null
-          has_headset?: boolean | null
-          has_quiet_place?: boolean | null
-          id?: string
-          last_name: string
-          login_discord?: boolean | null
-          meet_obligation?: boolean | null
-          personal_statement?: string | null
-          ram_amount?: string | null
-          sales_company?: string | null
-          sales_experience?: boolean | null
-          sales_months?: string | null
-          sales_product?: string | null
-          service_company?: string | null
-          service_experience?: boolean | null
-          service_months?: string | null
-          service_product?: string | null
-          solve_problems?: boolean | null
-          speed_test?: string | null
-          system_settings?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          accepted_terms?: boolean | null
-          application_date?: string | null
-          application_status?: string | null
-          available_days?: string[] | null
-          available_hours?: string[] | null
-          birth_day?: string | null
-          check_emails?: boolean | null
-          complete_training?: boolean | null
-          cpu_type?: string | null
-          created_at?: string | null
-          day_hours?: Json | null
-          email?: string
-          first_name?: string
-          gov_id_image?: string | null
-          gov_id_number?: string | null
-          has_headset?: boolean | null
-          has_quiet_place?: boolean | null
-          id?: string
-          last_name?: string
-          login_discord?: boolean | null
-          meet_obligation?: boolean | null
-          personal_statement?: string | null
-          ram_amount?: string | null
-          sales_company?: string | null
-          sales_experience?: boolean | null
-          sales_months?: string | null
-          sales_product?: string | null
-          service_company?: string | null
-          service_experience?: boolean | null
-          service_months?: string | null
-          service_product?: string | null
-          solve_problems?: boolean | null
-          speed_test?: string | null
-          system_settings?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      user_onboarding: {
-        Row: {
-          created_at: string | null
-          final_quiz_passed: boolean | null
-          id: string
-          interview_scheduled: boolean | null
-          quiz_score: number | null
-          training_completed: boolean | null
-          updated_at: string | null
-          user_id: string
-          welcome_completed: boolean | null
-        }
-        Insert: {
-          created_at?: string | null
-          final_quiz_passed?: boolean | null
-          id?: string
-          interview_scheduled?: boolean | null
-          quiz_score?: number | null
-          training_completed?: boolean | null
-          updated_at?: string | null
-          user_id: string
-          welcome_completed?: boolean | null
-        }
-        Update: {
-          created_at?: string | null
-          final_quiz_passed?: boolean | null
-          id?: string
-          interview_scheduled?: boolean | null
-          quiz_score?: number | null
-          training_completed?: boolean | null
-          updated_at?: string | null
-          user_id?: string
-          welcome_completed?: boolean | null
-        }
-        Relationships: []
-      }
       user_profiles: {
         Row: {
           accepted_terms: boolean | null
@@ -240,6 +87,7 @@ export type Database = {
           created_at: string | null
           credentials: string | null
           day_hours: Json | null
+          eligible_for_training: boolean | null
           email: string
           first_name: string
           gov_id_image: string | null
@@ -303,6 +151,7 @@ export type Database = {
           created_at?: string | null
           credentials?: string | null
           day_hours?: Json | null
+          eligible_for_training?: boolean | null
           email: string
           first_name: string
           gov_id_image?: string | null
@@ -366,6 +215,7 @@ export type Database = {
           created_at?: string | null
           credentials?: string | null
           day_hours?: Json | null
+          eligible_for_training?: boolean | null
           email?: string
           first_name?: string
           gov_id_image?: string | null
@@ -452,6 +302,7 @@ export type Database = {
           created_at: string | null
           credentials: string | null
           day_hours: Json | null
+          eligible_for_training: boolean | null
           email: string
           first_name: string
           gov_id_image: string | null
@@ -520,6 +371,7 @@ export type Database = {
           created_at: string | null
           credentials: string | null
           day_hours: Json | null
+          eligible_for_training: boolean | null
           email: string
           first_name: string
           gov_id_image: string | null

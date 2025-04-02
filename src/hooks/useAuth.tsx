@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -10,6 +9,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
+  checkEligibility: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,7 +39,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       'check_emails',
       'solve_problems',
       'complete_training',
-      'accepted_terms'
+      'accepted_terms',
+      'eligible_for_training',
+      'onboarding_completed'
     ];
     
     // Convert anything that should be boolean to actual boolean
@@ -72,24 +74,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           cleanProfile[field] = null;
         }
-        
-        // Extra debugging for the quiz_passed field
-        if (field === 'quiz_passed') {
-          console.log(`Sanitized quiz_passed value:`, cleanProfile[field], typeof cleanProfile[field]);
-        }
-      }
-    });
-    
-    console.log('Sanitized profile data:', {
-      quiz_passed: cleanProfile.quiz_passed,
-      training_video_watched: cleanProfile.training_video_watched,
-      types: {
-        quiz_passed: typeof cleanProfile.quiz_passed,
-        training_video_watched: typeof cleanProfile.training_video_watched
       }
     });
     
     return cleanProfile;
+  };
+
+  // Function to check user eligibility based on profile data
+  const checkEligibility = () => {
+    if (!userProfile) return false;
+    
+    // Return the stored eligibility value if it exists
+    if (userProfile.eligible_for_training !== undefined && userProfile.eligible_for_training !== null) {
+      return userProfile.eligible_for_training;
+    }
+    
+    // Otherwise calculate it based on the criteria
+    const isEligible = 
+      userProfile.meet_obligation === true &&
+      userProfile.login_discord === true &&
+      userProfile.check_emails === true &&
+      userProfile.solve_problems === true &&
+      userProfile.complete_training === true &&
+      userProfile.has_headset === true &&
+      userProfile.has_quiet_place === true;
+    
+    // Update the profile with the calculated eligibility
+    if (user) {
+      updateProfile({ eligible_for_training: isEligible }).catch(console.error);
+    }
+    
+    return isEligible;
   };
 
   useEffect(() => {
@@ -169,45 +184,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Fetching user profile for:', userId);
       
-      // Use type assertion to bypass TypeScript error for the RPC function name
-      const { data, error } = await (supabase.rpc as any)('get_user_profile_direct', {
+      // First try to get the profile using the direct function
+      let { data, error } = await (supabase.rpc as any)('get_user_profile_direct', {
         input_user_id: userId
       });
       
-      if (error) {
-        console.error('Error fetching user profile with direct function:', error);
-        return;
+      // If the direct function fails, fall back to a regular select
+      if (error || !data || data.length === 0) {
+        console.log('Direct function failed, trying regular query:', error);
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+          
+        if (profileError) {
+          console.error('Error fetching user profile with regular query:', profileError);
+          
+          // If no profile exists, attempt to create one
+          if (profileError.code === 'PGRST116') {
+            console.log('No profile found, creating one...');
+            const { data: userData, error: userError } = await supabase.auth.getUser();
+            
+            if (userError) {
+              console.error('Error getting user data:', userError);
+              return;
+            }
+            
+            const newProfile = {
+              user_id: userId,
+              email: userData.user.email,
+              first_name: '',
+              last_name: '',
+              credentials: 'agent',
+              application_status: 'pending'
+            };
+            
+            const { error: insertError } = await supabase
+              .from('user_profiles')
+              .insert([newProfile]);
+              
+            if (insertError) {
+              console.error('Error creating user profile:', insertError);
+              return;
+            }
+            
+            // Fetch the newly created profile
+            const { data: newProfileData, error: newProfileError } = await supabase
+              .from('user_profiles')
+              .select('*')
+              .eq('user_id', userId)
+              .single();
+              
+            if (newProfileError) {
+              console.error('Error fetching newly created profile:', newProfileError);
+              return;
+            }
+            
+            data = [newProfileData];
+          } else {
+            return;
+          }
+        } else {
+          data = [profileData];
+        }
       }
       
       if (data && Array.isArray(data) && data.length > 0) {
         const profileData = data[0];
         const sanitizedData = sanitizeProfileData(profileData);
-        console.log('User profile fetched successfully with direct function:', sanitizedData);
-        
-        // Log specific quiz state values for debugging
-        console.log('Quiz state values:', {
-          quiz_passed: sanitizedData.quiz_passed,
-          training_video_watched: sanitizedData.training_video_watched,
-          types: {
-            quiz_passed: typeof sanitizedData.quiz_passed,
-            training_video_watched: typeof sanitizedData.training_video_watched
-          }
-        });
-        
-        // Check for bank information
-        if (sanitizedData.routing_number) {
-          console.log('Bank information found in profile:', {
-            routing_number_length: sanitizedData.routing_number.length,
-            account_number_length: sanitizedData.account_number ? sanitizedData.account_number.length : 0
-          });
-        }
-        
+        console.log('User profile fetched successfully:', sanitizedData);
+
         setUserProfile(sanitizedData);
         
         // Cache the profile in localStorage as a stringified JSON
         localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
       } else {
-        console.log('No user profile found with direct function');
+        console.log('No user profile found with query');
       }
     } catch (error) {
       console.error('Exception in fetchUserProfile:', error);
@@ -251,7 +304,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setUserProfile(null);
       localStorage.removeItem('userProfile');
-      localStorage.removeItem('tempCredentials');
       
       // Check if we have an active session before trying to sign out
       const { data: { session } } = await supabase.auth.getSession();
@@ -277,7 +329,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setUserProfile(null);
       localStorage.removeItem('userProfile');
-      localStorage.removeItem('tempCredentials');
       
       toast({
         title: "Partial logout",
@@ -293,13 +344,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('Updating user profile with:', data);
       
-      // Use type assertion to bypass TypeScript error for the RPC function name
+      // Try to update using the direct function first
       const { error } = await (supabase.rpc as any)('update_user_profile_direct', {
         input_user_id: user.id,
         input_updates: data
-      });
+      }).catch(() => ({ error: true }));
       
-      if (error) throw error;
+      // If the direct function fails, fall back to regular update
+      if (error) {
+        console.log('Direct function failed, trying regular update');
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .update(data)
+          .eq('user_id', user.id);
+          
+        if (updateError) throw updateError;
+      }
       
       // Update local state
       setUserProfile(prev => {
@@ -335,7 +395,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, login, logout, updateProfile }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      userProfile, 
+      loading, 
+      login, 
+      logout, 
+      updateProfile,
+      checkEligibility
+    }}>
       {children}
     </AuthContext.Provider>
   );

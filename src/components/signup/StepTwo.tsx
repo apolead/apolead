@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, uploadFile } from '@/integrations/supabase/client';
 
 const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
   const [errorMessage, setErrorMessage] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const navigate = useNavigate();
   
   const handleBackToHome = async (e) => {
@@ -19,7 +20,7 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
     }
   };
   
-  const handleContinue = (e) => {
+  const handleContinue = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     
@@ -44,18 +45,54 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
       return;
     }
     
-    if (!userData.speedTest) {
+    if (!userData.speedTest && !userData.speedTestUrl) {
       setErrorMessage('Please upload a screenshot of your speed test results');
       return;
     }
     
-    if (!userData.systemSettings) {
+    if (!userData.systemSettings && !userData.systemSettingsUrl) {
       setErrorMessage('Please upload a screenshot of your system settings');
       return;
     }
     
-    // Continue to next step
-    nextStep();
+    try {
+      setIsUploading(true);
+      
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        setErrorMessage('Authentication error. Please try logging in again.');
+        setIsUploading(false);
+        return;
+      }
+      
+      // Upload speed test image if it exists and is not already uploaded
+      if (userData.speedTest && !userData.speedTestUrl) {
+        const speedTestUrl = await uploadFile(
+          userData.speedTest,
+          'speed_tests',
+          userId
+        );
+        updateUserData({ speedTestUrl });
+      }
+      
+      // Upload system settings image if it exists and is not already uploaded
+      if (userData.systemSettings && !userData.systemSettingsUrl) {
+        const systemSettingsUrl = await uploadFile(
+          userData.systemSettings,
+          'system_settings',
+          userId
+        );
+        updateUserData({ systemSettingsUrl });
+      }
+      
+      // Continue to next step
+      nextStep();
+    } catch (error) {
+      console.error('Error processing step 2:', error);
+      setErrorMessage('An error occurred while processing your information. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
   };
   
   const handleFileChange = (fieldName, e) => {
