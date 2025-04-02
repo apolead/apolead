@@ -1,24 +1,57 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Check, X, Loader2 } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Check, X, Loader2, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const ConfirmationScreen = () => {
   const [isApproved, setIsApproved] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [processingPassword, setProcessingPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
 
+  // Check for token in URL query parameters
   useEffect(() => {
     const checkApplicationStatus = async () => {
       try {
         setIsLoading(true);
         
-        // First check URL parameters for status
+        // Parse URL parameters
         const url = new URL(window.location.href);
         const status = url.searchParams.get('status');
+        const accessToken = url.searchParams.get('access_token');
+        const refreshToken = url.searchParams.get('refresh_token');
+        const type = url.searchParams.get('type');
         
+        // If we have tokens, this is from a confirmation email link
+        if (accessToken && refreshToken && type === 'signup') {
+          // Store the tokens in supabase session
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          
+          if (error) {
+            console.error('Error setting session:', error);
+            setIsApproved(false);
+          } else {
+            setIsApproved(true);
+            setShowPasswordForm(true);
+          }
+          setIsLoading(false);
+          return;
+        }
+        
+        // Regular status check as before
         if (status === 'rejected') {
           setIsApproved(false);
           setIsLoading(false);
@@ -66,6 +99,61 @@ const ConfirmationScreen = () => {
     checkApplicationStatus();
   }, [navigate]);
 
+  const handlePasswordSetup = async (e) => {
+    e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Passwords Don't Match",
+        description: "Please make sure your passwords match.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setProcessingPassword(true);
+    
+    try {
+      // Update user password
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Password Set Successfully",
+        description: "Your password has been set. You can now log in.",
+      });
+      
+      // Redirect to login page
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error setting password:', error);
+      toast({
+        title: "Error Setting Password",
+        description: error.message || "An error occurred setting your password.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingPassword(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -89,7 +177,55 @@ const ConfirmationScreen = () => {
           )}
         </div>
         
-        {isApproved ? (
+        {isApproved && showPasswordForm ? (
+          <>
+            <h2 className="text-2xl font-bold mb-4">Set Your Password</h2>
+            <p className="text-gray-600 mb-6">
+              Your application has been approved! Please set a password to complete your registration.
+            </p>
+            <form onSubmit={handlePasswordSetup} className="space-y-4 text-left">
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                  disabled={processingPassword}
+                />
+              </div>
+              <div>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input 
+                  id="confirmPassword" 
+                  type="password" 
+                  value={confirmPassword} 
+                  onChange={(e) => setConfirmPassword(e.target.value)} 
+                  required 
+                  disabled={processingPassword}
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={processingPassword}
+              >
+                {processingPassword ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Setting password...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <Key className="mr-2 h-4 w-4" />
+                    Set Password and Complete Registration
+                  </div>
+                )}
+              </Button>
+            </form>
+          </>
+        ) : isApproved ? (
           <>
             <h2 className="text-2xl font-bold mb-4">Application Submitted Successfully!</h2>
             <p className="text-gray-600 mb-6">
@@ -128,14 +264,16 @@ const ConfirmationScreen = () => {
         )}
         
         <div className="space-x-4">
-          <Button 
-            asChild
-            className={isApproved ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"}
-          >
-            <Link to="/">Return to Homepage</Link>
-          </Button>
+          {!showPasswordForm && (
+            <Button 
+              asChild
+              className={isApproved ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"}
+            >
+              <Link to="/">Return to Homepage</Link>
+            </Button>
+          )}
           
-          {isApproved && (
+          {isApproved && !showPasswordForm && (
             <Button 
               asChild
               variant="outline"

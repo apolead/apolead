@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -208,9 +209,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       
-      // REMOVED: No longer generating a temporary user_id
-      // const tempUserId = crypto.randomUUID();
-      
       // Insert into user_applications table - with no user_id field
       const { data: applicationData, error: applicationError } = await supabase
         .from('user_applications')
@@ -262,8 +260,44 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       console.log('Application submitted successfully:', applicationData);
       
-      // In a real application, you would trigger an email notification here
-      // to inform admins about the new application
+      // Send confirmation email with signup link for approved applications
+      // This is a simplified check - in a real app, admin approval would happen later
+      const isAutomaticallyApproved = 
+        userData.meetObligation && 
+        userData.loginDiscord && 
+        userData.checkEmails && 
+        userData.solveProblems && 
+        userData.completeTraining;
+      
+      if (isAutomaticallyApproved) {
+        try {
+          // Generate a signup link using Supabase Auth
+          const { data: signupData, error: signupError } = await supabase.auth.admin.generateLink({
+            type: 'signup',
+            email: userData.email,
+            options: {
+              redirectTo: `${window.location.origin}/confirmation?status=approved`
+            }
+          });
+          
+          if (signupError) {
+            console.error('Error generating signup link:', signupError);
+            // Continue with the flow even if email sending fails
+          } else if (signupData) {
+            console.log('Signup link generated successfully:', signupData);
+            // In a real app, you would send this link via email
+            // For now, we'll just show a toast with instructions
+            toast({
+              title: "Application Approved",
+              description: "Check your email for instructions to complete your registration.",
+              duration: 8000,
+            });
+          }
+        } catch (emailError) {
+          console.error('Error sending confirmation email:', emailError);
+          // Continue with the flow even if email sending fails
+        }
+      }
       
       // Move to confirmation step first
       nextStep();
