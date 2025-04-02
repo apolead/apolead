@@ -1,13 +1,17 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId = false }) => {
   const [errorMessage, setErrorMessage] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const handleBackToHome = async (e) => {
     e.preventDefault();
@@ -76,8 +80,43 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       
       // If we found a matching gov ID in profiles, show error
       if (profileData && profileData.gov_id_number === userData.govIdNumber) {
-        setErrorMessage('This government ID has already been registered in our system.');
+        toast({
+          title: "Government ID already used",
+          description: "This government ID has already been registered in our system.",
+          variant: "destructive",
+        });
         return;
+      }
+      
+      // Check if email is available
+      try {
+        const { data, error } = await supabase.auth.signInWithOtp({
+          email: userData.email,
+          options: {
+            // Don't actually send the email, just check if the user exists
+            shouldCreateUser: false
+          }
+        });
+        
+        // If there's no error, the user might exist
+        if (!error) {
+          // Cancel any login attempts
+          await supabase.auth.signOut();
+          
+          toast({
+            title: "Email already registered",
+            description: "This email address is already registered in our system.",
+            variant: "destructive", 
+          });
+          return;
+        }
+        
+        // If error is "User not found" that's actually good - means email is available
+        if (error && !error.message.includes('User not found')) {
+          console.error('Unexpected error checking email:', error);
+        }
+      } catch (error) {
+        console.error('Error checking email:', error);
       }
       
       // No matching gov ID was found, continue to next step
@@ -87,15 +126,56 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       console.error('Error checking government ID:', error);
       // Continue anyway - don't block the user for errors
       nextStep();
-      return;
     }
   };
   
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      console.log('Government ID file selected:', file.name);
-      updateUserData({ govIdImage: file });
+    if (!file) return;
+    
+    try {
+      setIsUploading(true);
+      
+      // Create a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+      
+      // Upload file to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('government_ids')
+        .upload(filePath, file);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('government_ids')
+        .getPublicUrl(filePath);
+      
+      console.log('File uploaded successfully:', urlData.publicUrl);
+      
+      // Update user data with the file URL
+      updateUserData({ 
+        govIdImage: file, 
+        govIdImageUrl: urlData.publicUrl 
+      });
+      
+      toast({
+        title: "File Uploaded",
+        description: "Government ID uploaded successfully.",
+      });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload government ID",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
   
@@ -121,7 +201,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
           </a>
 
           <h2 className="text-2xl font-bold mb-6">Step 1 of 4: Personal Details</h2>
-          <p className="text-white/80 mb-6">We need your basic personal information to get started with your application.</p>
+          <p className="text-white/80 mb-6">We need your basic personal information to get started with your application. You'll set your password after your application is approved.</p>
           
           <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm mb-6">
             <h4 className="font-semibold mb-2">Why we need this information</h4>
@@ -223,18 +303,28 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
                 accept="image/*,.pdf"
                 className="hidden"
                 onChange={handleFileChange}
+                disabled={isUploading}
               />
               <label htmlFor="govIdImage" className="cursor-pointer">
-                <svg className="w-10 h-10 text-gray-400 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                <p className="text-sm text-gray-500 mb-1">
-                  {userData.govIdImage ? 
-                    `Selected: ${userData.govIdImage.name}` : 
-                    'Drag and drop your ID here, or click to browse'
-                  }
-                </p>
-                <p className="text-xs text-gray-500">Accepted formats: JPG, PNG, PDF (Max 5MB)</p>
+                {isUploading ? (
+                  <div className="flex flex-col items-center">
+                    <Loader2 className="h-10 w-10 text-gray-400 animate-spin mb-2" />
+                    <p className="text-sm text-gray-500">Uploading...</p>
+                  </div>
+                ) : (
+                  <>
+                    <svg className="w-10 h-10 text-gray-400 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <p className="text-sm text-gray-500 mb-1">
+                      {userData.govIdImageUrl ? 
+                        `File uploaded successfully` : 
+                        'Drag and drop your ID here, or click to browse'
+                      }
+                    </p>
+                    <p className="text-xs text-gray-500">Accepted formats: JPG, PNG, PDF (Max 5MB)</p>
+                  </>
+                )}
               </label>
             </div>
           </div>
@@ -274,14 +364,14 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
             <Button
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              disabled={isCheckingGovId}
+              disabled={isCheckingGovId || isUploading}
             >
-              {isCheckingGovId ? (
+              {isCheckingGovId || isUploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Validating...
+                  {isUploading ? 'Uploading...' : 'Validating...'}
                 </>
-              ) : 'Continue'}
+              ) : 'Next'}
             </Button>
           </div>
         </form>

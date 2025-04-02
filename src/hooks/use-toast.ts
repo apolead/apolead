@@ -2,15 +2,15 @@ import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast"
 import * as React from "react"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 2000  // 2 seconds to remove after dismissal
-const DEFAULT_TOAST_DURATION = 3000  // 3 seconds visibility before auto-dismiss
+const TOAST_REMOVE_DELAY = 1000  // 1 second to remove after dismissal
+const DEFAULT_TOAST_DURATION = 1000  // Changed from 5000 to 1000 (1 second) for visibility
 
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
-  duration?: number  // Added duration property
+  duration?: number
 }
 
 const actionTypes = {
@@ -32,7 +32,7 @@ type ActionType = typeof actionTypes
 type Action =
   | {
       type: ActionType["ADD_TOAST"]
-      toast: Omit<ToasterToast, "id">
+      toast: ToasterToast
     }
   | {
       type: ActionType["UPDATE_TOAST"]
@@ -52,10 +52,9 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-const dismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>()  // Added for auto-dismiss
+const dismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
-  // Clear any existing timeout
   if (toastTimeouts.has(toastId)) {
     clearTimeout(toastTimeouts.get(toastId))
     toastTimeouts.delete(toastId)
@@ -72,12 +71,9 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout)
 }
 
-// New function to add auto-dismiss timeout
 const addToDismissQueue = (toastId: string, duration: number = DEFAULT_TOAST_DURATION) => {
-  // Don't auto-dismiss if duration is Infinity
   if (duration === Infinity) return
   
-  // Clear any existing timeout
   if (dismissTimeouts.has(toastId)) {
     clearTimeout(dismissTimeouts.get(toastId))
     dismissTimeouts.delete(toastId)
@@ -101,7 +97,7 @@ export const reducer = (state: State, action: Action): State => {
         ...state,
         toasts: [
           ...state.toasts,
-          { ...action.toast, id: genId() },
+          action.toast,
         ].slice(0, TOAST_LIMIT),
       }
 
@@ -116,8 +112,6 @@ export const reducer = (state: State, action: Action): State => {
     case actionTypes.DISMISS_TOAST: {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -164,9 +158,9 @@ function dispatch(action: Action) {
   })
 }
 
-type Toast = Omit<ToasterToast, "id">
+type ToastOptions = Omit<ToasterToast, "id">
 
-function toast({ duration = DEFAULT_TOAST_DURATION, ...props }: Toast) {
+function toast(options: ToastOptions) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -176,7 +170,6 @@ function toast({ duration = DEFAULT_TOAST_DURATION, ...props }: Toast) {
     })
     
   const dismiss = () => {
-    // Clear any auto-dismiss timeouts when manually dismissed
     if (dismissTimeouts.has(id)) {
       clearTimeout(dismissTimeouts.get(id))
       dismissTimeouts.delete(id)
@@ -184,14 +177,11 @@ function toast({ duration = DEFAULT_TOAST_DURATION, ...props }: Toast) {
     dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
   }
   
-  // Enhanced event handler for better X button support
   const handleOpenChange = (open: boolean) => {
-    // Make sure we properly call the original onOpenChange if provided
-    if (props.onOpenChange) {
-      props.onOpenChange(open)
+    if (options.onOpenChange) {
+      options.onOpenChange(open)
     }
     
-    // And also handle the dismiss if closed
     if (!open) {
       dismiss()
     }
@@ -200,19 +190,17 @@ function toast({ duration = DEFAULT_TOAST_DURATION, ...props }: Toast) {
   dispatch({
     type: actionTypes.ADD_TOAST,
     toast: {
-      ...props,
+      ...options,
       id,
-      duration,
       open: true,
       onOpenChange: handleOpenChange,
     },
   })
 
-  // Auto-dismiss the toast after the specified duration
-  addToDismissQueue(id, duration)
+  addToDismissQueue(id, options.duration)
 
   return {
-    id: id,
+    id,
     dismiss,
     update,
   }
