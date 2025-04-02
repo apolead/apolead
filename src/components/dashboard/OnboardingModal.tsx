@@ -545,7 +545,7 @@ const OnboardingModal = ({
                 Back
               </Button>
               
-              <Button type="button" disabled={isSubmitting} onClick={handleSubmit}>
+              <Button type="button" disabled={isSubmitting} onClick={handleSubmit} className="text-slate-50">
                 {isSubmitting ? <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Submitting...
