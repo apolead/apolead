@@ -1,4 +1,5 @@
 
+
 -- This function retrieves the credentials value for a specific user
 CREATE OR REPLACE FUNCTION public.get_user_credentials(user_id UUID)
 RETURNS TEXT
@@ -41,6 +42,7 @@ BEGIN
   END IF;
   
   -- If all required fields for onboarding are filled out AND all required questions answered, mark onboarding as completed
+  -- To be considered completed, all required fields must be filled AND the user must be eligible (all yes/no questions answered YES)
   IF (
     NEW.first_name IS NOT NULL AND NEW.first_name != '' AND
     NEW.last_name IS NOT NULL AND NEW.last_name != '' AND
@@ -59,7 +61,8 @@ BEGIN
     NEW.solve_problems IS NOT NULL AND 
     NEW.complete_training IS NOT NULL AND 
     NEW.personal_statement IS NOT NULL AND NEW.personal_statement != '' AND
-    NEW.accepted_terms IS TRUE
+    NEW.accepted_terms IS TRUE AND
+    NEW.eligible_for_training IS TRUE
   ) THEN
     NEW.onboarding_completed := TRUE;
   ELSE
@@ -108,3 +111,4 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
