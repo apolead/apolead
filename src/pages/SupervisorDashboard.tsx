@@ -40,9 +40,6 @@ interface UserProfile {
   agent_id?: string;
   lead_source?: string;
   start_date?: string;
-  quiz_passed?: boolean;
-  sales_skills?: string;
-  communication_rating?: string;
 }
 
 const SupervisorDashboard = () => {
@@ -64,10 +61,7 @@ const SupervisorDashboard = () => {
     supervisor_notes: '',
     agent_standing: 'Active',
     lead_source: '',
-    start_date: '',
-    sales_skills: '',
-    communication_rating: '',
-    application_status: ''
+    start_date: ''
   });
   
   useEffect(() => {
@@ -82,10 +76,12 @@ const SupervisorDashboard = () => {
           .single();
           
         if (!profile || profile.credentials !== 'supervisor') {
+          // Redirect to appropriate dashboard based on role
           navigate('/dashboard');
           return;
         }
         
+        // Set current user information
         setCurrentUser({
           first_name: profile.first_name || '',
           last_name: profile.last_name || ''
@@ -96,6 +92,7 @@ const SupervisorDashboard = () => {
     };
     
     const getUserProfiles = async () => {
+      // Get all agents (non-supervisors)
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -115,11 +112,13 @@ const SupervisorDashboard = () => {
     checkUserRole();
     getUserProfiles();
 
+    // Add Font Awesome
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css';
     document.head.appendChild(link);
 
+    // Add Poppins font
     const fontLink = document.createElement('link');
     fontLink.rel = 'stylesheet';
     fontLink.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap';
@@ -161,10 +160,7 @@ const SupervisorDashboard = () => {
       supervisor_notes: profile.supervisor_notes || '',
       agent_standing: profile.agent_standing || 'Active',
       lead_source: profile.lead_source || '',
-      start_date: profile.start_date || '',
-      sales_skills: profile.sales_skills || '',
-      communication_rating: profile.communication_rating || '',
-      application_status: profile.application_status || 'pending'
+      start_date: profile.start_date || ''
     });
     setIsEditDialogOpen(true);
   };
@@ -188,10 +184,7 @@ const SupervisorDashboard = () => {
           supervisor_notes: editForm.supervisor_notes,
           agent_standing: editForm.agent_standing,
           lead_source: editForm.lead_source,
-          start_date: editForm.start_date,
-          sales_skills: editForm.sales_skills,
-          communication_rating: editForm.communication_rating,
-          application_status: editForm.application_status
+          start_date: editForm.start_date
         })
         .eq('id', selectedProfile.id)
         .select();
@@ -201,6 +194,7 @@ const SupervisorDashboard = () => {
         return;
       }
 
+      // Update the user profiles list
       setUserProfiles(prevProfiles => 
         prevProfiles.map(profile => 
           profile.id === selectedProfile.id 
@@ -210,10 +204,7 @@ const SupervisorDashboard = () => {
                 supervisor_notes: editForm.supervisor_notes,
                 agent_standing: editForm.agent_standing,
                 lead_source: editForm.lead_source,
-                start_date: editForm.start_date,
-                sales_skills: editForm.sales_skills,
-                communication_rating: editForm.communication_rating,
-                application_status: editForm.application_status
+                start_date: editForm.start_date
               } 
             : profile
         )
@@ -236,6 +227,7 @@ const SupervisorDashboard = () => {
     );
   });
 
+  // Format date for display
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     
@@ -247,6 +239,7 @@ const SupervisorDashboard = () => {
     }).format(date);
   };
   
+  // CSS classes for status display
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'approved':
@@ -261,6 +254,7 @@ const SupervisorDashboard = () => {
     }
   };
   
+  // Status icon display
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
@@ -272,16 +266,6 @@ const SupervisorDashboard = () => {
         return 'fa-clock';
       default:
         return 'fa-question-circle';
-    }
-  };
-  
-  const getQuizPassedDisplay = (passed: boolean | undefined) => {
-    if (passed === undefined || passed === null) {
-      return <span className="badge badge-warning">Not taken</span>;
-    } else if (passed) {
-      return <span className="badge badge-success"><i className="fas fa-check"></i> Passed</span>;
-    } else {
-      return <span className="badge badge-danger"><i className="fas fa-times"></i> Failed</span>;
     }
   };
   
@@ -1260,7 +1244,6 @@ const SupervisorDashboard = () => {
                 <TableHead>Gov Photo</TableHead>
                 <TableHead>Speed Test</TableHead>
                 <TableHead>Interview Date</TableHead>
-                <TableHead>Quiz Passed</TableHead>
                 <TableHead>Sales Skills</TableHead>
                 <TableHead>Communication</TableHead>
                 <TableHead>Status</TableHead>
@@ -1299,31 +1282,23 @@ const SupervisorDashboard = () => {
                     </TableCell>
                     <TableCell>{formatDate(profile.application_date)}</TableCell>
                     <TableCell>
-                      {getQuizPassedDisplay(profile.quiz_passed)}
-                    </TableCell>
-                    <TableCell>
-                      {profile.sales_skills ? (
-                        <span className={`badge ${profile.sales_skills === 'Yes' ? 'badge-success' : 'badge-warning'}`}>
-                          <i className={`fas ${profile.sales_skills === 'Yes' ? 'fa-check' : 'fa-times'}`}></i>
-                          {' '}{profile.sales_skills}
+                      {profile.sales_experience !== undefined ? (
+                        <span className={`badge ${profile.sales_experience ? 'badge-success' : 'badge-warning'}`}>
+                          <i className={`fas ${profile.sales_experience ? 'fa-check' : 'fa-times'}`}></i>
+                          {profile.sales_experience ? ' Yes' : ' No'}
                         </span>
                       ) : (
-                        <span className="badge badge-warning">Not set</span>
+                        ''
                       )}
                     </TableCell>
                     <TableCell>
-                      {profile.communication_rating ? (
-                        <span className={`badge ${
-                          profile.communication_rating === 'Good' 
-                            ? 'badge-success' 
-                            : profile.communication_rating === 'Average' 
-                              ? 'badge-warning' 
-                              : 'badge-danger'
-                        }`}>
-                          {profile.communication_rating}
+                      {profile.service_experience !== undefined ? (
+                        <span className={`badge ${profile.service_experience ? 'badge-success' : 'badge-warning'}`}>
+                          <i className={`fas ${profile.service_experience ? 'fa-check' : 'fa-times'}`}></i>
+                          {profile.service_experience ? ' Good' : ' Average'}
                         </span>
                       ) : (
-                        <span className="badge badge-warning">Not set</span>
+                        ''
                       )}
                     </TableCell>
                     <TableCell>
@@ -1703,90 +1678,14 @@ const SupervisorDashboard = () => {
                   <input 
                     type="radio" 
                     name="agent_standing"
-                    value="Waitlist" 
-                    checked={editForm.agent_standing === 'Waitlist'}
+                    value="Warning" 
+                    checked={editForm.agent_standing === 'Warning'}
                     onChange={handleInputChange}
                     style={{ marginRight: '8px' }}
                   />
-                  Waitlist
+                  Warning
                 </label>
               </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-                Application Status
-              </label>
-              <select 
-                name="application_status"
-                value={editForm.application_status || 'pending'}
-                onChange={handleInputChange}
-                style={{
-                  padding: '10px 15px',
-                  width: '100%',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  backgroundColor: 'white'
-                }}
-              >
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="waitlist">Waitlist</option>
-              </select>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-                Sales Skills
-              </label>
-              <div style={{ display: 'flex', gap: '15px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <input 
-                    type="radio" 
-                    name="sales_skills"
-                    value="Yes" 
-                    checked={editForm.sales_skills === 'Yes'}
-                    onChange={handleInputChange}
-                    style={{ marginRight: '8px' }}
-                  />
-                  Yes
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <input 
-                    type="radio" 
-                    name="sales_skills"
-                    value="No" 
-                    checked={editForm.sales_skills === 'No'}
-                    onChange={handleInputChange}
-                    style={{ marginRight: '8px' }}
-                  />
-                  No
-                </label>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-                Communication Rating
-              </label>
-              <select 
-                name="communication_rating"
-                value={editForm.communication_rating || ''}
-                onChange={handleInputChange}
-                style={{
-                  padding: '10px 15px',
-                  width: '100%',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  backgroundColor: 'white'
-                }}
-              >
-                <option value="">Select Rating</option>
-                <option value="Good">Good</option>
-                <option value="Average">Average</option>
-                <option value="Poor">Poor</option>
-              </select>
             </div>
 
             <div style={{ marginBottom: '20px' }}>

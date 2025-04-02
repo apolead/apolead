@@ -13,6 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isSendingReset, setIsSendingReset] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -286,6 +287,53 @@ const Login = () => {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const emailError = validateEmail(email);
+    if (emailError) {
+      toast({
+        title: "Invalid email",
+        description: emailError,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSendingReset(true);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/confirmation?reset=true`,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Reset email sent",
+        description: "Check your email for a password reset link",
+      });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      toast({
+        title: "Error sending reset email",
+        description: error.message || "An error occurred sending the reset email",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
   if (isCheckingSession) {
     return <div className="flex items-center justify-center h-screen">
       <div className="flex flex-col items-center gap-2">
@@ -357,6 +405,17 @@ const Login = () => {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={handlePasswordChange} required />
+            </div>
+            
+            <div className="text-right">
+              <button 
+                type="button" 
+                onClick={handleForgotPassword}
+                className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                disabled={isSendingReset}
+              >
+                {isSendingReset ? 'Sending...' : 'Forgot password?'}
+              </button>
             </div>
             
             <Button type="submit" disabled={isLoading} className="w-full py-6 text-neutral-50">

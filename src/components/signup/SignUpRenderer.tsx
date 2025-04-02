@@ -6,6 +6,7 @@ import StepTwo from '@/components/signup/StepTwo';
 import StepThree from '@/components/signup/StepThree';
 import ConfirmationScreen from '@/components/signup/ConfirmationScreen';
 import { useSignUp } from '@/contexts/SignUpContext';
+import { Toaster } from '@/components/ui/toaster';
 
 const SignUpRenderer: React.FC = () => {
   const { currentStep, userData, updateUserData, nextStep, prevStep, handleSubmit, isSubmitting, isCheckingGovId } = useSignUp();
@@ -38,6 +39,7 @@ const SignUpRenderer: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {renderStep()}
+      <Toaster />
     </div>
   );
 };

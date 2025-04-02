@@ -32,3 +32,38 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session?.user?.email);
 });
+
+// Initialize storage buckets if needed
+const initializeStorage = async () => {
+  try {
+    // Check if required buckets exist
+    const requiredBuckets = ['user_documents', 'government_ids', 'speed_tests', 'system_settings'];
+    
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    
+    if (error) {
+      console.error('Error listing storage buckets:', error);
+      return;
+    }
+    
+    const existingBuckets = buckets?.map(b => b.name) || [];
+    
+    // Create any missing buckets
+    for (const bucket of requiredBuckets) {
+      if (!existingBuckets.includes(bucket)) {
+        console.log(`Creating storage bucket: ${bucket}`);
+        await supabase.storage.createBucket(bucket, {
+          public: true,  // Make public so images can be viewed
+          fileSizeLimit: 10485760,  // 10MB limit
+        });
+      }
+    }
+    
+    console.log('Storage buckets initialized successfully');
+  } catch (err) {
+    console.error('Error initializing storage buckets:', err);
+  }
+};
+
+// Attempt to initialize storage when the client loads
+initializeStorage().catch(console.error);
