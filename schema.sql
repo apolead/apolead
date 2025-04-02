@@ -1,4 +1,3 @@
-
 -- This function retrieves the credentials value for a specific user
 CREATE OR REPLACE FUNCTION public.get_user_credentials(user_id UUID)
 RETURNS TEXT
@@ -19,3 +18,30 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_user_credentials TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_user_credentials TO anon;
 GRANT EXECUTE ON FUNCTION public.get_user_credentials TO service_role;
+
+-- Function to automatically create user profiles when a new user is authenticated
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Check if the user profile already exists
+  IF NOT EXISTS (SELECT 1 FROM public.user_profiles WHERE user_id = NEW.id) THEN
+    -- Insert new user profile
+    INSERT INTO public.user_profiles (
+      user_id,
+      email,
+      application_status
+    ) VALUES (
+      NEW.id,
+      NEW.email,
+      'approved'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create trigger to automatically call this function when users are created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
