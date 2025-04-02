@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,6 +32,7 @@ type BillingFormValues = z.infer<typeof formSchema>;
 const BillingInformation = () => {
   const { user, userProfile, updateProfile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -100,7 +102,6 @@ const BillingInformation = () => {
     setIsSubmitting(true);
     setSaveSuccess(false);
     try {
-      // Call the dedicated billing information function directly
       const { error } = await supabase.rpc('update_billing_information', {
         p_user_id: user.id,
         p_bank_name: userProfile?.bank_name || "Default Bank", 
@@ -119,14 +120,12 @@ const BillingInformation = () => {
       if (error) {
         console.error('Error updating billing information via direct RPC:', error);
         
-        // Fallback to the profile update method if direct RPC fails
         await updateProfile({
           routing_number: data.routingNumber,
           account_number: data.accountNumber,
           account_type: data.accountType
         });
       } else {
-        // Also update local profile to ensure consistency
         await updateProfile({
           routing_number: data.routingNumber,
           account_number: data.accountNumber,

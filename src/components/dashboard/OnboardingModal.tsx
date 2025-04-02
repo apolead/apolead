@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -247,7 +246,7 @@ const OnboardingModal = ({ isOpen, onClose, user, initialUserData }) => {
           available_days: userData.availableDays,
           day_hours: userData.dayHours,
           accepted_terms: userData.acceptedTerms,
-          updated_at: new Date()
+          updated_at: new Date().toISOString()
         });
       
       if (error) {
@@ -259,7 +258,7 @@ const OnboardingModal = ({ isOpen, onClose, user, initialUserData }) => {
         description: "Your profile has been updated successfully"
       });
       
-      onClose(); // Close the modal
+      onClose();
       
     } catch (error) {
       console.error('Error updating profile:', error);

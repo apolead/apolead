@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { ChevronLeft, ChevronRight, LayoutDashboard, PlayCircle, Tool, CreditCard, BarChart2, Trophy, FileInvoice, Settings, LogOut, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutDashboard, PlayCircle, Wrench, CreditCard, BarChart2, Trophy, FileText, Settings, LogOut, Lock } from 'lucide-react';
 
 export const DashboardSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -79,7 +79,7 @@ export const DashboardSidebar = () => {
         </div>
         
         <div className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed ${collapsed ? 'justify-center' : ''}`}>
-          <Tool className={getIconStyles()} size={20} />
+          <Wrench className={getIconStyles()} size={20} />
           {!collapsed && <span>Tool Page</span>}
           {(!collapsed && !isTrainingEnabled) && <Lock size={14} className="ml-auto" />}
         </div>
@@ -110,7 +110,7 @@ export const DashboardSidebar = () => {
               : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'
           } ${collapsed ? 'justify-center' : ''}`}
         >
-          <FileInvoice className={getIconStyles()} size={20} />
+          <FileText className={getIconStyles()} size={20} />
           {!collapsed && <span>Billing Information</span>}
         </Link>
         
