@@ -1,14 +1,12 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { supabase, uploadFile } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId = false }) => {
   const [errorMessage, setErrorMessage] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
   const navigate = useNavigate();
   
   const handleBackToHome = async (e) => {
@@ -46,7 +44,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       return;
     }
     
-    if (!userData.govIdImage && !userData.govIdImageUrl) {
+    if (!userData.govIdImage) {
       setErrorMessage('Please upload a picture of your government ID');
       return;
     }
@@ -56,29 +54,8 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       return;
     }
     
+    // Verify government ID number against user_profiles table ONLY
     try {
-      // Upload government ID if it exists and is not already uploaded
-      if (userData.govIdImage && !userData.govIdImageUrl) {
-        setIsUploading(true);
-        const userId = (await supabase.auth.getUser()).data.user?.id;
-        if (!userId) {
-          setErrorMessage('Authentication error. Please try logging in again.');
-          setIsUploading(false);
-          return;
-        }
-        
-        // Upload the file
-        const govIdImageUrl = await uploadFile(
-          userData.govIdImage,
-          'government_ids',
-          userId
-        );
-        
-        // Update the user data with the new URL
-        updateUserData({ govIdImageUrl });
-      }
-      
-      // Verify government ID number against user_profiles table ONLY
       console.log('Checking government ID:', userData.govIdNumber);
       
       // Check ONLY if the government ID has been used before in user_profiles
@@ -107,10 +84,10 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       console.log('Government ID verified successfully, proceeding to next step');
       nextStep();
     } catch (error) {
-      console.error('Error processing step 1:', error);
-      setErrorMessage('An error occurred while processing your information. Please try again.');
-    } finally {
-      setIsUploading(false);
+      console.error('Error checking government ID:', error);
+      // Continue anyway - don't block the user for errors
+      nextStep();
+      return;
     }
   };
   

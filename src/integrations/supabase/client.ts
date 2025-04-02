@@ -32,32 +32,3 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session?.user?.email);
 });
-
-// Helper function to upload files to specified buckets
-export const uploadFile = async (file: File, bucket: string, path: string = '') => {
-  if (!file) return null;
-  
-  try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    // If path is provided, append the fileName to it, otherwise just use the fileName
-    const filePath = path ? `${path}/${fileName}` : fileName;
-    
-    const { error: uploadError, data } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file);
-      
-    if (uploadError) {
-      throw uploadError;
-    }
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(filePath);
-      
-    return publicUrl;
-  } catch (error) {
-    console.error('Error uploading file:', error);
-    throw error;
-  }
-};
