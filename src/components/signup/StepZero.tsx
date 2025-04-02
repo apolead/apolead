@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CheckCircle, X } from 'lucide-react';
+import { CheckCircle, X, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -44,28 +44,27 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
     
     try {
       // Check if email exists in auth system
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithOtp({
         email: email,
-        password: 'not-a-real-password-just-checking-if-exists'
+        options: {
+          shouldCreateUser: false
+        }
       });
       
-      if (!authError || (authError && !authError.message.includes('Invalid login credentials'))) {
+      // If the response has data, it means the email exists
+      if (signInData?.user) {
         setErrorMessage('This email is already registered in our system');
         setIsChecking(false);
         return;
       }
       
-      // Check if email exists in user_profiles
-      const { data: profileData, error: profileError } = await supabase
+      // Double check with user_profiles
+      const { data: profileData } = await supabase
         .from('user_profiles')
         .select('email')
         .eq('email', email)
         .maybeSingle();
         
-      if (profileError && !profileError.message.includes('not found')) {
-        console.error('Error checking email in profiles:', profileError);
-      }
-      
       if (profileData) {
         setErrorMessage('This email is already registered in our system');
         setIsChecking(false);
@@ -73,7 +72,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
       }
       
       // Check if email exists in user_applications
-      const { data: applicationData, error: applicationError } = await supabase
+      const { data: applicationData } = await supabase
         .from('user_applications')
         .select('email')
         .eq('email', email)
@@ -97,17 +96,16 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
       
     } catch (error) {
       console.error('Error checking email:', error);
-      // Even on error, we'll proceed (but log the error)
-      updateUserData({ email });
-      nextStep();
-    } finally {
+      setErrorMessage('Error validating email. Please try again.');
       setIsChecking(false);
     }
   };
   
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
+      {/* Left Side - Visual */}
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+        {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -143,6 +141,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         </div>
       </div>
       
+      {/* Right Side - Form */}
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col justify-center">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
@@ -174,6 +173,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
                 onChange={handleEmailChange}
                 className="w-full pr-10"
                 placeholder="Enter your Gmail address"
+                disabled={isChecking}
               />
               {email && (
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -193,7 +193,12 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white mt-6"
             disabled={!isValid || isChecking}
           >
-            {isChecking ? 'Checking...' : 'Next'}
+            {isChecking ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Checking...
+              </>
+            ) : 'Next'}
           </Button>
           
           <p className="text-center text-gray-500 text-sm mt-4">

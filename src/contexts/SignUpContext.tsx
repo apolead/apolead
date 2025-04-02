@@ -210,14 +210,13 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       
       // Generate a temporary user_id - this is required by the database schema
-      // In a real implementation, this would be replaced by the actual user's ID after authentication
       const tempUserId = crypto.randomUUID();
       
-      // Instead of creating a user account immediately, store the application data
+      // We need to use service_key to bypass RLS policies for public access inserts
+      // Since we're creating a pending application before the user is registered
       const { data: applicationData, error: applicationError } = await supabase
         .from('user_applications')
         .insert({
-          // Include the required user_id field
           user_id: tempUserId,
           first_name: userData.firstName,
           last_name: userData.lastName,
@@ -274,6 +273,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       toast({
         title: "Application Submitted",
         description: "Your application has been submitted successfully. You'll receive an email when it's approved.",
+        duration: 5000,
       });
       
       // If you want to add a slight delay before showing confirmation
