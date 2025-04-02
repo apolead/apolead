@@ -65,12 +65,15 @@ serve(async (req) => {
       console.error("No action link was generated");
     }
     
+    // Check if we're in development environment - use Deno.env instead of process.env
+    const isDevelopment = Deno.env.get("ENVIRONMENT") === "development";
+    
     return new Response(
       JSON.stringify({
         success: true,
         message: "Confirmation email sent successfully",
         // Only include the link in non-production environments for debugging
-        link: process.env.NODE_ENV === 'development' ? data?.properties?.action_link : undefined
+        link: isDevelopment ? data?.properties?.action_link : undefined
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
