@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Check, X, Loader2, Key, Copy, ExternalLink } from 'lucide-react';
+import { Check, X, Loader2, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,11 +16,11 @@ const ConfirmationScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [processingPassword, setProcessingPassword] = useState(false);
-  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(10);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { confirmationLink } = useSignUp();
+  const { confirmationSent } = useSignUp();
 
   // Check for token in URL query parameters
   useEffect(() => {
@@ -87,8 +87,6 @@ const ConfirmationScreen = () => {
           // If no session found, default to approved (should not happen)
           console.warn("No session found and no status in URL, defaulting to approved");
           setIsApproved(true);
-          // If no session or status param, redirect to homepage after a delay
-          setTimeout(() => navigate('/'), 5000);
         }
       } catch (error) {
         console.error('Error checking application status:', error);
@@ -101,6 +99,29 @@ const ConfirmationScreen = () => {
     
     checkApplicationStatus();
   }, [navigate]);
+
+  // Countdown timer for redirection
+  useEffect(() => {
+    let timer: number;
+    
+    // Start countdown for redirection if approved and not showing password form
+    if (isApproved && !showPasswordForm && !isLoading) {
+      timer = window.setInterval(() => {
+        setRedirectCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            navigate('/');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isApproved, showPasswordForm, isLoading, navigate]);
 
   const handlePasswordSetup = async (e) => {
     e.preventDefault();
@@ -154,18 +175,6 @@ const ConfirmationScreen = () => {
       });
     } finally {
       setProcessingPassword(false);
-    }
-  };
-
-  const copyLinkToClipboard = () => {
-    if (confirmationLink) {
-      navigator.clipboard.writeText(confirmationLink);
-      setCopiedToClipboard(true);
-      toast({
-        title: "Link Copied",
-        description: "Signup link copied to clipboard.",
-      });
-      setTimeout(() => setCopiedToClipboard(false), 3000);
     }
   };
 
@@ -250,47 +259,27 @@ const ConfirmationScreen = () => {
               <div className="p-4 bg-blue-50 rounded-md text-left">
                 <h3 className="font-semibold text-blue-800 mb-2">What happens next?</h3>
                 <p className="text-sm text-blue-700">
-                  1. Check your Gmail inbox for a confirmation email<br />
-                  2. Complete any verification steps in the email<br />
-                  3. Our team will review your application<br />
-                  4. You'll receive instructions for onboarding if approved
+                  {confirmationSent ? (
+                    <>
+                      1. Check your email for a confirmation link<br />
+                      2. Click the link to set your password<br />
+                      3. Once your password is set, you can log in to your account<br />
+                      4. You'll receive further instructions for onboarding
+                    </>
+                  ) : (
+                    <>
+                      1. Our team will review your application<br />
+                      2. You'll receive an email with the result of your application<br />
+                      3. If approved, you'll be provided next steps for onboarding<br />
+                      4. If rejected, you'll be notified of the reasons
+                    </>
+                  )}
                 </p>
               </div>
-              
-              {/* Show direct signup link if available (since we don't have real email sending) */}
-              {confirmationLink && (
-                <div className="p-4 bg-yellow-50 rounded-md text-left mt-4">
-                  <h3 className="font-semibold text-yellow-800 mb-2">Temporary Demo: Direct Signup</h3>
-                  <p className="text-sm text-yellow-700 mb-2">
-                    Since this is a demo without actual email integration, you can use this direct link to complete your registration:
-                  </p>
-                  <div className="flex mt-2">
-                    <Button 
-                      variant="outline" 
-                      className="flex items-center justify-center mr-2"
-                      onClick={copyLinkToClipboard}
-                    >
-                      {copiedToClipboard ? (
-                        <Check className="h-4 w-4 mr-1" />
-                      ) : (
-                        <Copy className="h-4 w-4 mr-1" />
-                      )}
-                      {copiedToClipboard ? "Copied!" : "Copy Link"}
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      className="flex items-center justify-center"
-                      asChild
-                    >
-                      <a href={confirmationLink} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Open Link
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
+            <p className="text-sm text-gray-500 mt-6">
+              Redirecting to homepage in {redirectCountdown} seconds...
+            </p>
           </>
         ) : (
           <>
@@ -319,15 +308,6 @@ const ConfirmationScreen = () => {
               className={isApproved ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"}
             >
               <Link to="/">Return to Homepage</Link>
-            </Button>
-          )}
-          
-          {isApproved && !showPasswordForm && (
-            <Button 
-              asChild
-              variant="outline"
-            >
-              <Link to="/login">Go to Login</Link>
             </Button>
           )}
         </div>

@@ -34,7 +34,6 @@ serve(async (req) => {
     console.log(`Generating signup link for: ${email}`);
 
     // Generate signup link with a temporary password (required by Supabase)
-    // The user will set their own password during the signup flow
     const { data, error } = await supabase.auth.admin.generateLink({
       type: "signup",
       email,
@@ -49,24 +48,14 @@ serve(async (req) => {
     }
 
     console.log("Generated signup link successfully");
-
-    // In a production app, we would now send the email with the signup link
-    // Since we don't have email integration set up, for demonstration purposes
-    // we'll just return the link to be displayed by the frontend
     
-    // For a real implementation, you would use a service like Resend, SendGrid, etc.
-    // Example with a hypothetical email sending function:
-    // await sendEmail({
-    //   to: email,
-    //   subject: "Complete your ApoLead registration", 
-    //   body: `Click this link to complete your registration: ${data.properties.action_link}`
-    // });
-
-    // Return the signup link 
+    // Supabase is now configured with Resend SMTP, so the email will be sent automatically
+    // We no longer need to return the link in the response for display
+    
     return new Response(
       JSON.stringify({
         success: true,
-        signupLink: data.properties.action_link
+        message: "Confirmation email sent successfully"
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -12,7 +12,7 @@ type SignUpContextType = {
   handleSubmit: () => Promise<void>;
   isSubmitting: boolean;
   isCheckingGovId: boolean;
-  confirmationLink: string | null;
+  confirmationSent: boolean;
 };
 
 type UserData = {
@@ -114,7 +114,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [userData, setUserData] = useState<UserData>(initialUserData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingGovId, setIsCheckingGovId] = useState(false);
-  const [confirmationLink, setConfirmationLink] = useState<string | null>(null);
+  const [confirmationSent, setConfirmationSent] = useState(false);
   const { toast } = useToast();
   
   // Update user data
@@ -271,7 +271,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       if (isAutomaticallyApproved) {
         try {
-          // Call our edge function instead of using generateLink directly
+          // Call our edge function to send the confirmation email
           const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-confirmation`, {
             method: 'POST',
             headers: {
@@ -304,14 +304,12 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 duration: 8000,
               });
             } else {
-              console.log('Signup link generated successfully:', result);
-              
-              // Store the signup link for display
-              setConfirmationLink(result.signupLink);
+              console.log('Confirmation email sent successfully');
+              setConfirmationSent(true);
               
               toast({
                 title: "Application Approved",
-                description: "Since email integration is not set up, we'll show you the signup link directly.",
+                description: "A confirmation email has been sent to your inbox with instructions to complete your registration.",
                 duration: 8000,
               });
             }
@@ -362,7 +360,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         handleSubmit,
         isSubmitting,
         isCheckingGovId,
-        confirmationLink
+        confirmationSent
       }}
     >
       {children}
