@@ -4,7 +4,7 @@ import * as React from "react"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000  // 1 second to remove after dismissal
-const DEFAULT_TOAST_DURATION = 3000  // 3 seconds for visibility
+const DEFAULT_TOAST_DURATION = 5000  // 5 seconds for visibility
 
 type ToasterToast = ToastProps & {
   id: string
@@ -161,7 +161,7 @@ function dispatch(action: Action) {
 
 type ToastOptions = Omit<ToasterToast, "id">
 
-function toast(props: ToastOptions) {
+function toast(options: ToastOptions) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -179,8 +179,8 @@ function toast(props: ToastOptions) {
   }
   
   const handleOpenChange = (open: boolean) => {
-    if (props.onOpenChange) {
-      props.onOpenChange(open)
+    if (options.onOpenChange) {
+      options.onOpenChange(open)
     }
     
     if (!open) {
@@ -191,16 +191,17 @@ function toast(props: ToastOptions) {
   dispatch({
     type: actionTypes.ADD_TOAST,
     toast: {
-      ...props,
+      ...options,
+      id,
       open: true,
       onOpenChange: handleOpenChange,
     },
   })
 
-  addToDismissQueue(id, props.duration)
+  addToDismissQueue(id, options.duration)
 
   return {
-    id: id,
+    id,
     dismiss,
     update,
   }

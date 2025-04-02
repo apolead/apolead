@@ -9,6 +9,8 @@ interface UserData {
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
+  confirmPassword: string;
   birthDay: string;
   govIdNumber: string;
   govIdImage: File | null;
@@ -44,6 +46,8 @@ const initialUserData: UserData = {
   firstName: '',
   lastName: '',
   email: '',
+  password: '',
+  confirmPassword: '',
   birthDay: '',
   govIdNumber: '',
   govIdImage: null,
@@ -127,36 +131,21 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
   
   // Improved file upload function to ensure files are saved to storage
-  const uploadFile = async (file: File | null, folder: string = 'user_documents') => {
+  const uploadFile = async (file: File | null, folder: string) => {
     try {
       if (!file) return null;
       
       // Generate a unique filename using timestamp and random string
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${folder}/${fileName}`;
+      const filePath = `${fileName}`;
       
-      console.log('Uploading file:', file.name, 'to path:', filePath);
-      
-      // First make sure the bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
-      if (!buckets?.find(b => b.name === folder)) {
-        console.log(`Bucket ${folder} not found, creating it...`);
-        const { error: bucketError } = await supabase.storage.createBucket(folder, {
-          public: false,
-          fileSizeLimit: 10485760, // 10MB
-        });
-        
-        if (bucketError) {
-          console.error('Error creating bucket:', bucketError);
-          throw bucketError;
-        }
-      }
+      console.log('Uploading file:', file.name, 'to folder:', folder, 'with path:', filePath);
       
       // Upload the file
-      const { error: uploadError } = await supabase.storage
+      const { data, error: uploadError } = await supabase.storage
         .from(folder)
-        .upload(fileName, file, {
+        .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true
         });
@@ -166,10 +155,12 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         throw uploadError;
       }
       
+      console.log('Upload successful:', data);
+      
       // Get the public URL
       const { data: publicUrlData } = await supabase.storage
         .from(folder)
-        .getPublicUrl(fileName);
+        .getPublicUrl(filePath);
       
       if (!publicUrlData) {
         throw new Error('Failed to get public URL for uploaded file');
@@ -262,13 +253,34 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       // If no session, need to sign up the user first
       if (!session) {
+        // Verify password match
+        if (userData.password !== userData.confirmPassword) {
+          toast({
+            title: "Password Error",
+            description: "Passwords do not match.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (!userData.password || userData.password.length < 6) {
+          toast({
+            title: "Password Error",
+            description: "Password must be at least 6 characters long.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
         try {
           console.log('No session found, creating user account with email:', userData.email);
           
-          // Create the user account with all user data in metadata
+          // Create the user account with custom password
           const { data, error } = await supabase.auth.signUp({
             email: userData.email,
-            password: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2), // Generate a random secure password
+            password: userData.password, // Use the user's password
             options: {
               data: {
                 first_name: userData.firstName,
@@ -302,7 +314,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 accepted_terms: userData.acceptedTerms,
                 application_status: applicationStatus
               },
-              // Only send confirmation email for approved applications
+              // Only send confirmation email for approved applications after submission
               emailRedirectTo: applicationStatus === 'approved' ? `${window.location.origin}/confirmation?status=${applicationStatus}` : undefined,
             },
           });
@@ -479,15 +491,18 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         throw updateError;
       }
       
-      // Fixed logic for application status redirection
+      // Sign out user before final redirection
       if (currentSession) {
         await supabase.auth.signOut();
       }
       
+      // Redirect based on application status
       if (applicationStatus === 'rejected') {
         navigate('/confirmation?status=rejected');
-      } else {
+      } else if (applicationStatus === 'approved') {
         navigate('/confirmation?status=approved');
+      } else {
+        navigate('/confirmation?status=pending');
       }
       
     } catch (error: any) {

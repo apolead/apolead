@@ -3,12 +3,14 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId = false }) => {
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -57,6 +59,22 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       return;
     }
     
+    // Password validation
+    if (!userData.password) {
+      setErrorMessage('Please enter a password');
+      return;
+    }
+    
+    if (userData.password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long');
+      return;
+    }
+    
+    if (userData.password !== userData.confirmPassword) {
+      setErrorMessage('Passwords do not match');
+      return;
+    }
+    
     // Verify government ID number against user_profiles table ONLY
     try {
       console.log('Checking government ID:', userData.govIdNumber);
@@ -82,8 +100,39 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
         toast({
           title: "Government ID already used",
           description: "This government ID has already been registered in our system.",
-          variant: "destructive", // Fixed to use a valid variant
+          variant: "destructive",
         });
+        return;
+      }
+      
+      // Check if email is already in use
+      try {
+        // We'll use a passwordless sign-in attempt to check if the email exists
+        // This avoids creating a real auth request
+        const { error: authError } = await supabase.auth.signInWithOtp({
+          email: userData.email,
+        });
+        
+        // If there is no error, or error is not "User already registered", the email is available
+        if (!authError || authError.message.includes('Identity validation failed')) {
+          // Email is available, continue with the form
+          nextStep();
+          return;
+        } else {
+          // For other types of errors, check if user already exists
+          if (authError.message.includes('already registered')) {
+            toast({
+              title: "Email already registered",
+              description: "This email address is already registered in our system.",
+              variant: "destructive", 
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking email:', error);
+        // Continue anyway - don't block the user for errors
+        nextStep();
         return;
       }
       
@@ -104,6 +153,14 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       console.log('Government ID file selected:', file.name);
       updateUserData({ govIdImage: file });
     }
+  };
+  
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+  
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
   
   return (
@@ -268,6 +325,63 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
             />
             <p className="mt-1 text-xs text-gray-500">This will be verified for uniqueness</p>
           </div>
+
+          {/* Password Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="step1-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  id="step1-password" 
+                  value={userData.password}
+                  onChange={(e) => updateUserData({ password: e.target.value })}
+                  className="w-full pr-10"
+                  placeholder="Enter password"
+                  minLength={6}
+                />
+                <button 
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={togglePasswordVisibility}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Minimum 6 characters</p>
+            </div>
+            
+            <div>
+              <label htmlFor="step1-confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="step1-confirmPassword" 
+                  value={userData.confirmPassword}
+                  onChange={(e) => updateUserData({ confirmPassword: e.target.value })}
+                  className="w-full pr-10"
+                  placeholder="Confirm password"
+                  minLength={6}
+                />
+                <button 
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={toggleConfirmPasswordVisibility}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Passwords must match</p>
+            </div>
+          </div>
           
           <div className="flex justify-between mt-8">
             <Button
@@ -288,7 +402,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Validating...
                 </>
-              ) : 'Continue'}
+              ) : 'Next'}
             </Button>
           </div>
         </form>
