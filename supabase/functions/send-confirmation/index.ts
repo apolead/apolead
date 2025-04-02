@@ -1,3 +1,4 @@
+
 // Add polyfill for process.env
 if (typeof globalThis.process === "undefined") {
   globalThis.process = { env: {} };
