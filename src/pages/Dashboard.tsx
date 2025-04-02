@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -20,10 +19,8 @@ const Dashboard = () => {
   
   const handleOpenTrainingModal = () => {
     if (!userProfile?.eligible_for_training && !userProfile?.onboarding_completed) {
-      toast({
-        title: "Onboarding Required",
-        description: "You must complete your onboarding process first.",
-        variant: "destructive"
+      toast.error("Onboarding Required", {
+        description: "You must complete your onboarding process first."
       });
       return;
     }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -112,23 +111,23 @@ const Onboarding = () => {
 
   const validateStep1 = () => {
     if (!formData.firstName.trim()) {
-      toast({ title: "Error", description: "Please enter your first name", variant: "destructive" });
+      toast.error("Error", { description: "Please enter your first name" });
       return false;
     }
     if (!formData.lastName.trim()) {
-      toast({ title: "Error", description: "Please enter your last name", variant: "destructive" });
+      toast.error("Error", { description: "Please enter your last name" });
       return false;
     }
     if (!formData.birthDay) {
-      toast({ title: "Error", description: "Please enter your birth date", variant: "destructive" });
+      toast.error("Error", { description: "Please enter your birth date" });
       return false;
     }
     if (!formData.govIdNumber.trim()) {
-      toast({ title: "Error", description: "Please enter your government ID number", variant: "destructive" });
+      toast.error("Error", { description: "Please enter your government ID number" });
       return false;
     }
     if (!formData.govIdImage && !userProfile?.gov_id_image) {
-      toast({ title: "Error", description: "Please upload your government ID", variant: "destructive" });
+      toast.error("Error", { description: "Please upload your government ID" });
       return false;
     }
     return true;
@@ -136,27 +135,27 @@ const Onboarding = () => {
 
   const validateStep2 = () => {
     if (!formData.cpuType.trim()) {
-      toast({ title: "Error", description: "Please enter your CPU type", variant: "destructive" });
+      toast.error("Error", { description: "Please enter your CPU type" });
       return false;
     }
     if (!formData.ramAmount.trim()) {
-      toast({ title: "Error", description: "Please enter your RAM amount", variant: "destructive" });
+      toast.error("Error", { description: "Please enter your RAM amount" });
       return false;
     }
     if (formData.hasHeadset === null) {
-      toast({ title: "Error", description: "Please indicate whether you have a headset", variant: "destructive" });
+      toast.error("Error", { description: "Please indicate whether you have a headset" });
       return false;
     }
     if (formData.hasQuietPlace === null) {
-      toast({ title: "Error", description: "Please indicate whether you have a quiet place to work", variant: "destructive" });
+      toast.error("Error", { description: "Please indicate whether you have a quiet place to work" });
       return false;
     }
     if (!formData.speedTest && !userProfile?.speed_test) {
-      toast({ title: "Error", description: "Please upload your speed test results", variant: "destructive" });
+      toast.error("Error", { description: "Please upload your speed test results" });
       return false;
     }
     if (!formData.systemSettings && !userProfile?.system_settings) {
-      toast({ title: "Error", description: "Please upload your system settings", variant: "destructive" });
+      toast.error("Error", { description: "Please upload your system settings" });
       return false;
     }
     return true;
@@ -164,19 +163,19 @@ const Onboarding = () => {
 
   const validateStep3 = () => {
     if (formData.salesExperience === null) {
-      toast({ title: "Error", description: "Please indicate whether you have sales experience", variant: "destructive" });
+      toast.error("Error", { description: "Please indicate whether you have sales experience" });
       return false;
     }
     if (formData.salesExperience && !formData.salesMonths.trim()) {
-      toast({ title: "Error", description: "Please enter your sales experience duration", variant: "destructive" });
+      toast.error("Error", { description: "Please enter your sales experience duration" });
       return false;
     }
     if (formData.serviceExperience === null) {
-      toast({ title: "Error", description: "Please indicate whether you have customer service experience", variant: "destructive" });
+      toast.error("Error", { description: "Please indicate whether you have customer service experience" });
       return false;
     }
     if (formData.serviceExperience && !formData.serviceMonths.trim()) {
-      toast({ title: "Error", description: "Please enter your customer service experience duration", variant: "destructive" });
+      toast.error("Error", { description: "Please enter your customer service experience duration" });
       return false;
     }
     return true;
@@ -184,31 +183,31 @@ const Onboarding = () => {
 
   const validateStep4 = () => {
     if (formData.meetObligation === null) {
-      toast({ title: "Error", description: "Please indicate whether you can meet the work obligation", variant: "destructive" });
+      toast.error("Error", { description: "Please indicate whether you can meet the work obligation" });
       return false;
     }
     if (formData.loginDiscord === null) {
-      toast({ title: "Error", description: "Please indicate whether you can login to Discord daily", variant: "destructive" });
+      toast.error("Error", { description: "Please indicate whether you can login to Discord daily" });
       return false;
     }
     if (formData.checkEmails === null) {
-      toast({ title: "Error", description: "Please indicate whether you can check emails daily", variant: "destructive" });
+      toast.error("Error", { description: "Please indicate whether you can check emails daily" });
       return false;
     }
     if (formData.solveProblems === null) {
-      toast({ title: "Error", description: "Please indicate whether you can solve problems", variant: "destructive" });
+      toast.error("Error", { description: "Please indicate whether you can solve problems" });
       return false;
     }
     if (formData.completeTraining === null) {
-      toast({ title: "Error", description: "Please indicate whether you can complete required training", variant: "destructive" });
+      toast.error("Error", { description: "Please indicate whether you can complete required training" });
       return false;
     }
     if (!formData.personalStatement.trim()) {
-      toast({ title: "Error", description: "Please provide a personal statement", variant: "destructive" });
+      toast.error("Error", { description: "Please provide a personal statement" });
       return false;
     }
     if (!formData.acceptedTerms) {
-      toast({ title: "Error", description: "You must accept the terms and conditions", variant: "destructive" });
+      toast.error("Error", { description: "You must accept the terms and conditions" });
       return false;
     }
     return true;
@@ -233,7 +232,7 @@ const Onboarding = () => {
             setStep(prev => prev + 1);
           } catch (error) {
             console.error('Error saving step 1 data:', error);
-            toast({ title: "Error", description: "Failed to save your data. Please try again.", variant: "destructive" });
+            toast.error("Error", { description: "Failed to save your data. Please try again." });
           }
         }
         break;
@@ -253,7 +252,7 @@ const Onboarding = () => {
             setStep(prev => prev + 1);
           } catch (error) {
             console.error('Error saving step 2 data:', error);
-            toast({ title: "Error", description: "Failed to save your data. Please try again.", variant: "destructive" });
+            toast.error("Error", { description: "Failed to save your data. Please try again." });
           }
         }
         break;
@@ -275,7 +274,7 @@ const Onboarding = () => {
             setStep(prev => prev + 1);
           } catch (error) {
             console.error('Error saving step 3 data:', error);
-            toast({ title: "Error", description: "Failed to save your data. Please try again.", variant: "destructive" });
+            toast.error("Error", { description: "Failed to save your data. Please try again." });
           }
         }
         break;
@@ -322,22 +321,22 @@ const Onboarding = () => {
         application_status: isEligible ? 'approved' : 'rejected'
       });
       
-      toast({ 
-        title: isEligible ? "Onboarding Completed!" : "Onboarding Completed",
-        description: isEligible 
-          ? "You're eligible to proceed with training!" 
-          : "Thank you for your application. Unfortunately, you don't meet our requirements.",
-        variant: isEligible ? "default" : "destructive"
-      });
+      if (isEligible) {
+        toast.success("Onboarding Completed!", { 
+          description: "You're eligible to proceed with training!" 
+        });
+      } else {
+        toast.error("Onboarding Completed", { 
+          description: "Thank you for your application. Unfortunately, you don't meet our requirements."
+        });
+      }
       
       navigate('/dashboard');
       
     } catch (error) {
       console.error('Error submitting onboarding:', error);
-      toast({ 
-        title: "Submission Error", 
-        description: "There was an error completing your onboarding. Please try again.", 
-        variant: "destructive" 
+      toast.error("Submission Error", {
+        description: "There was an error completing your onboarding. Please try again."
       });
     } finally {
       setIsSubmitting(false);
