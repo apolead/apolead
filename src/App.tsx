@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-route
 import { useState, useEffect } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
-import { SignUpProvider } from '@/contexts/SignUpContext';
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -272,11 +270,7 @@ const AuthWrapper = () => {
           <SupervisorDashboard />
         </SupervisorRoute>
       } />
-      <Route path="/confirmation" element={
-        <SignUpProvider>
-          <ConfirmationScreen />
-        </SignUpProvider>
-      } />
+      <Route path="/confirmation" element={<ConfirmationScreen />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="*" element={<NotFound />} />

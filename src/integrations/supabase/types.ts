@@ -73,7 +73,7 @@ export type Database = {
           speed_test: string | null
           system_settings: string | null
           updated_at: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           accepted_terms?: boolean | null
@@ -111,7 +111,7 @@ export type Database = {
           speed_test?: string | null
           system_settings?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           accepted_terms?: boolean | null
@@ -149,7 +149,7 @@ export type Database = {
           speed_test?: string | null
           system_settings?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
