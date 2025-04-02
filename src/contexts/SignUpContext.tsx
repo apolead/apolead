@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -126,64 +125,46 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
   
-  // Improved file upload function to ensure files are saved to storage
-  const uploadFile = async (file: File | null, folder: string = 'user_documents') => {
+  const uploadFile = async (file: File | null) => {
     try {
       if (!file) return null;
       
-      // Generate a unique filename using timestamp and random string
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('User is not authenticated');
+      }
+      
+      const userId = session.user.id;
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${folder}/${fileName}`;
+      const fileName = `${userId}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${fileName}`;
       
       console.log('Uploading file:', file.name, 'to path:', filePath);
       
-      // First make sure the bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
-      if (!buckets?.find(b => b.name === folder)) {
-        console.log(`Bucket ${folder} not found, creating it...`);
-        const { error: bucketError } = await supabase.storage.createBucket(folder, {
-          public: false,
-          fileSizeLimit: 10485760, // 10MB
-        });
-        
-        if (bucketError) {
-          console.error('Error creating bucket:', bucketError);
-          throw bucketError;
-        }
-      }
+      const fileArrayBuffer = await file.arrayBuffer();
       
-      // Upload the file
-      const { error: uploadError } = await supabase.storage
-        .from(folder)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true
+      const { data, error } = await supabase.storage
+        .from('user_documents')
+        .upload(filePath, fileArrayBuffer, {
+          contentType: file.type,
+          cacheControl: '3600'
         });
       
-      if (uploadError) {
-        console.error('Error uploading file:', uploadError);
-        throw uploadError;
+      if (error) {
+        console.error('Error uploading file:', error);
+        throw error;
       }
       
-      // Get the public URL
-      const { data: publicUrlData } = await supabase.storage
-        .from(folder)
-        .getPublicUrl(fileName);
+      const { data: { publicUrl } } = supabase.storage
+        .from('user_documents')
+        .getPublicUrl(filePath);
       
-      if (!publicUrlData) {
-        throw new Error('Failed to get public URL for uploaded file');
-      }
+      console.log('Uploaded file public URL:', publicUrl);
       
-      console.log('File uploaded successfully, URL:', publicUrlData.publicUrl);
-      return publicUrlData.publicUrl;
+      return publicUrl;
     } catch (error) {
       console.error('Error in uploadFile:', error);
-      toast({
-        title: "File Upload Failed",
-        description: "There was a problem uploading your file. Please try again.",
-        variant: "destructive",
-      });
       return null;
     }
   };
@@ -230,27 +211,27 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Continue anyway
       }
       
-      // Upload files to storage and get public URLs
+      // Upload both government ID and speed test images first
       console.log('Starting file uploads...');
       
       let govIdImageUrl = null;
       if (userData.govIdImage) {
         console.log('Uploading government ID image:', userData.govIdImage.name);
-        govIdImageUrl = await uploadFile(userData.govIdImage, 'government_ids');
+        govIdImageUrl = await uploadFile(userData.govIdImage);
         console.log('Government ID image uploaded, URL:', govIdImageUrl);
       }
       
       let speedTestUrl = null;
       if (userData.speedTest) {
         console.log('Uploading speed test image:', userData.speedTest.name);
-        speedTestUrl = await uploadFile(userData.speedTest, 'speed_tests');
+        speedTestUrl = await uploadFile(userData.speedTest);
         console.log('Speed test image uploaded, URL:', speedTestUrl);
       }
       
       let systemSettingsUrl = null;
       if (userData.systemSettings) {
         console.log('Uploading system settings image:', userData.systemSettings.name);
-        systemSettingsUrl = await uploadFile(userData.systemSettings, 'system_settings');
+        systemSettingsUrl = await uploadFile(userData.systemSettings);
         console.log('System settings image uploaded, URL:', systemSettingsUrl);
       }
       
@@ -302,8 +283,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 accepted_terms: userData.acceptedTerms,
                 application_status: applicationStatus
               },
-              // Only send confirmation email for approved applications
-              emailRedirectTo: `${window.location.origin}/confirmation?status=${applicationStatus}`,
             },
           });
           
@@ -479,18 +458,12 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         throw updateError;
       }
       
-      // FIX: Corrected application status comparison logic - bug fix for TypeScript error
+      // Redirect based on application status
       if (applicationStatus === 'pending' || applicationStatus === 'approved') {
-        // If application is pending or approved, sign out and redirect
         if (currentSession) {
           await supabase.auth.signOut();
         }
-        // This was a bug - we should only redirect to rejected if it's actually rejected
-        if (applicationStatus === 'rejected') {
-          navigate('/confirmation?status=rejected');
-        } else {
-          navigate('/confirmation?status=approved');
-        }
+        navigate('/confirmation?status=rejected');
         return;
       }
       
