@@ -9,68 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      onboarding_questions: {
-        Row: {
-          correct_answer: number
-          created_at: string | null
-          id: string
-          options: Json
-          question: string
-          updated_at: string | null
-        }
-        Insert: {
-          correct_answer: number
-          created_at?: string | null
-          id?: string
-          options: Json
-          question: string
-          updated_at?: string | null
-        }
-        Update: {
-          correct_answer?: number
-          created_at?: string | null
-          id?: string
-          options?: Json
-          question?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      onboarding_responses: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_correct: boolean
-          question_id: string
-          selected_answer: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_correct: boolean
-          question_id: string
-          selected_answer: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_correct?: boolean
-          question_id?: string
-          selected_answer?: number
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "onboarding_responses_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "onboarding_questions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       quiz_questions: {
         Row: {
           correct_answer: number
@@ -135,7 +73,7 @@ export type Database = {
           speed_test: string | null
           system_settings: string | null
           updated_at: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           accepted_terms?: boolean | null
@@ -173,7 +111,7 @@ export type Database = {
           speed_test?: string | null
           system_settings?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           accepted_terms?: boolean | null
@@ -211,7 +149,7 @@ export type Database = {
           speed_test?: string | null
           system_settings?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -286,9 +224,6 @@ export type Database = {
           lead_source: string | null
           login_discord: boolean | null
           meet_obligation: boolean | null
-          onboarding_completed: boolean | null
-          onboarding_date: string | null
-          onboarding_score: number | null
           personal_statement: string | null
           quiz_passed: boolean | null
           quiz_score: number | null
@@ -349,9 +284,6 @@ export type Database = {
           lead_source?: string | null
           login_discord?: boolean | null
           meet_obligation?: boolean | null
-          onboarding_completed?: boolean | null
-          onboarding_date?: string | null
-          onboarding_score?: number | null
           personal_statement?: string | null
           quiz_passed?: boolean | null
           quiz_score?: number | null
@@ -412,9 +344,6 @@ export type Database = {
           lead_source?: string | null
           login_discord?: boolean | null
           meet_obligation?: boolean | null
-          onboarding_completed?: boolean | null
-          onboarding_date?: string | null
-          onboarding_score?: number | null
           personal_statement?: string | null
           quiz_passed?: boolean | null
           quiz_score?: number | null
@@ -498,9 +427,6 @@ export type Database = {
           lead_source: string | null
           login_discord: boolean | null
           meet_obligation: boolean | null
-          onboarding_completed: boolean | null
-          onboarding_date: string | null
-          onboarding_score: number | null
           personal_statement: string | null
           quiz_passed: boolean | null
           quiz_score: number | null
@@ -566,9 +492,6 @@ export type Database = {
           lead_source: string | null
           login_discord: boolean | null
           meet_obligation: boolean | null
-          onboarding_completed: boolean | null
-          onboarding_date: string | null
-          onboarding_score: number | null
           personal_statement: string | null
           quiz_passed: boolean | null
           quiz_score: number | null
@@ -635,13 +558,6 @@ export type Database = {
           p_state: string
           p_zip_code: string
           p_ssn_last_four: string
-        }
-        Returns: undefined
-      }
-      update_onboarding_status: {
-        Args: {
-          p_user_id: string
-          p_score: number
         }
         Returns: undefined
       }
