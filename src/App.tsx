@@ -255,7 +255,6 @@ const AuthWrapper = () => {
       } />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/reset-password" element={<ConfirmationScreen />} />
       <Route path="/dashboard" element={
         <AuthRoute>
           <Dashboard />

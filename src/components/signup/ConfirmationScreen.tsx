@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Check, X, Loader2, Key } from 'lucide-react';
+import { Check, X, Loader2, Key, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -210,10 +210,12 @@ const ConfirmationScreen = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className={`max-w-md w-full ${isApproved ? 'bg-white' : 'bg-red-50'} rounded-lg shadow-md p-8 text-center`}>
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold inline">
-            <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
-          </h2>
+        <div className="mb-6 flex justify-center">
+          <div className="inline-flex items-center">
+            <span className="text-3xl font-bold">
+              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+            </span>
+          </div>
         </div>
         
         <div className={`h-16 w-16 rounded-full ${isApproved ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center mx-auto mb-6`}>
@@ -228,7 +230,7 @@ const ConfirmationScreen = () => {
           <>
             <h2 className="text-2xl font-bold mb-4">Set Your Password</h2>
             <p className="text-gray-600 mb-6">
-              Please create a secure password for your ApoLead account. This will be used for all future logins.
+              Your application has been approved! Please set a password to complete your registration.
             </p>
             <form onSubmit={handlePasswordSetup} className="space-y-4 text-left">
               <div>
@@ -240,8 +242,6 @@ const ConfirmationScreen = () => {
                   onChange={(e) => setPassword(e.target.value)} 
                   required 
                   disabled={processingPassword}
-                  className="bg-white"
-                  placeholder="Enter new password"
                 />
               </div>
               <div>
@@ -253,8 +253,6 @@ const ConfirmationScreen = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)} 
                   required 
                   disabled={processingPassword}
-                  className="bg-white"
-                  placeholder="Confirm new password"
                 />
               </div>
               <Button 
@@ -270,7 +268,7 @@ const ConfirmationScreen = () => {
                 ) : (
                   <div className="flex items-center justify-center">
                     <Key className="mr-2 h-4 w-4" />
-                    Set Password & Complete Registration
+                    Set Password and Complete Registration
                   </div>
                 )}
               </Button>
@@ -283,15 +281,29 @@ const ConfirmationScreen = () => {
               Thank you for applying to join our team. Your information has been received and will be reviewed by our team.
             </p>
             <div className="space-y-4 mb-8">
-              <div className="p-4 bg-blue-50 rounded-md text-left">
+              <div className="p-4 bg-blue-50 rounded-md text-left border border-blue-100">
                 <h3 className="font-semibold text-blue-800 mb-2">What happens next?</h3>
                 <p className="text-sm text-blue-700">
                   {confirmationSent ? (
                     <>
-                      1. Check your email for a confirmation link<br />
-                      2. Click the link to set your password<br />
-                      3. Once your password is set, you can log in to your account<br />
-                      4. You'll receive further instructions for onboarding
+                      <div className="flex items-start my-2">
+                        <Mail className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+                        <span>Please check your email for a confirmation link with the subject <strong>"Confirm Your Signup"</strong></span>
+                      </div>
+                      <div className="pl-7 space-y-2 mt-2">
+                        <div className="flex items-center">
+                          <div className="h-5 w-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs mr-2">1</div>
+                          <span>Click the <strong>"Confirm your mail"</strong> button in the email</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="h-5 w-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs mr-2">2</div>
+                          <span>Create your password on the next screen</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="h-5 w-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs mr-2">3</div>
+                          <span>Log in with your email and new password</span>
+                        </div>
+                      </div>
                     </>
                   ) : (
                     <>
@@ -328,7 +340,7 @@ const ConfirmationScreen = () => {
           </>
         )}
         
-        <div className="space-x-4">
+        <div className="space-x-4 mt-6">
           {!showPasswordForm && (
             <Button 
               asChild

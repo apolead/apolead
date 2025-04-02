@@ -51,7 +51,7 @@ serve(async (req) => {
       email,
       password: crypto.randomUUID(), // Generate a random temporary password
       options: {
-        redirectTo: redirectUrl || `${req.headers.get("origin")}/confirmation`,
+        redirectTo: redirectUrl || `${req.headers.get("origin")}/confirmation?status=approved`,
       }
     });
 

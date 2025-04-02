@@ -260,8 +260,8 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       console.log('Application submitted successfully:', applicationData);
       
-      // Send confirmation email with signup link immediately for all approved applications
-      // Real-world implementation would likely have an admin review step here
+      // Send confirmation email with signup link for approved applications
+      // This is a simplified check - in a real app, admin approval would happen later
       const isAutomaticallyApproved = 
         userData.meetObligation && 
         userData.loginDiscord && 
@@ -272,8 +272,6 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (isAutomaticallyApproved) {
         try {
           // Call our edge function to send the confirmation email
-          console.log('Sending confirmation email to:', userData.email);
-          
           const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-confirmation`, {
             method: 'POST',
             headers: {
@@ -282,13 +280,12 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             },
             body: JSON.stringify({ 
               email: userData.email,
-              redirectUrl: `${window.location.origin}/confirmation`
+              redirectUrl: `${window.location.origin}/confirmation?status=approved`
             })
           });
           
           if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error calling send-confirmation function:', errorText);
+            console.error('Error calling send-confirmation function:', await response.text());
             toast({
               title: "Email Notification Error",
               description: "There was an issue sending your confirmation email. Please contact support.",
@@ -328,16 +325,17 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
       
-      // Move to confirmation step
+      // Move to confirmation step first
       nextStep();
       
-      // Show confirmation toast
+      // Then show the toast (improved toast behavior)
       toast({
         title: "Application Submitted",
         description: "Your application has been submitted successfully.",
         duration: 5000,
       });
       
+      // Set isSubmitting to false immediately
       setIsSubmitting(false);
       
     } catch (error) {
