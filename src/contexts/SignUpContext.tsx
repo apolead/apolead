@@ -303,7 +303,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 application_status: applicationStatus
               },
               // Only send confirmation email for approved applications
-              emailRedirectTo: `${window.location.origin}/confirmation?status=${applicationStatus}`,
+              emailRedirectTo: applicationStatus === 'approved' ? `${window.location.origin}/confirmation?status=${applicationStatus}` : undefined,
             },
           });
           
@@ -479,22 +479,17 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         throw updateError;
       }
       
-      // FIX: Corrected application status comparison logic - bug fix for TypeScript error
-      if (applicationStatus === 'pending' || applicationStatus === 'approved') {
-        // If application is pending or approved, sign out and redirect
-        if (currentSession) {
-          await supabase.auth.signOut();
-        }
-        // This was a bug - we should only redirect to rejected if it's actually rejected
-        if (applicationStatus === 'rejected') {
-          navigate('/confirmation?status=rejected');
-        } else {
-          navigate('/confirmation?status=approved');
-        }
-        return;
+      // Fixed logic for application status redirection
+      if (currentSession) {
+        await supabase.auth.signOut();
       }
       
-      navigate('/confirmation?status=approved');
+      if (applicationStatus === 'rejected') {
+        navigate('/confirmation?status=rejected');
+      } else {
+        navigate('/confirmation?status=approved');
+      }
+      
     } catch (error: any) {
       console.error('Error submitting application:', error);
       toast({
