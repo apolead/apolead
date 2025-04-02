@@ -42,6 +42,13 @@ export const useSignUpInit = () => {
             await supabase.auth.signOut();
             navigate('/login');
             return;
+          } else if (profile.application_status === 'confirmed') {
+            toast({
+              title: "Already confirmed",
+              description: "Your account has already been set up",
+            });
+            navigate('/dashboard');
+            return;
           }
         }
         
