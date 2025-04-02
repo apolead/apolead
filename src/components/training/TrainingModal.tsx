@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';

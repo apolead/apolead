@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -39,7 +38,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       'check_emails',
       'solve_problems',
       'complete_training',
-      'accepted_terms'
+      'accepted_terms',
+      'onboarding_completed',
+      'eligible_for_training'
     ];
     
     // Convert anything that should be boolean to actual boolean
@@ -47,9 +48,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (field in cleanProfile) {
         const value = cleanProfile[field];
         
-        // Extra debugging for the quiz_passed field
-        if (field === 'quiz_passed') {
-          console.log(`Raw quiz_passed value:`, value, typeof value);
+        // Extra debugging for important fields
+        if (field === 'quiz_passed' || field === 'eligible_for_training') {
+          console.log(`Raw ${field} value:`, value, typeof value);
         }
         
         if (value === null || value === undefined) {
@@ -73,20 +74,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           cleanProfile[field] = null;
         }
         
-        // Extra debugging for the quiz_passed field
-        if (field === 'quiz_passed') {
-          console.log(`Sanitized quiz_passed value:`, cleanProfile[field], typeof cleanProfile[field]);
+        // Extra debugging for important fields
+        if (field === 'quiz_passed' || field === 'eligible_for_training') {
+          console.log(`Sanitized ${field} value:`, cleanProfile[field], typeof cleanProfile[field]);
         }
       }
     });
     
     console.log('Sanitized profile data:', {
+      eligible_for_training: cleanProfile.eligible_for_training,
+      onboarding_completed: cleanProfile.onboarding_completed,
       quiz_passed: cleanProfile.quiz_passed,
       training_video_watched: cleanProfile.training_video_watched,
-      types: {
-        quiz_passed: typeof cleanProfile.quiz_passed,
-        training_video_watched: typeof cleanProfile.training_video_watched
-      }
     });
     
     return cleanProfile;
@@ -184,22 +183,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const sanitizedData = sanitizeProfileData(profileData);
         console.log('User profile fetched successfully with direct function:', sanitizedData);
         
-        // Log specific quiz state values for debugging
-        console.log('Quiz state values:', {
+        // Log specific status values for debugging
+        console.log('User status values:', {
           quiz_passed: sanitizedData.quiz_passed,
           training_video_watched: sanitizedData.training_video_watched,
-          types: {
-            quiz_passed: typeof sanitizedData.quiz_passed,
-            training_video_watched: typeof sanitizedData.training_video_watched
-          }
+          eligible_for_training: sanitizedData.eligible_for_training,
+          onboarding_completed: sanitizedData.onboarding_completed,
+          application_status: sanitizedData.application_status
         });
         
-        // Check for bank information
-        if (sanitizedData.routing_number) {
-          console.log('Bank information found in profile:', {
-            routing_number_length: sanitizedData.routing_number.length,
-            account_number_length: sanitizedData.account_number ? sanitizedData.account_number.length : 0
-          });
+        // Check for uploaded file paths
+        if (sanitizedData.gov_id_image) {
+          console.log('Government ID image URL found:', sanitizedData.gov_id_image);
+        }
+        if (sanitizedData.speed_test) {
+          console.log('Speed test image URL found:', sanitizedData.speed_test);
+        }
+        if (sanitizedData.system_settings) {
+          console.log('System settings image URL found:', sanitizedData.system_settings);
         }
         
         setUserProfile(sanitizedData);
@@ -293,10 +294,95 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('Updating user profile with:', data);
       
+      // Handle file uploads if included in the data
+      const updatedData = { ...data };
+      
+      // Upload government ID image if provided
+      if (data.govIdImage && data.govIdImage instanceof File) {
+        try {
+          const filePath = `gov-ids/${user.id}-${Date.now()}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('user-documents')
+            .upload(filePath, data.govIdImage);
+            
+          if (uploadError) throw uploadError;
+          
+          // Get the public URL for the uploaded file
+          const { data: urlData } = supabase.storage
+            .from('user-documents')
+            .getPublicUrl(filePath);
+            
+          updatedData.gov_id_image = urlData.publicUrl;
+          delete updatedData.govIdImage; // Remove the file object
+          
+          console.log('Government ID image uploaded successfully:', urlData.publicUrl);
+        } catch (error) {
+          console.error('Error uploading government ID image:', error);
+          throw error;
+        }
+      }
+      
+      // Upload speed test image if provided
+      if (data.speedTest && data.speedTest instanceof File) {
+        try {
+          const filePath = `speed-tests/${user.id}-${Date.now()}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('user-documents')
+            .upload(filePath, data.speedTest);
+            
+          if (uploadError) throw uploadError;
+          
+          // Get the public URL for the uploaded file
+          const { data: urlData } = supabase.storage
+            .from('user-documents')
+            .getPublicUrl(filePath);
+            
+          updatedData.speed_test = urlData.publicUrl;
+          delete updatedData.speedTest; // Remove the file object
+          
+          console.log('Speed test image uploaded successfully:', urlData.publicUrl);
+        } catch (error) {
+          console.error('Error uploading speed test image:', error);
+          throw error;
+        }
+      }
+      
+      // Upload system settings image if provided
+      if (data.systemSettings && data.systemSettings instanceof File) {
+        try {
+          const filePath = `system-settings/${user.id}-${Date.now()}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('user-documents')
+            .upload(filePath, data.systemSettings);
+            
+          if (uploadError) throw uploadError;
+          
+          // Get the public URL for the uploaded file
+          const { data: urlData } = supabase.storage
+            .from('user-documents')
+            .getPublicUrl(filePath);
+            
+          updatedData.system_settings = urlData.publicUrl;
+          delete updatedData.systemSettings; // Remove the file object
+          
+          console.log('System settings image uploaded successfully:', urlData.publicUrl);
+        } catch (error) {
+          console.error('Error uploading system settings image:', error);
+          throw error;
+        }
+      }
+      
+      // Convert camelCase keys to snake_case for the database
+      const dbFormattedData = {};
+      Object.keys(updatedData).forEach(key => {
+        const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+        dbFormattedData[snakeKey] = updatedData[key];
+      });
+      
       // Use type assertion to bypass TypeScript error for the RPC function name
       const { error } = await (supabase.rpc as any)('update_user_profile_direct', {
         input_user_id: user.id,
-        input_updates: data
+        input_updates: dbFormattedData
       });
       
       if (error) throw error;
@@ -305,7 +391,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserProfile(prev => {
         const updated = {
           ...prev,
-          ...data
+          ...dbFormattedData
         };
         console.log('Updated user profile in state:', updated);
         
