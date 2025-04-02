@@ -21,8 +21,6 @@ type UserData = {
   lastName: string;
   email: string;
   birthDay: string;
-  password: string;
-  confirmPassword: string;
   govIdNumber: string;
   govIdImage: File | null;
   govIdImageUrl: string;
@@ -72,8 +70,6 @@ const initialUserData: UserData = {
   lastName: '',
   email: '',
   birthDay: '',
-  password: '',
-  confirmPassword: '',
   govIdNumber: '',
   govIdImage: null,
   govIdImageUrl: '',
@@ -213,61 +209,66 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       
-      // Create the user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-        options: {
-          data: {
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            birth_day: userData.birthDay,
-            gov_id_number: userData.govIdNumber,
-            gov_id_image: govIdImageUrl,
-            cpu_type: userData.cpuType,
-            ram_amount: userData.ramAmount,
-            has_headset: userData.hasHeadset,
-            has_quiet_place: userData.hasQuietPlace,
-            speed_test: speedTestUrl,
-            system_settings: systemSettingsUrl,
-            available_hours: userData.availableHours,
-            available_days: userData.availableDays,
-            day_hours: userData.dayHours,
-            sales_experience: userData.salesExperience,
-            sales_months: userData.salesMonths,
-            sales_company: userData.salesCompany,
-            sales_product: userData.salesProduct,
-            service_experience: userData.serviceExperience,
-            service_months: userData.serviceMonths,
-            service_company: userData.serviceCompany,
-            service_product: userData.serviceProduct,
-            meet_obligation: userData.meetObligation,
-            login_discord: userData.loginDiscord,
-            check_emails: userData.checkEmails,
-            solve_problems: userData.solveProblems,
-            complete_training: userData.completeTraining,
-            personal_statement: userData.personalStatement,
-            accepted_terms: userData.acceptedTerms,
-            application_status: 'pending'
-          }
-        }
-      });
+      // Instead of creating a user account immediately, store the application data
+      const { data: applicationData, error: applicationError } = await supabase
+        .from('user_applications')
+        .insert({
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          email: userData.email,
+          birth_day: userData.birthDay,
+          gov_id_number: userData.govIdNumber,
+          gov_id_image: govIdImageUrl,
+          cpu_type: userData.cpuType,
+          ram_amount: userData.ramAmount,
+          has_headset: userData.hasHeadset,
+          has_quiet_place: userData.hasQuietPlace,
+          speed_test: speedTestUrl,
+          system_settings: systemSettingsUrl,
+          available_hours: userData.availableHours,
+          available_days: userData.availableDays,
+          day_hours: userData.dayHours,
+          sales_experience: userData.salesExperience,
+          sales_months: userData.salesMonths,
+          sales_company: userData.salesCompany,
+          sales_product: userData.salesProduct,
+          service_experience: userData.serviceExperience,
+          service_months: userData.serviceMonths,
+          service_company: userData.serviceCompany,
+          service_product: userData.serviceProduct,
+          meet_obligation: userData.meetObligation,
+          login_discord: userData.loginDiscord,
+          check_emails: userData.checkEmails,
+          solve_problems: userData.solveProblems,
+          complete_training: userData.completeTraining,
+          personal_statement: userData.personalStatement,
+          accepted_terms: userData.acceptedTerms,
+          application_status: 'pending'
+        });
       
-      if (authError) {
-        console.error('Signup error:', authError);
+      if (applicationError) {
+        console.error('Application submission error:', applicationError);
         toast({
-          title: "Signup Error",
-          description: authError.message || "An error occurred during signup.",
+          title: "Submission Error",
+          description: applicationError.message || "An error occurred during submission.",
           variant: "destructive",
         });
         setIsSubmitting(false);
         return;
       }
       
-      console.log('Signup successful:', authData);
+      console.log('Application submitted successfully:', applicationData);
+      
+      // In a real application, you would trigger an email notification here
+      // to inform admins about the new application
       
       // Move to confirmation step
       nextStep();
+      
+      toast({
+        title: "Application Submitted",
+        description: "Your application has been submitted successfully. You'll receive an email when it's approved.",
+      });
       
       // If you want to add a slight delay before showing confirmation
       setTimeout(() => {

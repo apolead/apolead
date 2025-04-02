@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +15,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
   const { toast } = useToast();
   
   const validateEmail = (email) => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const regex = /^[^\s@]+@gmail\.com$/i;
     return regex.test(email);
   };
 
@@ -36,27 +35,24 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
     e.preventDefault();
     
     if (!isValid) {
-      setErrorMessage('Please enter a valid email address');
+      setErrorMessage('Please enter a valid Gmail address (@gmail.com)');
       return;
     }
     
     setIsChecking(true);
     
     try {
-      // Check if the user already exists in auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: 'not-a-real-password-just-checking-if-exists'
       });
       
-      // If we get any response but invalid credentials, the user exists
       if (!authError || (authError && !authError.message.includes('Invalid login credentials'))) {
         setErrorMessage('This email is already registered in our system');
         setIsChecking(false);
         return;
       }
       
-      // Also check profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('email')
@@ -73,19 +69,29 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         return;
       }
       
-      // If we get here, the email is not yet registered
+      const { data: applicationData, error: applicationError } = await supabase
+        .from('user_applications')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+        
+      if (applicationData) {
+        setErrorMessage('An application with this email already exists');
+        setIsChecking(false);
+        return;
+      }
+      
       console.log('Email is available for use');
       updateUserData({ email });
       nextStep();
       
       toast({
         title: "Email confirmed",
-        description: "Your email is valid and available for use.",
+        description: "Your Gmail address is valid and available for use.",
       });
       
     } catch (error) {
       console.error('Error checking email:', error);
-      // If there's an unexpected error, we'll give the user the benefit of the doubt
       updateUserData({ email });
       nextStep();
     } finally {
@@ -143,7 +149,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         </div>
         
         <h2 className="text-2xl font-bold mb-4">Start Your Application</h2>
-        <p className="text-gray-600 mb-6">Enter your email to begin the application process. This will be your login for future access.</p>
+        <p className="text-gray-600 mb-6">Enter your Gmail address to begin the application process. This will be your login for future access.</p>
         
         {errorMessage && (
           <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md text-sm mb-6">
@@ -161,7 +167,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
                 value={email}
                 onChange={handleEmailChange}
                 className="w-full pr-10"
-                placeholder="Enter your email address"
+                placeholder="Enter your Gmail address"
               />
               {email && (
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -173,7 +179,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
                 </div>
               )}
             </div>
-            <p className="mt-1 text-xs text-gray-500">We'll never share your email with anyone else.</p>
+            <p className="mt-1 text-xs text-gray-500">We only accept Gmail addresses (@gmail.com)</p>
           </div>
           
           <Button
