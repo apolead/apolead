@@ -16,6 +16,13 @@ import {
   AlertTriangle,
   XCircle
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const Dashboard = () => {
   const { user, userProfile, loading } = useAuth();
@@ -26,6 +33,7 @@ const Dashboard = () => {
   const [onboardingStatus, setOnboardingStatus] = useState('not_started'); // 'not_started', 'incomplete', 'ineligible', 'completed'
   const [trainingStatus, setTrainingStatus] = useState('not_started'); // 'not_started', 'failed', 'completed'
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -169,6 +177,11 @@ const Dashboard = () => {
     window.location.reload();
   };
   
+  const handleScheduleInterview = () => {
+    console.log("Dashboard: Opening schedule interview dialog");
+    setShowScheduleDialog(true);
+  };
+  
   const getOnboardingButtonText = () => {
     switch (onboardingStatus) {
       case 'not_started':
@@ -244,6 +257,22 @@ const Dashboard = () => {
     }
   };
   
+  useEffect(() => {
+    if (showScheduleDialog) {
+      console.log("Dashboard: Loading Calendly script");
+      const script = document.createElement('script');
+      script.src = 'https://assets.calendly.com/assets/external/widget.js';
+      script.async = true;
+      document.body.appendChild(script);
+      
+      return () => {
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
+    }
+  }, [showScheduleDialog]);
+  
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
@@ -253,7 +282,6 @@ const Dashboard = () => {
       <DashboardSidebar activeItem="dashboard" />
       
       <div className="flex-1 p-[20px_30px]">
-        {/* Header */}
         <div className="flex justify-between items-center mb-[25px]">
           <div className="welcome text-[26px] font-[600] text-[#1e293b]">
             Thanks for signing up, <span className="text-[#4f46e5] relative after:content-[''] after:absolute after:bottom-[-5px] after:left-0 after:w-full after:h-[3px] after:bg-gradient-to-r after:from-[#4f46e5] after:to-[#00c2cb] after:rounded-[2px]">
@@ -286,7 +314,6 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Page Title */}
         <div className="page-title flex items-center mb-[20px]">
           <h2 className="text-[24px] font-[600] text-[#1e293b] flex items-center">
             <div className="page-title-icon mr-[12px] bg-gradient-to-r from-[#4f46e5] to-[#00c2cb] text-white w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[16px]">
@@ -299,7 +326,6 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Stats Section */}
         <div className="stats grid grid-cols-4 gap-[25px] mb-[25px]">
           <div className="stat-card bg-white rounded-[16px] p-[25px] flex items-center shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all relative overflow-hidden hover:transform hover:-translate-y-[8px] hover:shadow-[0_8px_25px_rgba(0,0,0,0.1)] before:content-[''] before:absolute before:top-0 before:right-0 before:w-[100px] before:h-[100px] before:bg-radial-gradient before:from-[rgba(79,70,229,0.1)] before:to-[rgba(79,70,229,0)] before:rounded-[0_0_0_70%]">
             <div className="stat-icon w-[60px] h-[60px] rounded-[16px] flex items-center justify-center mr-[20px] bg-gradient-to-r from-[rgba(79,70,229,0.1)] to-[rgba(0,194,203,0.1)] text-[#4f46e5] text-[24px] relative after:content-[''] after:absolute after:top-0 after:left-0 after:w-full after:h-full after:bg-gradient-to-r after:from-[#4f46e5] after:to-[#00c2cb] after:rounded-[16px] after:opacity-20">
@@ -354,7 +380,6 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Action Cards Container */}
         <div className="action-cards-container bg-white rounded-[20px] p-[25px] mb-[20px] shadow-[0_4px_15px_rgba(0,0,0,0.05)] relative overflow-hidden before:content-[''] before:absolute before:bottom-0 before:right-0 before:w-[200px] before:h-[200px] before:bg-radial-gradient before:from-[rgba(79,70,229,0.05)] before:to-[rgba(79,70,229,0)] before:rounded-0">
           <div className="action-cards-header flex justify-between items-center mb-[20px]">
             <h2 className="text-[20px] text-[#1e293b] flex items-center font-[600]">
@@ -373,9 +398,7 @@ const Dashboard = () => {
             </div>
           </div>
           
-          {/* Action Cards */}
           <div className="action-cards grid grid-cols-5 gap-[25px] py-[20px] relative">
-            {/* Step 1: Initial Onboarding */}
             <div className={`action-card bg-white rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border ${onboardingStatus === 'completed' || onboardingStatus === 'ineligible' ? 'border-[#e2e8f0]' : 'border-[#f59e0b]'} shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all h-full hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.1)]`}>
               <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
                 onboardingStatus === 'completed' ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 
@@ -401,7 +424,6 @@ const Dashboard = () => {
               </button>
             </div>
             
-            {/* Step 2: Initial Training - Locked/Greyed out or Enabled */}
             <div className={`action-card ${userProfile?.eligible_for_training !== true ? 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50' : trainingStatus === 'failed' ? 'bg-white border border-[#ef4444]' : 'bg-white border border-[#10B981]'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${userProfile?.eligible_for_training === true ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : ''}`}>
               <div className={`step-number locked absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
                 trainingStatus === 'completed' ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 
@@ -419,7 +441,7 @@ const Dashboard = () => {
                 trainingStatus === 'completed' ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 
                 trainingStatus === 'failed' ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_8px_20px_rgba(239,68,68,0.2)]' : 
                 userProfile?.eligible_for_training === true ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 'locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B] shadow-none'
-              } text-white flex items-center justify-center text-[30px] relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
+              } text-white flex items-center justify-center text-[30px] shadow-none relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
                 <i className="fas fa-book-reader"></i>
               </div>
               <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Initial Training</h3>
@@ -447,7 +469,6 @@ const Dashboard = () => {
               </button>
             </div>
             
-            {/* Step 3: Interview - Locked when training is completed */}
             <div className={`action-card ${trainingStatus === 'completed' ? 'bg-white border border-[#10B981]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${trainingStatus === 'completed' ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : ''}`}>
               <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)] text-white flex items-center justify-center font-[600] text-[16px] z-[3] border-[3px] border-white`}>
                 3
@@ -466,7 +487,7 @@ const Dashboard = () => {
               <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Once your training is reviewed, you'll be able to schedule your interview with our team.</p>
               {trainingStatus === 'completed' ? (
                 <button 
-                  onClick={() => setShowInterviewScheduler(true)}
+                  onClick={handleScheduleInterview}
                   className="card-button button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]"
                 >
                   <CheckCircle className="mr-[8px] text-[16px]" /> Schedule Now
@@ -478,7 +499,6 @@ const Dashboard = () => {
               )}
             </div>
             
-            {/* Step 4: Additional Training - Locked */}
             <div className="action-card locked bg-[rgba(241,245,249,0.5)] rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50 relative z-[2] h-full">
               <div className="step-number locked absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B] text-white flex items-center justify-center font-[600] text-[16px] shadow-none z-[3] border-[3px] border-white">
                 4
@@ -496,7 +516,6 @@ const Dashboard = () => {
               </button>
             </div>
             
-            {/* Step 5: Kickoff & Setup */}
             <div className="action-card locked bg-[rgba(241,245,249,0.5)] rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50 relative z-[2] h-full">
               <div className="step-number locked absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B] text-white flex items-center justify-center font-[600] text-[16px] shadow-none z-[3] border-[3px] border-white">
                 5
@@ -517,7 +536,6 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {/* Onboarding Modal */}
       <OnboardingModal 
         isOpen={isModalOpen} 
         onClose={closeOnboardingModal} 
@@ -525,12 +543,32 @@ const Dashboard = () => {
         initialUserData={userProfile}
       />
 
-      {/* Training Modal */}
       <TrainingModal 
         isOpen={isTrainingModalOpen} 
         onClose={closeTrainingModal}
         onComplete={(passed) => closeTrainingModal(passed)}
       />
+      
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Schedule Your Interview</DialogTitle>
+            <DialogDescription>
+              Please select a date and time that works for you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="w-full h-[700px] border rounded-lg mt-4">
+            <iframe
+              src="https://calendly.com/apolead-support/apolead-agent-interview"
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              title="Schedule Interview"
+              className="rounded-lg"
+            ></iframe>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

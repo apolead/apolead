@@ -13,7 +13,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 interface TrainingModalProps {
@@ -102,6 +101,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   };
   
   const handleCloseModal = () => {
+    setShowScheduleDialog(false);
     onClose();
   };
   
