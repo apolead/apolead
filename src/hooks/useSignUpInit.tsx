@@ -14,37 +14,13 @@ export const useSignUpInit = () => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
+      // If user is already logged in, we can update the email in userData
       if (session) {
         updateUserData({
           email: session.user.email || '',
         });
         
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('application_status')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        if (profile) {
-          if (profile.application_status === 'approved') {
-            toast({
-              title: "Already approved",
-              description: "Your application has already been approved",
-            });
-            navigate('/dashboard');
-            return;
-          } else if (profile.application_status === 'rejected') {
-            toast({
-              title: "Application rejected",
-              description: "Your application has been rejected",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            navigate('/login');
-            return;
-          }
-        }
-        
+        // If we're on step 0 (email/password entry), move to next step
         if (currentStep === 0) {
           setTimeout(() => {
             nextStep();

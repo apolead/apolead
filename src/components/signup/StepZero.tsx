@@ -65,9 +65,14 @@ const StepZero = ({
     
     setIsLoading(true);
     try {
+      // Simplified signup process - just perform the signup with email/password
+      // No additional validation or redirect logic that could prevent email sending
       const { data, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/confirmation`
+        }
       });
       
       if (error) throw error;
@@ -81,7 +86,7 @@ const StepZero = ({
         description: "Please check your email for the confirmation link"
       });
       
-      // Instead of going to the next step, show a confirmation message
+      // Navigate to confirmation page
       navigate('/confirmation');
     } catch (error) {
       console.error('Signup error:', error);
