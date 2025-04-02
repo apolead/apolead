@@ -21,8 +21,6 @@ type UserData = {
   lastName: string;
   email: string;
   birthDay: string;
-  password: string;
-  confirmPassword: string;
   govIdNumber: string;
   govIdImage: File | null;
   govIdImageUrl: string;
@@ -72,8 +70,6 @@ const initialUserData: UserData = {
   lastName: '',
   email: '',
   birthDay: '',
-  password: '',
-  confirmPassword: '',
   govIdNumber: '',
   govIdImage: null,
   govIdImageUrl: '',
@@ -213,10 +209,10 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       
-      // Create the user account
+      // Create temporary user account with email verification disabled
+      // We'll send the set password email only after approval
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
-        password: userData.password,
         options: {
           data: {
             first_name: userData.firstName,
@@ -249,7 +245,11 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             personal_statement: userData.personalStatement,
             accepted_terms: userData.acceptedTerms,
             application_status: 'pending'
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/set-password`,
+          // Set email confirmation to false to avoid sending confirmation emails now
+          // We'll send it after approval
+          emailConfirmation: false,
         }
       });
       
