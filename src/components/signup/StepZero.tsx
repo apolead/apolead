@@ -16,13 +16,8 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
   const { toast } = useToast();
   
   const validateEmail = (email) => {
-    // First check general email format
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!regex.test(email)) return false;
-    
-    // Then check if it's a Gmail address
-    const domain = email.split('@')[1];
-    return domain.toLowerCase() === 'gmail.com';
+    return regex.test(email);
   };
 
   const handleEmailChange = (e) => {
@@ -41,7 +36,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
     e.preventDefault();
     
     if (!isValid) {
-      setErrorMessage('Please enter a valid Gmail address (only gmail.com is accepted)');
+      setErrorMessage('Please enter a valid email address');
       return;
     }
     
