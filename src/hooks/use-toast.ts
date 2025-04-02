@@ -1,9 +1,10 @@
+
 import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast"
 import * as React from "react"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 1000  // 1 second to remove after dismissal
-const DEFAULT_TOAST_DURATION = 1000  // 1 second for visibility
+const DEFAULT_TOAST_DURATION = 5000  // 5 seconds for visibility
 
 type ToasterToast = ToastProps & {
   id: string
@@ -32,7 +33,7 @@ type ActionType = typeof actionTypes
 type Action =
   | {
       type: ActionType["ADD_TOAST"]
-      toast: ToasterToast
+      toast: Omit<ToasterToast, "id">
     }
   | {
       type: ActionType["UPDATE_TOAST"]
@@ -52,7 +53,7 @@ interface State {
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
-const dismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+const dismissTimeouts = new Map<string, ReturnType<typeof setTimeout>>() 
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
@@ -97,7 +98,7 @@ export const reducer = (state: State, action: Action): State => {
         ...state,
         toasts: [
           ...state.toasts,
-          action.toast,
+          { ...action.toast, id: genId() },
         ].slice(0, TOAST_LIMIT),
       }
 

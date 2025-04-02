@@ -2,108 +2,67 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Loader2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
   const [errorMessage, setErrorMessage] = useState('');
-  const [isUploadingSpeedTest, setIsUploadingSpeedTest] = useState(false);
-  const [isUploadingSystemSettings, setIsUploadingSystemSettings] = useState(false);
-  const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  const handleBackToHome = async (e) => {
+    e.preventDefault();
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
   
   const handleContinue = (e) => {
     e.preventDefault();
     setErrorMessage('');
     
-    // Basic validation
-    if (!userData.cpuType) {
-      setErrorMessage('Please select your CPU type');
+    // Validate form - comprehensive checks
+    if (!userData.cpuType || !userData.cpuType.trim()) {
+      setErrorMessage('Please enter your CPU type');
       return;
     }
     
-    if (!userData.ramAmount) {
-      setErrorMessage('Please select your RAM amount');
+    if (!userData.ramAmount || !userData.ramAmount.trim()) {
+      setErrorMessage('Please enter your RAM amount');
       return;
     }
     
-    if (!userData.speedTest && !userData.speedTestUrl) {
-      setErrorMessage('Please upload your internet speed test screenshot');
+    if (userData.hasHeadset === null) {
+      setErrorMessage('Please indicate whether you have a headset');
       return;
     }
     
-    if (!userData.systemSettings && !userData.systemSettingsUrl) {
-      setErrorMessage('Please upload your system settings screenshot');
+    if (userData.hasQuietPlace === null) {
+      setErrorMessage('Please indicate whether you have a quiet place to work');
       return;
     }
     
-    // Proceed to next step
+    if (!userData.speedTest) {
+      setErrorMessage('Please upload a screenshot of your speed test results');
+      return;
+    }
+    
+    if (!userData.systemSettings) {
+      setErrorMessage('Please upload a screenshot of your system settings');
+      return;
+    }
+    
+    // Continue to next step
     nextStep();
   };
   
-  const handleFileUpload = async (e, fileType) => {
+  const handleFileChange = (fieldName, e) => {
     const file = e.target.files[0];
-    if (!file) return;
-    
-    try {
-      if (fileType === 'speedTest') {
-        setIsUploadingSpeedTest(true);
-        updateUserData({ speedTest: file });
-      } else if (fileType === 'systemSettings') {
-        setIsUploadingSystemSettings(true);
-        updateUserData({ systemSettings: file });
-      }
-      
-      // Create a unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
-      
-      // Determine the correct bucket
-      const bucketName = fileType === 'speedTest' ? 'speed_tests' : 'system_settings';
-      
-      // Upload file to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, file);
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(filePath);
-      
-      console.log(`${fileType} file uploaded successfully:`, urlData.publicUrl);
-      
-      // Update user data with the file URL
-      if (fileType === 'speedTest') {
-        updateUserData({ speedTestUrl: urlData.publicUrl });
-      } else if (fileType === 'systemSettings') {
-        updateUserData({ systemSettingsUrl: urlData.publicUrl });
-      }
-      
-      toast({
-        title: "File Uploaded",
-        description: `${fileType === 'speedTest' ? 'Speed test' : 'System settings'} uploaded successfully.`,
-      });
-    } catch (error) {
-      console.error(`Error uploading ${fileType}:`, error);
-      toast({
-        title: "Upload Failed",
-        description: error.message || `Failed to upload ${fileType === 'speedTest' ? 'speed test' : 'system settings'}`,
-        variant: "destructive"
-      });
-    } finally {
-      if (fileType === 'speedTest') {
-        setIsUploadingSpeedTest(false);
-      } else if (fileType === 'systemSettings') {
-        setIsUploadingSystemSettings(false);
-      }
+    if (file) {
+      console.log(`Uploading ${fieldName} file:`, file.name);
+      updateUserData({ [fieldName]: file });
     }
   };
   
@@ -111,37 +70,38 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+        {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
         <div className="relative z-10">
+          <a 
+            href="#" 
+            onClick={handleBackToHome}
+            className="inline-flex items-center text-white hover:text-white/80 mb-12"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+            </svg>
+            Back to Home
+          </a>
+
           <h2 className="text-2xl font-bold mb-6">Step 2 of 4: System Requirements</h2>
-          <p className="text-white/80 mb-6">We need to verify that your computer meets our minimum requirements.</p>
+          <p className="text-white/80 mb-6">To ensure you can work effectively, please confirm your technical setup and experience.</p>
           
           <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm mb-6">
             <h4 className="font-semibold mb-2">Why we need this information</h4>
             <ul className="list-disc pl-5 space-y-1 text-sm">
-              <li>To ensure you can run our agent software efficiently</li>
-              <li>To verify you have adequate internet connectivity</li>
-              <li>To confirm you have the necessary equipment for customer interactions</li>
-            </ul>
-          </div>
-          
-          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-            <h4 className="font-semibold mb-2">Minimum Requirements</h4>
-            <ul className="list-disc pl-5 space-y-1 text-sm">
-              <li>CPU: Intel i3 / AMD Ryzen 3 or better</li>
-              <li>RAM: 8GB or more</li>
-              <li>Internet: 10 Mbps download / 5 Mbps upload</li>
-              <li>Headset with microphone</li>
-              <li>Quiet work environment</li>
+              <li>To verify your system meets our requirements</li>
+              <li>To ensure you have the necessary equipment</li>
+              <li>To match you with appropriate client calls</li>
             </ul>
           </div>
         </div>
         
         <div className="mt-auto pt-4 text-sm opacity-75">
-          <p>You can contact technical support if you have questions about meeting these requirements.</p>
+          <p>All information is securely stored and protected in accordance with data protection regulations.</p>
         </div>
       </div>
       
@@ -157,8 +117,8 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
           <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "66.6%" }}></div>
         </div>
         
-        <h2 className="text-2xl font-bold mb-4">System Information</h2>
-        <p className="text-gray-600 mb-6">Please provide information about your computer system and work environment.</p>
+        <h2 className="text-2xl font-bold mb-4">System Requirements & Experience</h2>
+        <p className="text-gray-600 mb-6">To ensure you can work effectively, please confirm your technical setup and experience.</p>
         
         {errorMessage && (
           <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md text-sm mb-6">
@@ -166,167 +126,162 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
           </div>
         )}
         
-        <form onSubmit={handleContinue} className="space-y-6">
-          {/* CPU Type */}
-          <div>
-            <label htmlFor="cpuType" className="block text-sm font-medium text-gray-700 mb-1">
-              CPU Type
-            </label>
-            <Select 
-              value={userData.cpuType} 
-              onValueChange={(value) => updateUserData({ cpuType: value })}
-            >
-              <SelectTrigger id="cpuType">
-                <SelectValue placeholder="Select CPU Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="intel_i3">Intel i3</SelectItem>
-                <SelectItem value="intel_i5">Intel i5</SelectItem>
-                <SelectItem value="intel_i7">Intel i7</SelectItem>
-                <SelectItem value="intel_i9">Intel i9</SelectItem>
-                <SelectItem value="amd_ryzen3">AMD Ryzen 3</SelectItem>
-                <SelectItem value="amd_ryzen5">AMD Ryzen 5</SelectItem>
-                <SelectItem value="amd_ryzen7">AMD Ryzen 7</SelectItem>
-                <SelectItem value="amd_ryzen9">AMD Ryzen 9</SelectItem>
-                <SelectItem value="apple_m1">Apple M1</SelectItem>
-                <SelectItem value="apple_m2">Apple M2</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* RAM Amount */}
-          <div>
-            <label htmlFor="ramAmount" className="block text-sm font-medium text-gray-700 mb-1">
-              RAM Amount
-            </label>
-            <Select 
-              value={userData.ramAmount} 
-              onValueChange={(value) => updateUserData({ ramAmount: value })}
-            >
-              <SelectTrigger id="ramAmount">
-                <SelectValue placeholder="Select RAM Amount" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="4gb">4 GB</SelectItem>
-                <SelectItem value="8gb">8 GB</SelectItem>
-                <SelectItem value="16gb">16 GB</SelectItem>
-                <SelectItem value="32gb">32 GB</SelectItem>
-                <SelectItem value="64gb+">64 GB+</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Internet Speed Test */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Internet Speed Test Screenshot
-            </label>
-            <p className="text-xs text-gray-500 mb-2">
-              Please take a screenshot of your speed test results from <a href="https://www.speedtest.net" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">speedtest.net</a> and upload it here.
-            </p>
-            <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-50">
-              <input
-                type="file"
-                id="speedTest"
-                accept="image/*,.pdf"
-                className="hidden"
-                onChange={(e) => handleFileUpload(e, 'speedTest')}
-                disabled={isUploadingSpeedTest}
-              />
-              <label htmlFor="speedTest" className="cursor-pointer">
-                {isUploadingSpeedTest ? (
-                  <div className="flex flex-col items-center">
-                    <Loader2 className="h-10 w-10 text-gray-400 animate-spin mb-2" />
-                    <p className="text-sm text-gray-500">Uploading...</p>
-                  </div>
-                ) : (
-                  <>
-                    <svg className="w-10 h-10 text-gray-400 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    <p className="text-sm text-gray-500 mb-1">
-                      {userData.speedTestUrl ? 
-                        `File uploaded successfully` : 
-                        'Drag and drop your speed test screenshot here, or click to browse'
-                      }
-                    </p>
-                    <p className="text-xs text-gray-500">Accepted formats: JPG, PNG, PDF (Max 5MB)</p>
-                  </>
-                )}
-              </label>
-            </div>
-          </div>
-          
-          {/* System Settings */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              System Settings Screenshot
-            </label>
-            <p className="text-xs text-gray-500 mb-2">
-              Please take a screenshot of your system information page and upload it here.
-            </p>
-            <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center bg-gray-50">
-              <input
-                type="file"
-                id="systemSettings"
-                accept="image/*,.pdf"
-                className="hidden"
-                onChange={(e) => handleFileUpload(e, 'systemSettings')}
-                disabled={isUploadingSystemSettings}
-              />
-              <label htmlFor="systemSettings" className="cursor-pointer">
-                {isUploadingSystemSettings ? (
-                  <div className="flex flex-col items-center">
-                    <Loader2 className="h-10 w-10 text-gray-400 animate-spin mb-2" />
-                    <p className="text-sm text-gray-500">Uploading...</p>
-                  </div>
-                ) : (
-                  <>
-                    <svg className="w-10 h-10 text-gray-400 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    <p className="text-sm text-gray-500 mb-1">
-                      {userData.systemSettingsUrl ? 
-                        `File uploaded successfully` : 
-                        'Drag and drop your system information screenshot here, or click to browse'
-                      }
-                    </p>
-                    <p className="text-xs text-gray-500">Accepted formats: JPG, PNG, PDF (Max 5MB)</p>
-                  </>
-                )}
-              </label>
-            </div>
-          </div>
-          
-          {/* Equipment Checkboxes */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Do you have a headset with microphone?
-                </label>
-                <p className="text-xs text-gray-500">Required for customer interactions</p>
-              </div>
-              <Switch 
-                checked={userData.hasHeadset} 
-                onCheckedChange={(checked) => updateUserData({ hasHeadset: checked })} 
-                id="hasHeadset"
-              />
-            </div>
+        <form onSubmit={handleContinue} className="space-y-6 overflow-y-auto">
+          <div className="border rounded-lg p-4 bg-gray-50 mb-6">
+            <h3 className="text-lg font-medium mb-4">System Requirements</h3>
             
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Do you have a quiet place to work?
-                </label>
-                <p className="text-xs text-gray-500">Minimal background noise required</p>
+            <div className="space-y-5">
+              <div className="border-b pb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">25 MBPS Internet</label>
+                <p className="text-xs text-gray-500 mb-2">Upload a selfie of speed test results from:</p>
+                <a 
+                  href="https://speed.cloudflare.com/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 text-sm hover:underline"
+                >
+                  https://speed.cloudflare.com/
+                </a>
+                
+                <div className="mt-3 border-2 border-dashed border-gray-300 rounded-md p-4 bg-white">
+                  <div className="flex items-center justify-center">
+                    <input
+                      id="speed-test-upload"
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => handleFileChange('speedTest', e)}
+                    />
+                    <label htmlFor="speed-test-upload" className="cursor-pointer text-center">
+                      <svg className="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                        <path d="M12 4v16m8-8H4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {userData.speedTest ? 
+                          `Selected: ${userData.speedTest.name}` : 
+                          'Upload a file or drag and drop'
+                        }
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        PNG, JPG, GIF up to 5MB
+                      </p>
+                    </label>
+                  </div>
+                </div>
               </div>
-              <Switch 
-                checked={userData.hasQuietPlace} 
-                onCheckedChange={(checked) => updateUserData({ hasQuietPlace: checked })} 
-                id="hasQuietPlace"
-              />
+              
+              <div className="border-b pb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Windows 10+</label>
+                <p className="text-xs text-gray-500 mb-2">Post a screenshot of system settings</p>
+                
+                <div className="mt-3 border-2 border-dashed border-gray-300 rounded-md p-4 bg-white">
+                  <div className="flex items-center justify-center">
+                    <input
+                      id="system-settings-upload"
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => handleFileChange('systemSettings', e)}
+                    />
+                    <label htmlFor="system-settings-upload" className="cursor-pointer text-center">
+                      <svg className="mx-auto h-10 h-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                        <path d="M12 4v16m8-8H4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {userData.systemSettings ? 
+                          `Selected: ${userData.systemSettings.name}` : 
+                          'Upload a file or drag and drop'
+                        }
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        PNG, JPG, GIF up to 5MB
+                      </p>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <label htmlFor="step2-cpuType" className="block text-sm font-medium text-gray-700 mb-1">CPU Type and Speed</label>
+                <Input
+                  type="text"
+                  id="step2-cpuType"
+                  value={userData.cpuType}
+                  onChange={(e) => updateUserData({ cpuType: e.target.value })}
+                  className="w-full"
+                  placeholder="e.g., Intel Core i5-10400 2.9GHz"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="step2-ramAmount" className="block text-sm font-medium text-gray-700 mb-1">RAM / Memory (How much?)</label>
+                <Input
+                  type="text"
+                  id="step2-ramAmount"
+                  value={userData.ramAmount}
+                  onChange={(e) => updateUserData({ ramAmount: e.target.value })}
+                  className="w-full"
+                  placeholder="e.g., 16GB DDR4"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">I have a headset</label>
+                  <div className="flex space-x-4">
+                    <label className="inline-flex items-center">
+                      <input 
+                        type="radio" 
+                        name="headset" 
+                        value="yes" 
+                        checked={userData.hasHeadset === true}
+                        onChange={() => updateUserData({ hasHeadset: true })}
+                        className="w-4 h-4 cursor-pointer text-indigo-600"
+                      />
+                      <span className="ml-2 text-sm">Yes</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input 
+                        type="radio" 
+                        name="headset" 
+                        value="no" 
+                        checked={userData.hasHeadset === false}
+                        onChange={() => updateUserData({ hasHeadset: false })}
+                        className="w-4 h-4 cursor-pointer text-indigo-600"
+                      />
+                      <span className="ml-2 text-sm">No</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">I have a quiet place to work</label>
+                  <div className="flex space-x-4">
+                    <label className="inline-flex items-center">
+                      <input 
+                        type="radio" 
+                        name="quietPlace" 
+                        value="yes" 
+                        checked={userData.hasQuietPlace === true}
+                        onChange={() => updateUserData({ hasQuietPlace: true })}
+                        className="w-4 h-4 cursor-pointer text-indigo-600"
+                      />
+                      <span className="ml-2 text-sm">Yes</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input 
+                        type="radio" 
+                        name="quietPlace" 
+                        value="no" 
+                        checked={userData.hasQuietPlace === false}
+                        onChange={() => updateUserData({ hasQuietPlace: false })}
+                        className="w-4 h-4 cursor-pointer text-indigo-600"
+                      />
+                      <span className="ml-2 text-sm">No</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -342,14 +297,8 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
             <Button
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              disabled={isUploadingSpeedTest || isUploadingSystemSettings}
             >
-              {isUploadingSpeedTest || isUploadingSystemSettings ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : 'Next'}
+              Continue
             </Button>
           </div>
         </form>

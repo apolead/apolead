@@ -1,308 +1,534 @@
 
 import React, { createContext, useContext, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
-// Type definitions
-type SignUpContextType = {
-  currentStep: number;
-  userData: UserData;
-  updateUserData: (data: Partial<UserData>) => void;
-  nextStep: () => void;
-  prevStep: () => void;
-  handleSubmit: () => Promise<void>;
-  isSubmitting: boolean;
-  isCheckingGovId: boolean;
-};
-
-type UserData = {
-  // Personal Information (Step 1)
+// Define the shape of our user data
+interface UserData {
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
+  confirmPassword: string;
   birthDay: string;
   govIdNumber: string;
   govIdImage: File | null;
-  govIdImageUrl: string;
-  
-  // Computer Requirements (Step 2)
   cpuType: string;
   ramAmount: string;
-  hasHeadset: boolean;
-  hasQuietPlace: boolean;
+  hasHeadset: boolean | null;
+  hasQuietPlace: boolean | null;
   speedTest: File | null;
-  speedTestUrl: string;
   systemSettings: File | null;
-  systemSettingsUrl: string;
-  
-  // Availability and Experience (Step 3)
   availableHours: string[];
   availableDays: string[];
-  dayHours: Record<string, string[]>;
-  
+  dayHours: Record<string, string>;
   salesExperience: boolean;
   salesMonths: string;
   salesCompany: string;
   salesProduct: string;
-  
   serviceExperience: boolean;
   serviceMonths: string;
   serviceCompany: string;
   serviceProduct: string;
-  
-  meetObligation: boolean;
-  loginDiscord: boolean;
-  checkEmails: boolean;
-  solveProblems: boolean;
-  completeTraining: boolean;
-  
+  meetObligation: boolean | null;
+  loginDiscord: boolean | null;
+  checkEmails: boolean | null;
+  solveProblems: boolean | null;
+  completeTraining: boolean | null;
   personalStatement: string;
   acceptedTerms: boolean;
-};
+  applicationStatus: string;
+}
 
-// Create context
-const SignUpContext = createContext<SignUpContextType | undefined>(undefined);
-
-// Initial user data
+// Initial user data state
 const initialUserData: UserData = {
-  // Personal Information (Step 1)
   firstName: '',
   lastName: '',
   email: '',
+  password: '',
+  confirmPassword: '',
   birthDay: '',
   govIdNumber: '',
   govIdImage: null,
-  govIdImageUrl: '',
-  
-  // Computer Requirements (Step 2)
   cpuType: '',
   ramAmount: '',
   hasHeadset: false,
   hasQuietPlace: false,
   speedTest: null,
-  speedTestUrl: '',
   systemSettings: null,
-  systemSettingsUrl: '',
-  
-  // Availability and Experience (Step 3)
   availableHours: [],
   availableDays: [],
   dayHours: {},
-  
   salesExperience: false,
   salesMonths: '',
   salesCompany: '',
   salesProduct: '',
-  
   serviceExperience: false,
   serviceMonths: '',
   serviceCompany: '',
   serviceProduct: '',
-  
   meetObligation: false,
   loginDiscord: false,
   checkEmails: false,
   solveProblems: false,
   completeTraining: false,
-  
   personalStatement: '',
   acceptedTerms: false,
+  applicationStatus: 'pending'
 };
 
+// Define the context type
+interface SignUpContextType {
+  currentStep: number;
+  isSubmitting: boolean;
+  isCheckingGovId: boolean;
+  userData: UserData;
+  updateUserData: (data: Partial<UserData>) => void;
+  nextStep: () => void;
+  prevStep: () => void;
+  handleSubmit: () => Promise<void>;
+}
+
+// Create the context
+const SignUpContext = createContext<SignUpContextType | undefined>(undefined);
+
+// Custom hook to use the context
+export const useSignUp = () => {
+  const context = useContext(SignUpContext);
+  if (!context) {
+    throw new Error('useSignUp must be used within a SignUpProvider');
+  }
+  return context;
+};
+
+// Provider component
 export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [userData, setUserData] = useState<UserData>(initialUserData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingGovId, setIsCheckingGovId] = useState(false);
+  const [userData, setUserData] = useState<UserData>(initialUserData);
+  
+  const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Update user data
-  const updateUserData = (data: Partial<UserData>) => {
-    setUserData(prevData => ({
-      ...prevData,
-      ...data
-    }));
+  const updateUserData = (newData: Partial<UserData>) => {
+    setUserData(prev => ({ ...prev, ...newData }));
   };
   
-  // Move to next step
   const nextStep = () => {
-    setCurrentStep(prevStep => prevStep + 1);
+    if (currentStep < 4) {
+      setCurrentStep(prev => prev + 1);
+      window.scrollTo(0, 0);
+    }
   };
   
-  // Move to previous step
   const prevStep = () => {
-    setCurrentStep(prevStep => Math.max(0, prevStep - 1));
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+      window.scrollTo(0, 0);
+    }
   };
   
-  // Upload a file to Supabase storage
-  const uploadFileToStorage = async (file: File, bucketName: string) => {
-    if (!file) return null;
-    
-    // Create unique filename
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
-    
-    // Upload file
-    const { data, error } = await supabase.storage
-      .from(bucketName)
-      .upload(filePath, file);
+  // Improved file upload function to ensure files are saved to storage
+  const uploadFile = async (file: File | null, folder: string) => {
+    try {
+      if (!file) return null;
       
-    if (error) {
-      console.error(`Error uploading to ${bucketName}:`, error);
-      throw error;
+      // Generate a unique filename using timestamp and random string
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${fileName}`;
+      
+      console.log('Uploading file:', file.name, 'to folder:', folder, 'with path:', filePath);
+      
+      // Upload the file
+      const { data, error: uploadError } = await supabase.storage
+        .from(folder)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+      
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        throw uploadError;
+      }
+      
+      console.log('Upload successful:', data);
+      
+      // Get the public URL
+      const { data: publicUrlData } = await supabase.storage
+        .from(folder)
+        .getPublicUrl(filePath);
+      
+      if (!publicUrlData) {
+        throw new Error('Failed to get public URL for uploaded file');
+      }
+      
+      console.log('File uploaded successfully, URL:', publicUrlData.publicUrl);
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error('Error in uploadFile:', error);
+      toast({
+        title: "File Upload Failed",
+        description: "There was a problem uploading your file. Please try again.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+  
+  const determineApplicationStatus = () => {
+    if (!userData.hasHeadset || !userData.hasQuietPlace) {
+      return 'rejected';
     }
     
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(filePath);
-      
-    console.log(`File uploaded to ${bucketName}:`, urlData.publicUrl);
-    return urlData.publicUrl;
+    if (!userData.meetObligation || !userData.loginDiscord || 
+        !userData.checkEmails || !userData.solveProblems || 
+        !userData.completeTraining) {
+      return 'rejected';
+    }
+    
+    return 'approved';
   };
   
-  // Handle form submission
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
       
-      // Additional validation can be added here
-      if (!userData.acceptedTerms) {
-        toast({
-          title: "Terms Required",
-          description: "You must accept the terms and conditions to continue.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Upload any remaining files that haven't been uploaded yet
-      let govIdImageUrl = userData.govIdImageUrl;
-      let speedTestUrl = userData.speedTestUrl;
-      let systemSettingsUrl = userData.systemSettingsUrl;
-      
+      // Check only user_profiles table for existing gov ID
       try {
-        // Upload government ID if not already uploaded
-        if (userData.govIdImage && !userData.govIdImageUrl) {
-          govIdImageUrl = await uploadFileToStorage(userData.govIdImage, 'government_ids');
-        }
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('gov_id_number')
+          .eq('gov_id_number', userData.govIdNumber)
+          .maybeSingle();
+          
+        if (profileError) throw profileError;
         
-        // Upload speed test if not already uploaded
-        if (userData.speedTest && !userData.speedTestUrl) {
-          speedTestUrl = await uploadFileToStorage(userData.speedTest, 'speed_tests');
+        if (profileData) {
+          toast({
+            title: "Government ID already used",
+            description: "This government ID has already been registered in our system.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
         }
-        
-        // Upload system settings if not already uploaded
-        if (userData.systemSettings && !userData.systemSettingsUrl) {
-          systemSettingsUrl = await uploadFileToStorage(userData.systemSettings, 'system_settings');
-        }
-      } catch (uploadError) {
-        console.error('Error uploading files:', uploadError);
-        toast({
-          title: "Upload Error",
-          description: "Failed to upload one or more files. Please try again.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
+      } catch (error) {
+        console.error('Error verifying government ID:', error);
+        // Continue anyway
       }
       
-      // Create the temporary user account without a password
-      // It will be in a "pending" state until approved
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: userData.email,
-        options: {
-          data: {
-            first_name: userData.firstName,
-            last_name: userData.lastName,
-            birth_day: userData.birthDay,
-            gov_id_number: userData.govIdNumber,
-            gov_id_image: govIdImageUrl,
-            cpu_type: userData.cpuType,
-            ram_amount: userData.ramAmount,
-            has_headset: userData.hasHeadset,
-            has_quiet_place: userData.hasQuietPlace,
-            speed_test: speedTestUrl,
-            system_settings: systemSettingsUrl,
-            available_hours: userData.availableHours,
-            available_days: userData.availableDays,
-            day_hours: userData.dayHours,
-            sales_experience: userData.salesExperience,
-            sales_months: userData.salesMonths,
-            sales_company: userData.salesCompany,
-            sales_product: userData.salesProduct,
-            service_experience: userData.serviceExperience,
-            service_months: userData.serviceMonths,
-            service_company: userData.serviceCompany,
-            service_product: userData.serviceProduct,
-            meet_obligation: userData.meetObligation,
-            login_discord: userData.loginDiscord,
-            check_emails: userData.checkEmails,
-            solve_problems: userData.solveProblems,
-            complete_training: userData.completeTraining,
-            personal_statement: userData.personalStatement,
-            accepted_terms: userData.acceptedTerms,
-            application_status: 'pending'
+      // Upload files to storage and get public URLs
+      console.log('Starting file uploads...');
+      
+      let govIdImageUrl = null;
+      if (userData.govIdImage) {
+        console.log('Uploading government ID image:', userData.govIdImage.name);
+        govIdImageUrl = await uploadFile(userData.govIdImage, 'government_ids');
+        console.log('Government ID image uploaded, URL:', govIdImageUrl);
+      }
+      
+      let speedTestUrl = null;
+      if (userData.speedTest) {
+        console.log('Uploading speed test image:', userData.speedTest.name);
+        speedTestUrl = await uploadFile(userData.speedTest, 'speed_tests');
+        console.log('Speed test image uploaded, URL:', speedTestUrl);
+      }
+      
+      let systemSettingsUrl = null;
+      if (userData.systemSettings) {
+        console.log('Uploading system settings image:', userData.systemSettings.name);
+        systemSettingsUrl = await uploadFile(userData.systemSettings, 'system_settings');
+        console.log('System settings image uploaded, URL:', systemSettingsUrl);
+      }
+      
+      const applicationStatus = determineApplicationStatus();
+      console.log('Application status determined:', applicationStatus);
+      
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // If no session, need to sign up the user first
+      if (!session) {
+        // Verify password match
+        if (userData.password !== userData.confirmPassword) {
+          toast({
+            title: "Password Error",
+            description: "Passwords do not match.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (!userData.password || userData.password.length < 6) {
+          toast({
+            title: "Password Error",
+            description: "Password must be at least 6 characters long.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        try {
+          console.log('No session found, creating user account with email:', userData.email);
+          
+          // Create the user account with custom password
+          const { data, error } = await supabase.auth.signUp({
+            email: userData.email,
+            password: userData.password, // Use the user's password
+            options: {
+              data: {
+                first_name: userData.firstName,
+                last_name: userData.lastName,
+                birth_day: userData.birthDay,
+                gov_id_number: userData.govIdNumber,
+                gov_id_image: govIdImageUrl,
+                cpu_type: userData.cpuType,
+                ram_amount: userData.ramAmount,
+                has_headset: userData.hasHeadset,
+                has_quiet_place: userData.hasQuietPlace,
+                speed_test: speedTestUrl,
+                system_settings: systemSettingsUrl,
+                available_hours: userData.availableHours,
+                available_days: userData.availableDays,
+                day_hours: userData.dayHours,
+                sales_experience: userData.salesExperience,
+                sales_months: userData.salesMonths,
+                sales_company: userData.salesCompany,
+                sales_product: userData.salesProduct,
+                service_experience: userData.serviceExperience,
+                service_months: userData.serviceMonths,
+                service_company: userData.serviceCompany,
+                service_product: userData.serviceProduct,
+                meet_obligation: userData.meetObligation,
+                login_discord: userData.loginDiscord,
+                check_emails: userData.checkEmails,
+                solve_problems: userData.solveProblems,
+                complete_training: userData.completeTraining,
+                personal_statement: userData.personalStatement,
+                accepted_terms: userData.acceptedTerms,
+                application_status: applicationStatus
+              },
+              // Only send confirmation email for approved applications after submission
+              emailRedirectTo: applicationStatus === 'approved' ? `${window.location.origin}/confirmation?status=${applicationStatus}` : undefined,
+            },
+          });
+          
+          if (error) throw error;
+          
+          console.log('User created successfully:', data);
+          
+          // If we don't have a session after signup, that's okay - we'll create the profile record directly
+          // and then redirect to the appropriate page
+          if (!data.session) {
+            console.log('No session returned after signup, proceeding with profile creation anyway');
+            
+            // Create user_profiles record with service role
+            const profileData = {
+              user_id: data.user.id, // Critical: Include the user_id field
+              first_name: userData.firstName,
+              last_name: userData.lastName,
+              email: userData.email,
+              birth_day: userData.birthDay,
+              gov_id_number: userData.govIdNumber,
+              gov_id_image: govIdImageUrl,
+              cpu_type: userData.cpuType,
+              ram_amount: userData.ramAmount,
+              has_headset: userData.hasHeadset,
+              has_quiet_place: userData.hasQuietPlace,
+              speed_test: speedTestUrl,
+              system_settings: systemSettingsUrl,
+              available_hours: userData.availableHours,
+              available_days: userData.availableDays,
+              day_hours: userData.dayHours,
+              sales_experience: userData.salesExperience,
+              sales_months: userData.salesMonths,
+              sales_company: userData.salesCompany,
+              sales_product: userData.salesProduct,
+              service_experience: userData.serviceExperience,
+              service_months: userData.serviceMonths,
+              service_company: userData.serviceCompany,
+              service_product: userData.serviceProduct,
+              meet_obligation: userData.meetObligation,
+              login_discord: userData.loginDiscord,
+              check_emails: userData.checkEmails,
+              solve_problems: userData.solveProblems,
+              complete_training: userData.completeTraining,
+              personal_statement: userData.personalStatement,
+              accepted_terms: userData.acceptedTerms,
+              application_status: applicationStatus
+            };
+            
+            const { error: insertError } = await supabase
+              .from('user_profiles')
+              .insert(profileData);
+              
+            if (insertError) throw insertError;
+            
+            // Redirect based on application status
+            setIsSubmitting(false);
+            
+            if (applicationStatus === 'rejected') {
+              navigate('/confirmation?status=rejected');
+            } else {
+              navigate('/confirmation?status=approved');
+            }
+            
+            return;
           }
+        } catch (error: any) {
+          console.error('Error creating user account:', error);
+          toast({
+            title: "Authentication failed",
+            description: error.message || "Failed to create user account",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
         }
-      });
+      }
       
-      if (signUpError) {
-        console.error('Signup error:', signUpError);
+      // Get the current session again (could be new or existing)
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession) {
+        // Even if we don't have a session, we'll let the form submission continue
+        // as we've already determined the application status and uploaded files
+        console.log('No session available, but continuing with form submission');
+      }
+      
+      const userId = currentSession?.user?.id;
+      
+      // Always include user_id in the data object
+      const data = {
+        user_id: userId, // Fix: Adding the required user_id field
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        email: userData.email,
+        birth_day: userData.birthDay,
+        gov_id_number: userData.govIdNumber,
+        gov_id_image: govIdImageUrl,
+        cpu_type: userData.cpuType,
+        ram_amount: userData.ramAmount,
+        has_headset: userData.hasHeadset,
+        has_quiet_place: userData.hasQuietPlace,
+        speed_test: speedTestUrl,
+        system_settings: systemSettingsUrl,
+        available_hours: userData.availableHours,
+        available_days: userData.availableDays,
+        day_hours: userData.dayHours,
+        sales_experience: userData.salesExperience,
+        sales_months: userData.salesMonths,
+        sales_company: userData.salesCompany,
+        sales_product: userData.salesProduct,
+        service_experience: userData.serviceExperience,
+        service_months: userData.serviceMonths,
+        service_company: userData.serviceCompany,
+        service_product: userData.serviceProduct,
+        meet_obligation: userData.meetObligation,
+        login_discord: userData.loginDiscord,
+        check_emails: userData.checkEmails,
+        solve_problems: userData.solveProblems,
+        complete_training: userData.completeTraining,
+        personal_statement: userData.personalStatement,
+        accepted_terms: userData.acceptedTerms,
+        application_status: applicationStatus
+      };
+      
+      console.log('Updating user profile with data:', data);
+      
+      let updateError = null;
+      
+      if (userId) {
+        // First check if profile exists
+        const { data: existingProfile, error: profileCheckError } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+          
+        if (profileCheckError) {
+          console.error('Error checking for existing profile:', profileCheckError);
+        }
+        
+        if (existingProfile) {
+          // Update existing profile
+          console.log('Updating existing profile for user:', userId);
+          const { error } = await supabase
+            .from('user_profiles')
+            .update(data)
+            .eq('user_id', userId);
+            
+          updateError = error;
+        } else {
+          // Insert new profile
+          console.log('Creating new profile for user:', userId);
+          const { error } = await supabase
+            .from('user_profiles')
+            .insert(data);
+            
+          updateError = error;
+        }
+      } else {
+        // If we somehow don't have a user ID at this point, show an error
+        console.error('No user ID available for profile creation');
         toast({
-          title: "Signup Error",
-          description: signUpError.message || "An error occurred during signup.",
+          title: "Error creating profile",
+          description: "Could not determine user ID for profile creation",
           variant: "destructive",
         });
         setIsSubmitting(false);
         return;
       }
       
-      console.log('Application submitted successfully');
+      if (updateError) {
+        console.error('Error updating/inserting user profile:', updateError);
+        throw updateError;
+      }
       
-      // Move to confirmation step
-      nextStep();
+      // Sign out user before final redirection
+      if (currentSession) {
+        await supabase.auth.signOut();
+      }
       
-      // If you want to add a slight delay before showing confirmation
-      setTimeout(() => {
-        setIsSubmitting(false);
-      }, 1000);
+      // Redirect based on application status
+      if (applicationStatus === 'rejected') {
+        navigate('/confirmation?status=rejected');
+      } else if (applicationStatus === 'approved') {
+        navigate('/confirmation?status=approved');
+      } else {
+        navigate('/confirmation?status=pending');
+      }
       
-    } catch (error) {
-      console.error('Submission error:', error);
+    } catch (error: any) {
+      console.error('Error submitting application:', error);
       toast({
-        title: "Submission Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Submission failed",
+        description: error.message || "There was an error submitting your application",
         variant: "destructive",
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
-    <SignUpContext.Provider 
-      value={{ 
-        currentStep, 
-        userData, 
-        updateUserData, 
-        nextStep, 
-        prevStep, 
-        handleSubmit,
-        isSubmitting,
-        isCheckingGovId
-      }}
-    >
+    <SignUpContext.Provider value={{
+      currentStep,
+      isSubmitting,
+      isCheckingGovId,
+      userData,
+      updateUserData,
+      nextStep,
+      prevStep,
+      handleSubmit
+    }}>
       {children}
     </SignUpContext.Provider>
   );
-};
-
-export const useSignUp = () => {
-  const context = useContext(SignUpContext);
-  if (context === undefined) {
-    throw new Error('useSignUp must be used within a SignUpProvider');
-  }
-  return context;
 };

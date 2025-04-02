@@ -3,13 +3,14 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId = false }) => {
   const [errorMessage, setErrorMessage] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -58,6 +59,22 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       return;
     }
     
+    // Password validation
+    if (!userData.password) {
+      setErrorMessage('Please enter a password');
+      return;
+    }
+    
+    if (userData.password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long');
+      return;
+    }
+    
+    if (userData.password !== userData.confirmPassword) {
+      setErrorMessage('Passwords do not match');
+      return;
+    }
+    
     // Verify government ID number against user_profiles table ONLY
     try {
       console.log('Checking government ID:', userData.govIdNumber);
@@ -88,23 +105,22 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
         return;
       }
       
-      // Check if email is available
+      // Check if email is already in use
       try {
-        const { data, error } = await supabase.auth.signUp({
+        // We'll use a passwordless sign-in attempt to check if the email exists
+        // This avoids creating a real auth request
+        const { error: authError } = await supabase.auth.signInWithOtp({
           email: userData.email,
-          password: 'TemporaryCheckOnlyPassword123!', // This won't create an account as we'll cancel
-          options: {
-            // Set email confirmation to false to avoid sending confirmation emails
-            emailRedirectTo: null,
-          }
         });
         
-        // Cancel the sign-up process and check the error
-        await supabase.auth.signOut();
-        
-        if (error) {
-          // Check if error is because user exists already
-          if (error.message.includes('already registered')) {
+        // If there is no error, or error is not "User already registered", the email is available
+        if (!authError || authError.message.includes('Identity validation failed')) {
+          // Email is available, continue with the form
+          nextStep();
+          return;
+        } else {
+          // For other types of errors, check if user already exists
+          if (authError.message.includes('already registered')) {
             toast({
               title: "Email already registered",
               description: "This email address is already registered in our system.",
@@ -115,6 +131,9 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
         }
       } catch (error) {
         console.error('Error checking email:', error);
+        // Continue anyway - don't block the user for errors
+        nextStep();
+        return;
       }
       
       // No matching gov ID was found, continue to next step
@@ -124,57 +143,24 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       console.error('Error checking government ID:', error);
       // Continue anyway - don't block the user for errors
       nextStep();
+      return;
     }
   };
   
-  const handleFileChange = async (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-    
-    try {
-      setIsUploading(true);
-      
-      // Create a unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
-      
-      // Upload file to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('government_ids')
-        .upload(filePath, file);
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('government_ids')
-        .getPublicUrl(filePath);
-      
-      console.log('File uploaded successfully:', urlData.publicUrl);
-      
-      // Update user data with the file URL
-      updateUserData({ 
-        govIdImage: file, 
-        govIdImageUrl: urlData.publicUrl 
-      });
-      
-      toast({
-        title: "File Uploaded",
-        description: "Government ID uploaded successfully.",
-      });
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      toast({
-        title: "Upload Failed",
-        description: error.message || "Failed to upload government ID",
-        variant: "destructive"
-      });
-    } finally {
-      setIsUploading(false);
+    if (file) {
+      console.log('Government ID file selected:', file.name);
+      updateUserData({ govIdImage: file });
     }
+  };
+  
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+  
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
   
   return (
@@ -301,28 +287,18 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
                 accept="image/*,.pdf"
                 className="hidden"
                 onChange={handleFileChange}
-                disabled={isUploading}
               />
               <label htmlFor="govIdImage" className="cursor-pointer">
-                {isUploading ? (
-                  <div className="flex flex-col items-center">
-                    <Loader2 className="h-10 w-10 text-gray-400 animate-spin mb-2" />
-                    <p className="text-sm text-gray-500">Uploading...</p>
-                  </div>
-                ) : (
-                  <>
-                    <svg className="w-10 h-10 text-gray-400 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    <p className="text-sm text-gray-500 mb-1">
-                      {userData.govIdImageUrl ? 
-                        `File uploaded successfully` : 
-                        'Drag and drop your ID here, or click to browse'
-                      }
-                    </p>
-                    <p className="text-xs text-gray-500">Accepted formats: JPG, PNG, PDF (Max 5MB)</p>
-                  </>
-                )}
+                <svg className="w-10 h-10 text-gray-400 mb-2 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <p className="text-sm text-gray-500 mb-1">
+                  {userData.govIdImage ? 
+                    `Selected: ${userData.govIdImage.name}` : 
+                    'Drag and drop your ID here, or click to browse'
+                  }
+                </p>
+                <p className="text-xs text-gray-500">Accepted formats: JPG, PNG, PDF (Max 5MB)</p>
               </label>
             </div>
           </div>
@@ -349,6 +325,63 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
             />
             <p className="mt-1 text-xs text-gray-500">This will be verified for uniqueness</p>
           </div>
+
+          {/* Password Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="step1-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  id="step1-password" 
+                  value={userData.password}
+                  onChange={(e) => updateUserData({ password: e.target.value })}
+                  className="w-full pr-10"
+                  placeholder="Enter password"
+                  minLength={6}
+                />
+                <button 
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={togglePasswordVisibility}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Minimum 6 characters</p>
+            </div>
+            
+            <div>
+              <label htmlFor="step1-confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="step1-confirmPassword" 
+                  value={userData.confirmPassword}
+                  onChange={(e) => updateUserData({ confirmPassword: e.target.value })}
+                  className="w-full pr-10"
+                  placeholder="Confirm password"
+                  minLength={6}
+                />
+                <button 
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={toggleConfirmPasswordVisibility}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Passwords must match</p>
+            </div>
+          </div>
           
           <div className="flex justify-between mt-8">
             <Button
@@ -362,12 +395,12 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
             <Button
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              disabled={isCheckingGovId || isUploading}
+              disabled={isCheckingGovId}
             >
-              {isCheckingGovId || isUploading ? (
+              {isCheckingGovId ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isUploading ? 'Uploading...' : 'Validating...'}
+                  Validating...
                 </>
               ) : 'Next'}
             </Button>
