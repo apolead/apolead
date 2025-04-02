@@ -209,10 +209,16 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       
+      // Generate a temporary user_id - this is required by the database schema
+      // In a real implementation, this would be replaced by the actual user's ID after authentication
+      const tempUserId = crypto.randomUUID();
+      
       // Instead of creating a user account immediately, store the application data
       const { data: applicationData, error: applicationError } = await supabase
         .from('user_applications')
         .insert({
+          // Include the required user_id field
+          user_id: tempUserId,
           first_name: userData.firstName,
           last_name: userData.lastName,
           email: userData.email,

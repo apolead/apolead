@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
     setIsChecking(true);
     
     try {
+      // Check if email exists in auth system
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
         password: 'not-a-real-password-just-checking-if-exists'
@@ -53,6 +55,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         return;
       }
       
+      // Check if email exists in user_profiles
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('email')
@@ -69,6 +72,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         return;
       }
       
+      // Check if email exists in user_applications
       const { data: applicationData, error: applicationError } = await supabase
         .from('user_applications')
         .select('email')
@@ -88,10 +92,12 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
       toast({
         title: "Email confirmed",
         description: "Your Gmail address is valid and available for use.",
+        duration: 3000,
       });
       
     } catch (error) {
       console.error('Error checking email:', error);
+      // Even on error, we'll proceed (but log the error)
       updateUserData({ email });
       nextStep();
     } finally {
