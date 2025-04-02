@@ -9,4 +9,3 @@ verify_jwt = true
 
 [send-confirmation]
 verify_jwt = false
-

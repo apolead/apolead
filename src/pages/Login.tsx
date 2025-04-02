@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Mail, ArrowLeft } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,25 +14,10 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isSendingReset, setIsSendingReset] = useState(false);
-  const [resetMode, setResetMode] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [resetToken, setResetToken] = useState('');
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if this is a password reset link
-    const query = new URLSearchParams(location.search);
-    const type = query.get('type');
-    const accessToken = query.get('access_token');
-    
-    if (type === 'recovery' && accessToken) {
-      setResetMode(true);
-      setResetToken(accessToken);
-    }
-
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -138,12 +123,8 @@ const Login = () => {
       setIsCheckingSession(false);
     };
     
-    if (!resetMode) {
-      checkSession();
-    } else {
-      setIsCheckingSession(false);
-    }
-  }, [navigate, location.search, resetMode]);
+    checkSession();
+  }, [navigate]);
 
   const handleEmailChange = e => {
     setEmail(e.target.value);
@@ -332,7 +313,7 @@ const Login = () => {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login?type=recovery`,
+        redirectTo: `${window.location.origin}/confirmation?reset=true`,
       });
       
       if (error) throw error;
@@ -353,154 +334,11 @@ const Login = () => {
     }
   };
 
-  const handlePasswordReset = async (e) => {
-    e.preventDefault();
-    
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords match",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (newPassword.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      // Set the new password using the access token
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Password updated",
-        description: "Your password has been reset successfully"
-      });
-      
-      // Reset form and return to login
-      setResetMode(false);
-      setPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      
-    } catch (error) {
-      console.error('Password reset error:', error);
-      toast({
-        title: "Error resetting password",
-        description: error.message || "An error occurred while resetting your password",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (isCheckingSession) {
     return <div className="flex items-center justify-center h-screen">
       <div className="flex flex-col items-center gap-2">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <div className="text-lg font-medium">Checking session...</div>
-      </div>
-    </div>;
-  }
-
-  if (resetMode) {
-    return <div className="flex flex-col md:flex-row w-full h-screen">
-      <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
-        <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
-        
-        <div className="relative z-10">
-          <button 
-            onClick={() => setResetMode(false)} 
-            className="inline-flex items-center text-white hover:text-white/80 mb-12"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Login
-          </button>
-
-          <h2 className="text-3xl font-bold mb-6 text-white">Reset Your Password</h2>
-          <p className="text-white/80">Create a new secure password to access your account.</p>
-        </div>
-        
-        <div className="mt-auto relative z-10">
-          <div className="bg-indigo-800 bg-opacity-70 rounded-lg p-5 mb-8">
-            <p className="text-sm italic mb-3 text-white">"Security is key. Make sure to create a strong password that is unique to this platform."</p>
-          </div>
-        </div>
-      </div>
-      
-      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
-        <div className="block md:hidden mb-8">
-          <button 
-            onClick={() => setResetMode(false)} 
-            className="text-indigo-600 hover:text-indigo-800 flex items-center"
-          >
-            <ArrowLeft className="h-5 w-5 mr-1" />
-            Back to Login
-          </button>
-        </div>
-      
-        <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
-            </h2>
-          </div>
-
-          <h1 className="text-2xl font-bold mb-2 text-center">Reset Password</h1>
-          <p className="text-gray-600 mb-8 text-center">Create a new secure password</p>
-          
-          <form onSubmit={handlePasswordReset} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input 
-                id="newPassword" 
-                type="password" 
-                placeholder="Enter new password" 
-                value={newPassword} 
-                onChange={(e) => setNewPassword(e.target.value)} 
-                required 
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input 
-                id="confirmPassword" 
-                type="password" 
-                placeholder="Confirm new password" 
-                value={confirmPassword} 
-                onChange={(e) => setConfirmPassword(e.target.value)} 
-                required 
-              />
-            </div>
-            
-            <Button type="submit" disabled={isLoading} className="w-full py-6 text-neutral-50">
-              {isLoading ? <div className="flex items-center justify-center">
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Updating password...
-                </div> : "Reset Password"}
-            </Button>
-          </form>
-        </div>
-        
-        <div className="mt-auto pt-4">
-          <p className="text-center text-gray-500 text-xs">© 2025 ApoLead, All rights Reserved</p>
-        </div>
       </div>
     </div>;
   }
@@ -576,10 +414,7 @@ const Login = () => {
                 className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
                 disabled={isSendingReset}
               >
-                {isSendingReset ? <div className="flex items-center">
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                  Sending...
-                </div> : 'Forgot password?'}
+                {isSendingReset ? 'Sending...' : 'Forgot password?'}
               </button>
             </div>
             
