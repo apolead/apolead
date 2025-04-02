@@ -61,6 +61,20 @@ const Dashboard = () => {
       // Check if eligible based on the database field directly
       const isEligible = userProfile.eligible_for_training === true;
       
+      // Additional logic check - if all onboarding requirements are met
+      const hasRequiredFields = userProfile.first_name && 
+                              userProfile.last_name && 
+                              userProfile.birth_day && 
+                              userProfile.gov_id_number && 
+                              userProfile.gov_id_image &&
+                              userProfile.has_headset === true &&
+                              userProfile.has_quiet_place === true &&
+                              userProfile.meet_obligation === true &&
+                              userProfile.login_discord === true &&
+                              userProfile.check_emails === true &&
+                              userProfile.solve_problems === true &&
+                              userProfile.complete_training === true;
+      
       // Determine training status
       if (userProfile.quiz_passed === true) {
         setTrainingStatus('completed');
@@ -73,6 +87,7 @@ const Dashboard = () => {
       console.log("Dashboard: Eligibility check", {
         isOnboardingCompletedFlag,
         isEligible,
+        hasRequiredFields,
         eligible_for_training_type: typeof userProfile.eligible_for_training,
         onboarding_completed_type: typeof userProfile.onboarding_completed,
         trainingStatus,
@@ -81,7 +96,7 @@ const Dashboard = () => {
       });
       
       // Determine onboarding status - prioritize the database flags
-      if (isOnboardingCompletedFlag) {
+      if (isOnboardingCompletedFlag || (hasRequiredFields && isEligible)) {
         if (isEligible) {
           setOnboardingStatus('completed');
           setOnboardingCompleted(true);
