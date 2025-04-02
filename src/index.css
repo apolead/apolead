@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -241,6 +242,10 @@
     color: #4f46e5;
   }
   
+  .toggle-btn:hover {
+    color: #4f46e5;
+  }
+  
   .nav-menu {
     display: flex;
     flex-direction: column;
@@ -394,5 +399,84 @@
   .status-pending {
     background-color: rgba(245, 158, 11, 0.1);
     color: #F59E0B;
+  }
+
+  /* Action cards styles */
+  .action-card {
+    background-color: white;
+    border-radius: 16px;
+    padding: 30px 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+    height: 100%;
+  }
+        
+  .action-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+  }
+        
+  .action-card.locked {
+    opacity: 0.5;
+    background-color: rgba(241, 245, 249, 0.5);
+    box-shadow: none;
+    filter: grayscale(100%);
+    transform: none;
+    border: 1px dashed #cbd5e1;
+  }
+        
+  .action-card.locked:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .lock-icon {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #94A3B8;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 3;
+    font-size: 14px;
+  }
+
+  .progress-indicator {
+    display: flex;
+    align-items: center;
+    background: rgba(226, 232, 240, 0.5);
+    padding: 8px 15px;
+    border-radius: 50px;
+  }
+        
+  .progress-bar {
+    width: 150px;
+    height: 8px;
+    background-color: rgba(148, 163, 184, 0.2);
+    border-radius: 4px;
+    margin-right: 15px;
+    overflow: hidden;
+    position: relative;
+  }
+        
+  .progress-fill {
+    height: 100%;
+    width: 25%; /* 1/4 steps completed */
+    background: linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%);
+    border-radius: 4px;
+    position: relative;
   }
 }

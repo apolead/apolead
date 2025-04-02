@@ -4,20 +4,19 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { 
-  UserCircle, 
   Home, 
-  BookOpen, 
-  Users, 
-  Wrench, 
-  FileText, 
-  Settings, 
   LogOut, 
   ChevronLeft, 
   ChevronRight,
   PieChart,
   TrendingUp,
   Award,
-  Lock
+  Lock,
+  FileText,
+  Settings,
+  Wrench,
+  Info,
+  DollarSign
 } from 'lucide-react';
 
 export interface DashboardSidebarProps {
@@ -45,8 +44,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="logo">
-        <h1>
-          <span>Apo</span><span>Lead</span>
+        <h1 style={{ fontSize: '28px', fontWeight: 700 }}>
+          <span style={{ color: '#00c2cb' }}>Apo</span><span style={{ color: '#4f46e5' }}>Lead</span>
         </h1>
         <div className="toggle-btn" onClick={toggleSidebar}>
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -71,7 +70,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
         </div>
         
         <div className={`nav-item locked ${activeItem === 'payment-history' ? 'active' : ''}`}>
-          <FileText size={18} />
+          <DollarSign size={18} />
           <span>Payment History</span>
           <Lock size={18} className="menu-lock-icon" />
         </div>
@@ -105,9 +104,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
           <LogOut size={18} />
           <span>Log Out</span>
         </a>
+        
+        <div style={{ flexGrow: 1 }}></div>
       </div>
       <div className="sidebar-footer">
-        <UserCircle size={16} className="mr-1" /> Need help? <Link to="/support">Support</Link>
+        <Info size={16} className="mr-1" /> Need help? <Link to="/support" className="text-indigo-600 ml-1">Support Center</Link>
       </div>
     </div>
   );
