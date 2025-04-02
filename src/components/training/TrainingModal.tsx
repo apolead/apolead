@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -87,8 +88,10 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       
       setStep('result');
       
+      // Call onComplete with the result of the quiz
       onComplete(passed);
       
+      // Show schedule dialog if passed
       if (passed) {
         setShowScheduleDialog(true);
       }
