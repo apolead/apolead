@@ -271,9 +271,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log('Updating user profile with:', data);
       
+      // Create a safe copy of the data with proper handling of arrays and objects
+      const safeData = { ...data };
+      
+      // Handle arrays and objects correctly
+      if (safeData.available_days) {
+        // If it's already a valid array, PostgreSQL will handle it
+        if (!Array.isArray(safeData.available_days) || safeData.available_days.length === 0) {
+          delete safeData.available_days; // Remove empty arrays to avoid SQL errors
+        }
+      }
+      
+      if (safeData.day_hours) {
+        // If it's an empty object, remove it
+        if (typeof safeData.day_hours === 'object' && Object.keys(safeData.day_hours).length === 0) {
+          delete safeData.day_hours;
+        }
+      }
+      
       const { error } = await (supabase.rpc as any)('update_user_profile_direct', {
         input_user_id: user.id,
-        input_updates: data
+        input_updates: safeData
       });
       
       if (error) throw error;
@@ -281,7 +299,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserProfile(prev => {
         const updated = {
           ...prev,
-          ...data
+          ...safeData
         };
         console.log('Updated user profile in state:', updated);
         

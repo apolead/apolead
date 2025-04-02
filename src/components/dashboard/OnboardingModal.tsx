@@ -240,7 +240,7 @@ const OnboardingModal = ({
         }
       });
 
-      await updateProfile({
+      const profileData = {
         first_name: userData.firstName,
         last_name: userData.lastName,
         email: userData.email,
@@ -259,10 +259,18 @@ const OnboardingModal = ({
         solve_problems: userData.solveProblems,
         complete_training: userData.completeTraining,
         personal_statement: userData.personalStatement,
-        available_days: userData.availableDays || [],
-        day_hours: userData.dayHours || {},
         accepted_terms: userData.acceptedTerms
-      });
+      };
+      
+      if (userData.availableDays && userData.availableDays.length > 0) {
+        profileData.available_days = userData.availableDays;
+      }
+      
+      if (userData.dayHours && Object.keys(userData.dayHours).length > 0) {
+        profileData.day_hours = userData.dayHours;
+      }
+
+      await updateProfile(profileData);
 
       if (hasCompletedBasicInfo && hasAnsweredAllQuestions) {
         if (isEligible) {
@@ -271,12 +279,20 @@ const OnboardingModal = ({
             description: "You've successfully completed onboarding and are eligible for training.",
             variant: "default"
           });
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         } else {
           toast({
             title: "Not eligible",
             description: "You've completed onboarding but are not eligible for training based on your answers.",
             variant: "destructive"
           });
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         }
       }
       
