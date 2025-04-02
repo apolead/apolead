@@ -284,14 +284,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const safeData = { ...data };
       
       // Handle arrays and objects correctly
-      if (safeData.available_days) {
+      if ('available_days' in safeData) {
         // If it's already a valid array, PostgreSQL will handle it
         if (!Array.isArray(safeData.available_days) || safeData.available_days.length === 0) {
           safeData.available_days = []; // Use empty array instead of removing
         }
       }
       
-      if (safeData.day_hours) {
+      if ('day_hours' in safeData) {
         // If it's an empty object, use an empty object
         if (typeof safeData.day_hours === 'object' && Object.keys(safeData.day_hours).length === 0) {
           safeData.day_hours = {};

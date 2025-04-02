@@ -262,11 +262,11 @@ const OnboardingModal = ({
         accepted_terms: userData.acceptedTerms
       };
       
-      if (userData.availableDays && userData.availableDays.length > 0) {
+      if (Array.isArray(userData.availableDays) && userData.availableDays.length > 0) {
         profileData.available_days = userData.availableDays;
       }
       
-      if (userData.dayHours && Object.keys(userData.dayHours).length > 0) {
+      if (typeof userData.dayHours === 'object' && Object.keys(userData.dayHours).length > 0) {
         profileData.day_hours = userData.dayHours;
       }
 
