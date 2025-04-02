@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Check, X, Loader2, Key } from 'lucide-react';
+import { Check, X, Loader2, Key, Copy, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSignUp } from '@/contexts/SignUpContext';
 
 const ConfirmationScreen = () => {
   const [isApproved, setIsApproved] = useState<boolean | null>(null);
@@ -15,9 +16,11 @@ const ConfirmationScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [processingPassword, setProcessingPassword] = useState(false);
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { confirmationLink } = useSignUp();
 
   // Check for token in URL query parameters
   useEffect(() => {
@@ -154,6 +157,18 @@ const ConfirmationScreen = () => {
     }
   };
 
+  const copyLinkToClipboard = () => {
+    if (confirmationLink) {
+      navigator.clipboard.writeText(confirmationLink);
+      setCopiedToClipboard(true);
+      toast({
+        title: "Link Copied",
+        description: "Signup link copied to clipboard.",
+      });
+      setTimeout(() => setCopiedToClipboard(false), 3000);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -241,6 +256,40 @@ const ConfirmationScreen = () => {
                   4. You'll receive instructions for onboarding if approved
                 </p>
               </div>
+              
+              {/* Show direct signup link if available (since we don't have real email sending) */}
+              {confirmationLink && (
+                <div className="p-4 bg-yellow-50 rounded-md text-left mt-4">
+                  <h3 className="font-semibold text-yellow-800 mb-2">Temporary Demo: Direct Signup</h3>
+                  <p className="text-sm text-yellow-700 mb-2">
+                    Since this is a demo without actual email integration, you can use this direct link to complete your registration:
+                  </p>
+                  <div className="flex mt-2">
+                    <Button 
+                      variant="outline" 
+                      className="flex items-center justify-center mr-2"
+                      onClick={copyLinkToClipboard}
+                    >
+                      {copiedToClipboard ? (
+                        <Check className="h-4 w-4 mr-1" />
+                      ) : (
+                        <Copy className="h-4 w-4 mr-1" />
+                      )}
+                      {copiedToClipboard ? "Copied!" : "Copy Link"}
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      className="flex items-center justify-center"
+                      asChild
+                    >
+                      <a href={confirmationLink} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        Open Link
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         ) : (

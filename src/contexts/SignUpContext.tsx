@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +12,7 @@ type SignUpContextType = {
   handleSubmit: () => Promise<void>;
   isSubmitting: boolean;
   isCheckingGovId: boolean;
+  confirmationLink: string | null;
 };
 
 type UserData = {
@@ -114,6 +114,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [userData, setUserData] = useState<UserData>(initialUserData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingGovId, setIsCheckingGovId] = useState(false);
+  const [confirmationLink, setConfirmationLink] = useState<string | null>(null);
   const { toast } = useToast();
   
   // Update user data
@@ -304,11 +305,13 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               });
             } else {
               console.log('Signup link generated successfully:', result);
-              // In a real app, you would send this link via email
-              // For now, we'll just show a toast with instructions
+              
+              // Store the signup link for display
+              setConfirmationLink(result.signupLink);
+              
               toast({
                 title: "Application Approved",
-                description: "Check your email for instructions to complete your registration.",
+                description: "Since email integration is not set up, we'll show you the signup link directly.",
                 duration: 8000,
               });
             }
@@ -330,7 +333,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Then show the toast (improved toast behavior)
       toast({
         title: "Application Submitted",
-        description: "Your application has been submitted successfully. You'll receive an email when it's approved.",
+        description: "Your application has been submitted successfully.",
         duration: 5000,
       });
       
@@ -358,7 +361,8 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         prevStep, 
         handleSubmit,
         isSubmitting,
-        isCheckingGovId
+        isCheckingGovId,
+        confirmationLink
       }}
     >
       {children}

@@ -50,8 +50,19 @@ serve(async (req) => {
 
     console.log("Generated signup link successfully");
 
+    // In a production app, we would now send the email with the signup link
+    // Since we don't have email integration set up, for demonstration purposes
+    // we'll just return the link to be displayed by the frontend
+    
+    // For a real implementation, you would use a service like Resend, SendGrid, etc.
+    // Example with a hypothetical email sending function:
+    // await sendEmail({
+    //   to: email,
+    //   subject: "Complete your ApoLead registration", 
+    //   body: `Click this link to complete your registration: ${data.properties.action_link}`
+    // });
+
     // Return the signup link 
-    // In a real production app, you would send this via email
     return new Response(
       JSON.stringify({
         success: true,
