@@ -106,25 +106,29 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   };
   
   const handleScheduleInterview = () => {
+    console.log("Opening schedule interview dialog");
     setShowScheduleDialog(true);
   };
   
   useEffect(() => {
     if (showScheduleDialog) {
+      console.log("Loading Calendly script");
       const script = document.createElement('script');
       script.src = 'https://assets.calendly.com/assets/external/widget.js';
       script.async = true;
       document.body.appendChild(script);
       
       return () => {
-        document.body.removeChild(script);
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
       };
     }
   }, [showScheduleDialog]);
   
   if (!isOpen) return null;
   
-  console.log("Rendering Training Modal. Step:", step, "QuizPassed:", quizPassed);
+  console.log("Rendering Training Modal. Step:", step, "QuizPassed:", quizPassed, "showScheduleDialog:", showScheduleDialog);
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
