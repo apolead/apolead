@@ -208,14 +208,14 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       
-      // Generate a temporary user_id - this is required by the database schema
-      const tempUserId = crypto.randomUUID();
+      // REMOVED: No longer generating a temporary user_id
+      // const tempUserId = crypto.randomUUID();
       
-      // Insert into user_applications table - this is now allowed for anonymous users due to updated RLS policy
+      // Insert into user_applications table - with no user_id field
       const { data: applicationData, error: applicationError } = await supabase
         .from('user_applications')
         .insert({
-          user_id: tempUserId,
+          // Removed user_id field
           first_name: userData.firstName,
           last_name: userData.lastName,
           email: userData.email,
@@ -265,19 +265,18 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // In a real application, you would trigger an email notification here
       // to inform admins about the new application
       
-      // Move to confirmation step
+      // Move to confirmation step first
       nextStep();
       
+      // Then show the toast (improved toast behavior)
       toast({
         title: "Application Submitted",
         description: "Your application has been submitted successfully. You'll receive an email when it's approved.",
         duration: 5000,
       });
       
-      // If you want to add a slight delay before showing confirmation
-      setTimeout(() => {
-        setIsSubmitting(false);
-      }, 1000);
+      // Set isSubmitting to false immediately
+      setIsSubmitting(false);
       
     } catch (error) {
       console.error('Submission error:', error);
