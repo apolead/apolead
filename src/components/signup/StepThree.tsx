@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -70,6 +69,34 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
   
   const toggleYesNo = (field, value) => {
     updateUserData({ [field]: value });
+    
+    setTimeout(() => {
+      const updatedUserData = {
+        ...userData,
+        [field]: value
+      };
+      
+      const isEligible = 
+        updatedUserData.meetObligation === true &&
+        updatedUserData.loginDiscord === true &&
+        updatedUserData.checkEmails === true &&
+        updatedUserData.solveProblems === true &&
+        updatedUserData.completeTraining === true &&
+        updatedUserData.hasHeadset === true &&
+        updatedUserData.hasQuietPlace === true;
+      
+      if (updatedUserData.meetObligation !== null &&
+          updatedUserData.loginDiscord !== null &&
+          updatedUserData.checkEmails !== null &&
+          updatedUserData.solveProblems !== null &&
+          updatedUserData.completeTraining !== null &&
+          updatedUserData.hasHeadset !== null &&
+          updatedUserData.hasQuietPlace !== null) {
+        
+        updateUserData({ eligible_for_training: isEligible });
+        console.log('Updating eligibility status to:', isEligible);
+      }
+    }, 0);
   };
   
   const getMissingCommitments = () => {
@@ -120,6 +147,22 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
     setLoading(true);
     
     try {
+      const isEligible = 
+        userData.meetObligation === true &&
+        userData.loginDiscord === true &&
+        userData.checkEmails === true &&
+        userData.solveProblems === true &&
+        userData.completeTraining === true &&
+        userData.hasHeadset === true &&
+        userData.hasQuietPlace === true;
+      
+      updateUserData({ 
+        eligible_for_training: isEligible,
+        onboarding_completed: true
+      });
+      
+      console.log('Submitting form with eligibility status:', isEligible);
+      
       await handleSubmit();
     } catch (error) {
       console.error('Error submitting form:', error);

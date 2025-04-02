@@ -12,7 +12,9 @@ import {
   Lock,
   Search,
   Settings,
-  Bell
+  Bell,
+  AlertTriangle,
+  XCircle
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -20,6 +22,7 @@ const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [onboardingProgress, setOnboardingProgress] = useState(20); // Default to 20% (signup completed)
+  const [onboardingStatus, setOnboardingStatus] = useState('not_started'); // 'not_started', 'incomplete', 'ineligible', 'completed'
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -36,7 +39,15 @@ const Dashboard = () => {
         birth_day: userProfile.birth_day,
         gov_id_number: userProfile.gov_id_number,
         gov_id_image: userProfile.gov_id_image,
-        onboarding_completed: userProfile.onboarding_completed
+        onboarding_completed: userProfile.onboarding_completed,
+        eligible_for_training: userProfile.eligible_for_training,
+        has_headset: userProfile.has_headset,
+        has_quiet_place: userProfile.has_quiet_place,
+        meet_obligation: userProfile.meet_obligation,
+        login_discord: userProfile.login_discord,
+        check_emails: userProfile.check_emails,
+        solve_problems: userProfile.solve_problems,
+        complete_training: userProfile.complete_training
       });
       
       // Check if the user has completed the basic onboarding fields
@@ -46,22 +57,45 @@ const Dashboard = () => {
                                     userProfile.gov_id_number && 
                                     userProfile.gov_id_image;
       
-      // Use direct onboarding_completed flag if available, otherwise check required fields
-      const isOnboardingCompleted = userProfile.onboarding_completed || hasCompletedBasicInfo;
+      // Check if all required questions have been answered
+      const hasAnsweredAllQuestions = userProfile.has_headset !== null && 
+                                     userProfile.has_quiet_place !== null &&
+                                     userProfile.meet_obligation !== null &&
+                                     userProfile.login_discord !== null &&
+                                     userProfile.check_emails !== null &&
+                                     userProfile.solve_problems !== null && 
+                                     userProfile.complete_training !== null;
       
-      setOnboardingCompleted(isOnboardingCompleted);
+      // Check if eligible based on the database field directly
+      const isEligible = userProfile.eligible_for_training === true;
+      
+      // Determine onboarding status
+      if (userProfile.onboarding_completed === true && hasCompletedBasicInfo && hasAnsweredAllQuestions) {
+        if (isEligible) {
+          setOnboardingStatus('completed');
+        } else {
+          setOnboardingStatus('ineligible');
+        }
+        setOnboardingCompleted(true);
+      } else if (hasCompletedBasicInfo || userProfile.first_name || userProfile.last_name) {
+        setOnboardingStatus('incomplete');
+        setOnboardingCompleted(false);
+      } else {
+        setOnboardingStatus('not_started');
+        setOnboardingCompleted(false);
+      }
       
       // Update onboarding progress based on completed fields
-      if (isOnboardingCompleted) {
+      if (onboardingStatus === 'completed' || onboardingStatus === 'ineligible') {
         setOnboardingProgress(100);
-      } else if (hasCompletedBasicInfo) {
-        setOnboardingProgress(80);
-      } else if (userProfile.first_name || userProfile.last_name) {
-        setOnboardingProgress(40);
+      } else if (onboardingStatus === 'incomplete') {
+        setOnboardingProgress(hasCompletedBasicInfo ? 60 : 40);
       } else {
         // Just signed up, only has email
         setOnboardingProgress(20);
       }
+      
+      console.log("Dashboard: Onboarding status set to", onboardingStatus, "Progress:", onboardingProgress);
     }
   }, [user, loading, userProfile, navigate]);
   
@@ -81,23 +115,71 @@ const Dashboard = () => {
       if (userProfile && userProfile.first_name && userProfile.last_name && 
           userProfile.birth_day && userProfile.gov_id_number && userProfile.gov_id_image) {
         
-        // If profile has basic required fields, update onboarding status in DB
-        supabase.rpc('update_user_profile_direct', {
-          input_user_id: user.id,
-          input_updates: { onboarding_completed: true }
-        }).then(({ error }) => {
-          if (error) {
-            console.error('Error updating onboarding status:', error);
-          } else {
-            setOnboardingCompleted(true);
-            setOnboardingProgress(100);
-            toast({
-              title: "Onboarding completed",
-              description: "You can now proceed to the next steps."
-            });
-          }
-        });
+        const hasAnsweredAllQuestions = userProfile.has_headset !== null && 
+                                       userProfile.has_quiet_place !== null &&
+                                       userProfile.meet_obligation !== null &&
+                                       userProfile.login_discord !== null &&
+                                       userProfile.check_emails !== null &&
+                                       userProfile.solve_problems !== null && 
+                                       userProfile.complete_training !== null;
+        
+        if (hasAnsweredAllQuestions) {
+          // If profile has basic required fields, update onboarding status in DB
+          supabase.rpc('update_user_profile_direct', {
+            input_user_id: user.id,
+            input_updates: { onboarding_completed: true }
+          }).then(({ error }) => {
+            if (error) {
+              console.error('Error updating onboarding status:', error);
+            } else {
+              // We'll let the useAuth hook's profile refresh handle updating the state
+              console.log('Onboarding completed status updated in database');
+            }
+          });
+        }
       }
+    }
+  };
+  
+  const getOnboardingButtonText = () => {
+    switch (onboardingStatus) {
+      case 'not_started':
+        return 'Start Onboarding';
+      case 'incomplete':
+        return 'Continue Onboarding';
+      case 'ineligible':
+        return 'Not Eligible';
+      case 'completed':
+        return 'Completed';
+      default:
+        return 'Start Onboarding';
+    }
+  };
+  
+  const getOnboardingButtonStyle = () => {
+    switch (onboardingStatus) {
+      case 'not_started':
+      case 'incomplete':
+        return 'card-button button-incomplete p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(245,158,11,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(245,158,11,0.3)]';
+      case 'ineligible':
+        return 'card-button button-ineligible p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(239,68,68,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(239,68,68,0.3)]';
+      case 'completed':
+        return 'card-button button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]';
+      default:
+        return 'card-button button-incomplete p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(245,158,11,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(245,158,11,0.3)]';
+    }
+  };
+  
+  const getOnboardingIcon = () => {
+    switch (onboardingStatus) {
+      case 'ineligible':
+        return <XCircle className="mr-[8px] text-[16px]" />;
+      case 'incomplete':
+        return <AlertTriangle className="mr-[8px] text-[16px]" />;
+      case 'completed':
+        return <CheckCircle className="mr-[8px] text-[16px]" />;
+      default:
+        return null;
     }
   };
   
@@ -222,10 +304,10 @@ const Dashboard = () => {
             </h2>
             <div className="progress-indicator flex items-center bg-[rgba(226,232,240,0.5)] p-[8px_15px] rounded-[50px]">
               <div className="progress-bar w-[150px] h-[8px] bg-[rgba(148,163,184,0.2)] rounded-[4px] mr-[15px] overflow-hidden relative">
-                <div className="progress-fill h-full w-[25%] bg-gradient-to-r from-[#4f46e5] to-[#00c2cb] rounded-[4px] relative after:content-[''] after:absolute after:top-0 after:right-0 after:w-[8px] after:h-full after:bg-white after:opacity-30 after:animate-pulse"></div>
+                <div className="progress-fill h-full w-[25%] bg-gradient-to-r from-[#4f46e5] to-[#00c2cb] rounded-[4px] relative after:content-[''] after:absolute after:top-0 after:right-0 after:w-[8px] after:h-full after:bg-white after:opacity-30 after:animate-pulse" style={{ width: `${onboardingProgress}%` }}></div>
               </div>
               <div className="progress-text text-[14px] text-[#64748b] font-[500] flex items-center">
-                <i className="fas fa-check-circle text-[#10B981] mr-[5px]"></i> 1 of 5 completed
+                <i className="fas fa-check-circle text-[#10B981] mr-[5px]"></i> {onboardingStatus === 'completed' ? '5' : onboardingStatus === 'incomplete' ? '2' : '1'} of 5 completed
               </div>
             </div>
           </div>
@@ -233,20 +315,28 @@ const Dashboard = () => {
           {/* Action Cards */}
           <div className="action-cards grid grid-cols-5 gap-[25px] py-[20px] relative">
             {/* Step 1: Initial Onboarding */}
-            <div className="action-card bg-white rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border border-[#e2e8f0] shadow-[0_4px_15px_rgba(0,0,0,0.05)] relative z-[2] transition-all h-full hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.1)]">
-              <div className="step-number completed absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] text-white flex items-center justify-center font-[600] text-[16px] shadow-[0_4px_10px_rgba(16,185,129,0.3)] z-[3] border-[3px] border-white">
+            <div className={`action-card bg-white rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border ${onboardingStatus === 'completed' || onboardingStatus === 'ineligible' ? 'border-[#e2e8f0]' : 'border-[#f59e0b]'} shadow-[0_4px_15px_rgba(0,0,0,0.05)] relative z-[2] transition-all h-full hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.1)]`}>
+              <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
+                onboardingStatus === 'completed' ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 
+                onboardingStatus === 'ineligible' ? 'bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_4px_10px_rgba(239,68,68,0.3)]' : 
+                'bg-gradient-to-r from-[#f59e0b] to-[#d97706] shadow-[0_4px_10px_rgba(245,158,11,0.3)]'
+              } text-white flex items-center justify-center font-[600] text-[16px] z-[3] border-[3px] border-white`}>
                 1
               </div>
-              <div className="action-icon completed w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] text-white flex items-center justify-center text-[30px] shadow-[0_8px_20px_rgba(16,185,129,0.2)] relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]">
+              <div className={`action-icon w-[80px] h-[80px] rounded-full ${
+                onboardingStatus === 'completed' ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 
+                onboardingStatus === 'ineligible' ? 'bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_8px_20px_rgba(239,68,68,0.2)]' : 
+                'bg-gradient-to-r from-[#f59e0b] to-[#d97706] shadow-[0_8px_20px_rgba(245,158,11,0.2)]'
+              } text-white flex items-center justify-center text-[30px] relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
                 <i className="fas fa-user-plus"></i>
               </div>
               <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Initial Onboarding</h3>
               <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Complete your profile setup and account verification to get started with ApoLead.</p>
               <button 
-                className="card-button button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]"
+                className={getOnboardingButtonStyle()}
                 onClick={openOnboardingModal}
               >
-                <i className="fas fa-check-circle mr-[8px] text-[16px]"></i> Completed
+                {getOnboardingIcon()} {getOnboardingButtonText()}
               </button>
             </div>
             

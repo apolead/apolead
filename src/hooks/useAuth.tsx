@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -37,15 +38,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       'check_emails',
       'solve_problems',
       'complete_training',
-      'accepted_terms'
+      'accepted_terms',
+      'onboarding_completed',
+      'eligible_for_training'
     ];
     
     booleanFields.forEach(field => {
       if (field in cleanProfile) {
         const value = cleanProfile[field];
         
-        if (field === 'quiz_passed') {
-          console.log(`Raw quiz_passed value:`, value, typeof value);
+        if (field === 'onboarding_completed' || field === 'eligible_for_training') {
+          console.log(`Raw ${field} value:`, value, typeof value);
         }
         
         if (value === null || value === undefined) {
@@ -67,18 +70,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           cleanProfile[field] = null;
         }
         
-        if (field === 'quiz_passed') {
-          console.log(`Sanitized quiz_passed value:`, cleanProfile[field], typeof cleanProfile[field]);
+        if (field === 'onboarding_completed' || field === 'eligible_for_training') {
+          console.log(`Sanitized ${field} value:`, cleanProfile[field], typeof cleanProfile[field]);
         }
       }
     });
     
     console.log('Sanitized profile data:', {
-      quiz_passed: cleanProfile.quiz_passed,
-      training_video_watched: cleanProfile.training_video_watched,
+      onboarding_completed: cleanProfile.onboarding_completed, 
+      eligible_for_training: cleanProfile.eligible_for_training,
       types: {
-        quiz_passed: typeof cleanProfile.quiz_passed,
-        training_video_watched: typeof cleanProfile.training_video_watched
+        onboarding_completed: typeof cleanProfile.onboarding_completed,
+        eligible_for_training: typeof cleanProfile.eligible_for_training
       }
     });
     
@@ -175,7 +178,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           gov_id_number: sanitizedData.gov_id_number,
           gov_id_image: sanitizedData.gov_id_image,
           onboarding_completed: sanitizedData.onboarding_completed,
-          eligible_for_training: sanitizedData.eligible_for_training
+          eligible_for_training: sanitizedData.eligible_for_training,
+          meet_obligation: sanitizedData.meet_obligation,
+          login_discord: sanitizedData.login_discord,
+          check_emails: sanitizedData.check_emails,
+          solve_problems: sanitizedData.solve_problems,
+          complete_training: sanitizedData.complete_training
         });
         
         setUserProfile(sanitizedData);
