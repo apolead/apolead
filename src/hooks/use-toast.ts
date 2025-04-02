@@ -1,9 +1,10 @@
+
 import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast"
 import * as React from "react"
 
 const TOAST_LIMIT = 1
 const TOAST_REMOVE_DELAY = 2000  // 2 seconds to remove after dismissal
-const DEFAULT_TOAST_DURATION = 3000  // 3 seconds visibility before auto-dismiss
+const DEFAULT_TOAST_DURATION = 5000  // Increased from 3 to 5 seconds for better visibility
 
 type ToasterToast = ToastProps & {
   id: string

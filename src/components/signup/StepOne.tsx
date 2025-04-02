@@ -1,13 +1,16 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId = false }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const handleBackToHome = async (e) => {
     e.preventDefault();
@@ -76,7 +79,11 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       
       // If we found a matching gov ID in profiles, show error
       if (profileData && profileData.gov_id_number === userData.govIdNumber) {
-        setErrorMessage('This government ID has already been registered in our system.');
+        toast({
+          title: "Government ID already used",
+          description: "This government ID has already been registered in our system.",
+          variant: "destructive", // Fixed to use a valid variant
+        });
         return;
       }
       
