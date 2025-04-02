@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -37,27 +36,17 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
     console.log("quiz_passed type:", typeof userProfile.quiz_passed, "value:", userProfile.quiz_passed);
     console.log("training_video_watched type:", typeof userProfile.training_video_watched, "value:", userProfile.training_video_watched);
     
-    const quizPassedValue = userProfile.quiz_passed === true;
-    const quizFailedValue = userProfile.quiz_passed === false;
-    const videoWatchedValue = userProfile.training_video_watched === true;
-    
-    console.log("Parsed values:", {
-      quizPassedValue,
-      quizFailedValue,
-      videoWatchedValue
-    });
-    
-    if (quizPassedValue) {
+    if (userProfile.quiz_passed === true) {
       console.log("User has passed the quiz");
       setStep('result');
       setQuizPassed(true);
       setQuizScore(userProfile.quiz_score || 0);
-    } else if (quizFailedValue) {
+    } else if (userProfile.quiz_passed === false) {
       console.log("User has failed the quiz");
       setStep('result');
       setQuizPassed(false);
       setQuizScore(userProfile.quiz_score || 0);
-    } else if (videoWatchedValue) {
+    } else if (userProfile.training_video_watched === true) {
       console.log("User has watched the video but not completed quiz");
       setStep('quiz');
     } else {
