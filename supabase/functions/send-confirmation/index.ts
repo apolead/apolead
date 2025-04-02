@@ -1,6 +1,14 @@
+// Add polyfill for process.env
+if (typeof globalThis.process === "undefined") {
+  globalThis.process = { env: {} };
+  // Populate process.env with Deno.env values
+  for (const [key, value] of Object.entries(Deno.env.toObject())) {
+    globalThis.process.env[key] = value;
+  }
+}
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
