@@ -1,495 +1,145 @@
+
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { ChevronLeft, ChevronRight, LayoutDashboard, PlayCircle, Tool, CreditCard, BarChart2, Trophy, FileInvoice, Settings, LogOut, Lock } from 'lucide-react';
 
-interface DashboardSidebarProps {
-  activeItem?: string;
-}
-
-const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashboard' }) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { logout } = useAuth();
+export const DashboardSidebar = () => {
+  const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
-
-  const handleLogout = async () => {
+  const location = useLocation();
+  const { user, userProfile } = useAuth();
+  
+  const handleSignOut = async () => {
     try {
-      await logout();
+      await supabase.auth.signOut();
       navigate('/login');
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('Error signing out:', error);
     }
   };
-
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
+  
+  // Check if onboarding is completed to determine which items should be locked
+  const isOnboardingCompleted = userProfile && 
+    userProfile.first_name && 
+    userProfile.last_name && 
+    userProfile.birth_day && 
+    userProfile.gov_id_number && 
+    userProfile.gov_id_image;
+    
+  // Check if all requirements are met to enable training
+  const isTrainingEnabled = isOnboardingCompleted && 
+    userProfile.meet_obligation === true && 
+    userProfile.login_discord === true && 
+    userProfile.check_emails === true && 
+    userProfile.solve_problems === true && 
+    userProfile.complete_training === true;
+  
+  // Additional utility function to apply icon styling based on collapsed state
+  const getIconStyles = () => {
+    return collapsed ? 
+      "w-full flex justify-center items-center" : 
+      "mr-3 min-w-[24px]";
   };
-
+  
   return (
-    <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} style={{
-      width: sidebarCollapsed ? '60px' : '240px',
-      backgroundColor: 'white',
-      borderRight: '1px solid #eaeaea',
-      padding: '25px 0',
-      display: 'flex',
-      flexDirection: 'column',
-      boxShadow: '0 0 20px rgba(0,0,0,0.05)',
-      transition: 'all 0.3s ease',
-      position: 'relative',
-      zIndex: 10,
-      textAlign: 'left',
-      boxSizing: 'border-box'
-    }}>
-      <div className="logo" style={{
-        padding: sidebarCollapsed ? '25px 0 25px 0' : '0 25px 25px',
-        borderBottom: '1px solid #eaeaea',
-        marginBottom: '25px',
-        display: 'flex',
-        justifyContent: sidebarCollapsed ? 'center' : 'space-between',
-        alignItems: 'center',
-        overflow: 'hidden',
-        width: sidebarCollapsed ? '100%' : 'auto',
-        textAlign: sidebarCollapsed ? 'center' : 'left',
-        margin: sidebarCollapsed ? '0 auto' : 'inherit',
-        position: sidebarCollapsed ? 'relative' : 'static'
-      }}>
-        <h1 style={{
-          fontSize: '28px', 
-          fontWeight: 700, 
-          transition: 'opacity 0.3s',
-          opacity: sidebarCollapsed ? 0 : 1,
-          position: sidebarCollapsed ? 'absolute' : 'static',
-          left: sidebarCollapsed ? '-9999px' : 'auto',
-          width: sidebarCollapsed ? 0 : 'auto',
-          height: sidebarCollapsed ? 0 : 'auto',
-          overflow: sidebarCollapsed ? 'hidden' : 'visible',
-          visibility: sidebarCollapsed ? 'hidden' : 'visible'
-        }}>
-          <span style={{ color: '#00c2cb' }}>Apo</span>
-          <span style={{ color: '#4f46e5' }}>Lead</span>
-        </h1>
-        <div 
-          className="toggle-btn" 
-          onClick={toggleSidebar}
-          style={{
-            cursor: 'pointer',
-            fontSize: '12px',
-            color: '#64748b',
-            width: sidebarCollapsed ? '30px' : '20px',
-            height: sidebarCollapsed ? '30px' : '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '50%',
-            transition: 'all 0.3s',
-            position: sidebarCollapsed ? 'absolute' : 'relative',
-            right: sidebarCollapsed ? '-15px' : 'auto',
-            top: sidebarCollapsed ? '20px' : 'auto',
-            backgroundColor: sidebarCollapsed ? 'white' : 'transparent',
-            boxShadow: sidebarCollapsed ? '0 0 8px rgba(0,0,0,0.1)' : 'none',
-            border: sidebarCollapsed ? '1px solid #eaeaea' : 'none',
-            zIndex: 20
-          }}
+    <div className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'}`}>
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+        {!collapsed && (
+          <h1 className="text-xl font-bold">
+            <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+          </h1>
+        )}
+        <button 
+          onClick={() => setCollapsed(!collapsed)}
+          className={`w-6 h-6 flex items-center justify-center rounded-full text-gray-500 hover:text-indigo-600 hover:bg-gray-100 transition-all ${collapsed ? 'mx-auto' : ''}`}
         >
-          <i className={`fas fa-angle-${sidebarCollapsed ? 'right' : 'left'}`}></i>
-        </div>
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
       </div>
       
-      <div className="nav-menu" style={{
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-        padding: sidebarCollapsed ? 0 : '0 15px',
-        overflowX: 'hidden',
-        width: sidebarCollapsed ? '100%' : 'auto',
-        alignItems: sidebarCollapsed ? 'center' : 'stretch'
-      }}>
-        <Link to="/dashboard" className={`nav-item ${activeItem === 'getting-started' ? 'active' : ''}`} style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
-          color: activeItem === 'getting-started' ? '#4f46e5' : '#64748b',
-          textDecoration: 'none',
-          transition: 'all 0.3s',
-          marginBottom: '8px',
-          borderRadius: '10px',
-          width: '100%',
-          whiteSpace: 'nowrap',
-          position: 'relative',
-          boxSizing: 'border-box',
-          backgroundColor: activeItem === 'getting-started' ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
-          fontWeight: activeItem === 'getting-started' ? 500 : 'normal',
-          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
-        }}>
-          <i className="fas fa-play-circle" style={{
-            marginRight: sidebarCollapsed ? 0 : '12px',
-            fontSize: '18px',
-            width: '24px',
-            textAlign: 'center',
-            flexShrink: 0
-          }}></i>
-          <span style={{
-            display: sidebarCollapsed ? 'none' : 'inline-block',
-            opacity: sidebarCollapsed ? 0 : 1,
-            visibility: sidebarCollapsed ? 'hidden' : 'visible',
-            width: sidebarCollapsed ? 0 : 'auto',
-            height: sidebarCollapsed ? 0 : 'auto',
-            overflow: sidebarCollapsed ? 'hidden' : 'visible',
-            position: sidebarCollapsed ? 'absolute' : 'static'
-          }}>Getting Started</span>
-        </Link>
-        
-        <Link to="/dashboard" className={`nav-item ${activeItem === 'dashboard' ? 'active' : ''}`} style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
-          color: activeItem === 'dashboard' ? '#4f46e5' : '#64748b',
-          textDecoration: 'none',
-          transition: 'all 0.3s',
-          marginBottom: '8px',
-          borderRadius: '10px',
-          width: '100%',
-          whiteSpace: 'nowrap',
-          position: 'relative',
-          boxSizing: 'border-box',
-          backgroundColor: activeItem === 'dashboard' ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
-          fontWeight: activeItem === 'dashboard' ? 500 : 'normal',
-          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
-        }}>
-          <i className="fas fa-chart-pie" style={{
-            marginRight: sidebarCollapsed ? 0 : '12px',
-            fontSize: '18px',
-            width: '24px',
-            textAlign: 'center',
-            flexShrink: 0
-          }}></i>
-          <span style={{
-            display: sidebarCollapsed ? 'none' : 'inline-block',
-            opacity: sidebarCollapsed ? 0 : 1,
-            visibility: sidebarCollapsed ? 'hidden' : 'visible',
-            width: sidebarCollapsed ? 0 : 'auto',
-            height: sidebarCollapsed ? 0 : 'auto',
-            overflow: sidebarCollapsed ? 'hidden' : 'visible',
-            position: sidebarCollapsed ? 'absolute' : 'static'
-          }}>Dashboard</span>
-        </Link>
-        
-        <div className={`nav-item locked`} style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
-          color: '#64748b',
-          textDecoration: 'none',
-          transition: 'all 0.3s',
-          marginBottom: '8px',
-          borderRadius: '10px',
-          width: '100%',
-          whiteSpace: 'nowrap',
-          position: 'relative',
-          boxSizing: 'border-box',
-          cursor: 'not-allowed',
-          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
-        }}>
-          <i className="fas fa-tools" style={{
-            marginRight: sidebarCollapsed ? 0 : '12px',
-            fontSize: '18px',
-            width: '24px',
-            textAlign: 'center',
-            flexShrink: 0
-          }}></i>
-          <span style={{
-            display: sidebarCollapsed ? 'none' : 'inline-block',
-            opacity: sidebarCollapsed ? 0 : 1,
-            visibility: sidebarCollapsed ? 'hidden' : 'visible',
-            width: sidebarCollapsed ? 0 : 'auto',
-            height: sidebarCollapsed ? 0 : 'auto',
-            overflow: sidebarCollapsed ? 'hidden' : 'visible',
-            position: sidebarCollapsed ? 'absolute' : 'static'
-          }}>Tool Page</span>
-          <i className="fas fa-lock menu-lock-icon" style={{
-            display: 'none',
-            position: 'absolute',
-            left: sidebarCollapsed ? '50%' : '50%',
-            top: '50%',
-            transform: sidebarCollapsed ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
-            color: '#94A3B8',
-            fontSize: sidebarCollapsed ? '12px' : '18px',
-            zIndex: 5
-          }}></i>
-        </div>
-        
-        <div className={`nav-item locked`} style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
-          color: '#64748b',
-          textDecoration: 'none',
-          transition: 'all 0.3s',
-          marginBottom: '8px',
-          borderRadius: '10px',
-          width: '100%',
-          whiteSpace: 'nowrap',
-          position: 'relative',
-          boxSizing: 'border-box',
-          cursor: 'not-allowed',
-          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
-        }}>
-          <i className="fas fa-money-bill-wave" style={{
-            marginRight: sidebarCollapsed ? 0 : '12px',
-            fontSize: '18px',
-            width: '24px',
-            textAlign: 'center',
-            flexShrink: 0
-          }}></i>
-          <span style={{
-            display: sidebarCollapsed ? 'none' : 'inline-block',
-            opacity: sidebarCollapsed ? 0 : 1,
-            visibility: sidebarCollapsed ? 'hidden' : 'visible',
-            width: sidebarCollapsed ? 0 : 'auto',
-            height: sidebarCollapsed ? 0 : 'auto',
-            overflow: sidebarCollapsed ? 'hidden' : 'visible',
-            position: sidebarCollapsed ? 'absolute' : 'static'
-          }}>Payment History</span>
-          <i className="fas fa-lock menu-lock-icon" style={{
-            display: 'none',
-            position: 'absolute',
-            left: sidebarCollapsed ? '50%' : '50%',
-            top: '50%',
-            transform: sidebarCollapsed ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
-            color: '#94A3B8',
-            fontSize: sidebarCollapsed ? '12px' : '18px',
-            zIndex: 5
-          }}></i>
-        </div>
-        
-        <div className={`nav-item locked`} style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
-          color: '#64748b',
-          textDecoration: 'none',
-          transition: 'all 0.3s',
-          marginBottom: '8px',
-          borderRadius: '10px',
-          width: '100%',
-          whiteSpace: 'nowrap',
-          position: 'relative',
-          boxSizing: 'border-box',
-          cursor: 'not-allowed',
-          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
-        }}>
-          <i className="fas fa-chart-line" style={{
-            marginRight: sidebarCollapsed ? 0 : '12px',
-            fontSize: '18px',
-            width: '24px',
-            textAlign: 'center',
-            flexShrink: 0
-          }}></i>
-          <span style={{
-            display: sidebarCollapsed ? 'none' : 'inline-block',
-            opacity: sidebarCollapsed ? 0 : 1,
-            visibility: sidebarCollapsed ? 'hidden' : 'visible',
-            width: sidebarCollapsed ? 0 : 'auto',
-            height: sidebarCollapsed ? 0 : 'auto',
-            overflow: sidebarCollapsed ? 'hidden' : 'visible',
-            position: sidebarCollapsed ? 'absolute' : 'static'
-          }}>Performance</span>
-          <i className="fas fa-lock menu-lock-icon" style={{
-            display: 'none',
-            position: 'absolute',
-            left: sidebarCollapsed ? '50%' : '50%',
-            top: '50%',
-            transform: sidebarCollapsed ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
-            color: '#94A3B8',
-            fontSize: sidebarCollapsed ? '12px' : '18px',
-            zIndex: 5
-          }}></i>
-        </div>
-        
-        <div className={`nav-item locked`} style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
-          color: '#64748b',
-          textDecoration: 'none',
-          transition: 'all 0.3s',
-          marginBottom: '8px',
-          borderRadius: '10px',
-          width: '100%',
-          whiteSpace: 'nowrap',
-          position: 'relative',
-          boxSizing: 'border-box',
-          cursor: 'not-allowed',
-          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
-        }}>
-          <i className="fas fa-trophy" style={{
-            marginRight: sidebarCollapsed ? 0 : '12px',
-            fontSize: '18px',
-            width: '24px',
-            textAlign: 'center',
-            flexShrink: 0
-          }}></i>
-          <span style={{
-            display: sidebarCollapsed ? 'none' : 'inline-block',
-            opacity: sidebarCollapsed ? 0 : 1,
-            visibility: sidebarCollapsed ? 'hidden' : 'visible',
-            width: sidebarCollapsed ? 0 : 'auto',
-            height: sidebarCollapsed ? 0 : 'auto',
-            overflow: sidebarCollapsed ? 'hidden' : 'visible',
-            position: sidebarCollapsed ? 'absolute' : 'static'
-          }}>Ranking</span>
-          <i className="fas fa-lock menu-lock-icon" style={{
-            display: 'none',
-            position: 'absolute',
-            left: sidebarCollapsed ? '50%' : '50%',
-            top: '50%',
-            transform: sidebarCollapsed ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
-            color: '#94A3B8',
-            fontSize: sidebarCollapsed ? '12px' : '18px',
-            zIndex: 5
-          }}></i>
-        </div>
-        
-        <Link to="/billing" className={`nav-item ${activeItem === 'billing' ? 'active' : ''}`} style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
-          color: activeItem === 'billing' ? '#4f46e5' : '#64748b',
-          textDecoration: 'none',
-          transition: 'all 0.3s',
-          marginBottom: '8px',
-          borderRadius: '10px',
-          width: '100%',
-          whiteSpace: 'nowrap',
-          position: 'relative',
-          boxSizing: 'border-box',
-          backgroundColor: activeItem === 'billing' ? 'rgba(79, 70, 229, 0.1)' : 'transparent',
-          fontWeight: activeItem === 'billing' ? 500 : 'normal',
-          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
-        }}>
-          <i className="fas fa-file-invoice-dollar" style={{
-            marginRight: sidebarCollapsed ? 0 : '12px',
-            fontSize: '18px',
-            width: '24px',
-            textAlign: 'center',
-            flexShrink: 0
-          }}></i>
-          <span style={{
-            display: sidebarCollapsed ? 'none' : 'inline-block',
-            opacity: sidebarCollapsed ? 0 : 1,
-            visibility: sidebarCollapsed ? 'hidden' : 'visible',
-            width: sidebarCollapsed ? 0 : 'auto',
-            height: sidebarCollapsed ? 0 : 'auto',
-            overflow: sidebarCollapsed ? 'hidden' : 'visible',
-            position: sidebarCollapsed ? 'absolute' : 'static'
-          }}>Billing Information</span>
-        </Link>
-        
-        <div className="nav-divider" style={{
-          height: '1px',
-          backgroundColor: '#eaeaea',
-          margin: '15px 10px 15px',
-          width: 'calc(100% - 20px)'
-        }}></div>
-        
-        <div className={`nav-item locked`} style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: sidebarCollapsed ? '12px 0' : '12px 20px',
-          color: '#64748b',
-          textDecoration: 'none',
-          transition: 'all 0.3s',
-          marginBottom: '8px',
-          borderRadius: '10px',
-          width: '100%',
-          whiteSpace: 'nowrap',
-          position: 'relative',
-          boxSizing: 'border-box',
-          cursor: 'not-allowed',
-          justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
-        }}>
-          <i className="fas fa-cog" style={{
-            marginRight: sidebarCollapsed ? 0 : '12px',
-            fontSize: '18px',
-            width: '24px',
-            textAlign: 'center',
-            flexShrink: 0
-          }}></i>
-          <span style={{
-            display: sidebarCollapsed ? 'none' : 'inline-block',
-            opacity: sidebarCollapsed ? 0 : 1,
-            visibility: sidebarCollapsed ? 'hidden' : 'visible',
-            width: sidebarCollapsed ? 0 : 'auto',
-            height: sidebarCollapsed ? 0 : 'auto',
-            overflow: sidebarCollapsed ? 'hidden' : 'visible',
-            position: sidebarCollapsed ? 'absolute' : 'static'
-          }}>Settings</span>
-          <i className="fas fa-lock menu-lock-icon" style={{
-            display: 'none',
-            position: 'absolute',
-            left: sidebarCollapsed ? '50%' : '50%',
-            top: '50%',
-            transform: sidebarCollapsed ? 'translate(-50%, -50%)' : 'translate(-50%, -50%)',
-            color: '#94A3B8',
-            fontSize: sidebarCollapsed ? '12px' : '18px',
-            zIndex: 5
-          }}></i>
-        </div>
-        
-        <div 
-          onClick={handleLogout}
-          className="nav-item" 
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
-            color: '#64748b',
-            textDecoration: 'none',
-            transition: 'all 0.3s',
-            marginBottom: '8px',
-            borderRadius: '10px',
-            width: '100%',
-            whiteSpace: 'nowrap',
-            position: 'relative',
-            boxSizing: 'border-box',
-            cursor: 'pointer',
-            justifyContent: sidebarCollapsed ? 'center' : 'flex-start'
-          }}
+      <div className="flex-1 py-6 px-2 space-y-1 overflow-y-auto">
+        <Link
+          to="/dashboard"
+          className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            location.pathname === '/dashboard' 
+              ? 'bg-indigo-50 text-indigo-600' 
+              : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'
+          } ${collapsed ? 'justify-center' : ''}`}
         >
-          <i className="fas fa-sign-out-alt" style={{
-            marginRight: sidebarCollapsed ? 0 : '12px',
-            fontSize: '18px',
-            width: '24px',
-            textAlign: 'center',
-            flexShrink: 0
-          }}></i>
-          <span style={{
-            display: sidebarCollapsed ? 'none' : 'inline-block',
-            opacity: sidebarCollapsed ? 0 : 1,
-            visibility: sidebarCollapsed ? 'hidden' : 'visible',
-            width: sidebarCollapsed ? 0 : 'auto',
-            height: sidebarCollapsed ? 0 : 'auto',
-            overflow: sidebarCollapsed ? 'hidden' : 'visible',
-            position: sidebarCollapsed ? 'absolute' : 'static'
-          }}>Log Out</span>
+          <PlayCircle className={getIconStyles()} size={20} />
+          {!collapsed && <span>Getting Started</span>}
+        </Link>
+        
+        <div className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed ${collapsed ? 'justify-center' : ''}`}>
+          <LayoutDashboard className={getIconStyles()} size={20} />
+          {!collapsed && <span>Dashboard</span>}
+          {(!collapsed && !isTrainingEnabled) && <Lock size={14} className="ml-auto" />}
         </div>
         
-        <div style={{ flexGrow: 1 }}></div>
+        <div className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed ${collapsed ? 'justify-center' : ''}`}>
+          <Tool className={getIconStyles()} size={20} />
+          {!collapsed && <span>Tool Page</span>}
+          {(!collapsed && !isTrainingEnabled) && <Lock size={14} className="ml-auto" />}
+        </div>
+        
+        <div className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed ${collapsed ? 'justify-center' : ''}`}>
+          <CreditCard className={getIconStyles()} size={20} />
+          {!collapsed && <span>Payment History</span>}
+          {(!collapsed && !isTrainingEnabled) && <Lock size={14} className="ml-auto" />}
+        </div>
+        
+        <div className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed ${collapsed ? 'justify-center' : ''}`}>
+          <BarChart2 className={getIconStyles()} size={20} />
+          {!collapsed && <span>Performance</span>}
+          {(!collapsed && !isTrainingEnabled) && <Lock size={14} className="ml-auto" />}
+        </div>
+        
+        <div className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed ${collapsed ? 'justify-center' : ''}`}>
+          <Trophy className={getIconStyles()} size={20} />
+          {!collapsed && <span>Ranking</span>}
+          {(!collapsed && !isTrainingEnabled) && <Lock size={14} className="ml-auto" />}
+        </div>
+        
+        <Link
+          to="/billing"
+          className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            location.pathname === '/billing' 
+              ? 'bg-indigo-50 text-indigo-600' 
+              : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'
+          } ${collapsed ? 'justify-center' : ''}`}
+        >
+          <FileInvoice className={getIconStyles()} size={20} />
+          {!collapsed && <span>Billing Information</span>}
+        </Link>
+        
+        <div className="border-t border-gray-200 my-4"></div>
+        
+        <div className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed ${collapsed ? 'justify-center' : ''}`}>
+          <Settings className={getIconStyles()} size={20} />
+          {!collapsed && <span>Settings</span>}
+          {(!collapsed && !isTrainingEnabled) && <Lock size={14} className="ml-auto" />}
+        </div>
+        
+        <button
+          onClick={handleSignOut}
+          className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition-colors w-full ${collapsed ? 'justify-center' : ''}`}
+        >
+          <LogOut className={getIconStyles()} size={20} />
+          {!collapsed && <span>Log Out</span>}
+        </button>
       </div>
       
-      <div className="sidebar-footer" style={{
-        padding: sidebarCollapsed ? 0 : '20px 25px',
-        borderTop: sidebarCollapsed ? 'none' : '1px solid #eaeaea',
-        color: '#64748b',
-        fontSize: '14px',
-        transition: 'opacity 0.3s',
-        opacity: sidebarCollapsed ? 0 : 1,
-        visibility: sidebarCollapsed ? 'hidden' : 'visible',
-        height: sidebarCollapsed ? 0 : 'auto'
-      }}>
-        <i className="fas fa-info-circle"></i> Need help? <a href="#" style={{ color: '#4f46e5', textDecoration: 'none' }}>Support Center</a>
-      </div>
+      {!collapsed && (
+        <div className="p-4 border-t border-gray-200 text-xs text-gray-500">
+          <div className="flex items-center mb-1">
+            <span className="text-gray-700 font-medium">Need help?</span>
+            <a href="#" className="ml-1 text-indigo-600 hover:underline">Support</a>
+          </div>
+          <p>© 2025 ApoLead, All rights Reserved</p>
+        </div>
+      )}
     </div>
   );
 };
-
-export default DashboardSidebar;

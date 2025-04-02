@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
 const StepZero = ({
   userData,
   updateUserData,
@@ -16,24 +18,27 @@ const StepZero = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  
   const handleEmailChange = e => {
     setEmail(e.target.value);
   };
+  
   const handlePasswordChange = e => {
     setPassword(e.target.value);
   };
+  
   const handleConfirmPasswordChange = e => {
     setConfirmPassword(e.target.value);
   };
+  
   const validateEmail = email => {
     if (!email.endsWith('@gmail.com')) {
       return 'Only Gmail accounts are allowed';
     }
     return null;
   };
+  
   const handleSignUp = async e => {
     e.preventDefault();
 
@@ -57,30 +62,27 @@ const StepZero = ({
       });
       return;
     }
+    
     setIsLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password
       });
+      
       if (error) throw error;
 
       // Update userData with email
-      await updateUserData({
-        email
-      });
+      await updateUserData({ email });
 
       // Successful signup
       toast({
         title: "Signup successful",
-        description: "Please proceed with your application"
+        description: "Please check your email for the confirmation link"
       });
-
-      // Move to the next step
-      nextStep();
+      
+      // Instead of going to the next step, show a confirmation message
+      navigate('/confirmation');
     } catch (error) {
       console.error('Signup error:', error);
       toast({
@@ -92,7 +94,9 @@ const StepZero = ({
       setIsLoading(false);
     }
   };
-  return <div className="flex flex-col md:flex-row w-full h-screen">
+  
+  return (
+    <div className="flex flex-col md:flex-row w-full h-screen">
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
@@ -107,7 +111,7 @@ const StepZero = ({
           </Link>
 
           <h2 className="text-3xl font-bold mb-6 text-white">Let us help you run your call center career.</h2>
-          <p className="text-white/80">Our registration process is quick and easy, taking no more than 10 minutes to complete.</p>
+          <p className="text-white/80">Create your account with ApoLead and we'll send you a confirmation email to get started.</p>
         </div>
         
         <div className="mt-auto relative z-10">
@@ -167,10 +171,12 @@ const StepZero = ({
             </div>
             
             <Button type="submit" disabled={isLoading} className="w-full py-6 text-neutral-100">
-              {isLoading ? <div className="flex items-center justify-center">
+              {isLoading ? (
+                <div className="flex items-center justify-center">
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Signing up...
-                </div> : "Sign up"}
+                </div>
+              ) : "Sign up"}
             </Button>
           </form>
           
@@ -189,6 +195,8 @@ const StepZero = ({
           <p className="text-center text-gray-500 text-xs">© 2025 ApoLead, All rights Reserved</p>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default StepZero;
