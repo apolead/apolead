@@ -1,7 +1,8 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
@@ -59,7 +60,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Poppins', sans-serif;
   }
 
   body {
@@ -478,5 +479,15 @@
     background: linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%);
     border-radius: 4px;
     position: relative;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+    100% { opacity: 0.3; }
+  }
+
+  .bg-radial-gradient {
+    background: radial-gradient(circle, var(--from) 0%, var(--to) 70%);
   }
 }
