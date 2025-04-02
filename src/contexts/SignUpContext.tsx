@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +21,7 @@ type UserData = {
   firstName: string;
   lastName: string;
   email: string;
+  password: string; // Added for the new flow
   birthDay: string;
   govIdNumber: string;
   govIdImage: File | null;
@@ -58,6 +60,7 @@ type UserData = {
   
   personalStatement: string;
   acceptedTerms: boolean;
+  confirmationSent: boolean; // Added to track if confirmation email was sent
 };
 
 // Create context
@@ -69,6 +72,7 @@ const initialUserData: UserData = {
   firstName: '',
   lastName: '',
   email: '',
+  password: '', // New field for password
   birthDay: '',
   govIdNumber: '',
   govIdImage: null,
@@ -107,6 +111,7 @@ const initialUserData: UserData = {
   
   personalStatement: '',
   acceptedTerms: false,
+  confirmationSent: false, // New field to track confirmation status
 };
 
 export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -123,6 +128,11 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ...prevData,
       ...data
     }));
+    
+    // Update confirmation sent status if present in the data
+    if (data.confirmationSent !== undefined) {
+      setConfirmationSent(data.confirmationSent);
+    }
   };
   
   // Move to next step
@@ -260,70 +270,7 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       console.log('Application submitted successfully:', applicationData);
       
-      // Send confirmation email with signup link for approved applications
-      // This is a simplified check - in a real app, admin approval would happen later
-      const isAutomaticallyApproved = 
-        userData.meetObligation && 
-        userData.loginDiscord && 
-        userData.checkEmails && 
-        userData.solveProblems && 
-        userData.completeTraining;
-      
-      if (isAutomaticallyApproved) {
-        try {
-          // Call our edge function to send the confirmation email
-          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-confirmation`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-            },
-            body: JSON.stringify({ 
-              email: userData.email,
-              redirectUrl: `${window.location.origin}/confirmation?status=approved`
-            })
-          });
-          
-          if (!response.ok) {
-            console.error('Error calling send-confirmation function:', await response.text());
-            toast({
-              title: "Email Notification Error",
-              description: "There was an issue sending your confirmation email. Please contact support.",
-              variant: "destructive",
-              duration: 8000,
-            });
-          } else {
-            const result = await response.json();
-            
-            if (!result.success) {
-              console.error('Error sending confirmation email:', result.error);
-              toast({
-                title: "Email Notification Error",
-                description: "There was an issue sending your confirmation email. Please contact support.",
-                variant: "destructive",
-                duration: 8000,
-              });
-            } else {
-              console.log('Confirmation email sent successfully');
-              setConfirmationSent(true);
-              
-              toast({
-                title: "Application Approved",
-                description: "A confirmation email has been sent to your inbox with instructions to complete your registration.",
-                duration: 8000,
-              });
-            }
-          }
-        } catch (emailError) {
-          console.error('Error sending confirmation email:', emailError);
-          toast({
-            title: "Email Notification Error",
-            description: "There was an issue sending your confirmation email. Please contact support.",
-            variant: "destructive",
-            duration: 8000,
-          });
-        }
-      }
+      // We don't automatically send confirmation email anymore - that happens when user clicks "Join Today"
       
       // Move to confirmation step first
       nextStep();

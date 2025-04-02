@@ -3,8 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Check, X, Loader2, Key, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSignUp } from '@/contexts/SignUpContext';
@@ -12,15 +10,13 @@ import { useSignUp } from '@/contexts/SignUpContext';
 const ConfirmationScreen = () => {
   const [isApproved, setIsApproved] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [processingPassword, setProcessingPassword] = useState(false);
-  const [redirectCountdown, setRedirectCountdown] = useState(15); // Extended countdown time
+  const [processingSendEmail, setProcessingSendEmail] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(15);
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { confirmationSent } = useSignUp();
+  const { userData, confirmationSent, updateUserData } = useSignUp();
 
   // Check for token in URL query parameters
   useEffect(() => {
@@ -48,8 +44,18 @@ const ConfirmationScreen = () => {
             console.error('Error setting session:', error);
             setIsApproved(false);
           } else {
-            setIsApproved(true);
-            setShowPasswordForm(true);
+            // User is confirmed - redirect to dashboard instead of showing password form
+            toast({
+              title: "Account Confirmed",
+              description: "Your account has been confirmed. Redirecting to dashboard.",
+              duration: 3000,
+            });
+            
+            // Wait a moment before redirecting
+            setTimeout(() => {
+              navigate('/dashboard');
+            }, 2000);
+            return;
           }
           setIsLoading(false);
           return;
@@ -99,14 +105,14 @@ const ConfirmationScreen = () => {
     };
     
     checkApplicationStatus();
-  }, [navigate]);
+  }, [navigate, toast]);
 
   // Countdown timer for redirection
   useEffect(() => {
     let timer: number;
     
-    // Start countdown for redirection if approved and not showing password form
-    if (isApproved && !showPasswordForm && !isLoading) {
+    // Start countdown for redirection if approved and not sending email
+    if (isApproved && !processingSendEmail && !isLoading) {
       timer = window.setInterval(() => {
         setRedirectCountdown(prev => {
           if (prev <= 1) {
@@ -122,76 +128,76 @@ const ConfirmationScreen = () => {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [isApproved, showPasswordForm, isLoading, navigate]);
+  }, [isApproved, processingSendEmail, isLoading, navigate]);
 
-  const handlePasswordSetup = async (e) => {
-    e.preventDefault();
-    
-    if (password !== confirmPassword) {
-      toast({
-        title: "Passwords Don't Match",
-        description: "Please make sure your passwords match.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (password.length < 6) {
-      toast({
-        title: "Password Too Short",
-        description: "Password must be at least 6 characters long.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setProcessingPassword(true);
+  const handleSendConfirmation = async () => {
+    setProcessingSendEmail(true);
     
     try {
-      // Update user password
-      const { error } = await supabase.auth.updateUser({
-        password: password
+      // Call our edge function to send the confirmation email
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-confirmation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ 
+          email: userData.email,
+          redirectUrl: `${window.location.origin}/confirmation?status=approved`
+        })
       });
       
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        console.error('Error calling send-confirmation function:', await response.text());
+        toast({
+          title: "Email Notification Error",
+          description: "There was an issue sending your confirmation email. Please contact support.",
+          variant: "destructive",
+          duration: 8000,
+        });
+        setProcessingSendEmail(false);
+        return;
       }
       
-      // Update application status to confirmed in user_profiles
-      const { data: { user } } = await supabase.auth.getUser();
+      const result = await response.json();
       
-      if (user) {
-        // Update the user profile to mark as confirmed
-        const { error: updateError } = await supabase
-          .from('user_profiles')
-          .update({ application_status: 'confirmed' })
-          .eq('user_id', user.id);
-          
-        if (updateError) {
-          console.error('Error updating profile status:', updateError);
-          // Continue anyway as the password has been set
-        }
+      if (!result.success) {
+        console.error('Error sending confirmation email:', result.error);
+        toast({
+          title: "Email Notification Error",
+          description: "There was an issue sending your confirmation email. Please contact support.",
+          variant: "destructive",
+          duration: 8000,
+        });
+        setProcessingSendEmail(false);
+        return;
       }
+      
+      console.log('Confirmation email sent successfully');
+      // Store the temporary password if returned
+      if (result.tempPassword) {
+        setTempPassword(result.tempPassword);
+      }
+      
+      // Update user data to show confirmation sent
+      updateUserData({ confirmationSent: true });
       
       toast({
-        title: "Password Set Successfully",
-        description: "Your password has been set. You can now log in.",
+        title: "Confirmation Email Sent",
+        description: "A confirmation email has been sent to your inbox with instructions to complete your registration.",
+        duration: 8000,
       });
-      
-      // Redirect to login page
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
       
     } catch (error) {
-      console.error('Error setting password:', error);
+      console.error('Error sending confirmation email:', error);
       toast({
-        title: "Error Setting Password",
-        description: error.message || "An error occurred setting your password.",
+        title: "Email Notification Error",
+        description: "There was an issue sending your confirmation email. Please contact support.",
         variant: "destructive",
+        duration: 8000,
       });
     } finally {
-      setProcessingPassword(false);
+      setProcessingSendEmail(false);
     }
   };
 
@@ -226,60 +232,25 @@ const ConfirmationScreen = () => {
           )}
         </div>
         
-        {isApproved && showPasswordForm ? (
-          <>
-            <h2 className="text-2xl font-bold mb-4">Set Your Password</h2>
-            <p className="text-gray-600 mb-6">
-              Your application has been approved! Please set a password to complete your registration.
-            </p>
-            <form onSubmit={handlePasswordSetup} className="space-y-4 text-left">
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                  required 
-                  disabled={processingPassword}
-                />
-              </div>
-              <div>
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input 
-                  id="confirmPassword" 
-                  type="password" 
-                  value={confirmPassword} 
-                  onChange={(e) => setConfirmPassword(e.target.value)} 
-                  required 
-                  disabled={processingPassword}
-                />
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full bg-indigo-600 hover:bg-indigo-700" 
-                disabled={processingPassword}
-              >
-                {processingPassword ? (
-                  <div className="flex items-center justify-center">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Setting password...
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center">
-                    <Key className="mr-2 h-4 w-4" />
-                    Set Password and Complete Registration
-                  </div>
-                )}
-              </Button>
-            </form>
-          </>
-        ) : isApproved ? (
+        {isApproved ? (
           <>
             <h2 className="text-2xl font-bold mb-4">Application Submitted Successfully!</h2>
             <p className="text-gray-600 mb-6">
               Thank you for applying to join our team. Your information has been received and will be reviewed by our team.
             </p>
+            
+            {tempPassword && (
+              <div className="p-4 mb-6 bg-yellow-50 border border-yellow-100 rounded-md">
+                <h3 className="font-semibold text-yellow-800 mb-2">Your Temporary Password</h3>
+                <p className="text-sm text-yellow-700 mb-2">
+                  Please save this password for logging in. You'll be asked to reset it on your first login.
+                </p>
+                <div className="bg-white p-3 rounded border border-yellow-200 font-mono text-center">
+                  {tempPassword}
+                </div>
+              </div>
+            )}
+            
             <div className="space-y-4 mb-8">
               <div className="p-4 bg-blue-50 rounded-md text-left border border-blue-100">
                 <h3 className="font-semibold text-blue-800 mb-2">What happens next?</h3>
@@ -297,25 +268,45 @@ const ConfirmationScreen = () => {
                         </div>
                         <div className="flex items-center">
                           <div className="h-5 w-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs mr-2">2</div>
-                          <span>Create your password on the next screen</span>
+                          <span>You will be automatically redirected to the dashboard</span>
                         </div>
                         <div className="flex items-center">
                           <div className="h-5 w-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs mr-2">3</div>
-                          <span>Log in with your email and new password</span>
+                          <span>Complete the onboarding process to access training</span>
                         </div>
                       </div>
                     </>
                   ) : (
                     <>
                       1. Our team will review your application<br />
-                      2. You'll receive an email with the result of your application<br />
-                      3. If approved, you'll be provided next steps for onboarding<br />
-                      4. If rejected, you'll be notified of the reasons
+                      2. If approved, click the "Join Today" button below to receive your confirmation email<br />
+                      3. Follow the instructions in the email to complete your registration
                     </>
                   )}
                 </p>
               </div>
             </div>
+            
+            {!confirmationSent && (
+              <Button 
+                onClick={handleSendConfirmation} 
+                className="w-full bg-indigo-600 hover:bg-indigo-700 mb-6"
+                disabled={processingSendEmail}
+              >
+                {processingSendEmail ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending confirmation...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <Mail className="mr-2 h-4 w-4" />
+                    Join Today
+                  </div>
+                )}
+              </Button>
+            )}
+            
             <p className="text-sm text-gray-500 mt-6">
               Redirecting to homepage in {redirectCountdown} seconds...
             </p>
@@ -341,14 +332,12 @@ const ConfirmationScreen = () => {
         )}
         
         <div className="space-x-4 mt-6">
-          {!showPasswordForm && (
-            <Button 
-              asChild
-              className={isApproved ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"}
-            >
-              <Link to="/">Return to Homepage</Link>
-            </Button>
-          )}
+          <Button 
+            asChild
+            className={isApproved ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"}
+          >
+            <Link to="/">Return to Homepage</Link>
+          </Button>
         </div>
       </div>
       

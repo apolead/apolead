@@ -16,6 +16,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Generate a secure temporary password
+const generateTemporaryPassword = () => {
+  const length = 12;
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+  let password = "";
+  
+  // Ensure at least one of each character type
+  password += chars.substr(Math.floor(Math.random() * 26), 1); // Uppercase
+  password += chars.substr(26 + Math.floor(Math.random() * 26), 1); // Lowercase
+  password += chars.substr(52 + Math.floor(Math.random() * 10), 1); // Number
+  password += chars.substr(62 + Math.floor(Math.random() * 10), 1); // Special
+  
+  // Fill the rest randomly
+  for (let i = 4; i < length; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  
+  // Shuffle the password
+  return password.split('').sort(() => 0.5 - Math.random()).join('');
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -44,12 +65,16 @@ serve(async (req) => {
 
     console.log(`Generating signup link for: ${email}`);
     console.log(`Redirect URL: ${redirectUrl || "Not provided, using default"}`);
+    
+    // Generate a secure temporary password
+    const tempPassword = generateTemporaryPassword();
+    console.log(`Generated temporary password for: ${email}`);
 
-    // Generate signup link with a temporary password (required by Supabase)
+    // Generate signup link with the temporary password
     const { data, error } = await supabase.auth.admin.generateLink({
       type: "signup",
       email,
-      password: crypto.randomUUID(), // Generate a random temporary password
+      password: tempPassword,
       options: {
         redirectTo: redirectUrl || `${req.headers.get("origin")}/confirmation?status=approved`,
       }
@@ -81,7 +106,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: "Confirmation email sent successfully",
-        // Only include the link in non-production environments for debugging
+        // Include the temporary password in the response and link in non-production environments
+        tempPassword: tempPassword,
         link: isDevelopment ? data?.properties?.action_link : undefined
       }),
       {

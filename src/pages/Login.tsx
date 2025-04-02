@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -14,8 +14,48 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isSendingReset, setIsSendingReset] = useState(false);
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  // Check if this is a password reset confirmation
+  useEffect(() => {
+    const checkResetParams = async () => {
+      const url = new URL(window.location.href);
+      const type = url.searchParams.get('type');
+      const accessToken = url.searchParams.get('access_token');
+      const refreshToken = url.searchParams.get('refresh_token');
+      
+      // Handle password reset link
+      if (type === 'recovery' && accessToken && refreshToken) {
+        try {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          
+          if (error) {
+            throw error;
+          }
+          
+          // Redirect to password reset page
+          navigate('/reset-password');
+        } catch (error) {
+          console.error('Error setting session from recovery link:', error);
+          toast({
+            title: "Invalid Reset Link",
+            description: "The password reset link is invalid or has expired.",
+            variant: "destructive"
+          });
+        }
+      }
+    };
+    
+    checkResetParams();
+  }, [navigate, toast]);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -287,10 +327,16 @@ const Login = () => {
     }
   };
 
-  const handleForgotPassword = async (e) => {
+  const handleForgotPassword = (e) => {
+    e.preventDefault();
+    setShowResetForm(true);
+    setResetEmail(email); // Pre-fill with login email if available
+  };
+  
+  const handlePasswordReset = async (e) => {
     e.preventDefault();
     
-    if (!email) {
+    if (!resetEmail) {
       toast({
         title: "Email required",
         description: "Please enter your email address",
@@ -299,7 +345,7 @@ const Login = () => {
       return;
     }
     
-    const emailError = validateEmail(email);
+    const emailError = validateEmail(resetEmail);
     if (emailError) {
       toast({
         title: "Invalid email",
@@ -312,12 +358,13 @@ const Login = () => {
     setIsSendingReset(true);
     
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/confirmation?reset=true`,
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/login?type=recovery`,
       });
       
       if (error) throw error;
       
+      setResetSent(true);
       toast({
         title: "Reset email sent",
         description: "Check your email for a password reset link",
@@ -332,6 +379,12 @@ const Login = () => {
     } finally {
       setIsSendingReset(false);
     }
+  };
+  
+  const handleBackToLogin = (e) => {
+    e.preventDefault();
+    setShowResetForm(false);
+    setResetSent(false);
   };
 
   if (isCheckingSession) {
@@ -357,89 +410,163 @@ const Login = () => {
             Back to Home
           </Link>
 
-          <h2 className="text-3xl font-bold mb-6 text-white">Welcome back!</h2>
-          <p className="text-white/80">Log in to access your dashboard and manage your calls.</p>
+          <h2 className="text-2xl font-bold mb-6">Welcome Back!</h2>
+          <p className="text-white/80 mb-6">
+            Sign in to your ApoLead account to access your dashboard, manage your leads, and track your performance.
+          </p>
+          
+          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm mb-6">
+            <h4 className="font-semibold mb-2">Why join ApoLead?</h4>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>Flexible work hours from anywhere</li>
+              <li>Competitive compensation packages</li>
+              <li>Supportive community of professionals</li>
+              <li>Continuous training and skill development</li>
+            </ul>
+          </div>
         </div>
         
-        <div className="mt-auto relative z-10">
-          <div className="bg-indigo-800 bg-opacity-70 rounded-lg p-5 mb-8">
-            <p className="text-sm italic mb-3 text-white">"The platform has transformed my career as a call center agent. The tools and resources provided make handling calls much more efficient."</p>
-            <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-2">
-                S
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-white">Sarah Johnson</p>
-              </div>
-            </div>
-          </div>
+        <div className="mt-auto pt-4 text-sm opacity-75">
+          <p>© 2025 ApoLead. All rights reserved.</p>
         </div>
       </div>
       
-      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
-        <div className="block md:hidden mb-8">
-          <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-            Back to Home
-          </Link>
-        </div>
-      
-        <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
-            </h2>
-          </div>
-
-          <h1 className="text-2xl font-bold mb-2 text-center">Sign in</h1>
-          <p className="text-gray-600 mb-8 text-center">Sign in to your account</p>
-          
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email (Gmail only)</Label>
-              <Input id="email" type="email" placeholder="your.name@gmail.com" value={email} onChange={handleEmailChange} required />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={handlePasswordChange} required />
-            </div>
-            
-            <div className="text-right">
-              <button 
-                type="button" 
-                onClick={handleForgotPassword}
-                className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
-                disabled={isSendingReset}
-              >
-                {isSendingReset ? 'Sending...' : 'Forgot password?'}
-              </button>
-            </div>
-            
-            <Button type="submit" disabled={isLoading} className="w-full py-6 text-neutral-50">
-              {isLoading ? <div className="flex items-center justify-center">
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Signing in...
-                </div> : "Sign in"}
-            </Button>
-          </form>
-          
-          <div className="mt-6 text-center">
-            <p className="text-sm">
-              Don't have an account? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link>
-            </p>
-          </div>
-          
-          <div className="mt-4 text-center">
-            <p className="text-sm text-gray-500">Only Gmail accounts are supported</p>
-          </div>
+      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col justify-center">
+        <div className="mb-8 text-center">
+          <h2 className="text-3xl font-bold inline">
+            <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+          </h2>
         </div>
         
-        <div className="mt-auto pt-4">
-          <p className="text-center text-gray-500 text-xs">© 2025 ApoLead, All rights Reserved</p>
-        </div>
+        {!showResetForm ? (
+          // Login Form
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Sign In</h2>
+            <p className="text-gray-600 mb-8">Enter your credentials to access your account</p>
+            
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <Label htmlFor="email">Email Address</Label>
+                <Input 
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={handleEmailChange}
+                  placeholder="your.name@gmail.com"
+                  className="mt-1"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="password">Password</Label>
+                  <a 
+                    href="#" 
+                    onClick={handleForgotPassword} 
+                    className="text-sm text-indigo-600 hover:text-indigo-800"
+                  >
+                    Forgot password?
+                  </a>
+                </div>
+                <Input 
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter your password"
+                  className="mt-1"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full bg-indigo-600 hover:bg-indigo-700"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </div>
+                ) : 'Sign In'}
+              </Button>
+              
+              <p className="text-center text-gray-500 text-sm mt-4">
+                Don't have an account? <Link to="/signup" className="text-indigo-600 hover:text-indigo-800">Sign up</Link>
+              </p>
+            </form>
+          </div>
+        ) : (
+          // Password Reset Form
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Reset Password</h2>
+            {resetSent ? (
+              <div className="text-center p-6">
+                <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Mail className="h-8 w-8 text-green-600" />
+                </div>
+                <p className="text-gray-600 mb-6">
+                  Password reset instructions have been sent to your email address. Please check your inbox and follow the link to reset your password.
+                </p>
+                <Button 
+                  onClick={handleBackToLogin} 
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Back to Login
+                </Button>
+              </div>
+            ) : (
+              <>
+                <p className="text-gray-600 mb-8">Enter your email address to receive a password reset link</p>
+                
+                <form onSubmit={handlePasswordReset} className="space-y-6">
+                  <div>
+                    <Label htmlFor="resetEmail">Email Address</Label>
+                    <Input 
+                      type="email"
+                      id="resetEmail"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="your.name@gmail.com"
+                      className="mt-1"
+                      required
+                      disabled={isSendingReset}
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={handleBackToLogin}
+                      className="flex-1"
+                      disabled={isSendingReset}
+                    >
+                      Back to Login
+                    </Button>
+                    
+                    <Button 
+                      type="submit" 
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                      disabled={isSendingReset}
+                    >
+                      {isSendingReset ? (
+                        <div className="flex items-center justify-center">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </div>
+                      ) : 'Send Reset Link'}
+                    </Button>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>;
 };

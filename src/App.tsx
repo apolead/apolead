@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,12 +12,14 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword"; // Import the new ResetPassword page
 import Dashboard from "./pages/Dashboard";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 import BillingInformation from "./pages/BillingInformation";
+import Onboarding from "./pages/Onboarding"; // We'll create this next
 
 const queryClient = new QueryClient();
 
@@ -255,9 +258,15 @@ const AuthWrapper = () => {
       } />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/dashboard" element={
         <AuthRoute>
           <Dashboard />
+        </AuthRoute>
+      } />
+      <Route path="/onboarding" element={
+        <AuthRoute>
+          <Onboarding />
         </AuthRoute>
       } />
       <Route path="/billing" element={

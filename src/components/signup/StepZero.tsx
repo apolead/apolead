@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CheckCircle, X, Loader2 } from 'lucide-react';
@@ -9,6 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 
 const StepZero = ({ userData, updateUserData, nextStep }) => {
   const [email, setEmail] = useState(userData.email || '');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isValid, setIsValid] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
@@ -20,10 +23,34 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
     return regex.test(email);
   };
 
+  // Check if all inputs are valid
+  useEffect(() => {
+    const isEmailValid = validateEmail(email);
+    const doEmailsMatch = email === confirmEmail;
+    const isPasswordValid = password.length >= 8;
+    const doPasswordsMatch = password === confirmPassword;
+    
+    setIsValid(isEmailValid && doEmailsMatch && isPasswordValid && doPasswordsMatch);
+  }, [email, confirmEmail, password, confirmPassword]);
+
   const handleEmailChange = (e) => {
     const newEmail = e.target.value;
     setEmail(newEmail);
-    setIsValid(validateEmail(newEmail));
+    setErrorMessage('');
+  };
+  
+  const handleConfirmEmailChange = (e) => {
+    setConfirmEmail(e.target.value);
+    setErrorMessage('');
+  };
+  
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+    setErrorMessage('');
+  };
+  
+  const handleConfirmPasswordChange = (e) => {
+    setConfirmPassword(e.target.value);
     setErrorMessage('');
   };
   
@@ -36,7 +63,26 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
     e.preventDefault();
     
     if (!isValid) {
-      setErrorMessage('Please enter a valid Gmail address (@gmail.com)');
+      if (!validateEmail(email)) {
+        setErrorMessage('Please enter a valid Gmail address (@gmail.com)');
+        return;
+      }
+      
+      if (email !== confirmEmail) {
+        setErrorMessage('Email addresses do not match');
+        return;
+      }
+      
+      if (password.length < 8) {
+        setErrorMessage('Password must be at least 8 characters long');
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        setErrorMessage('Passwords do not match');
+        return;
+      }
+      
       return;
     }
     
@@ -86,7 +132,11 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
       
       // If we reach here, email is available
       console.log('Email is available for use');
-      updateUserData({ email });
+      updateUserData({ 
+        email, 
+        password, // Store password in userData for later use
+      });
+      
       nextStep();
       
       toast({
@@ -155,7 +205,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
         </div>
         
         <h2 className="text-2xl font-bold mb-4">Start Your Application</h2>
-        <p className="text-gray-600 mb-6">Enter your Gmail address to begin the application process. This will be your login for future access.</p>
+        <p className="text-gray-600 mb-6">Enter your Gmail address and create a secure password to begin the application process.</p>
         
         {errorMessage && (
           <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-md text-sm mb-6">
@@ -178,7 +228,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
               />
               {email && (
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  {isValid ? (
+                  {validateEmail(email) ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />
                   ) : (
                     <X className="h-5 w-5 text-red-500" />
@@ -187,6 +237,78 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
               )}
             </div>
             <p className="mt-1 text-xs text-gray-500">We only accept Gmail addresses (@gmail.com)</p>
+          </div>
+          
+          <div>
+            <label htmlFor="confirmEmail" className="block text-sm font-medium text-gray-700 mb-1">Confirm Email Address</label>
+            <div className="relative">
+              <Input
+                type="email"
+                id="confirmEmail"
+                value={confirmEmail}
+                onChange={handleConfirmEmailChange}
+                className="w-full pr-10"
+                placeholder="Confirm your Gmail address"
+                disabled={isChecking}
+              />
+              {confirmEmail && (
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                  {email === confirmEmail && validateEmail(confirmEmail) ? (
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <X className="h-5 w-5 text-red-500" />
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <div className="relative">
+              <Input
+                type="password"
+                id="password"
+                value={password}
+                onChange={handlePasswordChange}
+                className="w-full pr-10"
+                placeholder="Create a password (min. 8 characters)"
+                disabled={isChecking}
+              />
+              {password && (
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                  {password.length >= 8 ? (
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <X className="h-5 w-5 text-red-500" />
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+            <div className="relative">
+              <Input
+                type="password"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={handleConfirmPasswordChange}
+                className="w-full pr-10"
+                placeholder="Confirm your password"
+                disabled={isChecking}
+              />
+              {confirmPassword && (
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                  {password === confirmPassword && password.length >= 8 ? (
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <X className="h-5 w-5 text-red-500" />
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           
           <Button
@@ -199,7 +321,7 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Checking...
               </>
-            ) : 'Next'}
+            ) : 'Continue'}
           </Button>
           
           <p className="text-center text-gray-500 text-sm mt-4">
