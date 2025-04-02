@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -5,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
+import TrainingModal from '@/components/training/TrainingModal';
 import { 
   CheckCircle,
   ChevronDown,
@@ -19,6 +21,7 @@ import {
 const Dashboard = () => {
   const { user, userProfile, loading } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTrainingModalOpen, setIsTrainingModalOpen] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [onboardingProgress, setOnboardingProgress] = useState(20); // Default to 20% (signup completed)
   const [onboardingStatus, setOnboardingStatus] = useState('not_started'); // 'not_started', 'incomplete', 'ineligible', 'completed'
@@ -49,48 +52,28 @@ const Dashboard = () => {
         complete_training: userProfile.complete_training
       });
       
-      // Check if the user has completed the basic onboarding fields
-      const hasCompletedBasicInfo = 
-        userProfile.first_name && 
-        userProfile.last_name && 
-        userProfile.birth_day && 
-        userProfile.gov_id_number && 
-        userProfile.gov_id_image;
-      
-      // Check if all required questions have been answered
-      const hasAnsweredAllQuestions = 
-        userProfile.has_headset !== null && 
-        userProfile.has_quiet_place !== null &&
-        userProfile.meet_obligation !== null &&
-        userProfile.login_discord !== null &&
-        userProfile.check_emails !== null &&
-        userProfile.solve_problems !== null && 
-        userProfile.complete_training !== null;
+      // Check if the database flag for onboarding_completed is set
+      const isOnboardingCompletedFlag = userProfile.onboarding_completed === true;
       
       // Check if eligible based on the database field directly
       const isEligible = userProfile.eligible_for_training === true;
       
-      // Check if onboarding is marked as completed in the database
-      const isOnboardingCompleted = userProfile.onboarding_completed === true;
-      
       console.log("Dashboard: Eligibility check", {
-        hasCompletedBasicInfo,
-        hasAnsweredAllQuestions,
+        isOnboardingCompletedFlag,
         isEligible,
-        isOnboardingCompleted,
         eligible_for_training_type: typeof userProfile.eligible_for_training,
         onboarding_completed_type: typeof userProfile.onboarding_completed
       });
       
-      // Determine onboarding status
-      if (isOnboardingCompleted) {
+      // Determine onboarding status - prioritize the database flags
+      if (isOnboardingCompletedFlag) {
         if (isEligible) {
           setOnboardingStatus('completed');
         } else {
           setOnboardingStatus('ineligible');
         }
         setOnboardingCompleted(true);
-      } else if (hasCompletedBasicInfo || userProfile.first_name || userProfile.last_name) {
+      } else if (userProfile.first_name || userProfile.last_name) {
         setOnboardingStatus('incomplete');
         setOnboardingCompleted(false);
       } else {
@@ -102,7 +85,10 @@ const Dashboard = () => {
       if (onboardingStatus === 'completed' || onboardingStatus === 'ineligible') {
         setOnboardingProgress(100);
       } else if (onboardingStatus === 'incomplete') {
-        setOnboardingProgress(hasCompletedBasicInfo ? 60 : 40);
+        // Calculate progress percentage based on how many fields are filled
+        const hasBasicInfo = userProfile.first_name && userProfile.last_name && userProfile.birth_day && 
+                          userProfile.gov_id_number && userProfile.gov_id_image;
+        setOnboardingProgress(hasBasicInfo ? 60 : 40);
       } else {
         // Just signed up, only has email
         setOnboardingProgress(20);
@@ -119,7 +105,7 @@ const Dashboard = () => {
   const closeOnboardingModal = async () => {
     setIsModalOpen(false);
     
-    // Refresh the user profile to update the status
+    // Force a refresh to get the latest user profile data
     if (user) {
       try {
         const { data, error } = await supabase
@@ -136,6 +122,16 @@ const Dashboard = () => {
         console.error("Error refreshing user profile:", err);
       }
     }
+  };
+  
+  const openTrainingModal = () => {
+    setIsTrainingModalOpen(true);
+  };
+  
+  const closeTrainingModal = (passed = false) => {
+    setIsTrainingModalOpen(false);
+    // Force reload to update UI after training
+    window.location.reload();
   };
   
   const getOnboardingButtonText = () => {
@@ -352,7 +348,10 @@ const Dashboard = () => {
               </div>
               <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Initial Training</h3>
               <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Complete the initial training module to unlock the next step. This will teach you the fundamentals.</p>
-              <button className={`card-button ${userProfile?.eligible_for_training === true ? 'button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]' : 'button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70'}`}>
+              <button 
+                className={`card-button ${userProfile?.eligible_for_training === true ? 'button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]' : 'button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70'}`}
+                onClick={userProfile?.eligible_for_training === true ? openTrainingModal : undefined}
+              >
                 {userProfile?.eligible_for_training === true ? (
                   <><CheckCircle className="mr-[8px] text-[16px]" /> Start Training</>
                 ) : (
@@ -424,6 +423,13 @@ const Dashboard = () => {
         onClose={closeOnboardingModal} 
         user={user}
         initialUserData={userProfile}
+      />
+
+      {/* Training Modal */}
+      <TrainingModal 
+        isOpen={isTrainingModalOpen} 
+        onClose={closeTrainingModal}
+        onComplete={(passed) => closeTrainingModal(passed)}
       />
     </div>
   );

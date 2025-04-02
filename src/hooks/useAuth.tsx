@@ -76,6 +76,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
     
+    // Ensure we properly handle arrays that might be null or undefined
+    if (cleanProfile.available_days === null || cleanProfile.available_days === undefined) {
+      cleanProfile.available_days = [];
+    }
+    
+    if (cleanProfile.day_hours === null || cleanProfile.day_hours === undefined) {
+      cleanProfile.day_hours = {};
+    }
+    
     console.log('Sanitized profile data:', {
       onboarding_completed: cleanProfile.onboarding_completed, 
       eligible_for_training: cleanProfile.eligible_for_training,
@@ -278,14 +287,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (safeData.available_days) {
         // If it's already a valid array, PostgreSQL will handle it
         if (!Array.isArray(safeData.available_days) || safeData.available_days.length === 0) {
-          delete safeData.available_days; // Remove empty arrays to avoid SQL errors
+          safeData.available_days = []; // Use empty array instead of removing
         }
       }
       
       if (safeData.day_hours) {
-        // If it's an empty object, remove it
+        // If it's an empty object, use an empty object
         if (typeof safeData.day_hours === 'object' && Object.keys(safeData.day_hours).length === 0) {
-          delete safeData.day_hours;
+          safeData.day_hours = {};
         }
       }
       
@@ -296,26 +305,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
-      setUserProfile(prev => {
-        const updated = {
-          ...prev,
-          ...safeData
-        };
-        console.log('Updated user profile in state:', updated);
-        
-        localStorage.setItem('userProfile', JSON.stringify(updated));
-        
-        return updated;
-      });
+      // Fetch the latest profile after update to ensure we have the latest state
+      await fetchUserProfile(user.id);
       
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully",
       });
-      
-      // Fetch the updated profile to get the latest state, especially for fields calculated on the server
-      // like eligible_for_training which is determined by a trigger
-      fetchUserProfile(user.id);
       
     } catch (error: any) {
       console.error('Profile update error:', error);

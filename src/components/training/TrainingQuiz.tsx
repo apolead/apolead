@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -28,6 +29,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
+        console.log("Fetching quiz questions...");
         const { data, error } = await supabase
           .from('quiz_questions')
           .select('*');
@@ -37,6 +39,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
         }
         
         if (data && data.length > 0) {
+          console.log("Received questions from database:", data);
           const formattedQuestions = data.map(q => ({
             id: q.id,
             question: q.question,
@@ -48,6 +51,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
           
           setQuestions(formattedQuestions);
         } else {
+          console.log("No questions found in DB, using fallback questions");
           setQuestions([
             {
               id: 'q1',

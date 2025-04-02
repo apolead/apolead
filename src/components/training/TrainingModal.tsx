@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -63,10 +64,11 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       console.log("User has not started training yet");
       setStep('video');
     }
-  }, [userProfile]);
+  }, [userProfile, isOpen]);
   
   const handleVideoComplete = async () => {
     try {
+      console.log("Video marked as complete");
       await updateProfile({
         training_video_watched: true
       });
@@ -78,6 +80,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   };
   
   const handleContinueToQuiz = () => {
+    console.log("User clicked continue to quiz");
     setStep('quiz');
   };
   
@@ -128,6 +131,8 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   }, [showScheduleDialog]);
   
   if (!isOpen) return null;
+  
+  console.log("Rendering Training Modal. Step:", step, "QuizPassed:", quizPassed);
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
