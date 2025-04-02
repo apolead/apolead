@@ -21,8 +21,6 @@ type UserData = {
   lastName: string;
   email: string;
   birthDay: string;
-  password: string;
-  confirmPassword: string;
   govIdNumber: string;
   govIdImage: File | null;
   govIdImageUrl: string;
@@ -72,8 +70,6 @@ const initialUserData: UserData = {
   lastName: '',
   email: '',
   birthDay: '',
-  password: '',
-  confirmPassword: '',
   govIdNumber: '',
   govIdImage: null,
   govIdImageUrl: '',
@@ -213,10 +209,10 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       
-      // Create the user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Create the temporary user account without a password
+      // It will be in a "pending" state until approved
+      const { error: signUpError } = await supabase.auth.signUp({
         email: userData.email,
-        password: userData.password,
         options: {
           data: {
             first_name: userData.firstName,
@@ -253,18 +249,18 @@ export const SignUpProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       });
       
-      if (authError) {
-        console.error('Signup error:', authError);
+      if (signUpError) {
+        console.error('Signup error:', signUpError);
         toast({
           title: "Signup Error",
-          description: authError.message || "An error occurred during signup.",
+          description: signUpError.message || "An error occurred during signup.",
           variant: "destructive",
         });
         setIsSubmitting(false);
         return;
       }
       
-      console.log('Signup successful:', authData);
+      console.log('Application submitted successfully');
       
       // Move to confirmation step
       nextStep();
