@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CheckCircle, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 const StepZero = ({ userData, updateUserData, nextStep }) => {
   const [email, setEmail] = useState(userData.email || '');
@@ -13,7 +11,6 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
   const [isValid, setIsValid] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   const validateEmail = (email) => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,49 +40,26 @@ const StepZero = ({ userData, updateUserData, nextStep }) => {
     setIsChecking(true);
     
     try {
-      // Check if the user already exists in auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      // Check if the email already exists
+      const { data, error } = await supabase.auth.signInWithOtp({
         email: email,
-        password: 'not-a-real-password-just-checking-if-exists'
+        options: {
+          shouldCreateUser: false,
+        }
       });
       
-      // If we get any response but invalid credentials, the user exists
-      if (!authError || (authError && !authError.message.includes('Invalid login credentials'))) {
+      if (error && error.message.includes('not a user')) {
+        // If we get "not a user" error, then the email is not registered yet
+        console.log('Email is available for use');
+        updateUserData({ email });
+        nextStep();
+      } else {
+        // Otherwise, the email is already in use
         setErrorMessage('This email is already registered in our system');
-        setIsChecking(false);
-        return;
       }
-      
-      // Also check profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('email')
-        .eq('email', email)
-        .maybeSingle();
-        
-      if (profileError && !profileError.message.includes('not found')) {
-        console.error('Error checking email in profiles:', profileError);
-      }
-      
-      if (profileData) {
-        setErrorMessage('This email is already registered in our system');
-        setIsChecking(false);
-        return;
-      }
-      
-      // If we get here, the email is not yet registered
-      console.log('Email is available for use');
-      updateUserData({ email });
-      nextStep();
-      
-      toast({
-        title: "Email confirmed",
-        description: "Your email is valid and available for use.",
-      });
-      
     } catch (error) {
       console.error('Error checking email:', error);
-      // If there's an unexpected error, we'll give the user the benefit of the doubt
+      // If there's any other error, we'll proceed anyway
       updateUserData({ email });
       nextStep();
     } finally {
