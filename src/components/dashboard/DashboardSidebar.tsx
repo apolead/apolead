@@ -2,9 +2,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { UserCircle, Home, BookOpen, Users, Wrench, FileText, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { 
+  UserCircle, 
+  Home, 
+  BookOpen, 
+  Users, 
+  Wrench, 
+  FileText, 
+  Settings, 
+  LogOut, 
+  ChevronLeft, 
+  ChevronRight,
+  PieChart,
+  TrendingUp,
+  Award,
+  Lock
+} from 'lucide-react';
 
 export interface DashboardSidebarProps {
   activeItem?: string;
@@ -24,6 +38,10 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
     setCollapsed(!collapsed);
   };
 
+  // Define which items should be active vs locked
+  const unlockedItems = ['dashboard', 'billing', 'logout'];
+  const isItemUnlocked = (itemName: string) => unlockedItems.includes(itemName);
+
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="logo">
@@ -37,31 +55,52 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
       <div className="nav-menu">
         <Link to="/dashboard" className={`nav-item ${activeItem === 'dashboard' ? 'active' : ''}`}>
           <Home size={18} />
+          <span>Getting Started</span>
+        </Link>
+        
+        <div className={`nav-item locked ${activeItem === 'metrics' ? 'active' : ''}`}>
+          <PieChart size={18} />
           <span>Dashboard</span>
-        </Link>
-        <Link to="/training" className={`nav-item ${activeItem === 'training' ? 'active' : ''}`}>
-          <BookOpen size={18} />
-          <span>Training</span>
-        </Link>
-        <Link to="/supervisor" className={`nav-item ${activeItem === 'supervisor' ? 'active' : ''}`}>
-          <Users size={18} />
-          <span>Supervisor</span>
-        </Link>
-        <Link to="/tools" className={`nav-item ${activeItem === 'tools' ? 'active' : ''}`}>
+          <Lock size={18} className="menu-lock-icon" />
+        </div>
+        
+        <div className={`nav-item locked ${activeItem === 'tools' ? 'active' : ''}`}>
           <Wrench size={18} />
-          <span>Tools</span>
-        </Link>
+          <span>Tool Page</span>
+          <Lock size={18} className="menu-lock-icon" />
+        </div>
+        
+        <div className={`nav-item locked ${activeItem === 'payment-history' ? 'active' : ''}`}>
+          <FileText size={18} />
+          <span>Payment History</span>
+          <Lock size={18} className="menu-lock-icon" />
+        </div>
+        
+        <div className={`nav-item locked ${activeItem === 'performance' ? 'active' : ''}`}>
+          <TrendingUp size={18} />
+          <span>Performance</span>
+          <Lock size={18} className="menu-lock-icon" />
+        </div>
+        
+        <div className={`nav-item locked ${activeItem === 'ranking' ? 'active' : ''}`}>
+          <Award size={18} />
+          <span>Ranking</span>
+          <Lock size={18} className="menu-lock-icon" />
+        </div>
+        
         <Link to="/billing" className={`nav-item ${activeItem === 'billing' ? 'active' : ''}`}>
           <FileText size={18} />
-          <span>Billing</span>
+          <span>Billing Information</span>
         </Link>
         
         <div className="nav-divider"></div>
         
-        <Link to="/settings" className={`nav-item ${activeItem === 'settings' ? 'active' : ''}`}>
+        <div className={`nav-item locked ${activeItem === 'settings' ? 'active' : ''}`}>
           <Settings size={18} />
           <span>Settings</span>
-        </Link>
+          <Lock size={18} className="menu-lock-icon" />
+        </div>
+
         <a href="#" className="nav-item" onClick={handleLogout}>
           <LogOut size={18} />
           <span>Log Out</span>
