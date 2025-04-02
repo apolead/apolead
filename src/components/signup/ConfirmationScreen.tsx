@@ -16,7 +16,7 @@ const ConfirmationScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [processingPassword, setProcessingPassword] = useState(false);
-  const [redirectCountdown, setRedirectCountdown] = useState(10);
+  const [redirectCountdown, setRedirectCountdown] = useState(15); // Extended countdown time
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -37,6 +37,7 @@ const ConfirmationScreen = () => {
         
         // If we have tokens, this is from a confirmation email link
         if (accessToken && refreshToken && type === 'signup') {
+          console.log('Confirmation email tokens found, setting session');
           // Store the tokens in supabase session
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -154,6 +155,22 @@ const ConfirmationScreen = () => {
       
       if (error) {
         throw error;
+      }
+      
+      // Update application status to confirmed in user_profiles
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Update the user profile to mark as confirmed
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .update({ application_status: 'confirmed' })
+          .eq('user_id', user.id);
+          
+        if (updateError) {
+          console.error('Error updating profile status:', updateError);
+          // Continue anyway as the password has been set
+        }
       }
       
       toast({

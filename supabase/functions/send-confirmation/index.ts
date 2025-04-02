@@ -18,6 +18,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing Supabase environment variables");
       throw new Error("Missing Supabase environment variables");
     }
 
@@ -28,10 +29,12 @@ serve(async (req) => {
     const { email, redirectUrl } = await req.json();
     
     if (!email) {
+      console.error("Email is required but was not provided");
       throw new Error("Email is required");
     }
 
     console.log(`Generating signup link for: ${email}`);
+    console.log(`Redirect URL: ${redirectUrl || "Not provided, using default"}`);
 
     // Generate signup link with a temporary password (required by Supabase)
     const { data, error } = await supabase.auth.admin.generateLink({
@@ -44,18 +47,30 @@ serve(async (req) => {
     });
 
     if (error) {
+      console.error("Error generating signup link:", error.message);
       throw error;
     }
 
     console.log("Generated signup link successfully");
+    console.log("Link properties:", {
+      hrefLength: data?.properties?.action_link?.length,
+      linkExists: !!data?.properties?.action_link
+    });
     
-    // Supabase is now configured with Resend SMTP, so the email will be sent automatically
-    // We no longer need to return the link in the response for display
+    // The link should be automatically sent via email since Supabase is configured with Resend SMTP
+    // Let's log additional information for debugging
+    if (data?.properties?.action_link) {
+      console.log("Email with signup link should be sent automatically via Resend SMTP");
+    } else {
+      console.error("No action link was generated");
+    }
     
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Confirmation email sent successfully"
+        message: "Confirmation email sent successfully",
+        // Only include the link in non-production environments for debugging
+        link: process.env.NODE_ENV === 'development' ? data?.properties?.action_link : undefined
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
