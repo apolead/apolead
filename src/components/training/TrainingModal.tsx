@@ -7,6 +7,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { X, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog,
   DialogContent,
@@ -132,7 +133,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-xl max-h-[80vh] overflow-y-auto bg-white rounded-lg shadow-lg">
+      <div className="relative w-full max-w-lg max-h-[600px] bg-white rounded-lg shadow-lg flex flex-col">
         <div className={`sticky top-0 z-10 flex items-center justify-between p-3 border-b ${
           (quizPassed === true) 
             ? 'bg-gradient-to-r from-green-600 to-green-500' 
@@ -154,7 +155,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
           </button>
         </div>
         
-        <div className="p-4 overflow-y-auto max-h-[calc(80vh-56px)]">
+        <ScrollArea className="flex-1 p-4 max-h-[calc(600px-56px)]">
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertTitle>Error</AlertTitle>
@@ -245,7 +246,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
               </button>
             </div>
           )}
-        </div>
+        </ScrollArea>
       </div>
       
       <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
