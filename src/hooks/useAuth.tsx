@@ -246,7 +246,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear all session data from localStorage
       localStorage.removeItem('userProfile');
       localStorage.removeItem('tempCredentials');
-      localStorage.removeItem('sb-' + supabase.projectRef + '-auth-token');
+      
+      // Clear the Supabase auth token from localStorage without using projectRef
+      // Instead, find and remove any items that match the Supabase auth token pattern
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          localStorage.removeItem(key);
+        }
+      });
       
       // Try to perform server-side logout
       const { data: { session } } = await supabase.auth.getSession();
