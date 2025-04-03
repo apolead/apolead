@@ -1864,7 +1864,7 @@ const SupervisorDashboard = () => {
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button onClick={handleSubmit}>
+              <Button onClick={handleSubmit} style={{ color: 'white' }}>
                 <i className="fas fa-save" style={{ marginRight: '8px' }}></i>
                 Save Changes
               </Button>
