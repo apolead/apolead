@@ -44,9 +44,13 @@ supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session?.user?.email);
 });
 
-// Add error event listener for Supabase client
-supabase.handleBrowserError = {
-  onError: (error) => {
-    console.error('Supabase browser error:', error);
+// Set up a global error event listener instead of using the non-existent handleBrowserError property
+window.addEventListener('unhandledrejection', (event) => {
+  if (event.reason && (
+    // Check if the error is related to Supabase
+    (typeof event.reason.message === 'string' && event.reason.message.includes('supabase')) ||
+    (event.reason.name && event.reason.name.includes('Supabase'))
+  )) {
+    console.error('Supabase unhandled rejection:', event.reason);
   }
-};
+});
