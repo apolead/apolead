@@ -10,7 +10,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
-  updateAgentProfile: (agentId: string, data: any) => Promise<void>; // New function
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -325,51 +324,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // New function to update agent profiles (for supervisors)
-  const updateAgentProfile = async (userId: string, data: any) => {
-    try {
-      if (!user) throw new Error("Supervisor not authenticated");
-      
-      console.log('Supervisor updating agent profile:', userId, 'with data:', data);
-      
-      // Create a safe copy of the data with proper handling of special fields
-      const safeData = { ...data };
-      
-      // Handle date field - convert to ISO string if it's a Date object
-      if (safeData.start_date && safeData.start_date instanceof Date) {
-        safeData.start_date = safeData.start_date.toISOString().split('T')[0];
-      }
-      
-      // Call the update_user_profile_direct function
-      const { error } = await (supabase.rpc as any)('update_user_profile_direct', {
-        input_user_id: userId,
-        input_updates: safeData
-      });
-      
-      if (error) {
-        console.error('Error updating agent profile:', error);
-        throw error;
-      }
-      
-      toast({
-        title: "Agent profile updated",
-        description: "The agent profile has been updated successfully",
-      });
-      
-      return true;
-    } catch (error: any) {
-      console.error('Agent profile update error:', error);
-      toast({
-        title: "Update failed",
-        description: error.message || "Failed to update agent profile",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, login, logout, updateProfile, updateAgentProfile }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, login, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
