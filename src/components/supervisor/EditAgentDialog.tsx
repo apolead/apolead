@@ -40,6 +40,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   // Update local form data when agent prop changes
   React.useEffect(() => {
@@ -57,11 +58,76 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
         lead_source: agent.lead_source || "",
         supervisor_notes: agent.supervisor_notes || "",
       });
+      // Clear validation errors when agent changes
+      setValidationErrors({});
     }
   }, [agent]);
   
   const handleChange = (field: string, value: any) => {
+    // Clear validation error for this field when it changes
+    if (validationErrors[field]) {
+      setValidationErrors(prev => {
+        const newErrors = {...prev};
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    
+    // Required fields validation
+    if (!formData.first_name.trim()) {
+      errors.first_name = "Agent name is required";
+    }
+    
+    if (!formData.agent_id.trim()) {
+      errors.agent_id = "Agent ID is required";
+    }
+    
+    if (!formData.start_date) {
+      errors.start_date = "Start date is required";
+    }
+    
+    if (!formData.supervisor.trim()) {
+      errors.supervisor = "Supervisor name is required";
+    }
+    
+    if (!formData.agent_standing) {
+      errors.agent_standing = "Agent standing is required";
+    }
+    
+    if (!formData.application_status) {
+      errors.application_status = "Application status is required";
+    }
+    
+    if (!formData.sales_skills) {
+      errors.sales_skills = "Sales skills rating is required";
+    }
+    
+    if (!formData.communication_rating) {
+      errors.communication_rating = "Communication rating is required";
+    }
+    
+    if (!formData.email.trim()) {
+      errors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+    
+    if (!formData.lead_source) {
+      errors.lead_source = "Lead source is required";
+    }
+    
+    if (!formData.supervisor_notes.trim()) {
+      errors.supervisor_notes = "Supervisor notes are required";
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
   
   const handleSubmit = async () => {
@@ -70,6 +136,16 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
       toast({
         title: "Update failed",
         description: "Missing agent information. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill out all required fields.",
         variant: "destructive",
       });
       return;
@@ -151,35 +227,59 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
           <div className="grid gap-3 px-1 py-0 pb-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="agent-name">Agent Name</Label>
+                <Label htmlFor="agent-name" className="flex">
+                  Agent Name
+                  {validationErrors.first_name && (
+                    <span className="text-red-500 ml-1 text-xs">*</span>
+                  )}
+                </Label>
                 <Input 
                   id="agent-name" 
                   value={formData.first_name} 
                   onChange={(e) => handleChange("first_name", e.target.value)}
+                  className={validationErrors.first_name ? "border-red-500" : ""}
                 />
+                {validationErrors.first_name && (
+                  <p className="text-xs text-red-500">{validationErrors.first_name}</p>
+                )}
               </div>
               
               <div className="space-y-1">
-                <Label htmlFor="agent-id">Agent ID</Label>
+                <Label htmlFor="agent-id" className="flex">
+                  Agent ID
+                  {validationErrors.agent_id && (
+                    <span className="text-red-500 ml-1 text-xs">*</span>
+                  )}
+                </Label>
                 <Input 
                   id="agent-id" 
                   placeholder="e.g., AG-12345" 
                   value={formData.agent_id} 
                   onChange={(e) => handleChange("agent_id", e.target.value)}
+                  className={validationErrors.agent_id ? "border-red-500" : ""}
                 />
+                {validationErrors.agent_id && (
+                  <p className="text-xs text-red-500">{validationErrors.agent_id}</p>
+                )}
               </div>
             </div>
             
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="start-date">Start Date</Label>
+                <Label htmlFor="start-date" className="flex">
+                  Start Date
+                  {validationErrors.start_date && (
+                    <span className="text-red-500 ml-1 text-xs">*</span>
+                  )}
+                </Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant={"outline"}
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !formData.start_date && "text-muted-foreground"
+                        !formData.start_date && "text-muted-foreground",
+                        validationErrors.start_date && "border-red-500"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -199,20 +299,37 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
                     />
                   </PopoverContent>
                 </Popover>
+                {validationErrors.start_date && (
+                  <p className="text-xs text-red-500">{validationErrors.start_date}</p>
+                )}
               </div>
               
               <div className="space-y-1">
-                <Label htmlFor="supervisor">Supervisor</Label>
+                <Label htmlFor="supervisor" className="flex">
+                  Supervisor
+                  {validationErrors.supervisor && (
+                    <span className="text-red-500 ml-1 text-xs">*</span>
+                  )}
+                </Label>
                 <Input 
                   id="supervisor" 
                   value={formData.supervisor} 
                   onChange={(e) => handleChange("supervisor", e.target.value)}
+                  className={validationErrors.supervisor ? "border-red-500" : ""}
                 />
+                {validationErrors.supervisor && (
+                  <p className="text-xs text-red-500">{validationErrors.supervisor}</p>
+                )}
               </div>
             </div>
             
             <div className="space-y-1">
-              <Label>Agent Standing</Label>
+              <Label className={`flex ${validationErrors.agent_standing ? "text-red-500" : ""}`}>
+                Agent Standing
+                {validationErrors.agent_standing && (
+                  <span className="text-red-500 ml-1 text-xs">*</span>
+                )}
+              </Label>
               <RadioGroup 
                 className="flex space-x-4" 
                 value={formData.agent_standing}
@@ -231,15 +348,23 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
                   <Label htmlFor="waitlist" className="cursor-pointer">Waitlist</Label>
                 </div>
               </RadioGroup>
+              {validationErrors.agent_standing && (
+                <p className="text-xs text-red-500">{validationErrors.agent_standing}</p>
+              )}
             </div>
             
             <div className="space-y-1">
-              <Label htmlFor="application-status">Application Status</Label>
+              <Label htmlFor="application-status" className="flex">
+                Application Status
+                {validationErrors.application_status && (
+                  <span className="text-red-500 ml-1 text-xs">*</span>
+                )}
+              </Label>
               <Select 
                 value={formData.application_status}
                 onValueChange={(value) => handleChange("application_status", value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={validationErrors.application_status ? "border-red-500" : ""}>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -251,15 +376,23 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
                   <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
+              {validationErrors.application_status && (
+                <p className="text-xs text-red-500">{validationErrors.application_status}</p>
+              )}
             </div>
             
             <div className="space-y-1">
-              <Label>Sales Skills</Label>
+              <Label className="flex">
+                Sales Skills
+                {validationErrors.sales_skills && (
+                  <span className="text-red-500 ml-1 text-xs">*</span>
+                )}
+              </Label>
               <Select 
                 value={formData.sales_skills || ""}
                 onValueChange={(value) => handleChange("sales_skills", value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={validationErrors.sales_skills ? "border-red-500" : ""}>
                   <SelectValue placeholder="Select rating" />
                 </SelectTrigger>
                 <SelectContent>
@@ -270,15 +403,23 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
                   <SelectItem value="Poor">Poor</SelectItem>
                 </SelectContent>
               </Select>
+              {validationErrors.sales_skills && (
+                <p className="text-xs text-red-500">{validationErrors.sales_skills}</p>
+              )}
             </div>
             
             <div className="space-y-1">
-              <Label>Communication Rating</Label>
+              <Label className="flex">
+                Communication Rating
+                {validationErrors.communication_rating && (
+                  <span className="text-red-500 ml-1 text-xs">*</span>
+                )}
+              </Label>
               <Select 
                 value={formData.communication_rating || ""}
                 onValueChange={(value) => handleChange("communication_rating", value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={validationErrors.communication_rating ? "border-red-500" : ""}>
                   <SelectValue placeholder="Select rating" />
                 </SelectTrigger>
                 <SelectContent>
@@ -289,25 +430,42 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
                   <SelectItem value="Poor">Poor</SelectItem>
                 </SelectContent>
               </Select>
+              {validationErrors.communication_rating && (
+                <p className="text-xs text-red-500">{validationErrors.communication_rating}</p>
+              )}
             </div>
             
             <div className="space-y-1">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email" className="flex">
+                Email Address
+                {validationErrors.email && (
+                  <span className="text-red-500 ml-1 text-xs">*</span>
+                )}
+              </Label>
               <Input 
                 id="email" 
                 type="email" 
                 value={formData.email} 
                 onChange={(e) => handleChange("email", e.target.value)}
+                className={validationErrors.email ? "border-red-500" : ""}
               />
+              {validationErrors.email && (
+                <p className="text-xs text-red-500">{validationErrors.email}</p>
+              )}
             </div>
             
             <div className="space-y-1">
-              <Label htmlFor="lead-source">Lead Source</Label>
+              <Label htmlFor="lead-source" className="flex">
+                Lead Source
+                {validationErrors.lead_source && (
+                  <span className="text-red-500 ml-1 text-xs">*</span>
+                )}
+              </Label>
               <Select 
                 value={formData.lead_source || ""}
                 onValueChange={(value) => handleChange("lead_source", value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={validationErrors.lead_source ? "border-red-500" : ""}>
                   <SelectValue placeholder="Select source" />
                 </SelectTrigger>
                 <SelectContent>
@@ -318,17 +476,28 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
                   <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
+              {validationErrors.lead_source && (
+                <p className="text-xs text-red-500">{validationErrors.lead_source}</p>
+              )}
             </div>
             
             <div className="space-y-1">
-              <Label htmlFor="notes">Supervisor Notes</Label>
+              <Label htmlFor="notes" className="flex">
+                Supervisor Notes
+                {validationErrors.supervisor_notes && (
+                  <span className="text-red-500 ml-1 text-xs">*</span>
+                )}
+              </Label>
               <Textarea 
                 id="notes" 
                 placeholder="Enter notes about this agent..." 
-                className="min-h-[60px]"
+                className={`min-h-[60px] ${validationErrors.supervisor_notes ? "border-red-500" : ""}`}
                 value={formData.supervisor_notes || ""} 
                 onChange={(e) => handleChange("supervisor_notes", e.target.value)}
               />
+              {validationErrors.supervisor_notes && (
+                <p className="text-xs text-red-500">{validationErrors.supervisor_notes}</p>
+              )}
             </div>
           </div>
         </div>
@@ -345,7 +514,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
             type="button" 
             onClick={handleSubmit} 
             disabled={isSubmitting}
-            className="bg-indigo-600 hover:bg-indigo-700"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
           >
             <Save className="mr-2 h-4 w-4" />
             {isSubmitting ? "Saving..." : "Save Changes"}
