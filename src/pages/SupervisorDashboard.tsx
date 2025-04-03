@@ -1581,44 +1581,44 @@ const SupervisorDashboard = () => {
           </div>
         )}
 
-{/* Edit Dialog */}
-<Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-  <DialogContent 
-    className="sm:max-w-[600px]"
-    style={{ 
-      maxHeight: '70vh', 
-      overflowY: 'auto'
-    }}
-  >
-    <DialogHeader>
-      <DialogTitle>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <i className="fas fa-user-edit" style={{ marginRight: '10px', color: '#4f46e5' }}></i>
-          Edit Agent Information
-        </div>
-      </DialogTitle>
-    </DialogHeader>
-    
-    {/* Rest of your dialog content stays the same */}
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-      <div>
-        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
-          Agent Name
-        </label>
-        <input 
-          type="text" 
-          value={selectedProfile ? `${selectedProfile.first_name} ${selectedProfile.last_name}` : ''}
-          disabled
-          style={{
-            padding: '10px 15px',
-            width: '100%',',
-            border: '1px solid #e2e8f0',
-            borderRadius: '10px',
-            backgroundColor: '#f8fafc',
-            cursor: 'not-allowed'
-          }}
-        />
-      </div>
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent 
+            className="sm:max-w-[600px]"
+            style={{ 
+              maxHeight: '70vh', 
+              overflowY: 'auto'
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <i className="fas fa-user-edit" style={{ marginRight: '10px', color: '#4f46e5' }}></i>
+                  Edit Agent Information
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            
+            {/* Rest of your dialog content stays the same */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
+                  Agent Name
+                </label>
+                <input 
+                  type="text" 
+                  value={selectedProfile ? `${selectedProfile.first_name} ${selectedProfile.last_name}` : ''}
+                  disabled
+                  style={{
+                    padding: '10px 15px',
+                    width: '100%',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '10px',
+                    backgroundColor: '#f8fafc',
+                    cursor: 'not-allowed'
+                  }}
+                />
+              </div>
 
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
