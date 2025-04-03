@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -75,8 +74,6 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   // Create a ref for the completeButton 
   const completeButtonRef = useRef<HTMLElement | null>(null);
-  // Track script element to properly clean up
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
   
   // Check if component is unmounted
   useEffect(() => {
@@ -107,27 +104,9 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
       }
       
       // Safely remove the complete button if it exists
-      if (completeButtonRef.current) {
-        try {
-          if (completeButtonRef.current.parentNode) {
-            completeButtonRef.current.parentNode.removeChild(completeButtonRef.current);
-          }
-          completeButtonRef.current = null;
-        } catch (error) {
-          console.error("Error removing complete button:", error);
-        }
-      }
-      
-      // Safely remove script tag if it exists
-      if (scriptRef.current) {
-        try {
-          if (document.body.contains(scriptRef.current)) {
-            document.body.removeChild(scriptRef.current);
-          }
-          scriptRef.current = null;
-        } catch (error) {
-          console.error("Error removing script tag:", error);
-        }
+      if (completeButtonRef.current && completeButtonRef.current.parentNode) {
+        completeButtonRef.current.parentNode.removeChild(completeButtonRef.current);
+        completeButtonRef.current = null;
       }
     };
   }, []);
@@ -156,9 +135,6 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
       // Create script element
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
-      
-      // Store reference to script element
-      scriptRef.current = tag;
       
       // Add event listeners to track loading state
       tag.onload = () => {
@@ -442,15 +418,9 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
     setIsLoading(true);
     
     // Clean up the complete button if it exists
-    if (completeButtonRef.current) {
-      try {
-        if (completeButtonRef.current.parentNode) {
-          completeButtonRef.current.parentNode.removeChild(completeButtonRef.current);
-        }
-        completeButtonRef.current = null;
-      } catch (error) {
-        console.error("TrainingVideo: Error removing complete button on retry:", error);
-      }
+    if (completeButtonRef.current && completeButtonRef.current.parentNode) {
+      completeButtonRef.current.parentNode.removeChild(completeButtonRef.current);
+      completeButtonRef.current = null;
     }
     
     // Destroy and clean up the player if it exists
@@ -533,7 +503,7 @@ const TrainingVideo: React.FC<TrainingVideoProps> = ({ onComplete }) => {
       buttonContainer.appendChild(completeButton);
       
       // Find a safe parent to add the button to
-      if (containerRef.current && containerRef.current.parentNode) {
+      if (containerRef.current.parentNode) {
         containerRef.current.parentNode.appendChild(buttonContainer);
       }
     }, 60000); // Only show after 1 minute
