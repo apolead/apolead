@@ -181,23 +181,31 @@ const SupervisorDashboard = () => {
     if (!selectedProfile) return;
 
     try {
+      // Use a more explicit approach to identify the record
+      const updateData = {
+        agent_id: editForm.agent_id,
+        supervisor_notes: editForm.supervisor_notes,
+        agent_standing: editForm.agent_standing,
+        lead_source: editForm.lead_source,
+        start_date: editForm.start_date,
+        sales_skills: editForm.sales_skills,
+        communication_rating: editForm.communication_rating,
+        application_status: editForm.application_status
+      };
+      
+      console.log('Updating profile with ID:', selectedProfile.id);
+      console.log('Update data:', updateData);
+      
+      // Use a more specific and explicit query
       const { data, error } = await supabase
         .from('user_profiles')
-        .update({
-          agent_id: editForm.agent_id,
-          supervisor_notes: editForm.supervisor_notes,
-          agent_standing: editForm.agent_standing,
-          lead_source: editForm.lead_source,
-          start_date: editForm.start_date,
-          sales_skills: editForm.sales_skills,
-          communication_rating: editForm.communication_rating,
-          application_status: editForm.application_status
-        })
-        .eq('id', selectedProfile.id)
-        .select();
+        .update(updateData)
+        .match({ id: selectedProfile.id }) // Use match instead of eq for better clarity
+        .select('*');  // Select all columns explicitly
 
       if (error) {
         console.error('Error updating profile:', error);
+        alert(`Error updating profile: ${error.message}`);
         return;
       }
 
@@ -1586,8 +1594,10 @@ const SupervisorDashboard = () => {
           <DialogContent 
             className="sm:max-w-[600px]"
             style={{ 
-              maxHeight: '70vh', 
-              overflowY: 'auto'
+              maxHeight: '600px', 
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
             <DialogHeader>
