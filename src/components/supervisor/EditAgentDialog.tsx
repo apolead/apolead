@@ -87,7 +87,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="px-1">
           <DialogTitle className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" viewBox="0 0 20 20" fill="currentColor">
@@ -97,10 +97,10 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="h-[60vh] pr-4">
-          <div className="grid gap-4 p-1">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+        <ScrollArea className="flex-1 px-1 pb-2">
+          <div className="grid gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
                 <Label htmlFor="agent-name">Agent Name</Label>
                 <Input 
                   id="agent-name" 
@@ -109,7 +109,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
                 />
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="agent-id">Agent ID</Label>
                 <Input 
                   id="agent-id" 
@@ -120,8 +120,8 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
                 <Label htmlFor="start-date">Start Date</Label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -151,7 +151,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
                 </Popover>
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="supervisor">Supervisor</Label>
                 <Input 
                   id="supervisor" 
@@ -161,7 +161,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </div>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Agent Standing</Label>
               <RadioGroup 
                 className="flex space-x-4" 
@@ -183,7 +183,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </RadioGroup>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="application-status">Application Status</Label>
               <Select 
                 value={formData.application_status}
@@ -203,7 +203,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </Select>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Sales Skills</Label>
               <Select 
                 value={formData.sales_skills || ""}
@@ -222,7 +222,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </Select>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Communication Rating</Label>
               <Select 
                 value={formData.communication_rating || ""}
@@ -241,7 +241,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </Select>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="email">Email Address</Label>
               <Input 
                 id="email" 
@@ -251,7 +251,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               />
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="lead-source">Lead Source</Label>
               <Select 
                 value={formData.lead_source || ""}
@@ -270,12 +270,12 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </Select>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="notes">Supervisor Notes</Label>
               <Textarea 
                 id="notes" 
                 placeholder="Enter notes about this agent..." 
-                className="min-h-[80px]"
+                className="min-h-[60px]"
                 value={formData.supervisor_notes} 
                 onChange={(e) => handleChange("supervisor_notes", e.target.value)}
               />
@@ -283,7 +283,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
           </div>
         </ScrollArea>
         
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="flex justify-end gap-2 mt-3 pt-3 border-t">
           <DialogClose asChild>
             <Button variant="outline" type="button">
               <X className="mr-2 h-4 w-4" />
