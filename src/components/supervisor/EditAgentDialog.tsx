@@ -78,26 +78,29 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
     setIsSubmitting(true);
     
     try {
-      // Format date for database
-      const dataToSubmit = {
-        ...formData,
-        start_date: formData.start_date ? format(formData.start_date, "yyyy-MM-dd") : null
-      };
+      // Prepare data for submission with proper date handling
+      const dataToSubmit: Record<string, any> = { ...formData };
+      
+      // Format date for database - null if undefined, properly formatted string if exists
+      if (dataToSubmit.start_date) {
+        dataToSubmit.start_date = format(dataToSubmit.start_date, "yyyy-MM-dd");
+      } else {
+        dataToSubmit.start_date = null; // Use null instead of empty string
+      }
       
       console.log("Submitting agent update:", {
         data: dataToSubmit,
         agentId: agent.id,
       });
       
-      // Important: We're specifically targeting the record by its primary key 'id', not 'user_id'
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .update(dataToSubmit)
-        .eq('id', agent.id)
-        .select();
+      // Use RPC function instead of direct table update for better handling
+      const { data, error } = await supabase.rpc('update_user_profile_direct', {
+        input_user_id: agent.user_id,
+        input_updates: dataToSubmit
+      });
       
       if (error) {
-        console.error("Error updating profile:", error);
+        console.error("Error updating profile with RPC:", error);
         throw error;
       }
       
