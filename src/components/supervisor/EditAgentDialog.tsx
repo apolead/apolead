@@ -14,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EditAgentDialogProps {
@@ -42,6 +41,25 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Update local form data when agent prop changes
+  React.useEffect(() => {
+    if (agent) {
+      setFormData({
+        first_name: agent.first_name || "",
+        agent_id: agent.agent_id || "",
+        start_date: agent.start_date ? new Date(agent.start_date) : undefined,
+        supervisor: agent.supervisor || "",
+        agent_standing: agent.agent_standing || "Active",
+        application_status: agent.application_status || "pending",
+        sales_skills: agent.sales_skills || "",
+        communication_rating: agent.communication_rating || "",
+        email: agent.email || "",
+        lead_source: agent.lead_source || "",
+        supervisor_notes: agent.supervisor_notes || "",
+      });
+    }
+  }, [agent]);
   
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -98,7 +116,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="h-[60vh] pr-4">
+        <ScrollArea className="h-[400px] pr-4">
           <div className="grid gap-4 p-1">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -277,7 +295,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
                 id="notes" 
                 placeholder="Enter notes about this agent..." 
                 className="min-h-[80px]"
-                value={formData.supervisor_notes} 
+                value={formData.supervisor_notes || ""} 
                 onChange={(e) => handleChange("supervisor_notes", e.target.value)}
               />
             </div>
@@ -298,7 +316,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
             className="bg-indigo-600 hover:bg-indigo-700"
           >
             <Save className="mr-2 h-4 w-4" />
-            Save Changes
+            {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </DialogContent>
