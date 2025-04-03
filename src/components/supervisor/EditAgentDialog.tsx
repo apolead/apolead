@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Save, X } from "lucide-react";
@@ -110,8 +109,8 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] overflow-hidden">
-        <DialogHeader className="px-1">
+      <DialogContent className="max-w-md max-h-[70vh] overflow-hidden flex flex-col">
+        <DialogHeader className="px-1 flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" viewBox="0 0 20 20" fill="currentColor">
               <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
@@ -120,10 +119,11 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="grid gap-4 p-1">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+        {/* Make the ScrollArea flex-grow to take available space but not more */}
+        <ScrollArea className="flex-grow pr-4">
+          <div className="grid gap-3 p-1">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
                 <Label htmlFor="agent-name">Agent Name</Label>
                 <Input 
                   id="agent-name" 
@@ -132,7 +132,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
                 />
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="agent-id">Agent ID</Label>
                 <Input 
                   id="agent-id" 
@@ -143,8 +143,8 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
                 <Label htmlFor="start-date">Start Date</Label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -174,7 +174,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
                 </Popover>
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="supervisor">Supervisor</Label>
                 <Input 
                   id="supervisor" 
@@ -184,7 +184,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </div>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Agent Standing</Label>
               <RadioGroup 
                 className="flex space-x-4" 
@@ -206,7 +206,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </RadioGroup>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="application-status">Application Status</Label>
               <Select 
                 value={formData.application_status}
@@ -226,7 +226,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </Select>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Sales Skills</Label>
               <Select 
                 value={formData.sales_skills || ""}
@@ -245,7 +245,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </Select>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label>Communication Rating</Label>
               <Select 
                 value={formData.communication_rating || ""}
@@ -264,7 +264,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </Select>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="email">Email Address</Label>
               <Input 
                 id="email" 
@@ -274,7 +274,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               />
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="lead-source">Lead Source</Label>
               <Select 
                 value={formData.lead_source || ""}
@@ -293,12 +293,12 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
               </Select>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="notes">Supervisor Notes</Label>
               <Textarea 
                 id="notes" 
                 placeholder="Enter notes about this agent..." 
-                className="min-h-[80px]"
+                className="min-h-[60px]"
                 value={formData.supervisor_notes || ""} 
                 onChange={(e) => handleChange("supervisor_notes", e.target.value)}
               />
@@ -306,7 +306,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
           </div>
         </ScrollArea>
         
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="flex justify-end gap-2 mt-2 pt-2 border-t flex-shrink-0">
           <DialogClose asChild>
             <Button variant="outline" type="button">
               <X className="mr-2 h-4 w-4" />
