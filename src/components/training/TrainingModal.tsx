@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +28,8 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   const [quizPassed, setQuizPassed] = useState<boolean | null>(null);
   const [quizScore, setQuizScore] = useState<number>(0);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [calendlyScriptLoaded, setCalendlyScriptLoaded] = useState(false);
+  const calendlyScriptRef = useRef<HTMLScriptElement | null>(null);
   
   useEffect(() => {
     if (!userProfile) return;
@@ -110,21 +112,55 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
     setShowScheduleDialog(true);
   };
   
+  // Create a ref for the Calendly script element
+  const calendlyScriptRef = useRef<HTMLScriptElement | null>(null);
+  
   useEffect(() => {
-    if (showScheduleDialog) {
+    if (showScheduleDialog && !calendlyScriptLoaded) {
       console.log("Loading Calendly script");
+      
+      // Check if script already exists
+      if (document.querySelector('script[src="https://assets.calendly.com/assets/external/widget.js"]')) {
+        console.log("Calendly script already exists");
+        setCalendlyScriptLoaded(true);
+        return;
+      }
+      
       const script = document.createElement('script');
       script.src = 'https://assets.calendly.com/assets/external/widget.js';
       script.async = true;
+      
+      // Store reference to clean up later
+      calendlyScriptRef.current = script;
+      
+      script.onload = () => {
+        console.log("Calendly script loaded successfully");
+        setCalendlyScriptLoaded(true);
+      };
+      
       document.body.appendChild(script);
       
       return () => {
-        if (document.body.contains(script)) {
-          document.body.removeChild(script);
+        // Only remove the script if we were the ones who added it
+        if (calendlyScriptRef.current && document.body.contains(calendlyScriptRef.current)) {
+          console.log("Removing Calendly script");
+          document.body.removeChild(calendlyScriptRef.current);
+          calendlyScriptRef.current = null;
+          setCalendlyScriptLoaded(false);
         }
       };
     }
-  }, [showScheduleDialog]);
+  }, [showScheduleDialog, calendlyScriptLoaded]);
+  
+  // Clean up on component unmount
+  useEffect(() => {
+    return () => {
+      if (calendlyScriptRef.current && document.body.contains(calendlyScriptRef.current)) {
+        console.log("Removing Calendly script on unmount");
+        document.body.removeChild(calendlyScriptRef.current);
+      }
+    };
+  }, []);
   
   if (!isOpen) return null;
   
