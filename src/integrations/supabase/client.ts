@@ -20,10 +20,21 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
   // Add global error handling and logging
   global: {
     fetch: (...args: [RequestInfo | URL, RequestInit?]) => {
-      return fetch(...args).catch(err => {
-        console.error('Supabase fetch error:', err);
-        throw err;
-      });
+      return fetch(...args)
+        .then(response => {
+          // Log info about the response for debugging
+          if (!response.ok) {
+            console.error(`Supabase fetch error: ${response.status} ${response.statusText}`, 
+              `URL: ${typeof args[0] === 'string' ? args[0] : 'complex URL'}`,
+              `Method: ${args[1]?.method || 'GET'}`
+            );
+          }
+          return response;
+        })
+        .catch(err => {
+          console.error('Supabase fetch error:', err);
+          throw err;
+        });
     }
   }
 });
@@ -32,3 +43,10 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Auth state changed:', event, session?.user?.email);
 });
+
+// Add error event listener for Supabase client
+supabase.handleBrowserError = {
+  onError: (error) => {
+    console.error('Supabase browser error:', error);
+  }
+};

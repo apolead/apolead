@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Save, X } from "lucide-react";
@@ -64,6 +65,16 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
   };
   
   const handleSubmit = async () => {
+    if (!agent || !agent.id) {
+      console.error("Missing agent data or agent ID", agent);
+      toast({
+        title: "Update failed",
+        description: "Missing agent information. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -73,17 +84,24 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
         start_date: formData.start_date ? format(formData.start_date, "yyyy-MM-dd") : null
       };
       
-      console.log("Submitting agent update:", dataToSubmit);
+      console.log("Submitting agent update:", {
+        data: dataToSubmit,
+        agentId: agent.id,
+      });
       
-      const { error } = await supabase
+      // Important: We're specifically targeting the record by its primary key 'id', not 'user_id'
+      const { data, error } = await supabase
         .from('user_profiles')
         .update(dataToSubmit)
-        .eq('id', agent.id);
+        .eq('id', agent.id)
+        .select();
       
       if (error) {
         console.error("Error updating profile:", error);
         throw error;
       }
+      
+      console.log("Profile update response:", data);
       
       toast({
         title: "Agent updated",
@@ -92,11 +110,11 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
       
       onAgentUpdated();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating agent:", error);
       toast({
         title: "Update failed",
-        description: "There was an error updating the agent information.",
+        description: error.message || "There was an error updating the agent information.",
         variant: "destructive",
       });
     } finally {
@@ -106,12 +124,12 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* IMPORTANT: Override default dialog styles to make it shorter */}
+      {/* Compact dialog with scrollable content */}
       <DialogContent 
         className="max-w-md"
         style={{ 
-          maxHeight: '60vh', 
-          overflowY: 'auto', 
+          maxHeight: '85vh', 
+          overflowY: 'hidden', 
           display: 'flex', 
           flexDirection: 'column' 
         }}
@@ -125,188 +143,190 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
           </DialogTitle>
         </DialogHeader>
         
-        {/* Form content - now directly scrollable */}
-        <div className="grid gap-3 px-1 py-0 pb-2">
-          <div className="grid grid-cols-2 gap-3">
+        {/* Scrollable form content */}
+        <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(85vh - 150px)' }}>
+          <div className="grid gap-3 px-1 py-0 pb-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="agent-name">Agent Name</Label>
+                <Input 
+                  id="agent-name" 
+                  value={formData.first_name} 
+                  onChange={(e) => handleChange("first_name", e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <Label htmlFor="agent-id">Agent ID</Label>
+                <Input 
+                  id="agent-id" 
+                  placeholder="e.g., AG-12345" 
+                  value={formData.agent_id} 
+                  onChange={(e) => handleChange("agent_id", e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="start-date">Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.start_date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.start_date ? (
+                        format(formData.start_date, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={formData.start_date}
+                      onSelect={(date) => handleChange("start_date", date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div className="space-y-1">
+                <Label htmlFor="supervisor">Supervisor</Label>
+                <Input 
+                  id="supervisor" 
+                  value={formData.supervisor} 
+                  onChange={(e) => handleChange("supervisor", e.target.value)}
+                />
+              </div>
+            </div>
+            
             <div className="space-y-1">
-              <Label htmlFor="agent-name">Agent Name</Label>
+              <Label>Agent Standing</Label>
+              <RadioGroup 
+                className="flex space-x-4" 
+                value={formData.agent_standing}
+                onValueChange={(value) => handleChange("agent_standing", value)}
+              >
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="Active" id="active" />
+                  <Label htmlFor="active" className="cursor-pointer">Active</Label>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="Probation" id="probation" />
+                  <Label htmlFor="probation" className="cursor-pointer">Probation</Label>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <RadioGroupItem value="Waitlist" id="waitlist" />
+                  <Label htmlFor="waitlist" className="cursor-pointer">Waitlist</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <div className="space-y-1">
+              <Label htmlFor="application-status">Application Status</Label>
+              <Select 
+                value={formData.application_status}
+                onValueChange={(value) => handleChange("application_status", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="in_training">In Training</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-1">
+              <Label>Sales Skills</Label>
+              <Select 
+                value={formData.sales_skills || ""}
+                onValueChange={(value) => handleChange("sales_skills", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select rating" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Excellent">Excellent</SelectItem>
+                  <SelectItem value="Good">Good</SelectItem>
+                  <SelectItem value="Average">Average</SelectItem>
+                  <SelectItem value="Below Average">Below Average</SelectItem>
+                  <SelectItem value="Poor">Poor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-1">
+              <Label>Communication Rating</Label>
+              <Select 
+                value={formData.communication_rating || ""}
+                onValueChange={(value) => handleChange("communication_rating", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select rating" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Excellent">Excellent</SelectItem>
+                  <SelectItem value="Good">Good</SelectItem>
+                  <SelectItem value="Average">Average</SelectItem>
+                  <SelectItem value="Below Average">Below Average</SelectItem>
+                  <SelectItem value="Poor">Poor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-1">
+              <Label htmlFor="email">Email Address</Label>
               <Input 
-                id="agent-name" 
-                value={formData.first_name} 
-                onChange={(e) => handleChange("first_name", e.target.value)}
+                id="email" 
+                type="email" 
+                value={formData.email} 
+                onChange={(e) => handleChange("email", e.target.value)}
               />
             </div>
             
             <div className="space-y-1">
-              <Label htmlFor="agent-id">Agent ID</Label>
-              <Input 
-                id="agent-id" 
-                placeholder="e.g., AG-12345" 
-                value={formData.agent_id} 
-                onChange={(e) => handleChange("agent_id", e.target.value)}
-              />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="start-date">Start Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.start_date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.start_date ? (
-                      format(formData.start_date, "PPP")
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.start_date}
-                    onSelect={(date) => handleChange("start_date", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label htmlFor="lead-source">Lead Source</Label>
+              <Select 
+                value={formData.lead_source || ""}
+                onValueChange={(value) => handleChange("lead_source", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Website">Website</SelectItem>
+                  <SelectItem value="Referral">Referral</SelectItem>
+                  <SelectItem value="Social Media">Social Media</SelectItem>
+                  <SelectItem value="Job Board">Job Board</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-1">
-              <Label htmlFor="supervisor">Supervisor</Label>
-              <Input 
-                id="supervisor" 
-                value={formData.supervisor} 
-                onChange={(e) => handleChange("supervisor", e.target.value)}
+              <Label htmlFor="notes">Supervisor Notes</Label>
+              <Textarea 
+                id="notes" 
+                placeholder="Enter notes about this agent..." 
+                className="min-h-[60px]"
+                value={formData.supervisor_notes || ""} 
+                onChange={(e) => handleChange("supervisor_notes", e.target.value)}
               />
             </div>
-          </div>
-          
-          <div className="space-y-1">
-            <Label>Agent Standing</Label>
-            <RadioGroup 
-              className="flex space-x-4" 
-              value={formData.agent_standing}
-              onValueChange={(value) => handleChange("agent_standing", value)}
-            >
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="Active" id="active" />
-                <Label htmlFor="active" className="cursor-pointer">Active</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="Probation" id="probation" />
-                <Label htmlFor="probation" className="cursor-pointer">Probation</Label>
-              </div>
-              <div className="flex items-center space-x-1">
-                <RadioGroupItem value="Waitlist" id="waitlist" />
-                <Label htmlFor="waitlist" className="cursor-pointer">Waitlist</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          
-          <div className="space-y-1">
-            <Label htmlFor="application-status">Application Status</Label>
-            <Select 
-              value={formData.application_status}
-              onValueChange={(value) => handleChange("application_status", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-                <SelectItem value="in_training">In Training</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-1">
-            <Label>Sales Skills</Label>
-            <Select 
-              value={formData.sales_skills || ""}
-              onValueChange={(value) => handleChange("sales_skills", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select rating" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Excellent">Excellent</SelectItem>
-                <SelectItem value="Good">Good</SelectItem>
-                <SelectItem value="Average">Average</SelectItem>
-                <SelectItem value="Below Average">Below Average</SelectItem>
-                <SelectItem value="Poor">Poor</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-1">
-            <Label>Communication Rating</Label>
-            <Select 
-              value={formData.communication_rating || ""}
-              onValueChange={(value) => handleChange("communication_rating", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select rating" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Excellent">Excellent</SelectItem>
-                <SelectItem value="Good">Good</SelectItem>
-                <SelectItem value="Average">Average</SelectItem>
-                <SelectItem value="Below Average">Below Average</SelectItem>
-                <SelectItem value="Poor">Poor</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-1">
-            <Label htmlFor="email">Email Address</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              value={formData.email} 
-              onChange={(e) => handleChange("email", e.target.value)}
-            />
-          </div>
-          
-          <div className="space-y-1">
-            <Label htmlFor="lead-source">Lead Source</Label>
-            <Select 
-              value={formData.lead_source || ""}
-              onValueChange={(value) => handleChange("lead_source", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select source" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Website">Website</SelectItem>
-                <SelectItem value="Referral">Referral</SelectItem>
-                <SelectItem value="Social Media">Social Media</SelectItem>
-                <SelectItem value="Job Board">Job Board</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-1">
-            <Label htmlFor="notes">Supervisor Notes</Label>
-            <Textarea 
-              id="notes" 
-              placeholder="Enter notes about this agent..." 
-              className="min-h-[60px]"
-              value={formData.supervisor_notes || ""} 
-              onChange={(e) => handleChange("supervisor_notes", e.target.value)}
-            />
           </div>
         </div>
         
