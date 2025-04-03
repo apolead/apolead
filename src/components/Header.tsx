@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -19,6 +21,18 @@ const Header = () => {
       });
     }
     setMobileMenuOpen(false);
+  };
+
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      // Always navigate to home page, even if logout had issues
+      navigate('/', { replace: true });
+    }
   };
 
   return (
@@ -79,13 +93,23 @@ const Header = () => {
             </li>
           </ul>
           
-          {/* Login Button */}
-          <Link 
-            to="/login" 
-            className="ml-8 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-          >
-            Login
-          </Link>
+          {/* Login/Logout Button */}
+          {user ? (
+            <a 
+              href="#" 
+              onClick={handleLogout}
+              className="ml-8 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              Logout
+            </a>
+          ) : (
+            <Link 
+              to="/login" 
+              className="ml-8 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              Login
+            </Link>
+          )}
           
           <div className="md:hidden block cursor-pointer ml-4" onClick={toggleMobileMenu}>
             <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-xl`}></i>

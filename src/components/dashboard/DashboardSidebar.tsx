@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,9 +27,16 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
   const { logout } = useAuth();
   const navigate = useNavigate();
   
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      // Always navigate to home page, even if logout had issues
+      navigate('/', { replace: true });
+    }
   };
 
   const toggleSidebar = () => {

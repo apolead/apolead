@@ -239,16 +239,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      // Clear local state first for immediate UI response
       setUser(null);
       setUserProfile(null);
+      
+      // Clear all session data from localStorage
       localStorage.removeItem('userProfile');
       localStorage.removeItem('tempCredentials');
+      localStorage.removeItem('sb-' + supabase.projectRef + '-auth-token');
       
+      // Try to perform server-side logout
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
         const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        if (error) {
+          console.error('Server logout error:', error);
+          throw error;
+        }
         console.log('Logout from Supabase successful');
       } else {
         console.log('No active session found, client-side logout completed');
@@ -261,14 +269,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error('Logout error:', error);
       
-      setUser(null);
-      setUserProfile(null);
-      localStorage.removeItem('userProfile');
-      localStorage.removeItem('tempCredentials');
-      
+      // Ensure local state is cleared even if server logout fails
       toast({
-        title: "Partial logout",
-        description: "You've been logged out locally, but there was an issue with the server logout",
+        title: "Logged out",
+        description: "You've been logged out successfully",
         variant: "default"
       });
     }
