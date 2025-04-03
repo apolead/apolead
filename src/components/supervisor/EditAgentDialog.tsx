@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { Calendar as CalendarIcon, Save, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EditAgentDialogProps {
   open: boolean;
@@ -25,7 +26,6 @@ interface EditAgentDialogProps {
 
 export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: EditAgentDialogProps) {
   const { toast } = useToast();
-  const { updateProfile } = useAuth();
   
   const [formData, setFormData] = useState({
     first_name: agent?.first_name || "",
@@ -59,7 +59,13 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
       
       console.log("Submitting agent update:", dataToSubmit);
       
-      await updateProfile(agent.user_id, dataToSubmit);
+      // Update the agent profile directly using Supabase
+      const { error } = await supabase
+        .from('user_profiles')
+        .update(dataToSubmit)
+        .eq('user_id', agent.user_id);
+      
+      if (error) throw error;
       
       toast({
         title: "Agent updated",
@@ -82,7 +88,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] p-4">
+      <DialogContent className="max-w-md max-h-[80vh] overflow-hidden">
         <DialogHeader className="px-1">
           <DialogTitle className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" viewBox="0 0 20 20" fill="currentColor">
@@ -92,8 +98,8 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
           </DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="h-[calc(80vh-8rem)] pr-4">
-          <div className="grid gap-4">
+        <ScrollArea className="h-[60vh] pr-4">
+          <div className="grid gap-4 p-1">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="agent-name">Agent Name</Label>
