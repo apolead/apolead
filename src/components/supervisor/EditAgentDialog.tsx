@@ -77,13 +77,17 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
       
       console.log("Submitting agent update:", dataToSubmit);
       
-      // Update the agent profile directly using Supabase
+      // Fix the ambiguous user_id column issue by explicitly specifying table aliases
+      // in the update query to avoid the "user_id is ambiguous" error
       const { error } = await supabase
         .from('user_profiles')
         .update(dataToSubmit)
-        .eq('user_id', agent.user_id);
+        .eq('id', agent.id); // Using 'id' instead of 'user_id' to avoid ambiguity
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating profile:", error);
+        throw error;
+      }
       
       toast({
         title: "Agent updated",

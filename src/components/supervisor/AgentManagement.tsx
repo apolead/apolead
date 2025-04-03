@@ -21,6 +21,8 @@ export function AgentManagement() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
+      
+      console.log("Fetched agents:", data);
       setAgents(data || []);
     } catch (error) {
       console.error('Error fetching agents:', error);
@@ -39,6 +41,7 @@ export function AgentManagement() {
   }, []);
 
   const handleEditAgent = (agent) => {
+    console.log("Editing agent:", agent);
     setSelectedAgent(agent);
     setEditDialogOpen(true);
   };
