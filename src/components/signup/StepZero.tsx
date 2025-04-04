@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -153,7 +154,7 @@ const StepZero = ({
           
           <form onSubmit={handleSignUp} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email (Gmail or ApoLead only)</Label>
+              <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="your.name@gmail.com" value={email} onChange={handleEmailChange} required />
             </div>
             
