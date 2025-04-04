@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +22,6 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
     e.preventDefault();
     setErrorMessage('');
     
-    // Validate form - comprehensive checks
     if (!userData.cpuType || !userData.cpuType.trim()) {
       setErrorMessage('Please enter your CPU type');
       return;
@@ -54,7 +52,6 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
       return;
     }
     
-    // Continue to next step
     nextStep();
   };
   
@@ -68,9 +65,7 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
   
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
-      {/* Left Side - Visual */}
       <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
-        {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -105,7 +100,6 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
         </div>
       </div>
       
-      {/* Right Side - Form */}
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
@@ -173,6 +167,11 @@ const StepTwo = ({ userData, updateUserData, nextStep, prevStep }) => {
               <div className="border-b pb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Windows 10+</label>
                 <p className="text-xs text-gray-500 mb-2">Post a screenshot of system settings</p>
+                <div className="bg-blue-50 border border-blue-200 p-3 rounded mb-3">
+                  <p className="text-xs text-blue-700">
+                    <strong>How to find your system settings:</strong> Click Start Menu → Type "system" and hit Enter → Take a screenshot of the system information page
+                  </p>
+                </div>
                 
                 <div className="mt-3 border-2 border-dashed border-gray-300 rounded-md p-4 bg-white">
                   <div className="flex items-center justify-center">

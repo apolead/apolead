@@ -306,6 +306,17 @@ const OnboardingModal = ({
     }
   };
 
+  useEffect(() => {
+    // If user has already completed onboarding, don't allow further updates
+    if (initialUserData?.onboarding_completed === true) {
+      toast({
+        title: "Onboarding already completed",
+        description: "You have already completed the onboarding process.",
+      });
+      onClose();
+    }
+  }, [initialUserData, onClose]);
+
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -418,6 +429,11 @@ const OnboardingModal = ({
                 <div className="border-b pb-4">
                   <Label className="block text-sm font-medium text-gray-700 mb-2">Windows 10+</Label>
                   <p className="text-xs text-gray-500 mb-2">Post a screenshot of system settings</p>
+                  <div className="bg-blue-50 border border-blue-200 p-3 rounded mb-3">
+                    <p className="text-xs text-blue-700">
+                      <strong>How to find your system settings:</strong> Click Start Menu → Type "system" and hit Enter → Take a screenshot of the system information page
+                    </p>
+                  </div>
                   
                   <div className="mt-3 border-2 border-dashed border-gray-300 rounded-md p-4 bg-white">
                     <div className="flex items-center justify-center">

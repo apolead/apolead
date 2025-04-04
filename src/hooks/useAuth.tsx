@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -20,7 +19,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Helper function to sanitize boolean values in the profile
   const sanitizeProfileData = (profileData: any) => {
     if (!profileData) return null;
     
@@ -76,7 +74,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
     
-    // Ensure we properly handle arrays that might be null or undefined
     if (cleanProfile.available_days === null || cleanProfile.available_days === undefined) {
       cleanProfile.available_days = [];
     }
@@ -239,23 +236,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      // Clear local state first for immediate UI response
       setUser(null);
       setUserProfile(null);
       
-      // Clear all session data from localStorage
       localStorage.removeItem('userProfile');
       localStorage.removeItem('tempCredentials');
       
-      // Clear the Supabase auth token from localStorage without using projectRef
-      // Instead, find and remove any items that match the Supabase auth token pattern
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
           localStorage.removeItem(key);
         }
       });
       
-      // Try to perform server-side logout
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
@@ -276,7 +268,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error('Logout error:', error);
       
-      // Ensure local state is cleared even if server logout fails
       toast({
         title: "Logged out",
         description: "You've been logged out successfully",
@@ -289,21 +280,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!user) throw new Error("User not authenticated");
       
+      if (userProfile?.onboarding_completed === true) {
+        const onboardingFields = [
+          'first_name', 'last_name', 'birth_day', 'gov_id_number', 'gov_id_image',
+          'cpu_type', 'ram_amount', 'has_headset', 'has_quiet_place', 'speed_test',
+          'system_settings', 'meet_obligation', 'login_discord', 'check_emails',
+          'solve_problems', 'complete_training', 'personal_statement'
+        ];
+        
+        const isUpdatingOnboarding = onboardingFields.some(field => field in data);
+        
+        if (isUpdatingOnboarding) {
+          toast({
+            title: "Cannot update onboarding",
+            description: "Onboarding information cannot be modified once completed.",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+      
       console.log('Updating user profile with:', data);
       
-      // Create a safe copy of the data with proper handling of arrays and objects
       const safeData = { ...data };
       
-      // Handle arrays and objects correctly
       if ('available_days' in safeData) {
-        // If it's already a valid array, PostgreSQL will handle it
         if (!Array.isArray(safeData.available_days) || safeData.available_days.length === 0) {
-          safeData.available_days = []; // Use empty array instead of removing
+          safeData.available_days = [];
         }
       }
       
       if ('day_hours' in safeData) {
-        // If it's an empty object, use an empty object
         if (typeof safeData.day_hours === 'object' && Object.keys(safeData.day_hours).length === 0) {
           safeData.day_hours = {};
         }
@@ -316,7 +323,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
-      // Fetch the latest profile after update to ensure we have the latest state
       await fetchUserProfile(user.id);
       
       toast({
