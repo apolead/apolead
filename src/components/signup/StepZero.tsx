@@ -1,173 +1,115 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
 interface StepZeroProps {
-  userData: {
-    email: string;
-    password?: string;
-  };
+  userData: any;
   updateUserData: (data: any) => void;
   nextStep: () => void;
 }
 
 const StepZero: React.FC<StepZeroProps> = ({ userData, updateUserData, nextStep }) => {
-  const [email, setEmail] = useState(userData.email || '');
-  const [password, setPassword] = useState(userData.password || '');
-  const [confirmPassword, setConfirmPassword] = useState(userData.password || '');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    
+    if (!userData.email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Basic email validation
-    if (!email.includes('@') || !email.includes('.')) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userData.email)) {
       toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
+        title: "Invalid Email Format",
+        description: "Please enter a valid email address.",
         variant: "destructive",
       });
-      setIsSubmitting(false);
       return;
     }
     
-    // Check if email domain is valid
-    const domain = email.split('@')[1].toLowerCase();
-    const validDomains = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'apolead.com'];
+    // Check if this is a valid domain for sign up
+    const isValidEmail = userData.email.includes('@') && (
+      userData.email.endsWith('@gmail.com') || 
+      userData.email.endsWith('@outlook.com') || 
+      userData.email.endsWith('@hotmail.com') || 
+      userData.email.endsWith('@yahoo.com') ||
+      userData.email.endsWith('@apolead.com')
+    );
     
-    if (!validDomains.includes(domain)) {
+    if (!isValidEmail) {
       toast({
-        title: "Invalid email",
-        description: "Gmail, Outlook, Hotmail, Yahoo, and ApoLead email accounts are supported",
+        title: "Invalid Email Domain",
+        description: "Please use a supported email provider (Gmail, Outlook, Hotmail, Yahoo, or ApoLead).",
         variant: "destructive",
       });
-      setIsSubmitting(false);
       return;
     }
     
-    // Password validation
-    if (password.length < 8) {
+    // If we have a password, basic validation
+    if (userData.password && userData.password.length < 6) {
       toast({
-        title: "Invalid password",
-        description: "Password must be at least 8 characters long",
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long.",
         variant: "destructive",
       });
-      setIsSubmitting(false);
       return;
     }
     
-    // Password confirmation
-    if (password !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please ensure both passwords match",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-      return;
-    }
-    
-    // Update user data and proceed to next step
-    updateUserData({
-      email,
-      password
-    });
-    
-    setIsSubmitting(false);
+    // Move to next step
     nextStep();
   };
-
+  
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Create your account now
-        </h2>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold text-center mb-6">Create Your Account</h1>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                />
-              </div>
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@example.com"
+                value={userData.email || ''}
+                onChange={(e) => updateUserData({ email: e.target.value })}
+                className="w-full"
+              />
             </div>
-
+            
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                />
-              </div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Create a password"
+                value={userData.password || ''}
+                onChange={(e) => updateUserData({ password: e.target.value })}
+                className="w-full"
+              />
             </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                {isSubmitting ? 'Processing...' : 'Sign up'}
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="flex justify-center">
-                <span className="text-sm">
-                  Have an account? <a href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">Login</a>
-                </span>
-              </div>
-            </div>
+            
+            <button
+              type="submit" 
+              className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              Continue
+            </button>
           </div>
-
-          <div className="mt-4 text-center">
-            <p className="text-sm text-gray-500">Gmail, Outlook, Hotmail, Yahoo, and ApoLead email accounts are supported</p>
-          </div>
+        </form>
+        
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-500">Gmail, Outlook, Hotmail, Yahoo, and ApoLead email accounts are supported</p>
         </div>
       </div>
     </div>
