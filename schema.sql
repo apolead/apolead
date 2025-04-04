@@ -1,4 +1,5 @@
 
+
 -- This function retrieves the credentials value for a specific user
 CREATE OR REPLACE FUNCTION public.get_user_credentials(user_id UUID)
 RETURNS TEXT
@@ -37,7 +38,6 @@ BEGIN
   ) THEN
     NEW.eligible_for_training := TRUE;
   ELSE
-    -- If any required fields are false, ensure eligible_for_training is false
     NEW.eligible_for_training := FALSE;
   END IF;
   
@@ -61,7 +61,8 @@ BEGIN
     NEW.solve_problems IS NOT NULL AND 
     NEW.complete_training IS NOT NULL AND 
     NEW.personal_statement IS NOT NULL AND NEW.personal_statement != '' AND
-    NEW.accepted_terms IS TRUE
+    NEW.accepted_terms IS TRUE AND
+    NEW.eligible_for_training IS TRUE
   ) THEN
     NEW.onboarding_completed := TRUE;
   ELSE
@@ -110,3 +111,4 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+

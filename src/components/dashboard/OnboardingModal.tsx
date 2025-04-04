@@ -280,17 +280,21 @@ const OnboardingModal = ({
             description: "You've successfully completed onboarding and are eligible for training.",
             variant: "default"
           });
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         } else {
           toast({
             title: "Not eligible",
             description: "You've completed onboarding but are not eligible for training based on your answers.",
             variant: "destructive"
           });
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         }
-        
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
       }
       
       onClose();
