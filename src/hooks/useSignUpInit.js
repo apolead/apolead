@@ -15,12 +15,13 @@ export const useSignUpInit = () => {
         
         if (email) {
           // Check if this is a valid domain for sign up
+          // Updated to explicitly include @apolead.com in the valid domains list
           const isValidEmail = email.includes('@') && (
             email.endsWith('@gmail.com') || 
             email.endsWith('@outlook.com') || 
             email.endsWith('@hotmail.com') || 
             email.endsWith('@yahoo.com') ||
-            email.endsWith('@apolead.com') // Add support for company email domain
+            email.endsWith('@apolead.com') // Support for company email domain
           );
           
           if (isValidEmail) {

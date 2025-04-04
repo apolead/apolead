@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -33,8 +32,8 @@ const StepZero = ({
   };
   
   const validateEmail = email => {
-    if (!email.endsWith('@gmail.com')) {
-      return 'Only Gmail accounts are allowed';
+    if (!email.endsWith('@gmail.com') && !email.endsWith('@apolead.com')) {
+      return 'Only Gmail and ApoLead accounts are allowed';
     }
     return null;
   };
@@ -42,7 +41,6 @@ const StepZero = ({
   const handleSignUp = async e => {
     e.preventDefault();
 
-    // Validate email domain
     const emailError = validateEmail(email);
     if (emailError) {
       toast({
@@ -53,7 +51,6 @@ const StepZero = ({
       return;
     }
 
-    // Check password match
     if (password !== confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -65,8 +62,6 @@ const StepZero = ({
     
     setIsLoading(true);
     try {
-      // Simplified signup process - just perform the signup with email/password
-      // No additional validation or redirect logic that could prevent email sending
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -77,16 +72,13 @@ const StepZero = ({
       
       if (error) throw error;
 
-      // Update userData with email
       await updateUserData({ email });
 
-      // Successful signup
       toast({
         title: "Signup successful",
         description: "Please check your email for the confirmation link"
       });
       
-      // Navigate to confirmation page
       navigate('/confirmation');
     } catch (error) {
       console.error('Signup error:', error);
@@ -161,7 +153,7 @@ const StepZero = ({
           
           <form onSubmit={handleSignUp} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email (Gmail only)</Label>
+              <Label htmlFor="email">Email (Gmail or ApoLead only)</Label>
               <Input id="email" type="email" placeholder="your.name@gmail.com" value={email} onChange={handleEmailChange} required />
             </div>
             
@@ -192,7 +184,7 @@ const StepZero = ({
           </div>
           
           <div className="mt-4 text-center">
-            <p className="text-sm text-gray-500">Only Gmail accounts are supported</p>
+            <p className="text-sm text-gray-500">Only Gmail and ApoLead accounts are supported</p>
           </div>
         </div>
         
