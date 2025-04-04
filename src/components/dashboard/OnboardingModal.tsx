@@ -307,7 +307,6 @@ const OnboardingModal = ({
   };
 
   useEffect(() => {
-    // If user has already completed onboarding, don't allow further updates
     if (initialUserData?.onboarding_completed === true) {
       toast({
         title: "Onboarding already completed",
@@ -315,9 +314,9 @@ const OnboardingModal = ({
       });
       onClose();
     }
-  }, [initialUserData, onClose]);
+  }, [initialUserData, onClose, toast]);
 
-  return <Dialog open={isOpen} onOpenChange={onClose}>
+  return <Dialog open={isOpen && initialUserData?.onboarding_completed !== true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center">
