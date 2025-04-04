@@ -20,7 +20,7 @@ export const useSignUpInit = () => {
             email.endsWith('@outlook.com') || 
             email.endsWith('@hotmail.com') || 
             email.endsWith('@yahoo.com') ||
-            email.endsWith('@apolead.com') // Add support for company email domain
+            email.endsWith('@apolead.com') // Support for company email domain
           );
           
           if (isValidEmail) {
