@@ -105,14 +105,13 @@ const Dashboard = () => {
       });
       
       // Determine onboarding status - prioritize the database flags
-      if (isOnboardingCompletedFlag || (hasRequiredFields && isEligible)) {
+      if (isOnboardingCompletedFlag) {
         if (isEligible) {
           setOnboardingStatus('completed');
-          setOnboardingCompleted(true);
         } else {
           setOnboardingStatus('ineligible');
-          setOnboardingCompleted(true);
         }
+        setOnboardingCompleted(true);
       } else if (userProfile.first_name || userProfile.last_name) {
         setOnboardingStatus('incomplete');
         setOnboardingCompleted(false);
@@ -139,7 +138,19 @@ const Dashboard = () => {
   }, [user, loading, userProfile, navigate, onboardingStatus]);
   
   const openOnboardingModal = () => {
-    setIsModalOpen(true);
+    // Only open modal if onboarding is not completed
+    if (!onboardingCompleted) {
+      setIsModalOpen(true);
+    } else {
+      // If onboarding is completed, show a toast message instead
+      toast({
+        title: onboardingStatus === 'ineligible' ? "Not Eligible" : "Onboarding Complete",
+        description: onboardingStatus === 'ineligible' 
+          ? "You are not eligible for training based on your answers."
+          : "You have already completed the onboarding process.",
+        variant: onboardingStatus === 'ineligible' ? "destructive" : "default"
+      });
+    }
   };
   
   const closeOnboardingModal = async () => {
