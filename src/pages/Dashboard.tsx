@@ -105,13 +105,14 @@ const Dashboard = () => {
       });
       
       // Determine onboarding status - prioritize the database flags
-      if (isOnboardingCompletedFlag) {
+      if (isOnboardingCompletedFlag || (hasRequiredFields && isEligible)) {
         if (isEligible) {
           setOnboardingStatus('completed');
+          setOnboardingCompleted(true);
         } else {
           setOnboardingStatus('ineligible');
+          setOnboardingCompleted(true);
         }
-        setOnboardingCompleted(true);
       } else if (userProfile.first_name || userProfile.last_name) {
         setOnboardingStatus('incomplete');
         setOnboardingCompleted(false);
@@ -138,17 +139,6 @@ const Dashboard = () => {
   }, [user, loading, userProfile, navigate, onboardingStatus]);
   
   const openOnboardingModal = () => {
-    if (onboardingCompleted) {
-      // If onboarding is already completed, show a toast message instead of opening the modal
-      toast({
-        title: userProfile?.eligible_for_training ? "Onboarding Completed" : "Not Eligible for Training",
-        description: userProfile?.eligible_for_training ? 
-          "You have successfully completed onboarding." : 
-          "You are not eligible for training based on your answers.",
-        variant: userProfile?.eligible_for_training ? "default" : "destructive"
-      });
-      return;
-    }
     setIsModalOpen(true);
   };
   
@@ -427,9 +417,8 @@ const Dashboard = () => {
               <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Initial Onboarding</h3>
               <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Complete your profile setup and account verification to get started with ApoLead.</p>
               <button 
-                className={`${getOnboardingButtonStyle()} ${onboardingCompleted ? 'cursor-default' : 'cursor-pointer'}`}
+                className={getOnboardingButtonStyle()}
                 onClick={openOnboardingModal}
-                aria-disabled={onboardingCompleted}
               >
                 {getOnboardingIcon()} {getOnboardingButtonText()}
               </button>
