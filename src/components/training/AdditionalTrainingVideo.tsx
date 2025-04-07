@@ -92,7 +92,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
       return "Next Module";
     }
     if (moduleNumber === totalModules) {
-      return hasQuiz ? "Submit" : "Submit";
+      return hasQuiz ? "Start Quiz" : "Submit";
     }
     return hasQuiz ? "Start Quiz" : "Next Module";
   };
@@ -110,7 +110,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           onClick={handleContinueAfterScore}
           className="bg-blue-500 text-white hover:bg-blue-600 mt-4"
         >
-          Continue
+          {moduleNumber === totalModules ? "Submit" : "Continue to Next Module"}
         </Button>
       </div>
     );
