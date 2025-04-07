@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
+import ProbationTrainingModal from '@/components/training/ProbationTrainingModal';
 import { 
   CheckCircle,
   ChevronDown,
@@ -14,7 +16,8 @@ import {
   Settings,
   Bell,
   AlertTriangle,
-  XCircle
+  XCircle,
+  BookOpen
 } from 'lucide-react';
 import {
   Dialog,

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,7 +16,8 @@ import {
   Settings,
   Wrench,
   Info,
-  DollarSign
+  DollarSign,
+  BookOpen
 } from 'lucide-react';
 
 export interface DashboardSidebarProps {
@@ -24,7 +26,7 @@ export interface DashboardSidebarProps {
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashboard' }) => {
   const [collapsed, setCollapsed] = React.useState(false);
-  const { logout } = useAuth();
+  const { logout, userProfile } = useAuth();
   const navigate = useNavigate();
   
   const handleLogout = async (e: React.MouseEvent) => {
@@ -44,8 +46,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
   };
 
   // Define which items should be active vs locked
-  const unlockedItems = ['dashboard', 'billing', 'logout'];
+  const unlockedItems = ['dashboard', 'billing', 'logout', 'probation-training'];
   const isItemUnlocked = (itemName: string) => unlockedItems.includes(itemName);
+  
+  // Check if user is on probation to determine if they should see probation training
+  const isProbation = userProfile?.agent_standing === "Probation";
 
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -93,6 +98,13 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
           <Lock size={18} className="menu-lock-icon" />
         </div>
         
+        {isProbation && (
+          <div className={`nav-item ${activeItem === 'probation-training' ? 'active' : ''}`}>
+            <BookOpen size={18} />
+            <span>Probation Training</span>
+          </div>
+        )}
+        
         <Link to="/billing" className={`nav-item ${activeItem === 'billing' ? 'active' : ''}`}>
           <FileText size={18} />
           <span>Billing Information</span>
@@ -119,3 +131,5 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
     </div>
   );
 };
+
+export default DashboardSidebar;
