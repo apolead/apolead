@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
+import ProbationTrainingModal from '@/components/training/ProbationTrainingModal';
 import { 
   CheckCircle,
   ChevronDown,
@@ -14,7 +15,8 @@ import {
   Settings,
   Bell,
   AlertTriangle,
-  XCircle
+  XCircle,
+  GraduationCap
 } from 'lucide-react';
 import {
   Dialog,
@@ -28,10 +30,11 @@ const Dashboard = () => {
   const { user, userProfile, loading } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTrainingModalOpen, setIsTrainingModalOpen] = useState(false);
+  const [isProbationTrainingOpen, setIsProbationTrainingOpen] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
-  const [onboardingProgress, setOnboardingProgress] = useState(20); // Default to 20% (signup completed)
-  const [onboardingStatus, setOnboardingStatus] = useState('not_started'); // 'not_started', 'incomplete', 'ineligible', 'completed'
-  const [trainingStatus, setTrainingStatus] = useState('not_started'); // 'not_started', 'failed', 'completed'
+  const [onboardingProgress, setOnboardingProgress] = useState(20);
+  const [onboardingStatus, setOnboardingStatus] = useState('not_started');
+  const [trainingStatus, setTrainingStatus] = useState('not_started');
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const navigate = useNavigate();
@@ -42,7 +45,6 @@ const Dashboard = () => {
       navigate('/login');
     }
     
-    // Check if onboarding is completed based on user profile data
     if (userProfile) {
       console.log("Dashboard: User profile loaded", {
         first_name: userProfile.first_name,
@@ -60,16 +62,12 @@ const Dashboard = () => {
         solve_problems: userProfile.solve_problems,
         complete_training: userProfile.complete_training,
         quiz_passed: userProfile.quiz_passed,
-        training_video_watched: userProfile.training_video_watched
+        training_video_watched: userProfile.training_video_watched,
+        agent_standing: userProfile.agent_standing
       });
       
-      // Check if the database flag for onboarding_completed is set
       const isOnboardingCompletedFlag = userProfile.onboarding_completed === true;
-      
-      // Check if eligible based on the database field directly
       const isEligible = userProfile.eligible_for_training === true;
-      
-      // Additional logic check - if all onboarding requirements are met
       const hasRequiredFields = userProfile.first_name && 
                               userProfile.last_name && 
                               userProfile.birth_day && 
@@ -83,10 +81,9 @@ const Dashboard = () => {
                               userProfile.solve_problems === true &&
                               userProfile.complete_training === true;
       
-      // Determine training status
       if (userProfile.quiz_passed === true) {
         setTrainingStatus('completed');
-        setShowInterviewScheduler(true); // Enable interview scheduling when training is completed
+        setShowInterviewScheduler(true);
       } else if (userProfile.quiz_passed === false) {
         setTrainingStatus('failed');
       } else {
@@ -104,7 +101,6 @@ const Dashboard = () => {
         quiz_passed_type: typeof userProfile.quiz_passed
       });
       
-      // Determine onboarding status - prioritize the database flags
       if (isOnboardingCompletedFlag) {
         if (isEligible) {
           setOnboardingStatus('completed');
@@ -120,16 +116,13 @@ const Dashboard = () => {
         setOnboardingCompleted(false);
       }
       
-      // Update onboarding progress based on completed fields
       if (onboardingStatus === 'completed' || onboardingStatus === 'ineligible') {
         setOnboardingProgress(100);
       } else if (onboardingStatus === 'incomplete') {
-        // Calculate progress percentage based on how many fields are filled
         const hasBasicInfo = userProfile.first_name && userProfile.last_name && userProfile.birth_day && 
                           userProfile.gov_id_number && userProfile.gov_id_image;
         setOnboardingProgress(hasBasicInfo ? 60 : 40);
       } else {
-        // Just signed up, only has email
         setOnboardingProgress(20);
       }
       
@@ -139,7 +132,6 @@ const Dashboard = () => {
   
   const openOnboardingModal = () => {
     if (onboardingCompleted) {
-      // If onboarding is already completed, show a toast message instead of opening the modal
       toast({
         title: userProfile?.eligible_for_training ? "Onboarding Completed" : "Not Eligible for Training",
         description: userProfile?.eligible_for_training ? 
@@ -155,7 +147,6 @@ const Dashboard = () => {
   const closeOnboardingModal = async () => {
     setIsModalOpen(false);
     
-    // Force a refresh to get the latest user profile data
     if (user) {
       try {
         const { data, error } = await supabase
@@ -166,7 +157,6 @@ const Dashboard = () => {
         
         if (error) throw error;
         
-        // Reload the page to update all dashboard statuses
         window.location.reload();
       } catch (err) {
         console.error("Error refreshing user profile:", err);
@@ -183,8 +173,15 @@ const Dashboard = () => {
     if (passed) {
       setShowInterviewScheduler(true);
     }
-    // Force reload to update UI after training
     window.location.reload();
+  };
+  
+  const openProbationTrainingModal = () => {
+    setIsProbationTrainingOpen(true);
+  };
+  
+  const closeProbationTrainingModal = () => {
+    setIsProbationTrainingOpen(false);
   };
   
   const handleScheduleInterview = () => {
@@ -269,7 +266,6 @@ const Dashboard = () => {
   
   useEffect(() => {
     if (showScheduleDialog) {
-      console.log("Dashboard: Loading Calendly script");
       const script = document.createElement('script');
       script.src = 'https://assets.calendly.com/assets/external/widget.js';
       script.async = true;
@@ -286,6 +282,8 @@ const Dashboard = () => {
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
+  
+  const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
   
   return (
     <div className="flex w-full min-h-screen bg-[#f8fafc]">
@@ -544,6 +542,26 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
+          
+          {isProbationAgent && (
+            <div className={`action-card bg-white rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border border-[#10B981] shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all h-full hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]`}>
+              <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)] text-white flex items-center justify-center font-[600] text-[16px] z-[3] border-[3px] border-white`}>
+                P
+              </div>
+              <div className={`action-icon w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)] text-white flex items-center justify-center text-[30px] relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
+                <GraduationCap size={30} />
+              </div>
+              <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Probation Training</h3>
+              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Complete required probation training modules to advance in your role.</p>
+              <button 
+                id="probation-training-btn"
+                onClick={openProbationTrainingModal}
+                className="card-button button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]"
+              >
+                <GraduationCap className="mr-[8px] text-[16px]" /> Start Training
+              </button>
+            </div>
+          )}
         </div>
       </div>
       
@@ -559,6 +577,13 @@ const Dashboard = () => {
         onClose={closeTrainingModal}
         onComplete={(passed) => closeTrainingModal(passed)}
       />
+      
+      {isProbationAgent && (
+        <ProbationTrainingModal 
+          isOpen={isProbationTrainingOpen} 
+          onClose={closeProbationTrainingModal} 
+        />
+      )}
       
       <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
