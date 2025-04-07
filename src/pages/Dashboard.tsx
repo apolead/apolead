@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
-import ProbationTrainingModal from '@/components/training/ProbationTrainingModal';
 import { 
   CheckCircle,
   ChevronDown,
@@ -16,8 +14,7 @@ import {
   Settings,
   Bell,
   AlertTriangle,
-  XCircle,
-  BookOpen
+  XCircle
 } from 'lucide-react';
 import {
   Dialog,
@@ -31,15 +28,12 @@ const Dashboard = () => {
   const { user, userProfile, loading } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTrainingModalOpen, setIsTrainingModalOpen] = useState(false);
-  const [isProbationTrainingModalOpen, setIsProbationTrainingModalOpen] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [onboardingProgress, setOnboardingProgress] = useState(20); // Default to 20% (signup completed)
   const [onboardingStatus, setOnboardingStatus] = useState('not_started'); // 'not_started', 'incomplete', 'ineligible', 'completed'
   const [trainingStatus, setTrainingStatus] = useState('not_started'); // 'not_started', 'failed', 'completed'
-  const [probationTrainingStatus, setProbationTrainingStatus] = useState('not_started'); // 'not_started', 'failed', 'completed'
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
-  const [isOnProbation, setIsOnProbation] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -66,13 +60,8 @@ const Dashboard = () => {
         solve_problems: userProfile.solve_problems,
         complete_training: userProfile.complete_training,
         quiz_passed: userProfile.quiz_passed,
-        training_video_watched: userProfile.training_video_watched,
-        agent_standing: userProfile.agent_standing,
-        probation_training_completed: userProfile.probation_training_completed
+        training_video_watched: userProfile.training_video_watched
       });
-      
-      // Check if user is on probation
-      setIsOnProbation(userProfile.agent_standing === "Probation");
       
       // Check if the database flag for onboarding_completed is set
       const isOnboardingCompletedFlag = userProfile.onboarding_completed === true;
@@ -104,13 +93,6 @@ const Dashboard = () => {
         setTrainingStatus('not_started');
       }
       
-      // Determine probation training status
-      if (userProfile.probation_training_completed === true) {
-        setProbationTrainingStatus('completed');
-      } else if (userProfile.probation_training_completed === false) {
-        setProbationTrainingStatus('not_started');
-      }
-      
       console.log("Dashboard: Eligibility check", {
         isOnboardingCompletedFlag,
         isEligible,
@@ -119,10 +101,7 @@ const Dashboard = () => {
         onboarding_completed_type: typeof userProfile.onboarding_completed,
         trainingStatus,
         quiz_passed: userProfile.quiz_passed,
-        quiz_passed_type: typeof userProfile.quiz_passed,
-        isOnProbation,
-        agent_standing: userProfile.agent_standing,
-        probationTrainingStatus
+        quiz_passed_type: typeof userProfile.quiz_passed
       });
       
       // Determine onboarding status - prioritize the database flags
@@ -208,16 +187,6 @@ const Dashboard = () => {
     window.location.reload();
   };
   
-  const openProbationTrainingModal = () => {
-    setIsProbationTrainingModalOpen(true);
-  };
-  
-  const closeProbationTrainingModal = (passed = false) => {
-    setIsProbationTrainingModalOpen(false);
-    // Force reload to update UI after probation training
-    window.location.reload();
-  };
-  
   const handleScheduleInterview = () => {
     console.log("Dashboard: Opening schedule interview dialog");
     setShowScheduleDialog(true);
@@ -295,39 +264,6 @@ const Dashboard = () => {
         return <XCircle className="mr-[8px] text-[16px]" />;
       default:
         return <CheckCircle className="mr-[8px] text-[16px]" />;
-    }
-  };
-
-  const getProbationTrainingButtonStyle = () => {
-    switch (probationTrainingStatus) {
-      case 'completed':
-        return 'button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]';
-      case 'failed':
-        return 'button-ineligible p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(239,68,68,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(239,68,68,0.3)]';
-      default:
-        return 'button-probation p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(99,102,241,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(99,102,241,0.3)]';
-    }
-  };
-  
-  const getProbationTrainingButtonText = () => {
-    switch (probationTrainingStatus) {
-      case 'completed':
-        return 'Probation Training Completed';
-      case 'failed':
-        return 'Training Failed';
-      default:
-        return 'Start Probation Training';
-    }
-  };
-  
-  const getProbationTrainingIcon = () => {
-    switch (probationTrainingStatus) {
-      case 'completed':
-        return <CheckCircle className="mr-[8px] text-[16px]" />;
-      case 'failed':
-        return <XCircle className="mr-[8px] text-[16px]" />;
-      default:
-        return <BookOpen className="mr-[8px] text-[16px]" />;
     }
   };
   
@@ -609,52 +545,6 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        
-        {/* Probation Training Card - Only visible for users with agent_standing = "Probation" */}
-        {isOnProbation && (
-          <div className="bg-white rounded-[20px] p-[25px] mb-[20px] shadow-[0_4px_15px_rgba(0,0,0,0.05)]">
-            <div className="flex justify-between items-center mb-[20px]">
-              <h2 className="text-[20px] text-[#1e293b] flex items-center font-[600]">
-                <div className="header-icon mr-[10px] bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white w-[28px] h-[28px] rounded-[8px] flex items-center justify-center text-[14px]">
-                  <BookOpen size={16} />
-                </div>
-                Probation Training
-              </h2>
-            </div>
-            
-            <div className="flex flex-col md:flex-row gap-6 p-4">
-              <div className="flex-1">
-                <div className="rounded-lg border p-6 h-full flex flex-col">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white flex items-center justify-center mb-4">
-                    <BookOpen size={24} />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">ReadyMode AI Dialer Training</h3>
-                  <p className="text-gray-600 mb-6 flex-grow">
-                    Complete this training program to learn about the ReadyMode platform and AI dialer operations.
-                  </p>
-                  <button
-                    onClick={openProbationTrainingModal}
-                    className={getProbationTrainingButtonStyle()}
-                    disabled={probationTrainingStatus === 'completed'}
-                  >
-                    {getProbationTrainingIcon()} {getProbationTrainingButtonText()}
-                  </button>
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="rounded-lg border border-dashed p-6 bg-gray-50 h-full flex flex-col items-center justify-center text-center">
-                  <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mb-4">
-                    <Lock size={20} className="text-gray-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2 text-gray-500">Additional Modules</h3>
-                  <p className="text-gray-500 mb-4">
-                    More training modules will be available after you complete the ReadyMode training.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
       
       <OnboardingModal 
@@ -667,11 +557,7 @@ const Dashboard = () => {
       <TrainingModal 
         isOpen={isTrainingModalOpen} 
         onClose={closeTrainingModal}
-      />
-      
-      <ProbationTrainingModal
-        isOpen={isProbationTrainingModalOpen}
-        onClose={closeProbationTrainingModal}
+        onComplete={(passed) => closeTrainingModal(passed)}
       />
       
       <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
