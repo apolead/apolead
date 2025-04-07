@@ -55,12 +55,25 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
   
   // Extract video ID from URL to use in embed
   const getYouTubeEmbedUrl = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    
-    return (match && match[2].length === 11)
-      ? `https://www.youtube.com/embed/${match[2]}?autoplay=0&modestbranding=1&rel=0`
-      : url; // Return original if not a valid YouTube URL
+    try {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+      const match = url.match(regExp);
+      
+      return (match && match[2].length === 11)
+        ? `https://www.youtube.com/embed/${match[2]}?autoplay=0&modestbranding=1&rel=0`
+        : url; // Return original if not a valid YouTube URL
+    } catch (err) {
+      console.error("Error parsing YouTube URL:", err);
+      return url;
+    }
+  };
+  
+  // Determine button text based on whether this module has a quiz
+  const getButtonText = () => {
+    if (isCompleted) {
+      return "Next Module";
+    }
+    return hasQuiz ? "Start Quiz" : "Next Module";
   };
   
   return (
@@ -102,14 +115,10 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
         
         <Button 
           onClick={handleComplete}
-          className={
-            isCompleted 
-              ? "bg-[#4f46e5] text-white hover:bg-[#4338ca]" 
-              : "bg-blue-500 text-white hover:bg-blue-600"
-          }
+          className="bg-blue-500 text-white hover:bg-blue-600"
           variant="default"
         >
-          Next Module
+          {getButtonText()}
         </Button>
       </div>
     </div>
