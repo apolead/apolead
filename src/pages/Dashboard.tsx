@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
-import ProbationTrainingModal from '@/components/training/ProbationTrainingModal';
+import AdditionalTrainingModal from '@/components/training/AdditionalTrainingModal';
 import { 
   CheckCircle,
   ChevronDown,
@@ -177,11 +176,11 @@ const Dashboard = () => {
     window.location.reload();
   };
   
-  const openProbationTrainingModal = () => {
+  const openAdditionalTrainingModal = () => {
     setIsProbationTrainingOpen(true);
   };
   
-  const closeProbationTrainingModal = () => {
+  const closeAdditionalTrainingModal = () => {
     setIsProbationTrainingOpen(false);
   };
   
@@ -525,12 +524,12 @@ const Dashboard = () => {
               } text-white flex items-center justify-center text-[30px] shadow-none relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
                 <GraduationCap size={30} />
               </div>
-              <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Probation Training</h3>
-              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Complete required probation training modules to advance in your role.</p>
+              <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Additional Training</h3>
+              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Complete required additional training modules to advance in your role.</p>
               {isProbationAgent ? (
                 <button 
-                  id="probation-training-btn"
-                  onClick={openProbationTrainingModal}
+                  id="additional-training-btn"
+                  onClick={openAdditionalTrainingModal}
                   className="card-button button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]"
                 >
                   <GraduationCap className="mr-[8px] text-[16px]" /> Start Training
@@ -576,9 +575,9 @@ const Dashboard = () => {
       />
       
       {isProbationAgent && (
-        <ProbationTrainingModal 
+        <AdditionalTrainingModal 
           isOpen={isProbationTrainingOpen} 
-          onClose={closeProbationTrainingModal} 
+          onClose={closeAdditionalTrainingModal} 
         />
       )}
       

@@ -7,12 +7,12 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Check, ChevronRight } from 'lucide-react';
 import { ProbationTrainingQuestion } from '@/types/probation-training';
 
-interface ProbationTrainingQuizProps {
+interface AdditionalTrainingQuizProps {
   questions: ProbationTrainingQuestion[];
   onComplete: (passed: boolean, score: number) => void;
 }
 
-const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({ 
+const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({ 
   questions, 
   onComplete 
 }) => {
@@ -162,4 +162,4 @@ const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({
   );
 };
 
-export default ProbationTrainingQuiz;
+export default AdditionalTrainingQuiz;

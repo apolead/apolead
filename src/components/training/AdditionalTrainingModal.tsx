@@ -6,16 +6,20 @@ import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import ProbationTrainingVideo from './ProbationTrainingVideo';
-import ProbationTrainingQuiz from './ProbationTrainingQuiz';
-import { ProbationTrainingModule, ProbationTrainingQuestion, UserProbationProgress } from '@/types/probation-training';
+import AdditionalTrainingVideo from './AdditionalTrainingVideo';
+import AdditionalTrainingQuiz from './AdditionalTrainingQuiz';
+import { 
+  ProbationTrainingModule, 
+  ProbationTrainingQuestion, 
+  UserProbationProgress 
+} from '@/types/probation-training';
 
-interface ProbationTrainingModalProps {
+interface AdditionalTrainingModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen, onClose }) => {
+const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [modules, setModules] = useState<ProbationTrainingModule[]>([]);
   const [currentModule, setCurrentModule] = useState<ProbationTrainingModule | null>(null);
@@ -26,6 +30,9 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
   const [quizPassed, setQuizPassed] = useState<boolean | null>(null);
   const [quizScore, setQuizScore] = useState<number>(0);
   const [userProgress, setUserProgress] = useState<Record<string, UserProbationProgress>>({});
+  const [overallScore, setOverallScore] = useState<number>(0);
+  const [modulesCompleted, setModulesCompleted] = useState<number>(0);
+  const [totalModules, setTotalModules] = useState<number>(0);
   
   useEffect(() => {
     if (isOpen && user) {
@@ -46,11 +53,23 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
       if (progressError) throw progressError;
       
       const progressMap: Record<string, UserProbationProgress> = {};
+      let completedCount = 0;
+      let totalScore = 0;
+      let scoreCount = 0;
+      
       if (progressData) {
         progressData.forEach((progress: UserProbationProgress) => {
           progressMap[progress.module_id] = progress;
+          if (progress.completed) {
+            completedCount++;
+          }
+          if (progress.score !== null) {
+            totalScore += progress.score;
+            scoreCount++;
+          }
         });
       }
+      
       setUserProgress(progressMap);
       
       // Load training modules
@@ -63,6 +82,13 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
       
       if (modulesData && modulesData.length > 0) {
         setModules(modulesData as ProbationTrainingModule[]);
+        setTotalModules(modulesData.length);
+        setModulesCompleted(completedCount);
+        
+        if (scoreCount > 0) {
+          const avgScore = Math.round(totalScore / scoreCount);
+          setOverallScore(avgScore);
+        }
         
         // Find the first incomplete module or the first module if none started
         const firstIncompleteModule = modulesData.find((module: ProbationTrainingModule) => 
@@ -73,30 +99,44 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
         
         // Load questions for this module
         if (firstIncompleteModule) {
-          const { data: questionsData, error: questionsError } = await supabase
-            .from('probation_training_questions')
-            .select('*')
-            .eq('module_id', firstIncompleteModule.id)
-            .order('question_order', { ascending: true });
-          
-          if (questionsError) throw questionsError;
-          
-          if (questionsData) {
-            const formattedQuestions = questionsData.map(q => ({
-              ...q,
-              options: Array.isArray(q.options) ? q.options : []
-            }));
-            setQuestions(formattedQuestions as ProbationTrainingQuestion[]);
-          }
+          await loadQuestionsForModule(firstIncompleteModule.id);
         }
       } else {
         setError("No training modules available. Please check back later.");
       }
     } catch (error) {
-      console.error("Error loading probation training data:", error);
+      console.error("Error loading additional training data:", error);
       setError("Failed to load training content. Please try again later.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadQuestionsForModule = async (moduleId: string) => {
+    try {
+      console.log("Loading questions for module:", moduleId);
+      const { data, error } = await supabase
+        .from('probation_training_questions')
+        .select('*')
+        .eq('module_id', moduleId)
+        .order('question_order', { ascending: true });
+      
+      if (error) throw error;
+      
+      if (data) {
+        console.log("Received questions:", data);
+        const formattedQuestions = data.map(q => ({
+          ...q,
+          options: Array.isArray(q.options) ? q.options : []
+        }));
+        setQuestions(formattedQuestions as ProbationTrainingQuestion[]);
+      } else {
+        console.log("No questions found for this module");
+        setQuestions([]);
+      }
+    } catch (error) {
+      console.error("Error loading questions:", error);
+      setError("Failed to load quiz questions. Please try again later.");
     }
   };
   
@@ -186,7 +226,53 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
         }
       }));
       
+      // Update overall score and completed modules
+      let totalScore = 0;
+      let scoreCount = 0;
+      let completedCount = 0;
+      
+      const updatedProgress = {
+        ...userProgress,
+        [currentModule.id]: {
+          user_id: user.id,
+          module_id: currentModule.id,
+          passed,
+          score,
+          completed: true
+        }
+      };
+      
+      Object.values(updatedProgress).forEach(progress => {
+        if (progress.completed) {
+          completedCount++;
+        }
+        if (progress.score !== null) {
+          totalScore += progress.score;
+          scoreCount++;
+        }
+      });
+      
+      setModulesCompleted(completedCount);
+      
+      if (scoreCount > 0) {
+        const avgScore = Math.round(totalScore / scoreCount);
+        setOverallScore(avgScore);
+      }
+      
       setStep('result');
+      
+      // Update the user's overall training status if all modules are completed
+      if (completedCount === modules.length) {
+        const allPassed = avgScore >= 90;
+        
+        await supabase
+          .from('user_profiles')
+          .update({
+            probation_training_completed: true,
+            probation_training_passed: allPassed
+          })
+          .eq('user_id', user.id);
+      }
     } catch (error) {
       console.error("Error saving quiz results:", error);
       setError("Failed to save your quiz results. Please try again.");
@@ -210,29 +296,6 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
     
     // Load questions for this module
     loadQuestionsForModule(module.id);
-  };
-  
-  const loadQuestionsForModule = async (moduleId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('probation_training_questions')
-        .select('*')
-        .eq('module_id', moduleId)
-        .order('question_order', { ascending: true });
-      
-      if (error) throw error;
-      
-      if (data) {
-        const formattedQuestions = data.map(q => ({
-          ...q,
-          options: Array.isArray(q.options) ? q.options : []
-        }));
-        setQuestions(formattedQuestions as ProbationTrainingQuestion[]);
-      }
-    } catch (error) {
-      console.error("Error loading questions:", error);
-      setError("Failed to load quiz questions. Please try again later.");
-    }
   };
   
   const handleCloseModal = () => {
@@ -309,6 +372,20 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
             </div>
           ))}
         </div>
+        
+        {modulesCompleted === modules.length && overallScore > 0 && (
+          <div className={`mt-4 p-3 rounded-lg ${overallScore >= 90 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+            <h4 className="text-sm font-medium">Overall Training Score</h4>
+            <div className={`text-lg font-bold ${overallScore >= 90 ? 'text-green-600' : 'text-red-500'}`}>
+              {overallScore}%
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {overallScore >= 90 
+                ? "Congratulations! You've passed the training program." 
+                : "You need 90% overall to unlock the next step."}
+            </p>
+          </div>
+        )}
       </div>
     );
   };
@@ -355,18 +432,34 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
           </div>
           
           {step === 'video' && (
-            <ProbationTrainingVideo 
+            <AdditionalTrainingVideo 
               videoUrl={currentModule.video_url}
               onComplete={handleVideoComplete}
               isCompleted={userProgress[currentModule.id]?.completed === true}
             />
           )}
           
-          {step === 'quiz' && (
-            <ProbationTrainingQuiz
+          {step === 'quiz' && questions.length > 0 && (
+            <AdditionalTrainingQuiz
               questions={questions}
               onComplete={handleQuizComplete}
             />
+          )}
+          
+          {step === 'quiz' && questions.length === 0 && (
+            <div className="text-center py-6 bg-gray-50 rounded-lg">
+              <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+              <h3 className="text-xl font-bold mb-2">No Questions Available</h3>
+              <p className="text-gray-600">
+                There are no quiz questions available for this module.
+              </p>
+              <Button 
+                onClick={handleNextModule}
+                className="mt-4"
+              >
+                Continue to Next Module
+              </Button>
+            </div>
           )}
           
           {step === 'result' && (
@@ -437,7 +530,7 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Probation Training</DialogTitle>
+          <DialogTitle>Additional Training</DialogTitle>
         </DialogHeader>
         {renderModalContent()}
       </DialogContent>
@@ -445,4 +538,4 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
   );
 };
 
-export default ProbationTrainingModal;
+export default AdditionalTrainingModal;

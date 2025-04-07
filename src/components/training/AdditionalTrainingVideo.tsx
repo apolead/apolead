@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-interface ProbationTrainingVideoProps {
+interface AdditionalTrainingVideoProps {
   videoUrl: string;
   onComplete: () => void;
   isCompleted?: boolean;
 }
 
-const ProbationTrainingVideo: React.FC<ProbationTrainingVideoProps> = ({ 
+const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({ 
   videoUrl, 
   onComplete,
   isCompleted = false
@@ -107,4 +107,4 @@ const ProbationTrainingVideo: React.FC<ProbationTrainingVideoProps> = ({
   );
 };
 
-export default ProbationTrainingVideo;
+export default AdditionalTrainingVideo;
