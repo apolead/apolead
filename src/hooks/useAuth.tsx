@@ -31,23 +31,9 @@ export interface UserProfile {
   eligible_for_training?: boolean;
   training_video_watched?: boolean;
   quiz_passed?: boolean;
-  quiz_score?: number;
   agent_standing?: string;
   created_at?: string;
   updated_at?: string;
-  probation_training_completed?: boolean;
-  onboarding_score?: number;
-  credentials?: string;
-  account_type?: string;
-  routing_number?: string;
-  account_number?: string;
-  bank_name?: string;
-  address_line1?: string;
-  address_line2?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  ssn_last_four?: string;
 }
 
 interface AuthContextValue {
@@ -82,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (error) {
           console.error('Error fetching user profile:', error);
         } else if (data) {
-          setUserProfile(data as UserProfile);
+          setUserProfile(data);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -90,11 +76,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const setUpAuthStateListener = async () => {
+      // Set up auth state listener FIRST
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, newSession) => {
           setSession(newSession);
           setUser(newSession?.user ?? null);
           
+          // Defer Supabase calls with setTimeout to prevent auth deadlocks
           if (newSession?.user) {
             setTimeout(() => {
               fetchUserProfile(newSession.user.id);
@@ -105,6 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       );
 
+      // THEN check for existing session
       const { data } = await supabase.auth.getSession();
       const initialSession = data.session;
       
@@ -158,6 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
         
       if (fetchError && fetchError.code !== 'PGRST116') {
+        // PGRST116 means no results found, which is fine for a new profile
         throw fetchError;
       }
       
@@ -187,6 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         (updates.solve_problems === true || existingProfile?.solve_problems === true) && 
         (updates.complete_training === true || existingProfile?.complete_training === true);
       
+      // Set onboarding status for the profile
       const onboarding_completed = hasCompletedBasicInfo && hasAnsweredAllQuestions;
       const eligible_for_training = isEligible;
       
@@ -199,6 +190,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       let result;
       if (existingProfile) {
+        // Update existing profile
         const { data, error } = await supabase
           .from('user_profiles')
           .update(profileData)
@@ -207,8 +199,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .single();
           
         if (error) throw error;
-        result = data as UserProfile;
+        result = data;
       } else {
+        // Create new profile
         const { data, error } = await supabase
           .from('user_profiles')
           .insert([profileData])
@@ -216,9 +209,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .single();
           
         if (error) throw error;
-        result = data as UserProfile;
+        result = data;
       }
       
+      // Update local state
       setUserProfile(result);
       return result;
     } catch (error) {
@@ -238,8 +232,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
         
       if (error) throw error;
-      setUserProfile(data as UserProfile);
-      return data as UserProfile;
+      setUserProfile(data);
+      return data;
     } catch (error) {
       console.error('Error refreshing user profile:', error);
       throw error;

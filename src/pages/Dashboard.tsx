@@ -7,8 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
 import AdditionalTrainingModal from '@/components/training/AdditionalTrainingModal';
-import KickoffSetupDialog from '@/components/dashboard/KickoffSetupDialog';
-import CompletionDialog from '@/components/training/CompletionDialog';
 import { 
   CheckCircle,
   ChevronDown,
@@ -39,7 +37,6 @@ const Dashboard = () => {
   const [trainingStatus, setTrainingStatus] = useState('not_started');
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
-  const [showKickoffDialog, setShowKickoffDialog] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -300,18 +297,6 @@ const Dashboard = () => {
   }
   
   const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
-  const isProbationComplete = userProfile?.probation_training_completed === true;
-  const probationScore = userProfile?.onboarding_score || 0;
-  const isProbationPassed = isProbationComplete && probationScore >= 80;
-  const minRequiredScore = 80;
-  
-  const openKickoffDialog = () => {
-    setShowKickoffDialog(true);
-  };
-  
-  const closeKickoffDialog = () => {
-    setShowKickoffDialog(false);
-  };
   
   return (
     <div className="flex w-full min-h-screen bg-[#f8fafc]">
@@ -506,11 +491,7 @@ const Dashboard = () => {
               </button>
             </div>
             
-            <div className={`action-card ${trainingStatus === 'completed' ? 'bg-white border border-[#10B981]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} ${
-              isProbationComplete ? (
-                isProbationPassed ? 'border-[#10B981]' : 'border-[#ef4444]'
-              ) : 'border-[#3b82f6]'
-            } rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${trainingStatus === 'completed' ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : ''}`}>
+            <div className={`action-card ${trainingStatus === 'completed' ? 'bg-white border border-[#10B981]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${trainingStatus === 'completed' ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : ''}`}>
               <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)] text-white flex items-center justify-center font-[600] text-[16px] z-[3] border-[3px] border-white`}>
                 3
               </div>
@@ -540,16 +521,8 @@ const Dashboard = () => {
               )}
             </div>
             
-            <div className={`action-card ${isProbationAgent ? 'bg-white border' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} ${
-              isProbationComplete ? (
-                isProbationPassed ? 'border-[#10B981]' : 'border-[#ef4444]'
-              ) : 'border-[#3b82f6]'
-            } rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${isProbationAgent ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(59,130,246,0.1)]' : ''}`}>
+            <div className={`action-card ${isProbationAgent ? 'bg-white border border-[#3b82f6]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${isProbationAgent ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(59,130,246,0.1)]' : ''}`}>
               <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
-                isProbationComplete ? (
-                  isProbationPassed ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 
-                  'bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_4px_10px_rgba(239,68,68,0.3)]'
-                ) : 
                 isProbationAgent ? 'bg-gradient-to-r from-[#3b82f6] to-[#2563eb] shadow-[0_4px_10px_rgba(59,130,246,0.3)]' : 'bg-gradient-to-r from-[#94A3B8] to-[#64748B]'
               } text-white flex items-center justify-center font-[600] text-[16px] shadow-none z-[3] border-[3px] border-white`}>
                 4
@@ -560,37 +533,19 @@ const Dashboard = () => {
                 </div>
               )}
               <div className={`action-icon ${
-                isProbationComplete ? (
-                  isProbationPassed ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 
-                  'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_8px_20px_rgba(239,68,68,0.2)]'
-                ) : 
                 isProbationAgent ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#3b82f6] to-[#2563eb] shadow-[0_8px_20px_rgba(59,130,246,0.2)]' : 'locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B]'
               } text-white flex items-center justify-center text-[30px] shadow-none relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
                 <GraduationCap size={30} />
               </div>
               <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Additional Training</h3>
-              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">
-                {isProbationComplete ? (
-                  isProbationPassed ? "You have successfully completed all required training modules." : "You did not reach the required score for training completion."
-                ) : "Complete required additional training modules to advance in your role."}
-              </p>
+              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Complete required additional training modules to advance in your role.</p>
               {isProbationAgent ? (
                 <button 
                   id="additional-training-btn"
                   onClick={openAdditionalTrainingModal}
-                  className={`card-button p-[12px_24px] rounded-[12px] ${
-                    isProbationComplete ? (
-                      isProbationPassed ? 
-                      "bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]" : 
-                      "bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white border-0 cursor-pointer shadow-[0_4px_10px_rgba(239,68,68,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(239,68,68,0.3)]"
-                    ) : 
-                    "bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white border-0 cursor-pointer shadow-[0_4px_10px_rgba(59,130,246,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(59,130,246,0.3)]"
-                  } font-[500] transition-all w-full flex items-center justify-center text-[14px]`}
+                  className="card-button p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(59,130,246,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(59,130,246,0.3)]"
                 >
-                  <GraduationCap className="mr-[8px] text-[16px]" /> 
-                  {isProbationComplete ? (
-                    isProbationPassed ? "Training Completed" : "Not Eligible"
-                  ) : "Start Training"}
+                  <GraduationCap className="mr-[8px] text-[16px]" /> Start Training
                 </button>
               ) : (
                 <button className="card-button button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70">
@@ -611,18 +566,9 @@ const Dashboard = () => {
               </div>
               <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Kickoff & Setup</h3>
               <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Add your banking info, join Discord, and complete final onboarding steps to get started.</p>
-              {isProbationPassed ? (
-                <button 
-                  onClick={openKickoffDialog}
-                  className="card-button button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]"
-                >
-                  <CheckCircle className="mr-[8px] text-[16px]" /> Complete Setup
-                </button>
-              ) : (
-                <button className="card-button button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70">
-                  <i className="fas fa-lock mr-[8px] text-[16px]"></i> Locked
-                </button>
-              )}
+              <button className="card-button button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70">
+                <i className="fas fa-lock mr-[8px] text-[16px]"></i> Locked
+              </button>
             </div>
           </div>
         </div>
@@ -647,11 +593,6 @@ const Dashboard = () => {
           onClose={closeAdditionalTrainingModal} 
         />
       )}
-      
-      <KickoffSetupDialog 
-        isOpen={showKickoffDialog} 
-        onClose={closeKickoffDialog} 
-      />
       
       <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
