@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -120,6 +119,3 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
     </div>
   );
 };
-
-// Add default export
-export default DashboardSidebar;

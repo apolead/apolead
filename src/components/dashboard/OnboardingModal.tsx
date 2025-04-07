@@ -259,8 +259,7 @@ const OnboardingModal = ({
         solve_problems: userData.solveProblems,
         complete_training: userData.completeTraining,
         personal_statement: userData.personalStatement,
-        accepted_terms: userData.acceptedTerms,
-        onboarding_completed: hasCompletedBasicInfo && hasAnsweredAllQuestions
+        accepted_terms: userData.acceptedTerms
       };
       
       if (Array.isArray(userData.availableDays) && userData.availableDays.length > 0) {
@@ -280,21 +279,17 @@ const OnboardingModal = ({
             description: "You've successfully completed onboarding and are eligible for training.",
             variant: "default"
           });
-          
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
         } else {
           toast({
             title: "Not eligible",
             description: "You've completed onboarding but are not eligible for training based on your answers.",
             variant: "destructive"
           });
-          
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
         }
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       }
       
       onClose();
@@ -308,15 +303,23 @@ const OnboardingModal = ({
 
   useEffect(() => {
     if (initialUserData?.onboarding_completed === true) {
+      console.log("Onboarding already completed, closing modal");
       toast({
-        title: "Onboarding already completed",
-        description: "You have already completed the onboarding process.",
+        title: initialUserData.eligible_for_training ? "Onboarding Completed" : "Not Eligible for Training",
+        description: initialUserData.eligible_for_training ? 
+          "You have already completed the onboarding process." : 
+          "You are not eligible for training based on your previous answers.",
+        variant: initialUserData.eligible_for_training ? "default" : "destructive"
       });
       onClose();
     }
   }, [initialUserData, onClose, toast]);
 
-  return <Dialog open={isOpen && initialUserData?.onboarding_completed !== true} onOpenChange={onClose}>
+  if (initialUserData?.onboarding_completed === true) {
+    return null;
+  }
+
+  return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center">
