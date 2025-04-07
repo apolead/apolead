@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -45,7 +46,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
   };
 
   // Define which items should be active vs locked
-  const unlockedItems = ['dashboard', 'billing', 'probation-training', 'logout'];
+  const unlockedItems = ['dashboard', 'billing', 'additional-training', 'logout'];
   const isItemUnlocked = (itemName: string) => unlockedItems.includes(itemName);
   const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
 
@@ -101,7 +102,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
                   e.preventDefault(); 
                   document.getElementById('additional-training-btn')?.click(); 
                 }} 
-                className={`nav-item ${activeItem === 'probation-training' ? 'active' : ''}`}>
+                className={`nav-item ${activeItem === 'additional-training' ? 'active' : ''}`}>
             <GraduationCap size={18} />
             <span>Additional Training</span>
           </Link>
