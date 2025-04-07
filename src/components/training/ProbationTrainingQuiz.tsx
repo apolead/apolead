@@ -7,7 +7,6 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Check, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ModuleQuestion, IModuleQuestionsTable } from '@/types/training';
 
 interface QuizQuestion {
   id: string;
@@ -33,9 +32,8 @@ const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({ moduleId,
     const fetchQuestions = async () => {
       try {
         console.log("Fetching module questions for module:", moduleId);
-        // Using any type here to avoid TypeScript issues with missing tables
         const { data, error } = await supabase
-          .from('module_questions' as any)
+          .from('module_questions')
           .select('*')
           .eq('module_id', moduleId)
           .order('question_order', { ascending: true });
@@ -46,7 +44,7 @@ const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({ moduleId,
         
         if (data && data.length > 0) {
           console.log("Received questions from database:", data);
-          const formattedQuestions: QuizQuestion[] = data.map((q: IModuleQuestionsTable) => ({
+          const formattedQuestions = data.map(q => ({
             id: q.id,
             question: q.question,
             options: Array.isArray(q.options) 
@@ -184,40 +182,38 @@ const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({ moduleId,
         </Alert>
       )}
       
-      {currentQuestion && (
-        <div className="p-4 border rounded-lg bg-gray-50">
-          <h4 className="font-medium mb-4 text-lg">
-            {currentQuestion.question}
-          </h4>
-          <RadioGroup 
-            value={currentAnswer} 
-            onValueChange={handleChange}
-            className="space-y-3"
-          >
-            {currentQuestion.options.map((option, optIndex) => (
-              <div key={optIndex} className="flex items-start space-x-2 p-2 rounded-md hover:bg-gray-100">
-                <RadioGroupItem 
-                  value={optIndex.toString()} 
-                  id={`${currentQuestion.id}-${optIndex}`} 
-                  className="mt-1"
-                />
-                <Label 
-                  htmlFor={`${currentQuestion.id}-${optIndex}`}
-                  className="text-sm font-normal w-full cursor-pointer"
-                >
-                  {option}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-        </div>
-      )}
+      <div className="p-4 border rounded-lg bg-gray-50">
+        <h4 className="font-medium mb-4 text-lg">
+          {currentQuestion.question}
+        </h4>
+        <RadioGroup 
+          value={currentAnswer} 
+          onValueChange={handleChange}
+          className="space-y-3"
+        >
+          {currentQuestion.options.map((option, optIndex) => (
+            <div key={optIndex} className="flex items-start space-x-2 p-2 rounded-md hover:bg-gray-100">
+              <RadioGroupItem 
+                value={optIndex.toString()} 
+                id={`${currentQuestion.id}-${optIndex}`} 
+                className="mt-1"
+              />
+              <Label 
+                htmlFor={`${currentQuestion.id}-${optIndex}`}
+                className="text-sm font-normal w-full cursor-pointer"
+              >
+                {option}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
+      </div>
       
       <div className="flex justify-end pt-4">
         <Button 
           type="button" 
           onClick={handleNext}
-          disabled={!currentQuestion || answers[currentQuestion.id] === undefined}
+          disabled={answers[currentQuestion.id] === undefined}
           className="px-6 text-white"
         >
           {isLastQuestion ? (

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { toast } from 'sonner';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
 import ProbationTrainingModal from '@/components/training/ProbationTrainingModal';
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
@@ -39,6 +40,8 @@ const Dashboard = () => {
   }, [user?.id, userProfile?.agent_standing]);
   
   useEffect(() => {
+    // If the user is not eligible for training (answered "No" to any key questions)
+    // then onboarding modal should not be shown even if they try to click the button
     if (userProfile && !userProfile.eligible_for_training && userProfile.onboarding_completed === false) {
       const hasAnsweredNo = (
         userProfile.meet_obligation === false || 
@@ -50,11 +53,13 @@ const Dashboard = () => {
         userProfile.has_quiet_place === false
       );
       
+      // If they've answered "No" to any questions and tried to open onboarding
       if (hasAnsweredNo && showOnboarding) {
         setShowOnboarding(false);
-        toast.error({
+        toast({
           title: "Not Eligible",
-          description: "You've answered 'No' to one or more required questions and are not eligible to continue."
+          description: "You've answered 'No' to one or more required questions and are not eligible to continue.",
+          variant: "destructive"
         });
       }
     }
@@ -67,9 +72,10 @@ const Dashboard = () => {
         description: "You have successfully completed the initial training.",
       });
     } else {
-      toast.error({
+      toast({
         title: "Training Not Completed",
-        description: "Please try the training quiz again later."
+        description: "Please try the training quiz again later.",
+        variant: "destructive"
       });
     }
   };
@@ -167,6 +173,7 @@ const Dashboard = () => {
     setShowOnboarding(true);
   };
   
+  // Show the probation training button if the user's agent_standing is "Probation"
   const showProbationTrainingButton = isOnProbation;
   
   return (
@@ -185,6 +192,7 @@ const Dashboard = () => {
           
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Step 1: Initial Onboarding */}
               <div className="col-span-1 bg-white shadow rounded-lg p-6">
                 <div className="space-y-4">
                   <span className="inline-flex items-center justify-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
@@ -213,6 +221,7 @@ const Dashboard = () => {
                 </div>
               </div>
               
+              {/* Step 2: Initial Training */}
               <div className="col-span-1 bg-white shadow rounded-lg p-6">
                 <div className="space-y-4">
                   <span className="inline-flex items-center justify-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
@@ -235,6 +244,7 @@ const Dashboard = () => {
                 </div>
               </div>
               
+              {/* Additional Steps based on user's status */}
               {showProbationTrainingButton && (
                 <div className="col-span-1 bg-white shadow rounded-lg p-6">
                   <div className="space-y-4">
@@ -267,8 +277,6 @@ const Dashboard = () => {
         <OnboardingModal
           isOpen={showOnboarding} 
           onClose={() => setShowOnboarding(false)}
-          user={user}
-          initialUserData={userProfile}
         />
       )}
       
