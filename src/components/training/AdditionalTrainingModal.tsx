@@ -385,10 +385,14 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     return userProgress[moduleId]?.passed === true;
   };
   
+  const isCurrentModuleInProgress = (moduleId: string) => {
+    return currentModule?.id === moduleId && !isModuleCompleted(moduleId);
+  };
+
   const renderModuleList = () => {
     return (
       <div className="mb-6">
-        <h3 className="text-lg font-medium mb-3">Training Modules</h3>
+        <h3 className="text-lg font-medium mb-3">ReadyMode Training Modules</h3>
         <div className="grid grid-cols-1 gap-2">
           {modules.map((module, index) => (
             <div 
@@ -399,7 +403,8 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
                 ${currentModule?.id === module.id ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 hover:bg-gray-100'}
                 ${isModuleCompleted(module.id) && isModulePassed(module.id) ? 'border-l-4 border-l-green-500' : ''}
                 ${isModuleCompleted(module.id) && !isModulePassed(module.id) ? 'border-l-4 border-l-red-500' : ''}
-                ${!isModuleCompleted(module.id) && currentModule?.id !== module.id ? 'border-l-4 border-l-yellow-400' : ''}
+                ${isCurrentModuleInProgress(module.id) ? 'border-l-4 border-l-yellow-400' : ''}
+                ${!isModuleCompleted(module.id) && !isCurrentModuleInProgress(module.id) ? 'border-l-4 border-l-gray-300' : ''}
               `}
             >
               <div>
@@ -430,7 +435,8 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
                   <XCircle className="h-5 w-5 text-red-500" />
                 )
               ) : (
-                currentModule?.id === module.id && <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                isCurrentModuleInProgress(module.id) && 
+                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
               )}
             </div>
           ))}
@@ -444,7 +450,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
             </div>
             <p className="text-xs text-gray-500 mt-1">
               {overallScore >= 90 
-                ? "Congratulations! You've completed the additional training program." 
+                ? "Congratulations! You've completed the ReadyMode training program." 
                 : "You need 90% overall to complete the training program."}
             </p>
           </div>
@@ -499,6 +505,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
               videoUrl={currentModule.video_url}
               onComplete={handleVideoComplete}
               isCompleted={userProgress[currentModule.id]?.completed === true}
+              isPending={isCurrentModuleInProgress(currentModule.id)}
             />
             
             {step === 'quiz' && questions.length > 0 && (
@@ -507,12 +514,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
                   questions={questions}
                   onComplete={handleQuizComplete}
                 />
-              </div>
-            )}
-            
-            {step === 'quiz' && questions.length === 0 && (
-              <div className="mt-8 text-center hidden">
-                {/* Hidden empty quiz state - we're now auto-completing modules with no questions */}
               </div>
             )}
             
@@ -550,12 +551,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
                     <p className="text-lg mb-4">
                       You did not pass this training module.
                     </p>
-                    <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
-                      <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
-                      <p className="text-sm text-gray-600">
-                        You need at least 70% to pass this module.
-                      </p>
-                    </div>
                     
                     <div className="mt-6">
                       <Button 
@@ -579,7 +574,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Additional Training</DialogTitle>
+          <DialogTitle>ReadyMode Training</DialogTitle>
         </DialogHeader>
         {renderModalContent()}
       </DialogContent>

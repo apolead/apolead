@@ -76,21 +76,24 @@ export const useAdditionalTrainingData = () => {
 
       if (data) {
         console.log(`Loaded questions for module ${moduleId}:`, data);
-        setQuestions(prev => ({
-          ...prev,
-          [moduleId]: data as ProbationTrainingQuestion[]
-        }));
         
-        // If no questions found, create dummy ones
+        // Make sure all modules have dummy questions, even the first introduction module
         if (data.length === 0) {
           const module = modules.find(m => m.id === moduleId);
           if (module) {
+            // Always create at least one dummy question for every module
+            // For module 1, we'll make sure it has proper questions too
             const dummyQuestions = createDummyQuestions(moduleId, module.title);
             setQuestions(prev => ({
               ...prev,
               [moduleId]: dummyQuestions
             }));
           }
+        } else {
+          setQuestions(prev => ({
+            ...prev,
+            [moduleId]: data as ProbationTrainingQuestion[]
+          }));
         }
       }
     } catch (err) {
@@ -171,8 +174,48 @@ export const useAdditionalTrainingData = () => {
 
   const createDummyQuestions = (moduleId: string, moduleTitle: string): ProbationTrainingQuestion[] => {
     switch (moduleId) {
-      case '1': // Introduction
-        return [];
+      case '1': // Introduction - Add dummy questions to make it consistent
+        return [
+          {
+            id: `q1-1`,
+            question: "What is the primary purpose of ReadyMode?",
+            options: [
+              "To manage inventory",
+              "To connect with leads efficiently", 
+              "To track employee hours",
+              "To process payments"
+            ],
+            correct_answer: 1,
+            module_id: moduleId,
+            question_order: 1
+          },
+          {
+            id: `q1-2`,
+            question: "Which of the following best describes ReadyMode?",
+            options: [
+              "A word processing software",
+              "A customer relationship management tool",
+              "A lead management and communication platform", 
+              "A spreadsheet application"
+            ],
+            correct_answer: 2,
+            module_id: moduleId,
+            question_order: 2
+          },
+          {
+            id: `q1-3`,
+            question: "What does ReadyMode help businesses do?",
+            options: [
+              "Create websites",
+              "Manage social media",
+              "Connect with potential customers", 
+              "Process payments"
+            ],
+            correct_answer: 2,
+            module_id: moduleId,
+            question_order: 3
+          }
+        ];
       case '2': // Navigation Basics
         return [
           {
@@ -515,7 +558,47 @@ export const useAdditionalTrainingData = () => {
           }
         ];
       case '8': // Conclusion
-        return [];
+        return [
+          {
+            id: `q8-1`,
+            question: "Which of the following is NOT a key feature of ReadyMode?",
+            options: [
+              "Lead Management",
+              "AI Dialer",
+              "Inventory Management", 
+              "Callback Scheduling"
+            ],
+            correct_answer: 2,
+            module_id: moduleId,
+            question_order: 1
+          },
+          {
+            id: `q8-2`,
+            question: "What is the primary benefit of using ReadyMode's callback system?",
+            options: [
+              "It automatically transfers calls to managers",
+              "It helps maintain connections with interested leads", 
+              "It creates marketing emails",
+              "It reduces the need for agents"
+            ],
+            correct_answer: 1,
+            module_id: moduleId,
+            question_order: 2
+          },
+          {
+            id: `q8-3`,
+            question: "Which ReadyMode feature allows you to see previous interactions with a lead?",
+            options: [
+              "Contact History", 
+              "Lead Predictor",
+              "Auto Scheduler",
+              "Team Monitor"
+            ],
+            correct_answer: 0,
+            module_id: moduleId,
+            question_order: 3
+          }
+        ];
       default:
         return [];
     }

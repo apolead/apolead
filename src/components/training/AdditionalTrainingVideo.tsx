@@ -8,12 +8,14 @@ interface AdditionalTrainingVideoProps {
   videoUrl: string;
   onComplete: () => void;
   isCompleted?: boolean;
+  isPending?: boolean;
 }
 
 const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({ 
   videoUrl, 
   onComplete,
-  isCompleted = false
+  isCompleted = false,
+  isPending = false
 }) => {
   const [canComplete, setCanComplete] = useState(true); // Set to true by default
   const [error, setError] = useState<string | null>(null);
@@ -98,10 +100,16 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
         
         <Button 
           onClick={handleComplete}
-          className={isCompleted ? "text-white" : "bg-yellow-400 text-black hover:bg-yellow-500"}
+          className={
+            isCompleted 
+              ? "text-white" 
+              : isPending 
+                ? "bg-yellow-400 text-black hover:bg-yellow-500" 
+                : "bg-blue-500 text-white hover:bg-blue-600"
+          }
           variant={isCompleted ? "default" : "default"}
         >
-          {isCompleted ? "Continue to Quiz" : "Mark as Completed"}
+          {isCompleted ? "Continue to Next Module" : "Mark as Completed"}
         </Button>
       </div>
     </div>
