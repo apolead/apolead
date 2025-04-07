@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -41,8 +40,10 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  const processedProfileRef = useRef(false);
+  
   const processUserProfile = useCallback(() => {
-    if (userProfile) {
+    if (userProfile && !processedProfileRef.current) {
       console.log("Dashboard: User profile loaded", {
         first_name: userProfile.first_name,
         last_name: userProfile.last_name,
@@ -124,16 +125,22 @@ const Dashboard = () => {
       }
       
       console.log("Dashboard: Onboarding status set to", onboardingStatus, "Progress:", onboardingProgress);
+      
+      processedProfileRef.current = true;
     }
-  }, [userProfile, onboardingStatus]);
+  }, [userProfile, onboardingStatus, onboardingProgress]);
   
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
     }
     
-    if (userProfile) {
+    if (userProfile && !processedProfileRef.current) {
       processUserProfile();
+    }
+    
+    if (!userProfile) {
+      processedProfileRef.current = false;
     }
   }, [user, loading, userProfile, navigate, processUserProfile]);
   
@@ -515,9 +522,9 @@ const Dashboard = () => {
               )}
             </div>
             
-            <div className={`action-card ${isProbationAgent ? 'bg-white border border-[#10B981]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${isProbationAgent ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : ''}`}>
+            <div className={`action-card ${isProbationAgent ? 'bg-white border border-[#3b82f6]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${isProbationAgent ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(59,130,246,0.1)]' : ''}`}>
               <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
-                isProbationAgent ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 'bg-gradient-to-r from-[#94A3B8] to-[#64748B]'
+                isProbationAgent ? 'bg-gradient-to-r from-[#3b82f6] to-[#2563eb] shadow-[0_4px_10px_rgba(59,130,246,0.3)]' : 'bg-gradient-to-r from-[#94A3B8] to-[#64748B]'
               } text-white flex items-center justify-center font-[600] text-[16px] shadow-none z-[3] border-[3px] border-white`}>
                 4
               </div>
@@ -527,7 +534,7 @@ const Dashboard = () => {
                 </div>
               )}
               <div className={`action-icon ${
-                isProbationAgent ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 'locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B]'
+                isProbationAgent ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#3b82f6] to-[#2563eb] shadow-[0_8px_20px_rgba(59,130,246,0.2)]' : 'locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B]'
               } text-white flex items-center justify-center text-[30px] shadow-none relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
                 <GraduationCap size={30} />
               </div>
