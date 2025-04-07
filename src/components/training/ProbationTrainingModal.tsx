@@ -15,7 +15,7 @@ import { ITrainingModulesTable, IUserModuleProgressTable } from '@/types/supabas
 interface TrainingModule {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   video_url: string;
   has_quiz: boolean;
   module_order: number;
@@ -50,7 +50,7 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
         const { data, error } = await supabase
           .from('training_modules')
           .select('*')
-          .order('module_order', { ascending: true });
+          .order('module_order', { ascending: true }) as { data: ITrainingModulesTable[] | null; error: Error | null };
         
         if (error) throw error;
         
@@ -62,7 +62,7 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
             const { data: progressData, error: progressError } = await supabase
               .from('user_module_progress')
               .select('*')
-              .eq('user_id', user.id);
+              .eq('user_id', user.id) as { data: IUserModuleProgressTable[] | null; error: Error | null };
             
             if (progressError) throw progressError;
             
@@ -140,7 +140,7 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
             score,
             passed,
             completed_at: new Date().toISOString()
-          }, { onConflict: 'user_id,module_id' });
+          }, { onConflict: 'user_id,module_id' }) as { error: Error | null };
         
         if (error) throw error;
         
@@ -202,10 +202,12 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
   };
   
   const currentModule = modules[currentModuleIndex] || {
+    id: '',
     title: 'Loading...',
     description: '',
     video_url: '',
-    has_quiz: true
+    has_quiz: true,
+    module_order: 0
   };
   
   if (loading) {

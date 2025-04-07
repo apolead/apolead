@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -36,7 +37,7 @@ const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({ moduleId,
           .from('module_questions')
           .select('*')
           .eq('module_id', moduleId)
-          .order('question_order', { ascending: true });
+          .order('question_order', { ascending: true }) as { data: IModuleQuestionsTable[] | null; error: Error | null };
         
         if (error) {
           throw error;

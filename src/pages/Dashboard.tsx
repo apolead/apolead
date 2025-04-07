@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { toast } from 'sonner';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
 import ProbationTrainingModal from '@/components/training/ProbationTrainingModal';
-import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
+import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
@@ -21,9 +22,10 @@ const Dashboard = () => {
       
       try {
         // Use the is_user_on_probation RPC function
-        const { data, error } = await supabase.rpc('is_user_on_probation', {
-          input_user_id: user.id
-        });
+        const { data, error } = await supabase.rpc(
+          'is_user_on_probation', 
+          { input_user_id: user.id }
+        ) as { data: boolean | null; error: Error | null };
         
         if (error) {
           console.error("Error checking probation status:", error);
@@ -58,8 +60,7 @@ const Dashboard = () => {
         setShowOnboarding(false);
         toast({
           title: "Not Eligible",
-          description: "You've answered 'No' to one or more required questions and are not eligible to continue.",
-          variant: "destructive"
+          description: "You've answered 'No' to one or more required questions and are not eligible to continue."
         });
       }
     }
@@ -69,13 +70,12 @@ const Dashboard = () => {
     if (passed) {
       toast({
         title: "Training Completed",
-        description: "You have successfully completed the initial training.",
+        description: "You have successfully completed the initial training."
       });
     } else {
       toast({
         title: "Training Not Completed",
-        description: "Please try the training quiz again later.",
-        variant: "destructive"
+        description: "Please try the training quiz again later."
       });
     }
   };
@@ -163,8 +163,7 @@ const Dashboard = () => {
       if (hasAnsweredNo) {
         toast({
           title: "Not Eligible",
-          description: "You've answered 'No' to one or more required questions and are not eligible to continue.",
-          variant: "destructive"
+          description: "You've answered 'No' to one or more required questions and are not eligible to continue."
         });
         return;
       }

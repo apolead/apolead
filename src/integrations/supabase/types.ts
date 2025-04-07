@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      module_questions: {
+        Row: {
+          correct_answer: number
+          created_at: string | null
+          id: string
+          module_id: string
+          options: Json
+          question: string
+          question_order: number
+        }
+        Insert: {
+          correct_answer: number
+          created_at?: string | null
+          id?: string
+          module_id: string
+          options: Json
+          question: string
+          question_order: number
+        }
+        Update: {
+          correct_answer?: number
+          created_at?: string | null
+          id?: string
+          module_id?: string
+          options?: Json
+          question?: string
+          question_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_questions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_questions: {
         Row: {
           correct_answer: number
@@ -63,6 +101,74 @@ export type Database = {
         }
         Relationships: []
       }
+      training_modules: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          has_quiz: boolean
+          id: string
+          module_order: number
+          title: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          has_quiz?: boolean
+          id?: string
+          module_order: number
+          title: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          has_quiz?: boolean
+          id?: string
+          module_order?: number
+          title?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
+      user_module_progress: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          module_id: string
+          passed: boolean | null
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          module_id: string
+          passed?: boolean | null
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          module_id?: string
+          passed?: boolean | null
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_module_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_profiles: {
         Row: {
           accepted_terms: boolean | null
@@ -103,6 +209,7 @@ export type Database = {
           onboarding_date: string | null
           onboarding_score: number | null
           personal_statement: string | null
+          probation_training_completed: boolean | null
           quiz_passed: boolean | null
           quiz_score: number | null
           ram_amount: string | null
@@ -167,6 +274,7 @@ export type Database = {
           onboarding_date?: string | null
           onboarding_score?: number | null
           personal_statement?: string | null
+          probation_training_completed?: boolean | null
           quiz_passed?: boolean | null
           quiz_score?: number | null
           ram_amount?: string | null
@@ -231,6 +339,7 @@ export type Database = {
           onboarding_date?: string | null
           onboarding_score?: number | null
           personal_statement?: string | null
+          probation_training_completed?: boolean | null
           quiz_passed?: boolean | null
           quiz_score?: number | null
           ram_amount?: string | null
@@ -312,6 +421,7 @@ export type Database = {
           onboarding_date: string | null
           onboarding_score: number | null
           personal_statement: string | null
+          probation_training_completed: boolean | null
           quiz_passed: boolean | null
           quiz_score: number | null
           ram_amount: string | null
@@ -379,6 +489,7 @@ export type Database = {
           onboarding_date: string | null
           onboarding_score: number | null
           personal_statement: string | null
+          probation_training_completed: boolean | null
           quiz_passed: boolean | null
           quiz_score: number | null
           ram_amount: string | null
@@ -422,6 +533,10 @@ export type Database = {
       }
       is_supervisor: {
         Args: { check_user_id: string }
+        Returns: boolean
+      }
+      is_user_on_probation: {
+        Args: { input_user_id: string }
         Returns: boolean
       }
       update_billing_information: {
