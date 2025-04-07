@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import CompletionDialog from './CompletionDialog';
 
 interface TrainingModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   const [quizPassed, setQuizPassed] = useState<boolean | null>(null);
   const [quizScore, setQuizScore] = useState<number>(0);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   
   useEffect(() => {
     if (!userProfile) return;
@@ -85,7 +87,13 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
         quiz_score: score
       });
       
-      setStep('result');
+      setShowCompletionDialog(true);
+      
+      // Set a timeout to close the completion dialog and move to the result step
+      setTimeout(() => {
+        setShowCompletionDialog(false);
+        setStep('result');
+      }, 3000);
       
       // Call onComplete with the result of the quiz
       onComplete(passed);
@@ -135,8 +143,8 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-lg">
         <div className={`sticky top-0 z-10 flex items-center justify-between p-4 border-b ${
           (quizPassed === true) 
-            ? 'bg-gradient-to-r from-green-600 to-green-500' 
-            : (quizPassed === false)
+            ? 'bg-gradient-to-r from-green-600 to-green-500' : 
+            (quizPassed === false)
               ? 'bg-gradient-to-r from-red-600 to-red-500'
               : 'bg-gradient-to-r from-blue-600 to-cyan-500'
         } text-white rounded-t-lg`}>
@@ -167,7 +175,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
               <TrainingVideo onComplete={handleVideoComplete} />
               {userProfile?.training_video_watched === true && (
                 <div className="mt-6 flex justify-end">
-                  <Button onClick={handleContinueToQuiz} className="text-white">
+                  <Button onClick={handleContinueToQuiz} className="bg-blue-500 hover:bg-blue-600 text-white">
                     Continue to Quiz
                   </Button>
                 </div>
@@ -206,7 +214,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
                     </p>
                     <Button 
                       onClick={handleScheduleInterview}
-                      className="px-6 py-2 rounded-full text-white font-medium mt-2 bg-green-600 hover:bg-green-700 transition-colors"
+                      className="px-6 py-2 rounded-full text-white font-medium mt-2 bg-blue-500 hover:bg-blue-600 transition-colors"
                     >
                       Schedule Interview
                     </Button>
@@ -238,7 +246,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
               <button
                 onClick={handleCloseModal}
                 className={`px-6 py-2 rounded-full text-white font-medium mt-6 ${
-                  quizPassed ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+                  quizPassed ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'
                 } transition-colors`}
               >
                 Close
@@ -247,6 +255,13 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
           )}
         </div>
       </div>
+      
+      <CompletionDialog 
+        isOpen={showCompletionDialog} 
+        onClose={() => setShowCompletionDialog(false)} 
+        score={quizScore} 
+        passThreshold={80} 
+      />
       
       <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
