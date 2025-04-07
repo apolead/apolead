@@ -10,15 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ProbationTrainingVideo from './ProbationTrainingVideo';
 import ProbationTrainingQuiz from './ProbationTrainingQuiz';
-
-interface TrainingModule {
-  id: string;
-  title: string;
-  description: string;
-  video_url: string;
-  has_quiz: boolean;
-  module_order: number;
-}
+import { TrainingModule, UserModuleProgress } from '@/types/training';
 
 interface ProbationTrainingModalProps {
   isOpen: boolean;
@@ -54,7 +46,7 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
         if (error) throw error;
         
         if (data && data.length > 0) {
-          setModules(data);
+          setModules(data as TrainingModule[]);
           
           // Check user's progress for each module
           if (user) {
@@ -66,9 +58,11 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
             if (progressError) throw progressError;
             
             const progress: Record<string, boolean> = {};
-            progressData?.forEach(item => {
-              progress[item.module_id] = item.passed;
-            });
+            if (progressData) {
+              progressData.forEach((item: any) => {
+                progress[item.module_id] = item.passed;
+              });
+            }
             
             setModuleProgress(progress);
             
@@ -201,10 +195,12 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
   };
   
   const currentModule = modules[currentModuleIndex] || {
+    id: '',
     title: 'Loading...',
     description: '',
     video_url: '',
-    has_quiz: true
+    has_quiz: true,
+    module_order: 0
   };
   
   if (loading) {
