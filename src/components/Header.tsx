@@ -1,120 +1,67 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
-const Header = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const Header: React.FC = () => {
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
 
-  const scrollToSection = (sectionId: string) => {
-    const targetElement = document.getElementById(sectionId);
-    if (targetElement) {
-      window.scrollTo({
-        top: targetElement.offsetTop - 80,
-        behavior: 'smooth',
-      });
-    }
-    setMobileMenuOpen(false);
-  };
-
-  const handleLogout = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Error during logout:', error);
-    } finally {
-      // Always navigate to home page, even if logout had issues
-      navigate('/', { replace: true });
-    }
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
   };
 
   return (
-    <header className="fixed top-0 left-0 w-full z-[1000] py-4 bg-white bg-opacity-95 shadow-sm transition-all duration-300">
-      <div className="container flex justify-between items-center">
-        <a href="#" className="flex items-center text-decoration-none">
-          <h1 className="text-[1.8rem] mb-0">
-            <span className="text-[#00c2cb]">Apo</span>
-            <span className="text-indigo-600">Lead</span>
-          </h1>
-        </a>
-        <nav className="flex items-center">
-          <ul className={`flex md:flex ${mobileMenuOpen ? 'flex' : 'hidden md:flex'} ${mobileMenuOpen ? 'flex-col absolute top-16 left-0 w-full bg-white shadow-md p-4' : ''}`}>
-            <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-              <a 
-                href="#" 
-                onClick={() => scrollToSection('hero')}
-                className="text-dark hover:text-primary font-semibold transition-colors duration-300"
-              >
+    <header className="bg-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <Link to="/" className="text-2xl font-bold">
+                <span className="text-cyan-500">Apo</span><span className="text-indigo-600">Lead</span>
+              </Link>
+            </div>
+            <nav className="ml-6 flex space-x-8">
+              <Link to="/" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
                 Home
-              </a>
-            </li>
-            <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-              <a 
-                href="#how-it-works" 
-                onClick={(e) => {e.preventDefault(); scrollToSection('how-it-works');}}
-                className="text-dark hover:text-primary font-semibold transition-colors duration-300"
-              >
-                How It Works
-              </a>
-            </li>
-            <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-              <a 
-                href="#benefits" 
-                onClick={(e) => {e.preventDefault(); scrollToSection('benefits');}}
-                className="text-dark hover:text-primary font-semibold transition-colors duration-300"
-              >
-                Benefits
-              </a>
-            </li>
-            <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-              <a 
-                href="#testimonials" 
-                onClick={(e) => {e.preventDefault(); scrollToSection('testimonials');}}
-                className="text-dark hover:text-primary font-semibold transition-colors duration-300"
-              >
-                Testimonials
-              </a>
-            </li>
-            <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-              <a 
-                href="#contact" 
-                onClick={(e) => {e.preventDefault(); scrollToSection('contact');}}
-                className="text-dark hover:text-primary font-semibold transition-colors duration-300"
-              >
-                Contact
-              </a>
-            </li>
-          </ul>
-          
-          {/* Login/Logout Button */}
-          {user ? (
-            <a 
-              href="#" 
-              onClick={handleLogout}
-              className="ml-8 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              Logout
-            </a>
-          ) : (
-            <Link 
-              to="/login" 
-              className="ml-8 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              Login
-            </Link>
-          )}
-          
-          <div className="md:hidden block cursor-pointer ml-4" onClick={toggleMobileMenu}>
-            <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-xl`}></i>
+              </Link>
+              <Link to="/features" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                Features
+              </Link>
+              <Link to="/pricing" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                Pricing
+              </Link>
+              <Link to="/about" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                About
+              </Link>
+            </nav>
           </div>
-        </nav>
+          <div className="flex items-center">
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <Link to="/dashboard" className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                  Dashboard
+                </Link>
+                <button 
+                  onClick={handleLogout}
+                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50"
+                >
+                  Log Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link to="/login" className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50">
+                  Log In
+                </Link>
+                <Link to="/signup" className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                  Sign Up
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </header>
   );

@@ -31,6 +31,7 @@ export interface UserProfile {
   eligible_for_training?: boolean;
   training_video_watched?: boolean;
   quiz_passed?: boolean;
+  quiz_score?: number;
   agent_standing?: string;
   created_at?: string;
   updated_at?: string;
@@ -83,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (error) {
           console.error('Error fetching user profile:', error);
         } else if (data) {
-          setUserProfile(data);
+          setUserProfile(data as UserProfile);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
