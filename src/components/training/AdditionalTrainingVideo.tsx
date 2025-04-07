@@ -41,7 +41,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
     if (canComplete) {
       onComplete();
     } else {
-      setError("Please watch more of the video before completing.");
+      setError("Please watch more of the video before continuing.");
       setTimeout(() => setError(null), 3000);
     }
   };
@@ -109,7 +109,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           }
           variant="default"
         >
-          {isCompleted ? "Continue to Next Module" : "Mark as Completed"}
+          {isCompleted ? "Continue to Next Module" : "Ready for Quiz"}
         </Button>
       </div>
     </div>

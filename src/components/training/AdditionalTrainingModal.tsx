@@ -27,12 +27,13 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   const [questions, setQuestions] = useState<ProbationTrainingQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<'video' | 'quiz' | 'result'>('video');
+  const [showQuiz, setShowQuiz] = useState(false);
   const [quizScore, setQuizScore] = useState<number>(0);
   const [userProgress, setUserProgress] = useState<Record<string, UserProbationProgress>>({});
   const [overallScore, setOverallScore] = useState<number>(0);
   const [modulesCompleted, setModulesCompleted] = useState<number>(0);
   const [totalModules, setTotalModules] = useState<number>(0);
+  const [showResultScreen, setShowResultScreen] = useState(false);
   
   useEffect(() => {
     if (isOpen && user) {
@@ -109,6 +110,8 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       setError("Failed to load training content. Please try again later.");
     } finally {
       setLoading(false);
+      setShowQuiz(false);
+      setShowResultScreen(false);
     }
   };
 
@@ -173,15 +176,8 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         // Mark this module as completed with a perfect score and move to the next module
         await handleModuleAutoComplete();
       } else {
-        // Move to quiz if questions exist
-        setStep('quiz');
-        // Scroll to top when switching to quiz
-        window.setTimeout(() => {
-          const videoElement = document.getElementById('training-video-container');
-          if (videoElement) {
-            videoElement.scrollIntoView({ behavior: 'smooth' });
-          }
-        }, 100);
+        // Show the quiz below the video
+        setShowQuiz(true);
       }
     } catch (error) {
       console.error("Error updating video progress:", error);
@@ -332,7 +328,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       
       setUserProgress(updatedProgressMap);
       updateOverallScore(updatedProgressMap);
-      setStep('result');
+      setShowResultScreen(true);
     } catch (error) {
       console.error("Error saving quiz results:", error);
       setError("Failed to save your quiz results. Please try again.");
@@ -342,14 +338,14 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   const handleSelectModule = (module: ProbationTrainingModule) => {
     setCurrentModule(module);
     setQuizScore(0);
+    setShowQuiz(false);
+    setShowResultScreen(false);
     
     // If the module is already completed, go to the result screen
     const moduleProgress = userProgress[module.id];
     if (moduleProgress && moduleProgress.completed) {
       setQuizScore(moduleProgress.score || 0);
-      setStep('result');
-    } else {
-      setStep('video');
+      setShowResultScreen(true);
     }
     
     // Load questions for this module
@@ -482,17 +478,18 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
               )}
             </div>
             
-            {step === 'video' && (
-              <AdditionalTrainingVideo 
-                videoUrl={currentModule.video_url}
-                onComplete={handleVideoComplete}
-                isCompleted={userProgress[currentModule.id]?.completed === true}
-                isPending={isCurrentModuleInProgress(currentModule.id)}
-              />
-            )}
+            {/* Video is always displayed */}
+            <AdditionalTrainingVideo 
+              videoUrl={currentModule.video_url}
+              onComplete={handleVideoComplete}
+              isCompleted={userProgress[currentModule.id]?.completed === true}
+              isPending={isCurrentModuleInProgress(currentModule.id)}
+            />
             
-            {step === 'quiz' && questions.length > 0 && (
-              <div className="mt-8">
+            {/* Quiz appears below the video when the user clicks "Ready for Quiz" */}
+            {showQuiz && !showResultScreen && questions.length > 0 && (
+              <div className="mt-8" id="quiz-section">
+                <h3 className="text-lg font-medium mb-4">Module Quiz</h3>
                 <AdditionalTrainingQuiz
                   questions={questions}
                   onComplete={handleQuizComplete}
@@ -500,18 +497,14 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
               </div>
             )}
             
-            {step === 'result' && (
+            {showResultScreen && (
               <div className="text-center py-6 mt-8">
                 <div className="flex justify-center mb-6">
-                  {/* We don't show pass/fail for individual modules anymore */}
                   <CheckCircle className="h-20 w-20 text-green-500" />
                 </div>
                 <h3 className="text-2xl font-bold mb-4 text-green-600">
                   Module Completed
                 </h3>
-                <p className="text-lg mb-4">
-                  You have completed this training module!
-                </p>
                 
                 <div className="mt-6">
                   <Button 
