@@ -103,9 +103,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           className={
             isCompleted 
               ? "bg-[#4f46e5] text-white hover:bg-[#4338ca]" 
-              : isPending 
-                ? "bg-blue-500 text-white hover:bg-blue-600" 
-                : "bg-blue-500 text-white hover:bg-blue-600"
+              : "bg-blue-500 text-white hover:bg-blue-600"
           }
           variant="default"
         >

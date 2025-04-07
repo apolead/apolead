@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 
 const Dashboard = () => {
-  const { user, userProfile, loading } = useAuth();
+  const { user, userProfile, loading, refreshUserProfile } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTrainingModalOpen, setIsTrainingModalOpen] = useState(false);
   const [isProbationTrainingOpen, setIsProbationTrainingOpen] = useState(false);
@@ -41,6 +41,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   
   const processedProfileRef = useRef(false);
+  const initialLoadRef = useRef(true);
   
   const processUserProfile = useCallback(() => {
     if (userProfile && !processedProfileRef.current) {
@@ -142,6 +143,10 @@ const Dashboard = () => {
     if (!userProfile) {
       processedProfileRef.current = false;
     }
+
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+    }
   }, [user, loading, userProfile, navigate, processUserProfile]);
   
   const openOnboardingModal = () => {
@@ -163,15 +168,8 @@ const Dashboard = () => {
     
     if (user) {
       try {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (error) throw error;
-        
-        window.location.reload();
+        await refreshUserProfile();
+        processedProfileRef.current = false;
       } catch (err) {
         console.error("Error refreshing user profile:", err);
       }
@@ -186,8 +184,9 @@ const Dashboard = () => {
     setIsTrainingModalOpen(false);
     if (passed) {
       setShowInterviewScheduler(true);
+      setTrainingStatus('completed');
     }
-    window.location.reload();
+    refreshUserProfile();
   };
   
   const openAdditionalTrainingModal = () => {

@@ -1,351 +1,258 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from './use-toast';
 
-interface AuthContextType {
-  user: any | null;
-  userProfile: any | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  updateProfile: (data: any) => Promise<void>;
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
+
+export interface UserProfile {
+  id: string;
+  user_id: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  birth_day?: string;
+  gov_id_number?: string;
+  gov_id_image?: string;
+  cpu_type?: string;
+  ram_amount?: string;
+  has_headset?: boolean;
+  has_quiet_place?: boolean;
+  speed_test?: string;
+  system_settings?: string;
+  meet_obligation?: boolean;
+  login_discord?: boolean;
+  check_emails?: boolean;
+  solve_problems?: boolean;
+  complete_training?: boolean;
+  personal_statement?: string;
+  available_days?: string[];
+  day_hours?: Record<string, number>;
+  accepted_terms?: boolean;
+  onboarding_completed?: boolean;
+  eligible_for_training?: boolean;
+  training_video_watched?: boolean;
+  quiz_passed?: boolean;
+  agent_standing?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthContextValue {
+  user: User | null;
+  session: Session | null;
+  userProfile: UserProfile | null;
+  loading: boolean;
+  signUp: (email: string, password: string) => Promise<any>;
+  signIn: (email: string, password: string) => Promise<any>;
+  signOut: () => Promise<any>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<any>;
+  refreshUserProfile: () => Promise<any>;
+}
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<any | null>(null);
-  const [userProfile, setUserProfile] = useState<any | null>(null);
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
-  const sanitizeProfileData = (profileData: any) => {
-    if (!profileData) return null;
-    
-    const cleanProfile = { ...profileData };
-    
-    const booleanFields = [
-      'quiz_passed', 
-      'training_video_watched',
-      'has_headset',
-      'has_quiet_place',
-      'sales_experience',
-      'service_experience',
-      'meet_obligation',
-      'login_discord',
-      'check_emails',
-      'solve_problems',
-      'complete_training',
-      'accepted_terms',
-      'onboarding_completed',
-      'eligible_for_training'
-    ];
-    
-    booleanFields.forEach(field => {
-      if (field in cleanProfile) {
-        const value = cleanProfile[field];
-        
-        if (field === 'onboarding_completed' || field === 'eligible_for_training') {
-          console.log(`Raw ${field} value:`, value, typeof value);
-        }
-        
-        if (value === null || value === undefined) {
-          cleanProfile[field] = null;
-        } else if (typeof value === 'boolean') {
-          cleanProfile[field] = value;
-        } else if (typeof value === 'string') {
-          const lowerValue = String(value).toLowerCase();
-          if (['true', 't', 'yes', 'y', '1'].includes(lowerValue)) {
-            cleanProfile[field] = true;
-          } else if (['false', 'f', 'no', 'n', '0'].includes(lowerValue)) {
-            cleanProfile[field] = false;
-          } else {
-            cleanProfile[field] = null;
-          }
-        } else if (typeof value === 'number') {
-          cleanProfile[field] = value !== 0;
-        } else {
-          cleanProfile[field] = null;
-        }
-        
-        if (field === 'onboarding_completed' || field === 'eligible_for_training') {
-          console.log(`Sanitized ${field} value:`, cleanProfile[field], typeof cleanProfile[field]);
-        }
-      }
-    });
-    
-    if (cleanProfile.available_days === null || cleanProfile.available_days === undefined) {
-      cleanProfile.available_days = [];
-    }
-    
-    if (cleanProfile.day_hours === null || cleanProfile.day_hours === undefined) {
-      cleanProfile.day_hours = {};
-    }
-    
-    console.log('Sanitized profile data:', {
-      onboarding_completed: cleanProfile.onboarding_completed, 
-      eligible_for_training: cleanProfile.eligible_for_training,
-      types: {
-        onboarding_completed: typeof cleanProfile.onboarding_completed,
-        eligible_for_training: typeof cleanProfile.eligible_for_training
-      }
-    });
-    
-    return cleanProfile;
-  };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed in hook:', event);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const cachedProfile = localStorage.getItem('userProfile');
-          if (cachedProfile) {
-            try {
-              const parsed = sanitizeProfileData(JSON.parse(cachedProfile));
-              console.log('Using cached profile while fetching from DB:', parsed);
-              setUserProfile(parsed);
-            } catch (error) {
-              console.error('Error parsing cached profile:', error);
-              localStorage.removeItem('userProfile');
-            }
-          }
-          
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
-        } else if (event === 'SIGNED_OUT') {
-          setUserProfile(null);
-          localStorage.removeItem('userProfile');
-        }
-      }
-    );
-    
-    const checkSession = async () => {
+    const fetchUserProfile = async (userId: string) => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        console.log('Initial session check:', session ? 'Session found' : 'No session');
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const cachedProfile = localStorage.getItem('userProfile');
-          if (cachedProfile) {
-            try {
-              const parsed = sanitizeProfileData(JSON.parse(cachedProfile));
-              console.log('Using cached profile while fetching from DB:', parsed);
-              setUserProfile(parsed);
-            } catch (error) {
-              console.error('Error parsing cached profile:', error);
-              localStorage.removeItem('userProfile');
-            }
-          }
-          
-          await fetchUserProfile(session.user.id);
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user profile:', error);
+        } else if (data) {
+          setUserProfile(data);
         }
       } catch (error) {
-        console.error('Error checking session:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error fetching user profile:', error);
       }
     };
-    
-    checkSession();
-    
+
+    const setUpAuthStateListener = async () => {
+      // Set up auth state listener FIRST
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, newSession) => {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          
+          // Defer Supabase calls with setTimeout to prevent auth deadlocks
+          if (newSession?.user) {
+            setTimeout(() => {
+              fetchUserProfile(newSession.user.id);
+            }, 0);
+          } else {
+            setUserProfile(null);
+          }
+        }
+      );
+
+      // THEN check for existing session
+      const { data } = await supabase.auth.getSession();
+      const initialSession = data.session;
+      
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
+      
+      if (initialSession?.user) {
+        await fetchUserProfile(initialSession.user.id);
+      }
+      
+      setLoading(false);
+      
+      return () => {
+        subscription.unsubscribe();
+      };
+    };
+
+    const unsubscribe = setUpAuthStateListener();
+
     return () => {
-      subscription.unsubscribe();
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      } else if (unsubscribe instanceof Promise) {
+        unsubscribe.then(fn => {
+          if (fn) fn();
+        });
+      }
     };
   }, []);
+
+  const signUp = async (email: string, password: string) => {
+    return await supabase.auth.signUp({ email, password });
+  };
+
+  const signIn = async (email: string, password: string) => {
+    return await supabase.auth.signInWithPassword({ email, password });
+  };
+
+  const signOut = async () => {
+    return await supabase.auth.signOut();
+  };
   
-  const fetchUserProfile = async (userId: string) => {
+  const updateProfile = async (updates: Partial<UserProfile>) => {
+    if (!user) throw new Error('User must be logged in to update profile');
+    
     try {
-      console.log('Fetching user profile for:', userId);
-      
-      const { data, error } = await (supabase.rpc as any)('get_user_profile_direct', {
-        input_user_id: userId
-      });
-      
-      if (error) {
-        console.error('Error fetching user profile with direct function:', error);
-        return;
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        // PGRST116 means no results found, which is fine for a new profile
+        throw fetchError;
       }
       
-      if (data && Array.isArray(data) && data.length > 0) {
-        const profileData = data[0];
-        const sanitizedData = sanitizeProfileData(profileData);
-        console.log('User profile fetched successfully with direct function:', sanitizedData);
-        
-        console.log('Onboarding state values:', {
-          first_name: sanitizedData.first_name,
-          last_name: sanitizedData.last_name,
-          birth_day: sanitizedData.birth_day,
-          gov_id_number: sanitizedData.gov_id_number,
-          gov_id_image: sanitizedData.gov_id_image,
-          onboarding_completed: sanitizedData.onboarding_completed,
-          eligible_for_training: sanitizedData.eligible_for_training,
-          meet_obligation: sanitizedData.meet_obligation,
-          login_discord: sanitizedData.login_discord,
-          check_emails: sanitizedData.check_emails,
-          solve_problems: sanitizedData.solve_problems,
-          complete_training: sanitizedData.complete_training,
-          has_headset: sanitizedData.has_headset,
-          has_quiet_place: sanitizedData.has_quiet_place
-        });
-        
-        setUserProfile(sanitizedData);
-        
-        localStorage.setItem('userProfile', JSON.stringify(sanitizedData));
+      const hasCompletedBasicInfo = Boolean(
+        (updates.first_name || existingProfile?.first_name) && 
+        (updates.last_name || existingProfile?.last_name) && 
+        (updates.birth_day || existingProfile?.birth_day) && 
+        (updates.gov_id_number || existingProfile?.gov_id_number) && 
+        (updates.gov_id_image || existingProfile?.gov_id_image)
+      );
+                                   
+      const hasAnsweredAllQuestions = 
+        (updates.has_headset !== undefined || existingProfile?.has_headset !== undefined) && 
+        (updates.has_quiet_place !== undefined || existingProfile?.has_quiet_place !== undefined) && 
+        (updates.meet_obligation !== undefined || existingProfile?.meet_obligation !== undefined) && 
+        (updates.login_discord !== undefined || existingProfile?.login_discord !== undefined) && 
+        (updates.check_emails !== undefined || existingProfile?.check_emails !== undefined) && 
+        (updates.solve_problems !== undefined || existingProfile?.solve_problems !== undefined) && 
+        (updates.complete_training !== undefined || existingProfile?.complete_training !== undefined);
+
+      const isEligible = 
+        (updates.has_headset === true || existingProfile?.has_headset === true) && 
+        (updates.has_quiet_place === true || existingProfile?.has_quiet_place === true) && 
+        (updates.meet_obligation === true || existingProfile?.meet_obligation === true) && 
+        (updates.login_discord === true || existingProfile?.login_discord === true) && 
+        (updates.check_emails === true || existingProfile?.check_emails === true) && 
+        (updates.solve_problems === true || existingProfile?.solve_problems === true) && 
+        (updates.complete_training === true || existingProfile?.complete_training === true);
+      
+      // Set onboarding status for the profile
+      const onboarding_completed = hasCompletedBasicInfo && hasAnsweredAllQuestions;
+      const eligible_for_training = isEligible;
+      
+      const profileData = {
+        ...updates,
+        user_id: user.id,
+        onboarding_completed,
+        eligible_for_training
+      };
+      
+      let result;
+      if (existingProfile) {
+        // Update existing profile
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .update(profileData)
+          .eq('user_id', user.id)
+          .select()
+          .single();
+          
+        if (error) throw error;
+        result = data;
       } else {
-        console.log('No user profile found with direct function');
+        // Create new profile
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .insert([profileData])
+          .select()
+          .single();
+          
+        if (error) throw error;
+        result = data;
       }
+      
+      // Update local state
+      setUserProfile(result);
+      return result;
     } catch (error) {
-      console.error('Exception in fetchUserProfile:', error);
-    }
-  };
-
-  const login = async (email: string, password: string) => {
-    try {
-      console.log('Attempting login for:', email);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) throw error;
-      
-      console.log('Login successful');
-      
-      if (data.user) {
-        setTimeout(() => {
-          fetchUserProfile(data.user.id);
-        }, 0);
-      }
-      
-    } catch (error: any) {
-      console.error('Login error:', error);
-      toast({
-        title: "Login failed",
-        description: error.message || "Failed to log in",
-        variant: "destructive",
-      });
+      console.error('Error updating profile:', error);
       throw error;
     }
   };
-
-  const logout = async () => {
+  
+  const refreshUserProfile = async () => {
+    if (!user) return null;
+    
     try {
-      setUser(null);
-      setUserProfile(null);
-      
-      localStorage.removeItem('userProfile');
-      localStorage.removeItem('tempCredentials');
-      
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
-          localStorage.removeItem(key);
-        }
-      });
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          console.error('Server logout error:', error);
-          throw error;
-        }
-        console.log('Logout from Supabase successful');
-      } else {
-        console.log('No active session found, client-side logout completed');
-      }
-      
-      toast({
-        title: "Logout successful",
-        description: "You have been logged out successfully"
-      });
-    } catch (error: any) {
-      console.error('Logout error:', error);
-      
-      toast({
-        title: "Logged out",
-        description: "You've been logged out successfully",
-        variant: "default"
-      });
-    }
-  };
-
-  const updateProfile = async (data: any) => {
-    try {
-      if (!user) throw new Error("User not authenticated");
-      
-      if (userProfile?.onboarding_completed === true) {
-        const onboardingFields = [
-          'first_name', 'last_name', 'birth_day', 'gov_id_number', 'gov_id_image',
-          'cpu_type', 'ram_amount', 'has_headset', 'has_quiet_place', 'speed_test',
-          'system_settings', 'meet_obligation', 'login_discord', 'check_emails',
-          'solve_problems', 'complete_training', 'personal_statement'
-        ];
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
         
-        const isUpdatingOnboarding = onboardingFields.some(field => field in data);
-        
-        if (isUpdatingOnboarding) {
-          toast({
-            title: "Cannot update onboarding",
-            description: "Onboarding information cannot be modified once completed.",
-            variant: "destructive"
-          });
-          return;
-        }
-      }
-      
-      console.log('Updating user profile with:', data);
-      
-      const safeData = { ...data };
-      
-      if ('available_days' in safeData) {
-        if (!Array.isArray(safeData.available_days) || safeData.available_days.length === 0) {
-          safeData.available_days = [];
-        }
-      }
-      
-      if ('day_hours' in safeData) {
-        if (typeof safeData.day_hours === 'object' && Object.keys(safeData.day_hours).length === 0) {
-          safeData.day_hours = {};
-        }
-      }
-      
-      const { error } = await (supabase.rpc as any)('update_user_profile_direct', {
-        input_user_id: user.id,
-        input_updates: safeData
-      });
-      
       if (error) throw error;
-      
-      await fetchUserProfile(user.id);
-      
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully",
-      });
-      
-    } catch (error: any) {
-      console.error('Profile update error:', error);
-      toast({
-        title: "Update failed",
-        description: error.message || "Failed to update profile",
-        variant: "destructive"
-      });
+      setUserProfile(data);
+      return data;
+    } catch (error) {
+      console.error('Error refreshing user profile:', error);
       throw error;
     }
   };
+  
+  const value = {
+    user,
+    session,
+    userProfile,
+    loading,
+    signUp,
+    signIn,
+    signOut,
+    updateProfile,
+    refreshUserProfile
+  };
 
-  return (
-    <AuthContext.Provider value={{ user, userProfile, loading, login, logout, updateProfile }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
