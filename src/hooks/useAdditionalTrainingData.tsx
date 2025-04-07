@@ -120,7 +120,7 @@ export const additionalTrainingQuestions: AdditionalTrainingQuestion[] = [
   {
     id: '3-1',
     module_id: '3',
-    question: 'Which availability mode should you select when you're ready to take both outbound and inbound calls?',
+    question: "Which availability mode should you select when you're ready to take both outbound and inbound calls?",
     options: [
       'Prep Work',
       'Break',
@@ -133,7 +133,7 @@ export const additionalTrainingQuestions: AdditionalTrainingQuestion[] = [
   {
     id: '3-2',
     module_id: '3',
-    question: 'What happens when you switch to 'Ready' mode?',
+    question: "What happens when you switch to 'Ready' mode?",
     options: [
       'The system pauses all calls',
       'You receive only inbound calls',
@@ -159,7 +159,7 @@ export const additionalTrainingQuestions: AdditionalTrainingQuestion[] = [
   {
     id: '3-4',
     module_id: '3',
-    question: 'True or False: You can select Prep Work mode again after you've changed to a different mode during the day.',
+    question: "True or False: You can select Prep Work mode again after you've changed to a different mode during the day.",
     options: [
       'True',
       'False'
@@ -172,9 +172,9 @@ export const additionalTrainingQuestions: AdditionalTrainingQuestion[] = [
   {
     id: '4-1',
     module_id: '4',
-    question: 'What happens when the AI Dialer connects with a lead who answers?',
+    question: "What happens when the AI Dialer connects with a lead who answers?",
     options: [
-      'You hear a beep and see the lead\'s information on your screen',
+      "You hear a beep and see the lead's information on your screen",
       'The call goes to voicemail automatically',
       'You must manually accept the call',
       'The call is transferred to your manager'
@@ -224,11 +224,11 @@ export const additionalTrainingQuestions: AdditionalTrainingQuestion[] = [
   {
     id: '4-5',
     module_id: '4',
-    question: 'When do you need to manually end a call in the AI Dialer system?',
+    question: "When do you need to manually end a call in the AI Dialer system?",
     options: [
       'After every call',
       'Only when the call is disconnected unexpectedly',
-      'When the call result doesn\'t automatically end the call',
+      "When the call result doesn't automatically end the call",
       'When you switch to Break mode'
     ],
     correct_answer: 2,
@@ -265,12 +265,12 @@ export const additionalTrainingQuestions: AdditionalTrainingQuestion[] = [
   {
     id: '5-3',
     module_id: '5',
-    question: 'What type of information can you find in the Contact History tab?',
+    question: "What type of information can you find in the Contact History tab?",
     options: [
-      'The lead\'s credit score and financial history',
+      "The lead's credit score and financial history",
       'Previous interactions with this lead and notes',
-      'The lead\'s purchase history with competitors',
-      'The lead\'s social media activity'
+      "The lead's purchase history with competitors",
+      "The lead's social media activity"
     ],
     correct_answer: 1,
     question_order: 3
@@ -278,7 +278,7 @@ export const additionalTrainingQuestions: AdditionalTrainingQuestion[] = [
   {
     id: '5-4',
     module_id: '5',
-    question: 'Which folder contains lead profiles for callbacks you\'ve scheduled?',
+    question: "Which folder contains lead profiles for callbacks you've scheduled?",
     options: [
       'Recent Folders',
       'Shared Files',
