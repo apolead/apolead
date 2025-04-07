@@ -7,14 +7,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Check, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-interface QuizQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  correct_answer: number;
-  question_order: number;
-}
+import { ModuleQuestion } from '@/types/training';
 
 interface ProbationTrainingQuizProps {
   moduleId: string;
@@ -22,7 +15,7 @@ interface ProbationTrainingQuizProps {
 }
 
 const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({ moduleId, onComplete }) => {
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [questions, setQuestions] = useState<ModuleQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
@@ -44,21 +37,26 @@ const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({ moduleId,
         
         if (data && data.length > 0) {
           console.log("Received questions from database:", data);
-          const formattedQuestions = data.map(q => ({
+          const formattedQuestions: ModuleQuestion[] = data.map(q => ({
             id: q.id,
+            module_id: q.module_id,
             question: q.question,
             options: Array.isArray(q.options) 
-              ? (q.options as any[]).map(opt => String(opt)) 
-              : [],
+              ? q.options 
+              : (typeof q.options === 'object' && q.options !== null)
+                ? Object.values(q.options).map(String)
+                : [],
             correct_answer: q.correct_answer,
-            question_order: q.question_order
+            question_order: q.question_order,
+            created_at: q.created_at,
+            updated_at: q.updated_at
           }));
           
           setQuestions(formattedQuestions);
         } else {
           setError("No questions found for this module. Please contact support.");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching module questions:", error);
         setError("Failed to load quiz questions. Please try again later.");
       } finally {

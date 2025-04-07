@@ -10,15 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ProbationTrainingVideo from './ProbationTrainingVideo';
 import ProbationTrainingQuiz from './ProbationTrainingQuiz';
-
-interface TrainingModule {
-  id: string;
-  title: string;
-  description: string;
-  video_url: string;
-  has_quiz: boolean;
-  module_order: number;
-}
+import { TrainingModule, UserModuleProgress } from '@/types/training';
 
 interface ProbationTrainingModalProps {
   isOpen: boolean;
@@ -54,7 +46,18 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
         if (error) throw error;
         
         if (data && data.length > 0) {
-          setModules(data);
+          const typedModules: TrainingModule[] = data.map(module => ({
+            id: module.id,
+            title: module.title,
+            description: module.description,
+            video_url: module.video_url,
+            module_order: module.module_order,
+            has_quiz: module.has_quiz,
+            created_at: module.created_at,
+            updated_at: module.updated_at
+          }));
+          
+          setModules(typedModules);
           
           // Check user's progress for each module
           if (user) {
@@ -66,14 +69,14 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
             if (progressError) throw progressError;
             
             const progress: Record<string, boolean> = {};
-            progressData?.forEach(item => {
-              progress[item.module_id] = item.passed;
+            progressData?.forEach((item: UserModuleProgress) => {
+              progress[item.module_id] = item.passed || false;
             });
             
             setModuleProgress(progress);
             
             // Find the first uncompleted module
-            const firstUncompleted = data.findIndex(module => 
+            const firstUncompleted = typedModules.findIndex(module => 
               !progress[module.id] && module.has_quiz
             );
             
@@ -82,7 +85,7 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
             }
             
             // Check if all required modules are completed
-            const allCompleted = data.every(module => 
+            const allCompleted = typedModules.every(module => 
               !module.has_quiz || progress[module.id]
             );
             
@@ -201,10 +204,12 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
   };
   
   const currentModule = modules[currentModuleIndex] || {
+    id: '',
     title: 'Loading...',
     description: '',
     video_url: '',
-    has_quiz: true
+    has_quiz: true,
+    module_order: 0
   };
   
   if (loading) {
