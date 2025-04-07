@@ -31,6 +31,7 @@ export interface UserProfile {
   eligible_for_training?: boolean;
   training_video_watched?: boolean;
   quiz_passed?: boolean;
+  quiz_score?: number;
   agent_standing?: string;
   created_at?: string;
   updated_at?: string;
@@ -92,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const setUpAuthStateListener = async () => {
       // Set up auth state listener FIRST
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      const { data: { subscription } } = await supabase.auth.onAuthStateChange(
         (event, newSession) => {
           setSession(newSession);
           setUser(newSession?.user ?? null);
@@ -126,16 +127,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
     };
 
-    const unsubscribe = setUpAuthStateListener();
+    setUpAuthStateListener();
 
     return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      } else if (unsubscribe instanceof Promise) {
-        unsubscribe.then(fn => {
-          if (fn) fn();
-        });
-      }
+      // Cleanup is handled within setUpAuthStateListener
     };
   }, []);
 
