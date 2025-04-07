@@ -16,8 +16,7 @@ import {
   Bell,
   AlertTriangle,
   XCircle,
-  GraduationCap,
-  Rocket
+  GraduationCap
 } from 'lucide-react';
 import {
   Dialog,
@@ -54,8 +53,6 @@ const Dashboard = () => {
         gov_id_image: userProfile.gov_id_image,
         onboarding_completed: userProfile.onboarding_completed,
         eligible_for_training: userProfile.eligible_for_training,
-        probation_training_completed: userProfile.probation_training_completed,
-        probation_training_passed: userProfile.probation_training_passed,
         has_headset: userProfile.has_headset,
         has_quiet_place: userProfile.has_quiet_place,
         meet_obligation: userProfile.meet_obligation,
@@ -100,9 +97,7 @@ const Dashboard = () => {
         onboarding_completed_type: typeof userProfile.onboarding_completed,
         trainingStatus,
         quiz_passed: userProfile.quiz_passed,
-        quiz_passed_type: typeof userProfile.quiz_passed,
-        probation_training_completed: userProfile.probation_training_completed,
-        probation_training_passed: userProfile.probation_training_passed
+        quiz_passed_type: typeof userProfile.quiz_passed
       });
       
       if (isOnboardingCompletedFlag) {
@@ -200,7 +195,6 @@ const Dashboard = () => {
   
   const closeAdditionalTrainingModal = () => {
     setIsProbationTrainingOpen(false);
-    refreshUserProfile();
   };
   
   const handleScheduleInterview = () => {
@@ -250,17 +244,6 @@ const Dashboard = () => {
     }
   };
   
-  const getTrainingButtonText = () => {
-    switch (trainingStatus) {
-      case 'completed':
-        return 'Training Completed';
-      case 'failed':
-        return 'Training Failed';
-      default:
-        return 'Start Training';
-    }
-  };
-  
   const getTrainingButtonStyle = () => {
     switch (trainingStatus) {
       case 'completed':
@@ -269,6 +252,17 @@ const Dashboard = () => {
         return 'button-ineligible p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(239,68,68,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(239,68,68,0.3)]';
       default:
         return 'button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]';
+    }
+  };
+  
+  const getTrainingButtonText = () => {
+    switch (trainingStatus) {
+      case 'completed':
+        return 'Training Completed';
+      case 'failed':
+        return 'Training Failed';
+      default:
+        return 'Start Training';
     }
   };
   
@@ -303,8 +297,6 @@ const Dashboard = () => {
   }
   
   const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
-  const isProbationTrainingCompleted = userProfile?.probation_training_completed === true;
-  const isProbationTrainingPassed = userProfile?.probation_training_passed === true;
   
   return (
     <div className="flex w-full min-h-screen bg-[#f8fafc]">
@@ -437,4 +429,193 @@ const Dashboard = () => {
                 1
               </div>
               <div className={`action-icon w-[80px] h-[80px] rounded-full ${
-                onboardingStatus
+                onboardingStatus === 'completed' ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 
+                onboardingStatus === 'ineligible' ? 'bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_8px_20px_rgba(239,68,68,0.2)]' : 
+                'bg-gradient-to-r from-[#f59e0b] to-[#d97706] shadow-[0_8px_20px_rgba(245,158,11,0.2)]'
+              } text-white flex items-center justify-center text-[30px] relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
+                <i className="fas fa-user-plus"></i>
+              </div>
+              <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Initial Onboarding</h3>
+              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Complete your profile setup and account verification to get started with ApoLead.</p>
+              <button 
+                className={`${getOnboardingButtonStyle()} ${onboardingCompleted ? 'cursor-default' : 'cursor-pointer'}`}
+                onClick={openOnboardingModal}
+                aria-disabled={onboardingCompleted}
+              >
+                {getOnboardingIcon()} {getOnboardingButtonText()}
+              </button>
+            </div>
+            
+            <div className={`action-card ${userProfile?.eligible_for_training !== true ? 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50' : trainingStatus === 'failed' ? 'bg-white border border-[#ef4444]' : 'bg-white border border-[#10B981]'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${userProfile?.eligible_for_training === true ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : ''}`}>
+              <div className={`step-number locked absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
+                trainingStatus === 'completed' ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 
+                trainingStatus === 'failed' ? 'bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_4px_10px_rgba(239,68,68,0.3)]' : 
+                userProfile?.eligible_for_training === true ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 'bg-gradient-to-r from-[#94A3B8] to-[#64748B]'
+              } text-white flex items-center justify-center font-[600] text-[16px] ${userProfile?.eligible_for_training !== true ? 'shadow-none' : ''} z-[3] border-[3px] border-white`}>
+                2
+              </div>
+              {userProfile?.eligible_for_training !== true && (
+                <div className="lock-icon absolute top-[-12px] right-[-12px] w-[32px] h-[32px] rounded-full bg-[#94A3B8] text-white flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.1)] z-[3] text-[14px]">
+                  <Lock size={14} />
+                </div>
+              )}
+              <div className={`action-icon ${
+                trainingStatus === 'completed' ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 
+                trainingStatus === 'failed' ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_8px_20px_rgba(239,68,68,0.2)]' : 
+                userProfile?.eligible_for_training === true ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 'locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B] shadow-none'
+              } text-white flex items-center justify-center text-[30px] shadow-none relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
+                <i className="fas fa-book-reader"></i>
+              </div>
+              <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Initial Training</h3>
+              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">
+                {trainingStatus === 'failed' 
+                  ? "You did not pass the training quiz. You cannot move forward in the application process." 
+                  : "Complete the initial training module to unlock the next step. This will teach you the fundamentals."}
+              </p>
+              <button 
+                className={`card-button ${
+                  userProfile?.eligible_for_training === true 
+                    ? getTrainingButtonStyle()
+                    : 'button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70'
+                }`}
+                onClick={userProfile?.eligible_for_training === true && trainingStatus !== 'failed' ? openTrainingModal : undefined}
+                disabled={trainingStatus === 'failed'}
+              >
+                {userProfile?.eligible_for_training === true ? (
+                  <>
+                    {getTrainingIcon()} {getTrainingButtonText()}
+                  </>
+                ) : (
+                  <><i className="fas fa-lock mr-[8px] text-[16px]"></i> Locked</>
+                )}
+              </button>
+            </div>
+            
+            <div className={`action-card ${trainingStatus === 'completed' ? 'bg-white border border-[#10B981]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${trainingStatus === 'completed' ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : ''}`}>
+              <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)] text-white flex items-center justify-center font-[600] text-[16px] z-[3] border-[3px] border-white`}>
+                3
+              </div>
+              {trainingStatus !== 'completed' && (
+                <div className="lock-icon absolute top-[-12px] right-[-12px] w-[32px] h-[32px] rounded-full bg-[#94A3B8] text-white flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.1)] z-[3] text-[14px]">
+                  <Lock size={14} />
+                </div>
+              )}
+              <div className={`action-icon ${
+                trainingStatus === 'completed' ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 'locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B] shadow-none'
+              } text-white flex items-center justify-center text-[30px] shadow-none relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
+                <i className="fas fa-user-friends"></i>
+              </div>
+              <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Schedule Interview</h3>
+              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Once your training is reviewed, you'll be able to schedule your interview with our team.</p>
+              {trainingStatus === 'completed' ? (
+                <button 
+                  onClick={handleScheduleInterview}
+                  className="card-button button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]"
+                >
+                  <CheckCircle className="mr-[8px] text-[16px]" /> Schedule Now
+                </button>
+              ) : (
+                <button className="card-button button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70">
+                  <i className="fas fa-lock mr-[8px] text-[16px]"></i> Locked
+                </button>
+              )}
+            </div>
+            
+            <div className={`action-card ${isProbationAgent ? 'bg-white border border-[#3b82f6]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${isProbationAgent ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(59,130,246,0.1)]' : ''}`}>
+              <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
+                isProbationAgent ? 'bg-gradient-to-r from-[#3b82f6] to-[#2563eb] shadow-[0_4px_10px_rgba(59,130,246,0.3)]' : 'bg-gradient-to-r from-[#94A3B8] to-[#64748B]'
+              } text-white flex items-center justify-center font-[600] text-[16px] shadow-none z-[3] border-[3px] border-white`}>
+                4
+              </div>
+              {!isProbationAgent && (
+                <div className="lock-icon absolute top-[-12px] right-[-12px] w-[32px] h-[32px] rounded-full bg-[#94A3B8] text-white flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.1)] z-[3] text-[14px]">
+                  <Lock size={14} />
+                </div>
+              )}
+              <div className={`action-icon ${
+                isProbationAgent ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#3b82f6] to-[#2563eb] shadow-[0_8px_20px_rgba(59,130,246,0.2)]' : 'locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B]'
+              } text-white flex items-center justify-center text-[30px] shadow-none relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
+                <GraduationCap size={30} />
+              </div>
+              <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Additional Training</h3>
+              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Complete required additional training modules to advance in your role.</p>
+              {isProbationAgent ? (
+                <button 
+                  id="additional-training-btn"
+                  onClick={openAdditionalTrainingModal}
+                  className="card-button p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(59,130,246,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(59,130,246,0.3)]"
+                >
+                  <GraduationCap className="mr-[8px] text-[16px]" /> Start Training
+                </button>
+              ) : (
+                <button className="card-button button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70">
+                  <i className="fas fa-lock mr-[8px] text-[16px]"></i> Locked
+                </button>
+              )}
+            </div>
+            
+            <div className="action-card locked bg-[rgba(241,245,249,0.5)] rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50 relative z-[2] h-full">
+              <div className="step-number locked absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B] text-white flex items-center justify-center font-[600] text-[16px] shadow-none z-[3] border-[3px] border-white">
+                5
+              </div>
+              <div className="lock-icon absolute top-[-12px] right-[-12px] w-[32px] h-[32px] rounded-full bg-[#94A3B8] text-white flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.1)] z-[3] text-[14px]">
+                <Lock size={14} />
+              </div>
+              <div className="action-icon locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B] text-white flex items-center justify-center text-[30px] shadow-none relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]">
+                <i className="fas fa-rocket"></i>
+              </div>
+              <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Kickoff & Setup</h3>
+              <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Add your banking info, join Discord, and complete final onboarding steps to get started.</p>
+              <button className="card-button button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70">
+                <i className="fas fa-lock mr-[8px] text-[16px]"></i> Locked
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <OnboardingModal 
+        isOpen={isModalOpen} 
+        onClose={closeOnboardingModal} 
+        user={user}
+        initialUserData={userProfile}
+      />
+
+      <TrainingModal 
+        isOpen={isTrainingModalOpen} 
+        onClose={closeTrainingModal}
+        onComplete={(passed) => closeTrainingModal(passed)}
+      />
+      
+      {isProbationAgent && (
+        <AdditionalTrainingModal 
+          isOpen={isProbationTrainingOpen} 
+          onClose={closeAdditionalTrainingModal} 
+        />
+      )}
+      
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Schedule Your Interview</DialogTitle>
+            <DialogDescription>
+              Please select a date and time that works for you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="w-full h-[700px] border rounded-lg mt-4">
+            <iframe
+              src="https://calendly.com/apolead-support/apolead-agent-interview"
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              title="Schedule Interview"
+              className="rounded-lg"
+            ></iframe>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default Dashboard;

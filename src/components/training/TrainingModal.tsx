@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
@@ -31,23 +32,32 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   useEffect(() => {
     if (!userProfile) return;
     
+    console.log("Training Modal - Initializing from user profile:", userProfile);
+    console.log("quiz_passed type:", typeof userProfile.quiz_passed, "value:", userProfile.quiz_passed);
+    console.log("training_video_watched type:", typeof userProfile.training_video_watched, "value:", userProfile.training_video_watched);
+    
     if (userProfile.quiz_passed === true) {
+      console.log("User has passed the quiz");
       setStep('result');
       setQuizPassed(true);
       setQuizScore(userProfile.quiz_score || 0);
     } else if (userProfile.quiz_passed === false) {
+      console.log("User has failed the quiz");
       setStep('result');
       setQuizPassed(false);
       setQuizScore(userProfile.quiz_score || 0);
     } else if (userProfile.training_video_watched === true) {
+      console.log("User has watched the video but not completed quiz");
       setStep('quiz');
     } else {
+      console.log("User has not started training yet");
       setStep('video');
     }
   }, [userProfile, isOpen]);
   
   const handleVideoComplete = async () => {
     try {
+      console.log("Video marked as complete");
       await updateProfile({
         training_video_watched: true
       });
@@ -59,11 +69,14 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   };
   
   const handleContinueToQuiz = () => {
+    console.log("User clicked continue to quiz");
     setStep('quiz');
   };
   
   const handleQuizComplete = async (passed: boolean, score: number) => {
     try {
+      console.log("Quiz completed. Passed:", passed, "Score:", score);
+      
       setQuizPassed(passed);
       setQuizScore(score);
       

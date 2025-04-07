@@ -246,7 +246,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       const calculatedAvgScore = Math.round(totalScore / scoreCount);
       setOverallScore(calculatedAvgScore);
       
-      if (completedCount === modules.length && modules.length > 0) {
+      if (completedCount === modules.length) {
         const allPassed = calculatedAvgScore >= 90;
         
         updateProfile({
@@ -342,15 +342,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       const nextModule = modules[currentIndex + 1];
       handleSelectModule(nextModule);
     } else {
-      const allPassed = overallScore >= 90;
-      updateProfile({
-        probation_training_completed: true,
-        probation_training_passed: allPassed
-      }).then(() => {
-        onClose();
-      }).catch(error => {
-        console.error("Error updating training status:", error);
-      });
+      onClose();
     }
   };
   
@@ -492,9 +484,9 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
                 <div className="mt-6">
                   <Button 
                     onClick={handleNextModule}
-                    className="px-6 py-2 rounded-full text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors"
+                    className="px-6 py-2 rounded-full text-white font-medium bg-purple-600 hover:bg-purple-700 transition-colors"
                   >
-                    {currentModule.module_order === modules.length ? "Submit" : "Continue to Next Module"}
+                    Continue to Next Module
                   </Button>
                 </div>
               </div>
