@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -362,7 +363,7 @@ const Dashboard = () => {
   }
   
   const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
-  const canAccessKickoffSetup = additionalTrainingStatus === 'completed';
+  const canAccessKickoffSetup = userProfile?.probation_training_passed === true;
   
   return (
     <div className="flex w-full min-h-screen bg-[#f8fafc]">
@@ -470,4 +471,117 @@ const Dashboard = () => {
         <div className="action-cards-container bg-white rounded-[20px] p-[25px] mb-[20px] shadow-[0_4px_15px_rgba(0,0,0,0.05)] relative overflow-hidden before:content-[''] before:absolute before:bottom-0 before:right-0 before:w-[200px] before:h-[200px] before:bg-radial-gradient before:from-[rgba(79,70,229,0.05)] before:to-[rgba(79,70,229,0)] before:rounded-0">
           <div className="action-cards-header flex justify-between items-center mb-[20px]">
             <h2 className="text-[20px] text-[#1e293b] flex items-center font-[600]">
-              <div className="header-icon mr-[10px] bg-gradient-to-r from-[#4
+              <div className="header-icon mr-[10px] bg-gradient-to-r from-[#4f46e5] to-[#00c2cb] text-white w-[28px] h-[28px] rounded-[8px] flex items-center justify-center text-[14px]">
+                <i className="fas fa-tasks"></i>
+              </div>
+              Required Actions
+            </h2>
+            <div className="text-[#64748b] text-[14px]">3/4 Pending</div>
+          </div>
+          
+          <div className="action-cards grid grid-cols-2 md:grid-cols-4 gap-[25px]">
+            <div className={`action-card rounded-[16px] p-[20px] flex flex-col justify-between min-h-[180px] shadow-[0_4px_10px_rgba(0,0,0,0.05)] transition-all relative overflow-hidden hover:transform hover:-translate-y-[5px] hover:shadow-[0_8px_15px_rgba(0,0,0,0.1)] border ${onboardingStatus === 'completed' ? 'border-[#10B981]' : onboardingStatus === 'ineligible' ? 'border-[#ef4444]' : 'border-[#f59e0b]'}`}>
+              <div className="card-icon-top absolute top-[-15px] right-[-15px] text-[80px] opacity-[0.03] transform rotate-12">
+                <i className="fas fa-user-circle"></i>
+              </div>
+              <div className="card-content">
+                <div className="card-title font-[600] text-[18px] text-[#1e293b] mb-[12px]">Personal Information</div>
+                <div className="card-desc text-[14px] text-[#64748b] mb-[15px]">Complete your profile details and eligibility questions</div>
+              </div>
+              <button onClick={openOnboardingModal} className={getOnboardingButtonStyle()}>
+                {getOnboardingIcon()}
+                {getOnboardingButtonText()}
+              </button>
+            </div>
+            
+            <div className={`action-card rounded-[16px] p-[20px] flex flex-col justify-between min-h-[180px] shadow-[0_4px_10px_rgba(0,0,0,0.05)] transition-all relative overflow-hidden hover:transform hover:-translate-y-[5px] hover:shadow-[0_8px_15px_rgba(0,0,0,0.1)] border ${trainingStatus === 'completed' ? 'border-[#10B981]' : trainingStatus === 'failed' ? 'border-[#ef4444]' : 'border-[#f59e0b]'}`}>
+              <div className="card-icon-top absolute top-[-15px] right-[-15px] text-[80px] opacity-[0.03] transform rotate-12">
+                <i className="fas fa-graduation-cap"></i>
+              </div>
+              <div className="card-content">
+                <div className="card-title font-[600] text-[18px] text-[#1e293b] mb-[12px]">Basic Training</div>
+                <div className="card-desc text-[14px] text-[#64748b] mb-[15px]">Complete the basic training requirements</div>
+              </div>
+              <button 
+                onClick={trainingStatus === 'completed' ? () => {} : openTrainingModal} 
+                disabled={trainingStatus === 'completed'} 
+                className={getTrainingButtonStyle()}
+              >
+                {getTrainingIcon()}
+                {getTrainingButtonText()}
+              </button>
+            </div>
+            
+            <div className={`action-card rounded-[16px] p-[20px] flex flex-col justify-between min-h-[180px] shadow-[0_4px_10px_rgba(0,0,0,0.05)] transition-all relative overflow-hidden hover:transform hover:-translate-y-[5px] hover:shadow-[0_8px_15px_rgba(0,0,0,0.1)] ${getAdditionalTrainingCardStyle()}`}>
+              <div className="card-icon-top absolute top-[-15px] right-[-15px] text-[80px] opacity-[0.03] transform rotate-12">
+                <i className="fas fa-book"></i>
+              </div>
+              <div className="card-content">
+                <div className="card-title font-[600] text-[18px] text-[#1e293b] mb-[12px]">Additional Training</div>
+                <div className="card-desc text-[14px] text-[#64748b] mb-[15px]">Complete advanced ReadyMode training modules</div>
+              </div>
+              <button 
+                onClick={additionalTrainingStatus === 'completed' || additionalTrainingStatus === 'waitlisted' ? () => {} : openAdditionalTrainingModal}
+                className={getAdditionalTrainingButtonStyle()}>
+                {getAdditionalTrainingIcon()}
+                {getAdditionalTrainingButtonText()}
+              </button>
+            </div>
+            
+            <div className="action-card rounded-[16px] p-[20px] flex flex-col justify-between min-h-[180px] shadow-[0_4px_10px_rgba(0,0,0,0.05)] bg-white transition-all relative overflow-hidden hover:transform hover:-translate-y-[5px] hover:shadow-[0_8px_15px_rgba(0,0,0,0.1)] border border-[#e2e8f0] opacity-90">
+              <div className="card-icon-top absolute top-[-15px] right-[-15px] text-[80px] opacity-[0.03] transform rotate-12">
+                <i className="fas fa-rocket"></i>
+              </div>
+              <div className="card-content">
+                <div className="card-title font-[600] text-[18px] text-[#1e293b] mb-[12px]">Kickoff & Setup</div>
+                <div className="card-desc text-[14px] text-[#64748b] mb-[15px]">Schedule your kickoff call and get started</div>
+              </div>
+              {canAccessKickoffSetup ? (
+                <button className="p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]">
+                  <i className="fas fa-calendar-alt mr-[8px] text-[16px]"></i>
+                  Schedule Now
+                </button>
+              ) : (
+                <div className="p-[12px_24px] rounded-[12px] bg-[#e2e8f0] text-[#64748b] border-0 cursor-not-allowed font-[500] w-full flex items-center justify-center text-[14px]">
+                  <Lock className="mr-[8px] text-[16px]" />
+                  Complete Training First
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Modals */}
+      <OnboardingModal 
+        isOpen={isModalOpen} 
+        onClose={closeOnboardingModal}
+      />
+      
+      <TrainingModal
+        isOpen={isTrainingModalOpen}
+        onClose={closeTrainingModal}
+      />
+      
+      <AdditionalTrainingModal
+        isOpen={isProbationTrainingOpen}
+        onClose={closeAdditionalTrainingModal}
+      />
+      
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Schedule Your Kickoff Interview</DialogTitle>
+            <DialogDescription>
+              Select a time that works for you to meet with our team.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="calendly-inline-widget" data-url="https://calendly.com/readymode/interview" style={{ minWidth: '320px', height: '600px' }}></div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default Dashboard;
