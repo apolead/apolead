@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -51,7 +50,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
   const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
 
   return (
-    <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <div className="sidebar ${collapsed ? 'collapsed' : ''}">
       <div className="logo">
         <h1 style={{ fontSize: '28px', fontWeight: 700 }}>
           <span style={{ color: '#00c2cb' }}>Apo</span><span style={{ color: '#4f46e5' }}>Lead</span>
@@ -100,11 +99,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
           <Link to="/dashboard" 
                 onClick={(e) => { 
                   e.preventDefault(); 
-                  document.getElementById('probation-training-btn')?.click(); 
+                  document.getElementById('additional-training-btn')?.click(); 
                 }} 
                 className={`nav-item ${activeItem === 'probation-training' ? 'active' : ''}`}>
             <GraduationCap size={18} />
-            <span>Probation Training</span>
+            <span>Additional Training</span>
           </Link>
         )}
         
