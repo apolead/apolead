@@ -102,12 +102,12 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           onClick={handleComplete}
           className={
             isCompleted 
-              ? "text-white" 
+              ? "bg-purple-600 text-white hover:bg-purple-700" 
               : isPending 
                 ? "bg-yellow-400 text-black hover:bg-yellow-500" 
                 : "bg-blue-500 text-white hover:bg-blue-600"
           }
-          variant={isCompleted ? "default" : "default"}
+          variant="default"
         >
           {isCompleted ? "Continue to Next Module" : "Mark as Completed"}
         </Button>

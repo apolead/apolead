@@ -9,7 +9,7 @@ import { ProbationTrainingQuestion } from '@/types/probation-training';
 
 interface AdditionalTrainingQuizProps {
   questions: ProbationTrainingQuestion[];
-  onComplete: (passed: boolean, score: number) => void;
+  onComplete: (score: number) => void;
 }
 
 const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({ 
@@ -66,12 +66,11 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
     });
     
     const scorePercentage = Math.round((correctCount / questions.length) * 100);
-    const passed = scorePercentage >= 70; // Passing score is 70%
-    
-    console.log('Quiz completed. Passed:', passed, 'Score:', scorePercentage);
+    console.log('Quiz completed. Score:', scorePercentage);
     console.log('Answers submitted:', answers);
     
-    onComplete(passed, scorePercentage);
+    // We're not determining pass/fail per module anymore
+    onComplete(scorePercentage);
   };
   
   const currentAnswer = answers[currentQuestion?.id] !== undefined 
@@ -83,7 +82,7 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Module Quiz</h3>
         <p className="text-sm text-gray-500">
-          Please answer all questions to complete this training module. You must score at least 70% to pass.
+          Please answer all questions to complete this training module.
         </p>
         
         <div className="flex justify-between items-center">
@@ -146,7 +145,7 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
           type="button" 
           onClick={handleNext}
           disabled={answers[currentQuestion.id] === undefined}
-          className="px-6 text-white"
+          className="px-6 text-white bg-purple-600 hover:bg-purple-700"
         >
           {isLastQuestion ? (
             'Submit Quiz'

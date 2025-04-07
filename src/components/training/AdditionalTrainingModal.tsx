@@ -28,7 +28,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'video' | 'quiz' | 'result'>('video');
-  const [quizPassed, setQuizPassed] = useState<boolean | null>(null);
   const [quizScore, setQuizScore] = useState<number>(0);
   const [userProgress, setUserProgress] = useState<Record<string, UserProbationProgress>>({});
   const [overallScore, setOverallScore] = useState<number>(0);
@@ -190,7 +189,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     }
   };
 
-  // New function to automatically complete a module when it has no questions
+  // Handle module completion when it has no questions
   const handleModuleAutoComplete = async () => {
     if (!user?.id || !currentModule) return;
     
@@ -199,7 +198,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       const { error } = await supabase
         .from('user_probation_progress')
         .update({
-          passed: true,
+          passed: null, // We're not tracking per-module passing anymore
           score: 100,
           completed: true,
           updated_at: new Date().toISOString()
@@ -216,7 +215,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
           ...prev[currentModule.id],
           user_id: user.id,
           module_id: currentModule.id,
-          passed: true,
+          passed: null, // Not tracking per-module pass/fail
           score: 100,
           completed: true
         }
@@ -228,7 +227,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         [currentModule.id]: {
           user_id: user.id,
           module_id: currentModule.id,
-          passed: true,
+          passed: null, // Not tracking per-module pass/fail 
           score: 100,
           completed: true
         }
@@ -281,11 +280,10 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     }
   };
   
-  const handleQuizComplete = async (passed: boolean, score: number) => {
+  const handleQuizComplete = async (score: number) => {
     if (!user?.id || !currentModule) return;
     
     try {
-      setQuizPassed(passed);
       setQuizScore(score);
       
       const progress = userProgress[currentModule.id];
@@ -295,7 +293,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         const { error } = await supabase
           .from('user_probation_progress')
           .update({
-            passed,
+            passed: null, // Not tracking per-module pass/fail anymore
             score,
             completed: true,
             updated_at: new Date().toISOString()
@@ -311,7 +309,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
           .insert({
             user_id: user.id,
             module_id: currentModule.id,
-            passed,
+            passed: null, // Not tracking per-module pass/fail anymore
             score,
             completed: true
           });
@@ -326,7 +324,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
           ...userProgress[currentModule.id],
           user_id: user.id,
           module_id: currentModule.id,
-          passed,
+          passed: null, // Not tracking per-module pass/fail
           score,
           completed: true
         }
@@ -343,13 +341,11 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   
   const handleSelectModule = (module: ProbationTrainingModule) => {
     setCurrentModule(module);
-    setQuizPassed(null);
     setQuizScore(0);
     
     // If the module is already completed, go to the result screen
     const moduleProgress = userProgress[module.id];
     if (moduleProgress && moduleProgress.completed) {
-      setQuizPassed(moduleProgress.passed || false);
       setQuizScore(moduleProgress.score || 0);
       setStep('result');
     } else {
@@ -381,10 +377,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     return userProgress[moduleId]?.completed === true;
   };
   
-  const isModulePassed = (moduleId: string) => {
-    return userProgress[moduleId]?.passed === true;
-  };
-  
   const isCurrentModuleInProgress = (moduleId: string) => {
     return currentModule?.id === moduleId && !isModuleCompleted(moduleId);
   };
@@ -401,10 +393,9 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
               className={`
                 p-3 rounded-lg cursor-pointer flex items-center justify-between
                 ${currentModule?.id === module.id ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 hover:bg-gray-100'}
-                ${isModuleCompleted(module.id) && isModulePassed(module.id) ? 'border-l-4 border-l-green-500' : ''}
-                ${isModuleCompleted(module.id) && !isModulePassed(module.id) ? 'border-l-4 border-l-red-500' : ''}
+                ${isModuleCompleted(module.id) ? 'border-l-4 border-l-green-500' : ''}
                 ${isCurrentModuleInProgress(module.id) ? 'border-l-4 border-l-yellow-400' : ''}
-                ${!isModuleCompleted(module.id) && !isCurrentModuleInProgress(module.id) ? 'border-l-4 border-l-gray-300' : ''}
+                ${!isModuleCompleted(module.id) && !isCurrentModuleInProgress(module.id) ? 'border-l-4 border-l-yellow-300' : ''}
               `}
             >
               <div>
@@ -416,24 +407,14 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
                 </div>
                 {isModuleCompleted(module.id) && (
                   <div className="ml-8 text-sm mt-1">
-                    {isModulePassed(module.id) ? (
-                      <span className="text-green-600 flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3" /> Completed
-                      </span>
-                    ) : (
-                      <span className="text-red-600 flex items-center gap-1">
-                        <XCircle className="h-3 w-3" /> Failed
-                      </span>
-                    )}
+                    <span className="text-green-600 flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" /> Completed
+                    </span>
                   </div>
                 )}
               </div>
               {isModuleCompleted(module.id) ? (
-                isModulePassed(module.id) ? (
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-red-500" />
-                )
+                <CheckCircle className="h-5 w-5 text-green-500" />
               ) : (
                 isCurrentModuleInProgress(module.id) && 
                 <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
@@ -501,12 +482,14 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
               )}
             </div>
             
-            <AdditionalTrainingVideo 
-              videoUrl={currentModule.video_url}
-              onComplete={handleVideoComplete}
-              isCompleted={userProgress[currentModule.id]?.completed === true}
-              isPending={isCurrentModuleInProgress(currentModule.id)}
-            />
+            {step === 'video' && (
+              <AdditionalTrainingVideo 
+                videoUrl={currentModule.video_url}
+                onComplete={handleVideoComplete}
+                isCompleted={userProgress[currentModule.id]?.completed === true}
+                isPending={isCurrentModuleInProgress(currentModule.id)}
+              />
+            )}
             
             {step === 'quiz' && questions.length > 0 && (
               <div className="mt-8">
@@ -519,49 +502,25 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
             
             {step === 'result' && (
               <div className="text-center py-6 mt-8">
-                {quizPassed ? (
-                  <>
-                    <div className="flex justify-center mb-4">
-                      <CheckCircle className="h-20 w-20 text-green-500" />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4 text-green-600">
-                      Module Completed
-                    </h3>
-                    <p className="text-lg mb-4">
-                      You completed this training module successfully!
-                    </p>
-                    
-                    <div className="mt-6">
-                      <Button 
-                        onClick={handleNextModule}
-                        className="px-6 py-2 rounded-full text-white font-medium bg-green-600 hover:bg-green-700 transition-colors"
-                      >
-                        Continue to Next Module
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex justify-center mb-4">
-                      <XCircle className="h-20 w-20 text-red-500" />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-4 text-red-600">
-                      Module Not Passed
-                    </h3>
-                    <p className="text-lg mb-4">
-                      You did not pass this training module.
-                    </p>
-                    
-                    <div className="mt-6">
-                      <Button 
-                        onClick={handleNextModule}
-                        className="px-6 py-2 rounded-full text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors"
-                      >
-                        Continue to Next Module
-                      </Button>
-                    </div>
-                  </>
-                )}
+                <div className="flex justify-center mb-6">
+                  {/* We don't show pass/fail for individual modules anymore */}
+                  <CheckCircle className="h-20 w-20 text-green-500" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-green-600">
+                  Module Completed
+                </h3>
+                <p className="text-lg mb-4">
+                  You have completed this training module!
+                </p>
+                
+                <div className="mt-6">
+                  <Button 
+                    onClick={handleNextModule}
+                    className="px-6 py-2 rounded-full text-white font-medium bg-purple-600 hover:bg-purple-700 transition-colors"
+                  >
+                    Continue to Next Module
+                  </Button>
+                </div>
               </div>
             )}
           </ScrollArea>
