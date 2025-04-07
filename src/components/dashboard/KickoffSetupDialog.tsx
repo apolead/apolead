@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { BanknotesIcon, DiscordLogoIcon } from '@radix-ui/react-icons';
+import { BanknotesIcon, DiscordLogoIcon } from 'lucide-react';
 
 interface KickoffSetupDialogProps {
   isOpen: boolean;

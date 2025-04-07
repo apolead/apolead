@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -81,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (error) {
           console.error('Error fetching user profile:', error);
         } else if (data) {
-          setUserProfile(data);
+          setUserProfile(data as UserProfile);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -206,7 +207,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .single();
           
         if (error) throw error;
-        result = data;
+        result = data as UserProfile;
       } else {
         const { data, error } = await supabase
           .from('user_profiles')
@@ -215,7 +216,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .single();
           
         if (error) throw error;
-        result = data;
+        result = data as UserProfile;
       }
       
       setUserProfile(result);
@@ -237,8 +238,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
         
       if (error) throw error;
-      setUserProfile(data);
-      return data;
+      setUserProfile(data as UserProfile);
+      return data as UserProfile;
     } catch (error) {
       console.error('Error refreshing user profile:', error);
       throw error;

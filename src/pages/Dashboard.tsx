@@ -8,6 +8,7 @@ import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
 import AdditionalTrainingModal from '@/components/training/AdditionalTrainingModal';
 import KickoffSetupDialog from '@/components/dashboard/KickoffSetupDialog';
+import CompletionDialog from '@/components/training/CompletionDialog';
 import { 
   CheckCircle,
   ChevronDown,
@@ -304,6 +305,14 @@ const Dashboard = () => {
   const isProbationPassed = isProbationComplete && probationScore >= 80;
   const minRequiredScore = 80;
   
+  const openKickoffDialog = () => {
+    setShowKickoffDialog(true);
+  };
+  
+  const closeKickoffDialog = () => {
+    setShowKickoffDialog(false);
+  };
+  
   return (
     <div className="flex w-full min-h-screen bg-[#f8fafc]">
       <DashboardSidebar activeItem="dashboard" />
@@ -497,7 +506,11 @@ const Dashboard = () => {
               </button>
             </div>
             
-            <div className={`action-card ${trainingStatus === 'completed' ? 'bg-white border border-[#10B981]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${trainingStatus === 'completed' ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : ''}`}>
+            <div className={`action-card ${trainingStatus === 'completed' ? 'bg-white border border-[#10B981]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} ${
+              isProbationComplete ? (
+                isProbationPassed ? 'border-[#10B981]' : 'border-[#ef4444]'
+              ) : 'border-[#3b82f6]'
+            } rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${trainingStatus === 'completed' ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : ''}`}>
               <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)] text-white flex items-center justify-center font-[600] text-[16px] z-[3] border-[3px] border-white`}>
                 3
               </div>
