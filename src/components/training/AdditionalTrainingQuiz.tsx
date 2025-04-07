@@ -80,7 +80,7 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">Module Quiz</h3>
+        {/* Removed the duplicate "Module Quiz" heading since it's already in AdditionalTrainingModal.tsx */}
         <p className="text-sm text-gray-500">
           Please answer all questions to complete this training module.
         </p>
@@ -97,7 +97,7 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
                   index < currentQuestionIndex 
                     ? 'bg-green-500' 
                     : index === currentQuestionIndex 
-                      ? 'bg-blue-500' 
+                      ? 'bg-purple-600' 
                       : 'bg-gray-200'
                 }`}
               />
