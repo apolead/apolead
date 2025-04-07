@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
 import ProbationTrainingModal from '@/components/training/ProbationTrainingModal';
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
@@ -16,25 +16,21 @@ const Dashboard = () => {
   const [showProbationTraining, setShowProbationTraining] = useState(false);
   const [isOnProbation, setIsOnProbation] = useState(false);
   
-  // Check if user is on probation
   useEffect(() => {
     const checkProbationStatus = async () => {
       if (!user?.id) return;
       
       try {
-        // Use a direct query instead of RPC function to avoid type issues
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('agent_standing')
-          .eq('user_id', user.id)
-          .single();
+        const { data, error } = await supabase.rpc('is_user_on_probation', {
+          input_user_id: user.id
+        });
         
         if (error) {
           console.error("Error checking probation status:", error);
           return;
         }
         
-        setIsOnProbation(data?.agent_standing === 'Probation');
+        setIsOnProbation(!!data);
       } catch (error) {
         console.error("Exception checking probation status:", error);
       }
@@ -60,22 +56,26 @@ const Dashboard = () => {
       // If they've answered "No" to any questions and tried to open onboarding
       if (hasAnsweredNo && showOnboarding) {
         setShowOnboarding(false);
-        toast.error(
-          "Not Eligible", 
-          { description: "You've answered 'No' to one or more required questions and are not eligible to continue." }
-        );
+        toast({
+          title: "Not Eligible",
+          description: "You've answered 'No' to one or more required questions and are not eligible to continue.",
+          variant: "destructive"
+        });
       }
     }
   }, [showOnboarding, userProfile]);
   
   const handleTrainingComplete = (passed: boolean) => {
     if (passed) {
-      toast.success("Training Completed", {
+      toast({
+        title: "Training Completed",
         description: "You have successfully completed the initial training.",
       });
     } else {
-      toast.error("Training Not Completed", {
+      toast({
+        title: "Training Not Completed",
         description: "Please try the training quiz again later.",
+        variant: "destructive"
       });
     }
   };
@@ -142,7 +142,8 @@ const Dashboard = () => {
     if (!userProfile) return;
     
     if (userProfile.onboarding_completed) {
-      toast.info("Onboarding Completed", {
+      toast({
+        title: "Onboarding Completed",
         description: "You have already completed the onboarding process."
       });
       return;
@@ -160,8 +161,10 @@ const Dashboard = () => {
       );
       
       if (hasAnsweredNo) {
-        toast.error("Not Eligible", {
+        toast({
+          title: "Not Eligible",
           description: "You've answered 'No' to one or more required questions and are not eligible to continue.",
+          variant: "destructive"
         });
         return;
       }
