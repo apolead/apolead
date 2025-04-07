@@ -5,14 +5,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Check, ChevronRight } from 'lucide-react';
-import { ProbationTrainingQuestion } from '@/types/probation-training';
+import { AdditionalTrainingQuestion } from '@/types/additional-training';
 
-interface ProbationTrainingQuizProps {
-  questions: ProbationTrainingQuestion[];
+interface AdditionalTrainingQuizProps {
+  questions: AdditionalTrainingQuestion[];
   onComplete: (passed: boolean, score: number) => void;
 }
 
-const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({ 
+const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({ 
   questions, 
   onComplete 
 }) => {
@@ -66,7 +66,7 @@ const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({
     });
     
     const scorePercentage = Math.round((correctCount / questions.length) * 100);
-    const passed = scorePercentage >= 70; // Passing score is 70%
+    const passed = scorePercentage >= 70; // Passing score is 70% per module
     
     console.log('Quiz completed. Passed:', passed, 'Score:', scorePercentage);
     console.log('Answers submitted:', answers);
@@ -162,4 +162,4 @@ const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({
   );
 };
 
-export default ProbationTrainingQuiz;
+export default AdditionalTrainingQuiz;
