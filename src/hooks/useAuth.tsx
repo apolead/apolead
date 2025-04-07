@@ -156,8 +156,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) throw new Error('User must be logged in to update profile');
     
     try {
-      console.log("Updating profile with:", updates);
-      
       const { data: existingProfile, error: fetchError } = await supabase
         .from('user_profiles')
         .select('*')
@@ -202,16 +200,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const profileData = {
         ...updates,
         user_id: user.id,
+        onboarding_completed,
+        eligible_for_training
       };
-      
-      // Only set these fields if they're not already in updates
-      if (!('onboarding_completed' in updates)) {
-        profileData.onboarding_completed = onboarding_completed;
-      }
-      
-      if (!('eligible_for_training' in updates)) {
-        profileData.eligible_for_training = eligible_for_training;
-      }
       
       let result;
       if (existingProfile) {

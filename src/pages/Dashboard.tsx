@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -37,7 +36,6 @@ const Dashboard = () => {
   const [onboardingProgress, setOnboardingProgress] = useState(20);
   const [onboardingStatus, setOnboardingStatus] = useState('not_started');
   const [trainingStatus, setTrainingStatus] = useState('not_started');
-  const [additionalTrainingStatus, setAdditionalTrainingStatus] = useState('not_started');
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const navigate = useNavigate();
@@ -94,17 +92,6 @@ const Dashboard = () => {
         setTrainingStatus('not_started');
       }
       
-      // Set additional training status
-      if (userProfile.probation_training_completed === true) {
-        if (userProfile.probation_training_passed === true) {
-          setAdditionalTrainingStatus('completed');
-        } else {
-          setAdditionalTrainingStatus('waitlisted');
-        }
-      } else {
-        setAdditionalTrainingStatus('not_started');
-      }
-      
       console.log("Dashboard: Eligibility check", {
         isOnboardingCompletedFlag,
         isEligible,
@@ -112,7 +99,6 @@ const Dashboard = () => {
         eligible_for_training_type: typeof userProfile.eligible_for_training,
         onboarding_completed_type: typeof userProfile.onboarding_completed,
         trainingStatus,
-        additionalTrainingStatus,
         quiz_passed: userProfile.quiz_passed,
         quiz_passed_type: typeof userProfile.quiz_passed,
         probation_training_completed: userProfile.probation_training_completed,
@@ -215,8 +201,6 @@ const Dashboard = () => {
   const closeAdditionalTrainingModal = () => {
     setIsProbationTrainingOpen(false);
     refreshUserProfile();
-    // Reset the processed flag to force re-evaluation of the profile
-    processedProfileRef.current = false;
   };
   
   const handleScheduleInterview = () => {
@@ -296,40 +280,6 @@ const Dashboard = () => {
         return <XCircle className="mr-[8px] text-[16px]" />;
       default:
         return <CheckCircle className="mr-[8px] text-[16px]" />;
-    }
-  };
-
-  // Additional Training button text and style
-  const getAdditionalTrainingButtonText = () => {
-    switch (additionalTrainingStatus) {
-      case 'completed':
-        return 'Training Completed';
-      case 'waitlisted':
-        return 'Waitlisted';
-      default:
-        return 'Start Training';
-    }
-  };
-  
-  const getAdditionalTrainingButtonStyle = () => {
-    switch (additionalTrainingStatus) {
-      case 'completed':
-        return 'button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]';
-      case 'waitlisted':
-        return 'button-waitlisted p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(245,158,11,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(245,158,11,0.3)]';
-      default:
-        return 'button-primary p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#4f46e5] to-[#3b82f6] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(79,70,229,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(79,70,229,0.3)]';
-    }
-  };
-  
-  const getAdditionalTrainingIcon = () => {
-    switch (additionalTrainingStatus) {
-      case 'completed':
-        return <CheckCircle className="mr-[8px] text-[16px]" />;
-      case 'waitlisted':
-        return <AlertTriangle className="mr-[8px] text-[16px]" />;
-      default:
-        return null;
     }
   };
   
@@ -487,182 +437,4 @@ const Dashboard = () => {
                 1
               </div>
               <div className={`action-icon w-[80px] h-[80px] rounded-full ${
-                onboardingStatus === 'completed' ? 'bg-[rgba(16,185,129,0.1)]' : 
-                onboardingStatus === 'ineligible' ? 'bg-[rgba(239,68,68,0.1)]' : 
-                'bg-[rgba(245,158,11,0.1)]'
-              } flex items-center justify-center mb-[20px]`}>
-                <i className={`fas fa-user-check text-[32px] ${
-                  onboardingStatus === 'completed' ? 'text-[#10B981]' : 
-                  onboardingStatus === 'ineligible' ? 'text-[#ef4444]' : 
-                  'text-[#f59e0b]'
-                }`}></i>
-              </div>
-              <h3 className="text-[18px] font-[600] text-[#1e293b] mb-[10px]">Complete Onboarding</h3>
-              <p className="text-[14px] text-[#64748b] mb-[20px]">Set up your profile and complete the required information.</p>
-              <button 
-                onClick={openOnboardingModal}
-                className={getOnboardingButtonStyle()}
-                disabled={onboardingStatus === 'completed' || onboardingStatus === 'ineligible'}
-              >
-                {getOnboardingIcon()}
-                {getOnboardingButtonText()}
-              </button>
-            </div>
-            
-            <div className={`action-card bg-white rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border ${trainingStatus === 'completed' || trainingStatus === 'failed' ? 'border-[#e2e8f0]' : onboardingStatus !== 'completed' ? 'border-[#e2e8f0]' : 'border-[#4f46e5]'} shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all h-full hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.1)]`}>
-              <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
-                trainingStatus === 'completed' ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 
-                trainingStatus === 'failed' ? 'bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_4px_10px_rgba(239,68,68,0.3)]' : 
-                onboardingStatus !== 'completed' ? 'bg-gradient-to-r from-[#94a3b8] to-[#64748b] shadow-[0_4px_10px_rgba(148,163,184,0.3)]' :
-                'bg-gradient-to-r from-[#4f46e5] to-[#3b82f6] shadow-[0_4px_10px_rgba(79,70,229,0.3)]'
-              } text-white flex items-center justify-center font-[600] text-[16px] z-[3] border-[3px] border-white`}>
-                2
-              </div>
-              <div className={`action-icon w-[80px] h-[80px] rounded-full ${
-                trainingStatus === 'completed' ? 'bg-[rgba(16,185,129,0.1)]' : 
-                trainingStatus === 'failed' ? 'bg-[rgba(239,68,68,0.1)]' : 
-                onboardingStatus !== 'completed' ? 'bg-[rgba(148,163,184,0.1)]' :
-                'bg-[rgba(79,70,229,0.1)]'
-              } flex items-center justify-center mb-[20px]`}>
-                <i className={`fas fa-book text-[32px] ${
-                  trainingStatus === 'completed' ? 'text-[#10B981]' : 
-                  trainingStatus === 'failed' ? 'text-[#ef4444]' : 
-                  onboardingStatus !== 'completed' ? 'text-[#94a3b8]' :
-                  'text-[#4f46e5]'
-                }`}></i>
-              </div>
-              <h3 className="text-[18px] font-[600] text-[#1e293b] mb-[10px]">Complete Training</h3>
-              <p className="text-[14px] text-[#64748b] mb-[20px]">Watch the training video and complete the quiz.</p>
-              <button 
-                onClick={openTrainingModal}
-                className={getTrainingButtonStyle()}
-                disabled={onboardingStatus !== 'completed' || trainingStatus === 'completed' || trainingStatus === 'failed'}
-              >
-                {getTrainingIcon()}
-                {getTrainingButtonText()}
-              </button>
-            </div>
-            
-            <div className={`action-card bg-white rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border ${
-              trainingStatus !== 'completed' ? 'border-[#e2e8f0]' : 
-              additionalTrainingStatus === 'completed' || additionalTrainingStatus === 'waitlisted' ? 'border-[#e2e8f0]' : 
-              'border-[#4f46e5]'
-            } shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all h-full hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.1)]`}>
-              <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
-                additionalTrainingStatus === 'completed' ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 
-                additionalTrainingStatus === 'waitlisted' ? 'bg-gradient-to-r from-[#f59e0b] to-[#d97706] shadow-[0_4px_10px_rgba(245,158,11,0.3)]' : 
-                trainingStatus !== 'completed' ? 'bg-gradient-to-r from-[#94a3b8] to-[#64748b] shadow-[0_4px_10px_rgba(148,163,184,0.3)]' :
-                'bg-gradient-to-r from-[#4f46e5] to-[#3b82f6] shadow-[0_4px_10px_rgba(79,70,229,0.3)]'
-              } text-white flex items-center justify-center font-[600] text-[16px] z-[3] border-[3px] border-white`}>
-                4
-              </div>
-              <div className={`action-icon w-[80px] h-[80px] rounded-full ${
-                additionalTrainingStatus === 'completed' ? 'bg-[rgba(16,185,129,0.1)]' : 
-                additionalTrainingStatus === 'waitlisted' ? 'bg-[rgba(245,158,11,0.1)]' : 
-                trainingStatus !== 'completed' ? 'bg-[rgba(148,163,184,0.1)]' :
-                'bg-[rgba(79,70,229,0.1)]'
-              } flex items-center justify-center mb-[20px]`}>
-                <i className={`fas fa-graduation-cap text-[32px] ${
-                  additionalTrainingStatus === 'completed' ? 'text-[#10B981]' : 
-                  additionalTrainingStatus === 'waitlisted' ? 'text-[#f59e0b]' : 
-                  trainingStatus !== 'completed' ? 'text-[#94a3b8]' :
-                  'text-[#4f46e5]'
-                }`}></i>
-              </div>
-              <h3 className="text-[18px] font-[600] text-[#1e293b] mb-[10px]">Additional Training</h3>
-              <p className="text-[14px] text-[#64748b] mb-[20px]">Complete required additional training modules to advance in your role.</p>
-              <button 
-                onClick={openAdditionalTrainingModal}
-                className={getAdditionalTrainingButtonStyle()}
-                disabled={trainingStatus !== 'completed'}
-              >
-                {getAdditionalTrainingIcon()}
-                {getAdditionalTrainingButtonText()}
-              </button>
-            </div>
-            
-            <div className={`action-card bg-white rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border border-[#e2e8f0] shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all h-full hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.1)]`}>
-              <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
-                showInterviewScheduler ? 'bg-gradient-to-r from-[#4f46e5] to-[#3b82f6] shadow-[0_4px_10px_rgba(79,70,229,0.3)]' : 
-                'bg-gradient-to-r from-[#94a3b8] to-[#64748b] shadow-[0_4px_10px_rgba(148,163,184,0.3)]'
-              } text-white flex items-center justify-center font-[600] text-[16px] z-[3] border-[3px] border-white`}>
-                3
-              </div>
-              <div className={`action-icon w-[80px] h-[80px] rounded-full ${
-                showInterviewScheduler ? 'bg-[rgba(79,70,229,0.1)]' : 'bg-[rgba(148,163,184,0.1)]'
-              } flex items-center justify-center mb-[20px]`}>
-                <i className={`fas fa-comments text-[32px] ${
-                  showInterviewScheduler ? 'text-[#4f46e5]' : 'text-[#94a3b8]'
-                }`}></i>
-              </div>
-              <h3 className="text-[18px] font-[600] text-[#1e293b] mb-[10px]">Schedule Interview</h3>
-              <p className="text-[14px] text-[#64748b] mb-[20px]">Once your training is reviewed, you'll be able to schedule your interview with our team.</p>
-              <button 
-                onClick={handleScheduleInterview}
-                className={`p-[12px_24px] rounded-[12px] bg-gradient-to-r ${
-                  showInterviewScheduler ? 'from-[#10B981] to-[#059669] cursor-pointer' : 'from-[#94a3b8] to-[#64748b] cursor-not-allowed opacity-60'
-                } text-white border-0 font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(148,163,184,0.2)]`}
-                disabled={!showInterviewScheduler}
-              >
-                {showInterviewScheduler && <CheckCircle className="mr-[8px] text-[16px]" />}
-                {showInterviewScheduler ? 'Schedule Now' : 'Locked'}
-              </button>
-            </div>
-            
-            <div className={`action-card bg-white rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border border-[#e2e8f0] shadow-[0_4px_15px_rgba(0,0,0,0.05)] transition-all h-full hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(0,0,0,0.1)]`}>
-              <div className={`step-number absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${
-                additionalTrainingStatus === 'completed' ? 'bg-gradient-to-r from-[#4f46e5] to-[#3b82f6] shadow-[0_4px_10px_rgba(79,70,229,0.3)]' : 
-                'bg-gradient-to-r from-[#94a3b8] to-[#64748b] shadow-[0_4px_10px_rgba(148,163,184,0.3)]'
-              } text-white flex items-center justify-center font-[600] text-[16px] z-[3] border-[3px] border-white`}>
-                5
-              </div>
-              <div className={`action-icon w-[80px] h-[80px] rounded-full ${
-                additionalTrainingStatus === 'completed' ? 'bg-[rgba(79,70,229,0.1)]' : 'bg-[rgba(148,163,184,0.1)]'
-              } flex items-center justify-center mb-[20px]`}>
-                <i className={`fas fa-rocket text-[32px] ${
-                  additionalTrainingStatus === 'completed' ? 'text-[#4f46e5]' : 'text-[#94a3b8]'
-                }`}></i>
-              </div>
-              <h3 className="text-[18px] font-[600] text-[#1e293b] mb-[10px]">Kickoff & Setup</h3>
-              <p className="text-[14px] text-[#64748b] mb-[20px]">Add your banking info, join Discord, and complete final onboarding steps to get started.</p>
-              <button 
-                className={`p-[12px_24px] rounded-[12px] bg-gradient-to-r ${
-                  additionalTrainingStatus === 'completed' ? 'from-[#4f46e5] to-[#3b82f6] cursor-pointer' : 'from-[#94a3b8] to-[#64748b] cursor-not-allowed opacity-60'
-                } text-white border-0 font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(148,163,184,0.2)]`}
-                disabled={additionalTrainingStatus !== 'completed'}
-              >
-                {additionalTrainingStatus === 'completed' ? 'Get Started' : <Lock className="mr-[8px] text-[16px]" />}
-                {additionalTrainingStatus === 'completed' ? '' : 'Locked'}
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {isModalOpen && <OnboardingModal isOpen={isModalOpen} onClose={closeOnboardingModal} />}
-        {isTrainingModalOpen && <TrainingModal isOpen={isTrainingModalOpen} onClose={closeTrainingModal} />}
-        {isProbationTrainingOpen && <AdditionalTrainingModal isOpen={isProbationTrainingOpen} onClose={closeAdditionalTrainingModal} />}
-        
-        {showScheduleDialog && (
-          <Dialog open={showScheduleDialog} onOpenChange={() => setShowScheduleDialog(false)}>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Schedule Your Interview</DialogTitle>
-                <DialogDescription>
-                  Choose a time that works best for your interview with our team.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="w-full aspect-[3/2]">
-                <div 
-                  className="calendly-inline-widget w-full h-full" 
-                  data-url="https://calendly.com/d/gmd-h4z-n7c/readymode-agent-interview?hide_event_type_details=1&hide_gdpr_banner=1&primary_color=4f46e5"
-                ></div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default Dashboard;
+                onboardingStatus

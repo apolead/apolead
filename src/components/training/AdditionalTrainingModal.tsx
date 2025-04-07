@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,6 @@ import {
   ProbationTrainingQuestion, 
   UserProbationProgress 
 } from '@/types/probation-training';
-import { useToast } from '@/hooks/use-toast';
 
 interface AdditionalTrainingModalProps {
   isOpen: boolean;
@@ -22,8 +20,7 @@ interface AdditionalTrainingModalProps {
 }
 
 const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpen, onClose }) => {
-  const { user, updateProfile, userProfile } = useAuth();
-  const { toast } = useToast();
+  const { user, updateProfile } = useAuth();
   const [modules, setModules] = useState<ProbationTrainingModule[]>([]);
   const [currentModule, setCurrentModule] = useState<ProbationTrainingModule | null>(null);
   const [questions, setQuestions] = useState<ProbationTrainingQuestion[]>([]);
@@ -186,7 +183,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       const { error } = await supabase
         .from('user_probation_progress')
         .update({
-          passed: true, // Mark as passed since there's no quiz
+          passed: null,
           score: 100,
           completed: true,
           updated_at: new Date().toISOString()
@@ -202,7 +199,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
           ...prev[currentModule.id],
           user_id: user.id,
           module_id: currentModule.id,
-          passed: true,
+          passed: null,
           score: 100,
           completed: true
         }
@@ -213,7 +210,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         [currentModule.id]: {
           user_id: user.id,
           module_id: currentModule.id,
-          passed: true,
+          passed: null,
           score: 100,
           completed: true
         }
@@ -255,26 +252,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         updateProfile({
           probation_training_completed: true,
           probation_training_passed: allPassed
-        }).then(() => {
-          if (allPassed) {
-            toast({
-              title: "Training Completed Successfully",
-              description: `You've completed the ReadyMode training with a score of ${calculatedAvgScore}%. You can now proceed to the next step.`,
-              variant: "default"
-            });
-          } else {
-            toast({
-              title: "You've Been Waitlisted",
-              description: `Your training score of ${calculatedAvgScore}% is below 90%. You've been placed on the waitlist.`,
-              variant: "destructive"
-            });
-          }
-          
-          console.log("Updated profile with training completion:", { 
-            completed: true, 
-            passed: allPassed, 
-            score: calculatedAvgScore 
-          });
         }).catch(error => {
           console.error("Error updating training status:", error);
         });
@@ -289,13 +266,12 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       setQuizScore(score);
       
       const progress = userProgress[currentModule.id];
-      const passed = score >= 90; // Consider 90% as passing score
       
       if (progress) {
         const { error } = await supabase
           .from('user_probation_progress')
           .update({
-            passed,
+            passed: null,
             score,
             completed: true,
             updated_at: new Date().toISOString()
@@ -310,7 +286,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
           .insert({
             user_id: user.id,
             module_id: currentModule.id,
-            passed,
+            passed: null,
             score,
             completed: true
           });
@@ -324,7 +300,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
           ...userProgress[currentModule.id],
           user_id: user.id,
           module_id: currentModule.id,
-          passed,
+          passed: null,
           score,
           completed: true
         }
@@ -371,20 +347,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         probation_training_completed: true,
         probation_training_passed: allPassed
       }).then(() => {
-        if (allPassed) {
-          toast({
-            title: "Training Completed Successfully",
-            description: `You've completed the ReadyMode training with a score of ${overallScore}%. You can now proceed to the next step.`,
-            variant: "default"
-          });
-        } else {
-          toast({
-            title: "You've Been Waitlisted",
-            description: `Your training score of ${overallScore}% is below 90%. You've been placed on the waitlist.`,
-            variant: "destructive"
-          });
-        }
-        
         onClose();
       }).catch(error => {
         console.error("Error updating training status:", error);
@@ -443,9 +405,9 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         </div>
         
         {modulesCompleted === modules.length && overallScore > 0 && (
-          <div className={`mt-4 p-3 rounded-lg ${overallScore >= 90 ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+          <div className={`mt-4 p-3 rounded-lg ${overallScore >= 90 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
             <h4 className="text-sm font-medium">Overall Training Score</h4>
-            <div className={`text-lg font-bold ${overallScore >= 90 ? 'text-green-600' : 'text-yellow-500'}`}>
+            <div className={`text-lg font-bold ${overallScore >= 90 ? 'text-green-600' : 'text-red-500'}`}>
               {overallScore}%
             </div>
             <p className="text-xs text-gray-500 mt-1">
@@ -506,9 +468,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
               onComplete={handleVideoComplete}
               isCompleted={userProgress[currentModule.id]?.completed === true}
               isPending={isCurrentModuleInProgress(currentModule.id)}
-              moduleNumber={currentModule.module_order}
-              totalModules={modules.length}
-              hasQuiz={questions.length > 0}
             />
             
             {showQuiz && !showResultScreen && questions.length > 0 && (
