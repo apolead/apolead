@@ -9,13 +9,15 @@ interface AdditionalTrainingVideoProps {
   onComplete: () => void;
   isCompleted?: boolean;
   isPending?: boolean;
+  hasQuiz?: boolean;
 }
 
 const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({ 
   videoUrl, 
   onComplete,
   isCompleted = false,
-  isPending = false
+  isPending = false,
+  hasQuiz = true
 }) => {
   const [canComplete, setCanComplete] = useState(true); // Set to true by default
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +109,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           }
           variant="default"
         >
-          {isCompleted ? "Continue to Next Module" : "Ready for Quiz"}
+          {isCompleted || !hasQuiz ? "Continue to Next Module" : "Ready for Quiz"}
         </Button>
       </div>
     </div>
