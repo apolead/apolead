@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,7 @@ interface AdditionalTrainingModalProps {
 }
 
 const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpen, onClose }) => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [modules, setModules] = useState<ProbationTrainingModule[]>([]);
   const [currentModule, setCurrentModule] = useState<ProbationTrainingModule | null>(null);
   const [questions, setQuestions] = useState<ProbationTrainingQuestion[]>([]);
@@ -45,7 +44,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     try {
       setLoading(true);
       
-      // Load user progress
       const { data: progressData, error: progressError } = await supabase
         .from('user_probation_progress')
         .select('*')
@@ -73,7 +71,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       
       setUserProgress(progressMap);
       
-      // Load training modules
       const { data: modulesData, error: modulesError } = await supabase
         .from('probation_training_modules')
         .select('*')
@@ -91,14 +88,12 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
           setOverallScore(calculatedAvgScore);
         }
         
-        // Find the first incomplete module or the first module if none started
         const firstIncompleteModule = modulesData.find((module: ProbationTrainingModule) => 
           !progressMap[module.id] || !progressMap[module.id].completed
         ) || modulesData[0];
         
         setCurrentModule(firstIncompleteModule as ProbationTrainingModule);
         
-        // Load questions for this module
         if (firstIncompleteModule) {
           await loadQuestionsForModule(firstIncompleteModule.id);
         }
@@ -147,7 +142,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     if (!user?.id || !currentModule) return;
     
     try {
-      // If we don't have progress for this module yet, create it
       if (!userProgress[currentModule.id]) {
         const { error } = await supabase
           .from('user_probation_progress')
@@ -171,12 +165,9 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         }));
       }
       
-      // Check if there are questions for this module
       if (questions.length === 0) {
-        // Mark this module as completed with a perfect score and move to the next module
         await handleModuleAutoComplete();
       } else {
-        // Show the quiz below the video
         setShowQuiz(true);
       }
     } catch (error) {
@@ -185,16 +176,14 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     }
   };
 
-  // Handle module completion when it has no questions
   const handleModuleAutoComplete = async () => {
     if (!user?.id || !currentModule) return;
     
     try {
-      // Auto-complete this module with a perfect score
       const { error } = await supabase
         .from('user_probation_progress')
         .update({
-          passed: null, // We're not tracking per-module passing anymore
+          passed: null,
           score: 100,
           completed: true,
           updated_at: new Date().toISOString()
@@ -204,26 +193,24 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       
       if (error) throw error;
       
-      // Update local state
       setUserProgress(prev => ({
         ...prev,
         [currentModule.id]: {
           ...prev[currentModule.id],
           user_id: user.id,
           module_id: currentModule.id,
-          passed: null, // Not tracking per-module pass/fail
+          passed: null,
           score: 100,
           completed: true
         }
       }));
       
-      // Update overall score and completed modules
       const updatedProgressMap = {
         ...userProgress,
         [currentModule.id]: {
           user_id: user.id,
           module_id: currentModule.id,
-          passed: null, // Not tracking per-module pass/fail 
+          passed: null,
           score: 100,
           completed: true
         }
@@ -231,7 +218,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       
       updateOverallScore(updatedProgressMap);
       
-      // Find the next module and move to it
       handleNextModule();
     } catch (error) {
       console.error("Error auto-completing module:", error);
@@ -239,7 +225,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     }
   };
   
-  // Helper to update overall score calculation
   const updateOverallScore = (progressMap: Record<string, UserProbationProgress>) => {
     let totalScore = 0;
     let scoreCount = 0;
@@ -261,17 +246,15 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       const calculatedAvgScore = Math.round(totalScore / scoreCount);
       setOverallScore(calculatedAvgScore);
       
-      // Update the user's overall training status if all modules are completed
       if (completedCount === modules.length) {
         const allPassed = calculatedAvgScore >= 90;
         
-        supabase
-          .from('user_profiles')
-          .update({
-            probation_training_completed: true,
-            probation_training_passed: allPassed
-          })
-          .eq('user_id', user?.id);
+        updateProfile({
+          probation_training_completed: true,
+          probation_training_passed: allPassed
+        }).catch(error => {
+          console.error("Error updating training status:", error);
+        });
       }
     }
   };
@@ -285,11 +268,10 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       const progress = userProgress[currentModule.id];
       
       if (progress) {
-        // Update existing progress
         const { error } = await supabase
           .from('user_probation_progress')
           .update({
-            passed: null, // Not tracking per-module pass/fail anymore
+            passed: null,
             score,
             completed: true,
             updated_at: new Date().toISOString()
@@ -299,13 +281,12 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         
         if (error) throw error;
       } else {
-        // Create new progress entry
         const { error } = await supabase
           .from('user_probation_progress')
           .insert({
             user_id: user.id,
             module_id: currentModule.id,
-            passed: null, // Not tracking per-module pass/fail anymore
+            passed: null,
             score,
             completed: true
           });
@@ -313,14 +294,13 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         if (error) throw error;
       }
       
-      // Update local state
       const updatedProgressMap = {
         ...userProgress,
         [currentModule.id]: {
           ...userProgress[currentModule.id],
           user_id: user.id,
           module_id: currentModule.id,
-          passed: null, // Not tracking per-module pass/fail
+          passed: null,
           score,
           completed: true
         }
@@ -341,14 +321,12 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     setShowQuiz(false);
     setShowResultScreen(false);
     
-    // If the module is already completed, go to the result screen
     const moduleProgress = userProgress[module.id];
     if (moduleProgress && moduleProgress.completed) {
       setQuizScore(moduleProgress.score || 0);
       setShowResultScreen(true);
     }
     
-    // Load questions for this module
     loadQuestionsForModule(module.id);
   };
   
@@ -364,7 +342,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       const nextModule = modules[currentIndex + 1];
       handleSelectModule(nextModule);
     } else {
-      // All modules completed
       onClose();
     }
   };
@@ -478,7 +455,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
               )}
             </div>
             
-            {/* Video is always displayed */}
             <AdditionalTrainingVideo 
               videoUrl={currentModule.video_url}
               onComplete={handleVideoComplete}
@@ -486,7 +462,6 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
               isPending={isCurrentModuleInProgress(currentModule.id)}
             />
             
-            {/* Quiz appears below the video when the user clicks "Ready for Quiz" */}
             {showQuiz && !showResultScreen && questions.length > 0 && (
               <div className="mt-8" id="quiz-section">
                 <h3 className="text-lg font-medium mb-4">Module Quiz</h3>
