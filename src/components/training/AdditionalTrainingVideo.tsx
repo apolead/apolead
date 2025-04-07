@@ -98,7 +98,8 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
         
         <Button 
           onClick={handleComplete}
-          className="text-white"
+          className={isCompleted ? "text-white" : "bg-yellow-400 text-black hover:bg-yellow-500"}
+          variant={isCompleted ? "default" : "default"}
         >
           {isCompleted ? "Continue to Quiz" : "Mark as Completed"}
         </Button>

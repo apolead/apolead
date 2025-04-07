@@ -169,17 +169,115 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         }));
       }
       
-      setStep('quiz');
-      // Scroll to top when switching to quiz
-      window.setTimeout(() => {
-        const videoElement = document.getElementById('training-video-container');
-        if (videoElement) {
-          videoElement.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
+      // Check if there are questions for this module
+      if (questions.length === 0) {
+        // Mark this module as completed with a perfect score and move to the next module
+        await handleModuleAutoComplete();
+      } else {
+        // Move to quiz if questions exist
+        setStep('quiz');
+        // Scroll to top when switching to quiz
+        window.setTimeout(() => {
+          const videoElement = document.getElementById('training-video-container');
+          if (videoElement) {
+            videoElement.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }
     } catch (error) {
       console.error("Error updating video progress:", error);
       setError("Failed to save your progress. Please try again.");
+    }
+  };
+
+  // New function to automatically complete a module when it has no questions
+  const handleModuleAutoComplete = async () => {
+    if (!user?.id || !currentModule) return;
+    
+    try {
+      // Auto-complete this module with a perfect score
+      const { error } = await supabase
+        .from('user_probation_progress')
+        .update({
+          passed: true,
+          score: 100,
+          completed: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id)
+        .eq('module_id', currentModule.id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setUserProgress(prev => ({
+        ...prev,
+        [currentModule.id]: {
+          ...prev[currentModule.id],
+          user_id: user.id,
+          module_id: currentModule.id,
+          passed: true,
+          score: 100,
+          completed: true
+        }
+      }));
+      
+      // Update overall score and completed modules
+      const updatedProgressMap = {
+        ...userProgress,
+        [currentModule.id]: {
+          user_id: user.id,
+          module_id: currentModule.id,
+          passed: true,
+          score: 100,
+          completed: true
+        }
+      };
+      
+      updateOverallScore(updatedProgressMap);
+      
+      // Find the next module and move to it
+      handleNextModule();
+    } catch (error) {
+      console.error("Error auto-completing module:", error);
+      setError("Failed to complete this module. Please try again.");
+    }
+  };
+  
+  // Helper to update overall score calculation
+  const updateOverallScore = (progressMap: Record<string, UserProbationProgress>) => {
+    let totalScore = 0;
+    let scoreCount = 0;
+    let completedCount = 0;
+    
+    Object.values(progressMap).forEach(progress => {
+      if (progress.completed) {
+        completedCount++;
+      }
+      if (progress.score !== null) {
+        totalScore += progress.score;
+        scoreCount++;
+      }
+    });
+    
+    setModulesCompleted(completedCount);
+    
+    if (scoreCount > 0) {
+      const calculatedAvgScore = Math.round(totalScore / scoreCount);
+      setOverallScore(calculatedAvgScore);
+      
+      // Update the user's overall training status if all modules are completed
+      if (completedCount === modules.length) {
+        const allPassed = calculatedAvgScore >= 90;
+        
+        supabase
+          .from('user_profiles')
+          .update({
+            probation_training_completed: true,
+            probation_training_passed: allPassed
+          })
+          .eq('user_id', user?.id);
+      }
     }
   };
   
@@ -222,26 +320,10 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       }
       
       // Update local state
-      setUserProgress(prev => ({
-        ...prev,
-        [currentModule.id]: {
-          ...prev[currentModule.id],
-          user_id: user.id,
-          module_id: currentModule.id,
-          passed,
-          score,
-          completed: true
-        }
-      }));
-      
-      // Update overall score and completed modules
-      let totalScore = 0;
-      let scoreCount = 0;
-      let completedCount = 0;
-      
-      const updatedProgress = {
+      const updatedProgressMap = {
         ...userProgress,
         [currentModule.id]: {
+          ...userProgress[currentModule.id],
           user_id: user.id,
           module_id: currentModule.id,
           passed,
@@ -250,38 +332,9 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         }
       };
       
-      Object.values(updatedProgress).forEach(progress => {
-        if (progress.completed) {
-          completedCount++;
-        }
-        if (progress.score !== null) {
-          totalScore += progress.score;
-          scoreCount++;
-        }
-      });
-      
-      setModulesCompleted(completedCount);
-      
-      if (scoreCount > 0) {
-        const calculatedAvgScore = Math.round(totalScore / scoreCount);
-        setOverallScore(calculatedAvgScore);
-      }
-      
+      setUserProgress(updatedProgressMap);
+      updateOverallScore(updatedProgressMap);
       setStep('result');
-      
-      // Update the user's overall training status if all modules are completed
-      if (completedCount === modules.length) {
-        const calculatedAvgScore = Math.round(totalScore / scoreCount);
-        const allPassed = calculatedAvgScore >= 90;
-        
-        await supabase
-          .from('user_profiles')
-          .update({
-            probation_training_completed: true,
-            probation_training_passed: allPassed
-          })
-          .eq('user_id', user.id);
-      }
     } catch (error) {
       console.error("Error saving quiz results:", error);
       setError("Failed to save your quiz results. Please try again.");
@@ -346,6 +399,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
                 ${currentModule?.id === module.id ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50 hover:bg-gray-100'}
                 ${isModuleCompleted(module.id) && isModulePassed(module.id) ? 'border-l-4 border-l-green-500' : ''}
                 ${isModuleCompleted(module.id) && !isModulePassed(module.id) ? 'border-l-4 border-l-red-500' : ''}
+                ${!isModuleCompleted(module.id) && currentModule?.id !== module.id ? 'border-l-4 border-l-yellow-400' : ''}
               `}
             >
               <div>
@@ -359,11 +413,11 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
                   <div className="ml-8 text-sm mt-1">
                     {isModulePassed(module.id) ? (
                       <span className="text-green-600 flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3" /> Passed with {userProgress[module.id]?.score}%
+                        <CheckCircle className="h-3 w-3" /> Completed
                       </span>
                     ) : (
                       <span className="text-red-600 flex items-center gap-1">
-                        <XCircle className="h-3 w-3" /> Failed with {userProgress[module.id]?.score}%
+                        <XCircle className="h-3 w-3" /> Failed
                       </span>
                     )}
                   </div>
@@ -390,8 +444,8 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
             </div>
             <p className="text-xs text-gray-500 mt-1">
               {overallScore >= 90 
-                ? "Congratulations! You've passed the training program." 
-                : "You need 90% overall to unlock the next step."}
+                ? "Congratulations! You've completed the additional training program." 
+                : "You need 90% overall to complete the training program."}
             </p>
           </div>
         )}
@@ -457,18 +511,8 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
             )}
             
             {step === 'quiz' && questions.length === 0 && (
-              <div className="text-center py-6 bg-gray-50 rounded-lg mt-8">
-                <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">No Questions Available</h3>
-                <p className="text-gray-600">
-                  There are no quiz questions available for this module.
-                </p>
-                <Button 
-                  onClick={handleNextModule}
-                  className="mt-4"
-                >
-                  Continue to Next Module
-                </Button>
+              <div className="mt-8 text-center hidden">
+                {/* Hidden empty quiz state - we're now auto-completing modules with no questions */}
               </div>
             )}
             
@@ -480,17 +524,11 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
                       <CheckCircle className="h-20 w-20 text-green-500" />
                     </div>
                     <h3 className="text-2xl font-bold mb-4 text-green-600">
-                      Congratulations!
+                      Module Completed
                     </h3>
                     <p className="text-lg mb-4">
-                      You passed this training module successfully!
+                      You completed this training module successfully!
                     </p>
-                    <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
-                      <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
-                      <p className="text-sm text-gray-600">
-                        You've completed this module and can move to the next one.
-                      </p>
-                    </div>
                     
                     <div className="mt-6">
                       <Button 
@@ -521,10 +559,10 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
                     
                     <div className="mt-6">
                       <Button 
-                        onClick={() => setStep('video')}
+                        onClick={handleNextModule}
                         className="px-6 py-2 rounded-full text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors"
                       >
-                        Try Again
+                        Continue to Next Module
                       </Button>
                     </div>
                   </>
