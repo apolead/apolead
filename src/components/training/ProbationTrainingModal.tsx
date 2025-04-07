@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -10,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ProbationTrainingVideo from './ProbationTrainingVideo';
 import ProbationTrainingQuiz from './ProbationTrainingQuiz';
-import { TrainingModule, UserModuleProgress } from '@/types/training';
+import { TrainingModule, UserModuleProgress, ITrainingModulesTable, IUserModuleProgressTable } from '@/types/training';
 
 interface ProbationTrainingModalProps {
   isOpen: boolean;
@@ -39,19 +38,31 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('training_modules')
+          .from('training_modules' as any)
           .select('*')
           .order('module_order', { ascending: true });
         
         if (error) throw error;
         
         if (data && data.length > 0) {
-          setModules(data as TrainingModule[]);
+          // Cast data to TrainingModule[] type
+          const typedData = (data as ITrainingModulesTable[]).map(item => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            video_url: item.video_url,
+            has_quiz: item.has_quiz,
+            module_order: item.module_order,
+            created_at: item.created_at,
+            updated_at: item.updated_at
+          }));
+          
+          setModules(typedData);
           
           // Check user's progress for each module
           if (user) {
             const { data: progressData, error: progressError } = await supabase
-              .from('user_module_progress')
+              .from('user_module_progress' as any)
               .select('*')
               .eq('user_id', user.id);
             
@@ -59,7 +70,7 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
             
             const progress: Record<string, boolean> = {};
             if (progressData) {
-              progressData.forEach((item: any) => {
+              (progressData as IUserModuleProgressTable[]).forEach((item) => {
                 progress[item.module_id] = item.passed;
               });
             }
@@ -67,7 +78,7 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
             setModuleProgress(progress);
             
             // Find the first uncompleted module
-            const firstUncompleted = data.findIndex(module => 
+            const firstUncompleted = typedData.findIndex(module => 
               !progress[module.id] && module.has_quiz
             );
             
@@ -76,7 +87,7 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
             }
             
             // Check if all required modules are completed
-            const allCompleted = data.every(module => 
+            const allCompleted = typedData.every(module => 
               !module.has_quiz || progress[module.id]
             );
             
@@ -122,8 +133,9 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
       
       // Save progress to database
       if (user && currentModule) {
+        // Cast as any to avoid TypeScript errors with missing tables
         const { error } = await supabase
-          .from('user_module_progress')
+          .from('user_module_progress' as any)
           .upsert({
             user_id: user.id,
             module_id: currentModule.id,
@@ -168,10 +180,9 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
       }
     } catch (error: any) {
       console.error("Error saving quiz results:", error);
-      toast({
+      toast.error({
         title: "Error",
-        description: error.message || "Failed to save quiz results",
-        variant: "destructive"
+        description: error.message || "Failed to save quiz results"
       });
     }
   };

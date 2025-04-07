@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
 import ProbationTrainingModal from '@/components/training/ProbationTrainingModal';
-import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
+import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
@@ -52,10 +52,9 @@ const Dashboard = () => {
       
       if (hasAnsweredNo && showOnboarding) {
         setShowOnboarding(false);
-        toast({
+        toast.error({
           title: "Not Eligible",
-          description: "You've answered 'No' to one or more required questions and are not eligible to continue.",
-          variant: "destructive"
+          description: "You've answered 'No' to one or more required questions and are not eligible to continue."
         });
       }
     }
@@ -68,10 +67,9 @@ const Dashboard = () => {
         description: "You have successfully completed the initial training.",
       });
     } else {
-      toast({
+      toast.error({
         title: "Training Not Completed",
-        description: "Please try the training quiz again later.",
-        variant: "destructive"
+        description: "Please try the training quiz again later."
       });
     }
   };
