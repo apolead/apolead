@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -40,11 +41,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/login');
-    }
-    
+  const processUserProfile = useCallback(() => {
     if (userProfile) {
       console.log("Dashboard: User profile loaded", {
         first_name: userProfile.first_name,
@@ -128,7 +125,17 @@ const Dashboard = () => {
       
       console.log("Dashboard: Onboarding status set to", onboardingStatus, "Progress:", onboardingProgress);
     }
-  }, [user, loading, userProfile, navigate, onboardingStatus]);
+  }, [userProfile, onboardingStatus]);
+  
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/login');
+    }
+    
+    if (userProfile) {
+      processUserProfile();
+    }
+  }, [user, loading, userProfile, navigate, processUserProfile]);
   
   const openOnboardingModal = () => {
     if (onboardingCompleted) {
@@ -530,7 +537,7 @@ const Dashboard = () => {
                 <button 
                   id="additional-training-btn"
                   onClick={openAdditionalTrainingModal}
-                  className="card-button button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]"
+                  className="card-button p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(59,130,246,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(59,130,246,0.3)]"
                 >
                   <GraduationCap className="mr-[8px] text-[16px]" /> Start Training
                 </button>
