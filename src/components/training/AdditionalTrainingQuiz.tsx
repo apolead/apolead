@@ -145,7 +145,7 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
           type="button" 
           onClick={handleNext}
           disabled={answers[currentQuestion.id] === undefined}
-          className="px-6 text-white bg-purple-600 hover:bg-purple-700"
+          className="px-6 text-white bg-[#4f46e5] hover:bg-[#4338ca]"
         >
           {isLastQuestion ? (
             'Submit Quiz'

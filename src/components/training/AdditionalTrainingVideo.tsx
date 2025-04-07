@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, ChevronRight } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AdditionalTrainingVideoProps {
@@ -102,10 +102,10 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           onClick={handleComplete}
           className={
             isCompleted 
-              ? "bg-purple-600 text-white hover:bg-purple-700" 
+              ? "bg-[#4f46e5] text-white hover:bg-[#4338ca]" 
               : isPending 
-                ? "bg-yellow-400 text-black hover:bg-yellow-500" 
-                : "bg-purple-600 text-white hover:bg-purple-700"
+                ? "bg-blue-500 text-white hover:bg-blue-600" 
+                : "bg-[#4f46e5] text-white hover:bg-[#4338ca]"
           }
           variant="default"
         >
