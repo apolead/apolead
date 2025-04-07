@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
 import ProbationTrainingModal from '@/components/training/ProbationTrainingModal';
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
+import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {

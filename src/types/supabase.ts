@@ -47,3 +47,22 @@ export interface SupabaseRpcFunctions {
   update_user_profile: (args: { p_user_id: string; p_updates: any }) => Promise<void>;
   update_user_profile_direct: (args: { input_user_id: string; input_updates: any }) => Promise<void>;
 }
+
+// Add explicit table declarations for Supabase
+declare module '@supabase/supabase-js' {
+  interface Database {
+    public: {
+      Tables: {
+        training_modules: {
+          Row: ITrainingModulesTable;
+        };
+        module_questions: {
+          Row: IModuleQuestionsTable;
+        };
+        user_module_progress: {
+          Row: IUserModuleProgressTable;
+        };
+      };
+    };
+  }
+}
