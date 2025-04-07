@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, CheckCircle, FastForward } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ProbationTrainingVideoProps {
@@ -15,7 +15,7 @@ const ProbationTrainingVideo: React.FC<ProbationTrainingVideoProps> = ({
   onComplete,
   isCompleted = false
 }) => {
-  const [canComplete, setCanComplete] = useState(isCompleted);
+  const [canComplete, setCanComplete] = useState(true); // Set to true by default
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const videoRef = useRef<HTMLIFrameElement>(null);
@@ -24,25 +24,13 @@ const ProbationTrainingVideo: React.FC<ProbationTrainingVideoProps> = ({
     // If the video is already marked as completed, allow completion
     if (isCompleted) {
       setCanComplete(true);
-      setLoading(false);
     }
     
     const loadTimer = setTimeout(() => {
       setLoading(false);
+      // Always enable completion
+      setCanComplete(true);
     }, 2000);
-    
-    // For this simplified version, we'll allow completion after 1 minute 
-    // In a real implementation, you'd want to use the YouTube API to track actual watch progress
-    if (!isCompleted) {
-      const timer = setTimeout(() => {
-        setCanComplete(true);
-      }, 60000); // 60 seconds before enabling complete button
-      
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(loadTimer);
-      };
-    }
     
     return () => clearTimeout(loadTimer);
   }, [isCompleted]);
@@ -102,22 +90,14 @@ const ProbationTrainingVideo: React.FC<ProbationTrainingVideoProps> = ({
       
       <div className="flex justify-between items-center pt-2">
         <div className="text-sm text-gray-500">
-          {canComplete ? (
-            <span className="text-green-600 flex items-center gap-1">
-              <CheckCircle className="h-4 w-4" />
-              Ready to continue
-            </span>
-          ) : (
-            <span className="text-amber-600 flex items-center gap-1">
-              <FastForward className="h-4 w-4" />
-              Please watch the video before continuing
-            </span>
-          )}
+          <span className="text-green-600 flex items-center gap-1">
+            <CheckCircle className="h-4 w-4" />
+            Ready to continue
+          </span>
         </div>
         
         <Button 
           onClick={handleComplete}
-          disabled={!canComplete && !isCompleted}
           className="text-white"
         >
           {isCompleted ? "Continue to Quiz" : "Mark as Completed"}

@@ -16,8 +16,7 @@ import {
   Settings,
   Wrench,
   Info,
-  DollarSign,
-  GraduationCap
+  DollarSign
 } from 'lucide-react';
 
 export interface DashboardSidebarProps {
@@ -46,9 +45,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
   };
 
   // Define which items should be active vs locked
-  const unlockedItems = ['dashboard', 'billing', 'probation-training', 'logout'];
+  const unlockedItems = ['dashboard', 'billing', 'logout'];
   const isItemUnlocked = (itemName: string) => unlockedItems.includes(itemName);
-  const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
 
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -95,18 +93,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
           <span>Ranking</span>
           <Lock size={18} className="menu-lock-icon" />
         </div>
-
-        {isProbationAgent && (
-          <Link to="/dashboard" 
-                onClick={(e) => { 
-                  e.preventDefault(); 
-                  document.getElementById('probation-training-btn')?.click(); 
-                }} 
-                className={`nav-item ${activeItem === 'probation-training' ? 'active' : ''}`}>
-            <GraduationCap size={18} />
-            <span>Probation Training</span>
-          </Link>
-        )}
         
         <Link to="/billing" className={`nav-item ${activeItem === 'billing' ? 'active' : ''}`}>
           <FileText size={18} />
