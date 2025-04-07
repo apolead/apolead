@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
@@ -86,8 +87,8 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         setModulesCompleted(completedCount);
         
         if (scoreCount > 0) {
-          const avgScore = Math.round(totalScore / scoreCount);
-          setOverallScore(avgScore);
+          const calculatedAvgScore = Math.round(totalScore / scoreCount);
+          setOverallScore(calculatedAvgScore);
         }
         
         // Find the first incomplete module or the first module if none started
@@ -169,6 +170,13 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       }
       
       setStep('quiz');
+      // Scroll to top when switching to quiz
+      window.setTimeout(() => {
+        const videoElement = document.getElementById('training-video-container');
+        if (videoElement) {
+          videoElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     } catch (error) {
       console.error("Error updating video progress:", error);
       setError("Failed to save your progress. Please try again.");
@@ -255,15 +263,16 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       setModulesCompleted(completedCount);
       
       if (scoreCount > 0) {
-        const avgScore = Math.round(totalScore / scoreCount);
-        setOverallScore(avgScore);
+        const calculatedAvgScore = Math.round(totalScore / scoreCount);
+        setOverallScore(calculatedAvgScore);
       }
       
       setStep('result');
       
       // Update the user's overall training status if all modules are completed
       if (completedCount === modules.length) {
-        const allPassed = avgScore >= 90;
+        const calculatedAvgScore = Math.round(totalScore / scoreCount);
+        const allPassed = calculatedAvgScore >= 90;
         
         await supabase
           .from('user_profiles')
@@ -424,103 +433,105 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         </div>
         
         <div className="w-full md:w-3/4">
-          <div className="mb-4">
-            <h2 className="text-xl font-bold">{currentModule.title}</h2>
-            {currentModule.description && (
-              <p className="text-gray-600 mt-1">{currentModule.description}</p>
-            )}
-          </div>
-          
-          {step === 'video' && (
+          <ScrollArea className="h-[70vh] pr-4">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold">{currentModule.title}</h2>
+              {currentModule.description && (
+                <p className="text-gray-600 mt-1">{currentModule.description}</p>
+              )}
+            </div>
+            
             <AdditionalTrainingVideo 
               videoUrl={currentModule.video_url}
               onComplete={handleVideoComplete}
               isCompleted={userProgress[currentModule.id]?.completed === true}
             />
-          )}
-          
-          {step === 'quiz' && questions.length > 0 && (
-            <AdditionalTrainingQuiz
-              questions={questions}
-              onComplete={handleQuizComplete}
-            />
-          )}
-          
-          {step === 'quiz' && questions.length === 0 && (
-            <div className="text-center py-6 bg-gray-50 rounded-lg">
-              <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-              <h3 className="text-xl font-bold mb-2">No Questions Available</h3>
-              <p className="text-gray-600">
-                There are no quiz questions available for this module.
-              </p>
-              <Button 
-                onClick={handleNextModule}
-                className="mt-4"
-              >
-                Continue to Next Module
-              </Button>
-            </div>
-          )}
-          
-          {step === 'result' && (
-            <div className="text-center py-6">
-              {quizPassed ? (
-                <>
-                  <div className="flex justify-center mb-4">
-                    <CheckCircle className="h-20 w-20 text-green-500" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4 text-green-600">
-                    Congratulations!
-                  </h3>
-                  <p className="text-lg mb-4">
-                    You passed this training module successfully!
-                  </p>
-                  <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
-                    <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
-                    <p className="text-sm text-gray-600">
-                      You've completed this module and can move to the next one.
+            
+            {step === 'quiz' && questions.length > 0 && (
+              <div className="mt-8">
+                <AdditionalTrainingQuiz
+                  questions={questions}
+                  onComplete={handleQuizComplete}
+                />
+              </div>
+            )}
+            
+            {step === 'quiz' && questions.length === 0 && (
+              <div className="text-center py-6 bg-gray-50 rounded-lg mt-8">
+                <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">No Questions Available</h3>
+                <p className="text-gray-600">
+                  There are no quiz questions available for this module.
+                </p>
+                <Button 
+                  onClick={handleNextModule}
+                  className="mt-4"
+                >
+                  Continue to Next Module
+                </Button>
+              </div>
+            )}
+            
+            {step === 'result' && (
+              <div className="text-center py-6 mt-8">
+                {quizPassed ? (
+                  <>
+                    <div className="flex justify-center mb-4">
+                      <CheckCircle className="h-20 w-20 text-green-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4 text-green-600">
+                      Congratulations!
+                    </h3>
+                    <p className="text-lg mb-4">
+                      You passed this training module successfully!
                     </p>
-                  </div>
-                  
-                  <div className="mt-6">
-                    <Button 
-                      onClick={handleNextModule}
-                      className="px-6 py-2 rounded-full text-white font-medium bg-green-600 hover:bg-green-700 transition-colors"
-                    >
-                      Continue to Next Module
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex justify-center mb-4">
-                    <XCircle className="h-20 w-20 text-red-500" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-4 text-red-600">
-                    Module Not Passed
-                  </h3>
-                  <p className="text-lg mb-4">
-                    You did not pass this training module.
-                  </p>
-                  <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
-                    <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
-                    <p className="text-sm text-gray-600">
-                      You need at least 70% to pass this module.
+                    <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
+                      <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
+                      <p className="text-sm text-gray-600">
+                        You've completed this module and can move to the next one.
+                      </p>
+                    </div>
+                    
+                    <div className="mt-6">
+                      <Button 
+                        onClick={handleNextModule}
+                        className="px-6 py-2 rounded-full text-white font-medium bg-green-600 hover:bg-green-700 transition-colors"
+                      >
+                        Continue to Next Module
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-center mb-4">
+                      <XCircle className="h-20 w-20 text-red-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-4 text-red-600">
+                      Module Not Passed
+                    </h3>
+                    <p className="text-lg mb-4">
+                      You did not pass this training module.
                     </p>
-                  </div>
-                  
-                  <div className="mt-6">
-                    <Button 
-                      onClick={() => setStep('video')}
-                      className="px-6 py-2 rounded-full text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors"
-                    >
-                      Try Again
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+                    <div className="bg-gray-100 p-4 rounded-lg inline-block mb-6">
+                      <p className="text-lg">Your score: <span className="font-bold">{quizScore}%</span></p>
+                      <p className="text-sm text-gray-600">
+                        You need at least 70% to pass this module.
+                      </p>
+                    </div>
+                    
+                    <div className="mt-6">
+                      <Button 
+                        onClick={() => setStep('video')}
+                        className="px-6 py-2 rounded-full text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors"
+                      >
+                        Try Again
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </ScrollArea>
         </div>
       </div>
     );

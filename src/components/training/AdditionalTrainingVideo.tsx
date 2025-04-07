@@ -60,7 +60,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
   };
   
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" id="training-video-container">
       <div className="aspect-video relative bg-gray-100 rounded-lg overflow-hidden">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
