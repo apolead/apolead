@@ -109,7 +109,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           }
           variant="default"
         >
-          {isCompleted || !hasQuiz ? "Continue to Next Module" : "Ready for Quiz"}
+          Next Module
         </Button>
       </div>
     </div>
