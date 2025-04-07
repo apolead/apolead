@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,8 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
 import AdditionalTrainingModal from '@/components/training/AdditionalTrainingModal';
-import KickoffSetupDialog from '@/components/dashboard/KickoffSetupDialog';
-import CompletionDialog from '@/components/training/CompletionDialog';
 import { 
   CheckCircle,
   ChevronDown,
