@@ -1,7 +1,7 @@
 
 import { Json } from '@/integrations/supabase/types';
 
-export interface AdditionalTrainingModule {
+export interface ProbationTrainingModule {
   id: string;
   title: string;
   description: string | null;
@@ -10,7 +10,7 @@ export interface AdditionalTrainingModule {
   created_at?: string | null;
 }
 
-export interface AdditionalTrainingQuestion {
+export interface ProbationTrainingQuestion {
   id: string;
   question: string;
   options: string[];
@@ -20,7 +20,7 @@ export interface AdditionalTrainingQuestion {
   created_at?: string | null;
 }
 
-export interface UserAdditionalProgress {
+export interface UserProbationProgress {
   id?: string;
   user_id: string;
   module_id: string;

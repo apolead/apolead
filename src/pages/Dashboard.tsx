@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,7 +26,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { loadAdditionalTrainingData } from '@/utils/additionalTrainingData';
 
 const Dashboard = () => {
   const { user, userProfile, loading } = useAuth();
@@ -130,12 +130,6 @@ const Dashboard = () => {
       console.log("Dashboard: Onboarding status set to", onboardingStatus, "Progress:", onboardingProgress);
     }
   }, [user, loading, userProfile, navigate, onboardingStatus]);
-  
-  useEffect(() => {
-    if (user) {
-      loadAdditionalTrainingData().catch(console.error);
-    }
-  }, [user]);
   
   const openOnboardingModal = () => {
     if (onboardingCompleted) {
