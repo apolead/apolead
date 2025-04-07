@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -21,6 +20,7 @@ const Dashboard = () => {
       if (!user?.id) return;
       
       try {
+        // Use the is_user_on_probation RPC function
         const { data, error } = await supabase.rpc('is_user_on_probation', {
           input_user_id: user.id
         });

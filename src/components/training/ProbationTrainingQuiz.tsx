@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -7,6 +6,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Check, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { IModuleQuestionsTable } from '@/types/supabase';
 
 interface QuizQuestion {
   id: string;
@@ -44,7 +44,7 @@ const ProbationTrainingQuiz: React.FC<ProbationTrainingQuizProps> = ({ moduleId,
         
         if (data && data.length > 0) {
           console.log("Received questions from database:", data);
-          const formattedQuestions = data.map(q => ({
+          const formattedQuestions = data.map((q: any) => ({
             id: q.id,
             question: q.question,
             options: Array.isArray(q.options) 

@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ProbationTrainingVideo from './ProbationTrainingVideo';
 import ProbationTrainingQuiz from './ProbationTrainingQuiz';
+import { ITrainingModulesTable, IUserModuleProgressTable } from '@/types/supabase';
 
 interface TrainingModule {
   id: string;
@@ -54,7 +55,7 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
         if (error) throw error;
         
         if (data && data.length > 0) {
-          setModules(data);
+          setModules(data as TrainingModule[]);
           
           // Check user's progress for each module
           if (user) {
@@ -66,9 +67,11 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
             if (progressError) throw progressError;
             
             const progress: Record<string, boolean> = {};
-            progressData?.forEach(item => {
-              progress[item.module_id] = item.passed;
-            });
+            if (progressData) {
+              (progressData as IUserModuleProgressTable[]).forEach(item => {
+                progress[item.module_id] = item.passed;
+              });
+            }
             
             setModuleProgress(progress);
             
@@ -167,7 +170,6 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
           setAllModulesCompleted(true);
           
           toast({
-            title: "Training Completed",
             description: "You have successfully completed all required training modules!"
           });
         }
@@ -175,7 +177,6 @@ const ProbationTrainingModal: React.FC<ProbationTrainingModalProps> = ({ isOpen,
     } catch (error: any) {
       console.error("Error saving quiz results:", error);
       toast({
-        title: "Error",
         description: error.message || "Failed to save quiz results",
         variant: "destructive"
       });
