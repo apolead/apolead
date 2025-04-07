@@ -10,6 +10,8 @@ interface AdditionalTrainingVideoProps {
   isCompleted?: boolean;
   isPending?: boolean;
   hasQuiz?: boolean;
+  isLastModule?: boolean;
+  moduleNumber?: number;
 }
 
 const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({ 
@@ -17,7 +19,9 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
   onComplete,
   isCompleted = false,
   isPending = false,
-  hasQuiz = true
+  hasQuiz = true,
+  isLastModule = false,
+  moduleNumber = 1
 }) => {
   const [canComplete, setCanComplete] = useState(true); // Set to true by default
   const [error, setError] = useState<string | null>(null);
@@ -68,8 +72,11 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
     }
   };
   
-  // Determine button text based on whether this module has a quiz
+  // Determine button text based on whether this module has a quiz and if it's the last module
   const getButtonText = () => {
+    if (isLastModule) {
+      return "Submit";
+    }
     if (isCompleted) {
       return "Next Module";
     }
