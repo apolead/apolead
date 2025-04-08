@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,6 @@ import {
   ProbationTrainingQuestion, 
   UserProbationProgress 
 } from '@/types/probation-training';
-import { useToast } from '@/hooks/use-toast';
 
 interface AdditionalTrainingModalProps {
   isOpen: boolean;
@@ -22,8 +20,7 @@ interface AdditionalTrainingModalProps {
 }
 
 const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpen, onClose }) => {
-  const { user, userProfile, updateProfile, refreshUserProfile } = useAuth();
-  const { toast } = useToast();
+  const { user, updateProfile } = useAuth();
   const [modules, setModules] = useState<ProbationTrainingModule[]>([]);
   const [currentModule, setCurrentModule] = useState<ProbationTrainingModule | null>(null);
   const [questions, setQuestions] = useState<ProbationTrainingQuestion[]>([]);
@@ -228,7 +225,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     }
   };
   
-  const updateOverallScore = async (progressMap: Record<string, UserProbationProgress>) => {
+  const updateOverallScore = (progressMap: Record<string, UserProbationProgress>) => {
     let totalScore = 0;
     let scoreCount = 0;
     let completedCount = 0;
@@ -252,32 +249,12 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       if (completedCount === modules.length) {
         const allPassed = calculatedAvgScore >= 90;
         
-        try {
-          console.log("Updating user profile with training status:", {
-            probation_training_completed: true,
-            probation_training_passed: allPassed,
-            score: calculatedAvgScore
-          });
-          
-          await updateProfile({
-            probation_training_completed: true,
-            probation_training_passed: allPassed
-          });
-          
-          toast({
-            title: allPassed ? "Training Completed Successfully!" : "Training Completed",
-            description: allPassed ? 
-              "You've successfully completed the ReadyMode training program with a score of " + calculatedAvgScore + "%." : 
-              "You've completed the training but your score of " + calculatedAvgScore + "% was below the required 90%. You've been waitlisted.",
-            variant: allPassed ? "default" : "destructive"
-          });
-          
-          // Force refresh user profile to get the latest status
-          await refreshUserProfile();
-        } catch (error) {
+        updateProfile({
+          probation_training_completed: true,
+          probation_training_passed: allPassed
+        }).catch(error => {
           console.error("Error updating training status:", error);
-          setError("Failed to update your training status. Please try again.");
-        }
+        });
       }
     }
   };
@@ -330,7 +307,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       };
       
       setUserProgress(updatedProgressMap);
-      await updateOverallScore(updatedProgressMap);
+      updateOverallScore(updatedProgressMap);
       setShowResultScreen(true);
     } catch (error) {
       console.error("Error saving quiz results:", error);
