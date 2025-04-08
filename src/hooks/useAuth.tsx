@@ -34,21 +34,6 @@ export interface UserProfile {
   agent_standing?: string;
   created_at?: string;
   updated_at?: string;
-  credentials?: string;
-  probation_training_completed?: boolean;
-  probation_training_passed?: boolean;
-  // Add missing fields referenced in other files
-  account_type?: string;
-  routing_number?: string;
-  account_number?: string;
-  bank_name?: string;
-  address_line1?: string;
-  address_line2?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  ssn_last_four?: string;
-  account_holder_name?: string;
 }
 
 interface AuthContextValue {
@@ -228,7 +213,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // Update local state
-      setUserProfile(result as UserProfile);
+      setUserProfile(result);
       return result;
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -247,7 +232,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
         
       if (error) throw error;
-      setUserProfile(data as UserProfile);
+      setUserProfile(data);
       return data;
     } catch (error) {
       console.error('Error refreshing user profile:', error);
