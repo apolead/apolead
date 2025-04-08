@@ -35,6 +35,7 @@ const Dashboard = () => {
   const [onboardingProgress, setOnboardingProgress] = useState(20);
   const [onboardingStatus, setOnboardingStatus] = useState('not_started');
   const [trainingStatus, setTrainingStatus] = useState('not_started');
+  const [probationTrainingStatus, setProbationTrainingStatus] = useState('not_started');
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const navigate = useNavigate();
@@ -62,7 +63,9 @@ const Dashboard = () => {
         complete_training: userProfile.complete_training,
         quiz_passed: userProfile.quiz_passed,
         training_video_watched: userProfile.training_video_watched,
-        agent_standing: userProfile.agent_standing
+        agent_standing: userProfile.agent_standing,
+        probation_training_completed: userProfile.probation_training_completed,
+        probation_training_passed: userProfile.probation_training_passed
       });
       
       const isOnboardingCompletedFlag = userProfile.onboarding_completed === true;
@@ -89,6 +92,18 @@ const Dashboard = () => {
         setTrainingStatus('not_started');
       }
       
+      if (userProfile.probation_training_completed === true) {
+        if (userProfile.probation_training_passed === true) {
+          setProbationTrainingStatus('completed');
+        } else if (userProfile.probation_training_passed === false) {
+          setProbationTrainingStatus('failed');
+        } else {
+          setProbationTrainingStatus('in_progress');
+        }
+      } else {
+        setProbationTrainingStatus('not_started');
+      }
+      
       console.log("Dashboard: Eligibility check", {
         isOnboardingCompletedFlag,
         isEligible,
@@ -96,8 +111,11 @@ const Dashboard = () => {
         eligible_for_training_type: typeof userProfile.eligible_for_training,
         onboarding_completed_type: typeof userProfile.onboarding_completed,
         trainingStatus,
+        probationTrainingStatus,
         quiz_passed: userProfile.quiz_passed,
-        quiz_passed_type: typeof userProfile.quiz_passed
+        quiz_passed_type: typeof userProfile.quiz_passed,
+        probation_training_completed: userProfile.probation_training_completed,
+        probation_training_passed: userProfile.probation_training_passed
       });
       
       if (isOnboardingCompletedFlag) {
@@ -195,6 +213,9 @@ const Dashboard = () => {
   
   const closeAdditionalTrainingModal = () => {
     setIsProbationTrainingOpen(false);
+    refreshUserProfile().then(() => {
+      processedProfileRef.current = false;
+    });
   };
   
   const handleScheduleInterview = () => {
@@ -277,6 +298,45 @@ const Dashboard = () => {
     }
   };
   
+  const getProbationTrainingButtonText = () => {
+    switch (probationTrainingStatus) {
+      case 'completed':
+        return 'Training Completed';
+      case 'failed':
+        return 'Training Failed';
+      case 'in_progress':
+        return 'Continue Training';
+      default:
+        return 'Start Training';
+    }
+  };
+  
+  const getProbationTrainingButtonStyle = () => {
+    switch (probationTrainingStatus) {
+      case 'completed':
+        return 'card-button button-completed p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]';
+      case 'failed':
+        return 'card-button button-ineligible p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(239,68,68,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(239,68,68,0.3)]';
+      case 'in_progress':
+        return 'card-button button-incomplete p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(245,158,11,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(245,158,11,0.3)]';
+      default:
+        return 'card-button p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(59,130,246,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(59,130,246,0.3)]';
+    }
+  };
+  
+  const getProbationTrainingIcon = () => {
+    switch (probationTrainingStatus) {
+      case 'completed':
+        return <CheckCircle className="mr-[8px] text-[16px]" />;
+      case 'failed':
+        return <XCircle className="mr-[8px] text-[16px]" />;
+      case 'in_progress':
+        return <AlertTriangle className="mr-[8px] text-[16px]" />;
+      default:
+        return <GraduationCap className="mr-[8px] text-[16px]" />;
+    }
+  };
+  
   useEffect(() => {
     if (showScheduleDialog) {
       const script = document.createElement('script');
@@ -297,6 +357,7 @@ const Dashboard = () => {
   }
   
   const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
+  const shouldUnlockFinalStep = probationTrainingStatus === 'completed';
   
   return (
     <div className="flex w-full min-h-screen bg-[#f8fafc]">
@@ -543,9 +604,9 @@ const Dashboard = () => {
                 <button 
                   id="additional-training-btn"
                   onClick={openAdditionalTrainingModal}
-                  className="card-button p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(59,130,246,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(59,130,246,0.3)]"
+                  className={getProbationTrainingButtonStyle()}
                 >
-                  <GraduationCap className="mr-[8px] text-[16px]" /> Start Training
+                  {getProbationTrainingIcon()} {getProbationTrainingButtonText()}
                 </button>
               ) : (
                 <button className="card-button button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,7 @@ interface AdditionalTrainingModalProps {
 }
 
 const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpen, onClose }) => {
-  const { user } = useAuth();
+  const { user, refreshUserProfile } = useAuth();
   const [modules, setModules] = useState<ProbationTrainingModule[]>([]);
   const [currentModule, setCurrentModule] = useState<ProbationTrainingModule | null>(null);
   const [questions, setQuestions] = useState<ProbationTrainingQuestion[]>([]);
@@ -262,16 +261,24 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       setOverallScore(calculatedAvgScore);
       
       // Update the user's overall training status if all modules are completed
-      if (completedCount === modules.length) {
+      if (completedCount === modules.length && modules.length > 0) {
         const allPassed = calculatedAvgScore >= 90;
         
+        // Update user_profiles with probation training results
         supabase
           .from('user_profiles')
           .update({
             probation_training_completed: true,
             probation_training_passed: allPassed
           })
-          .eq('user_id', user?.id);
+          .eq('user_id', user?.id)
+          .then(() => {
+            // Refresh user profile to update the UI
+            refreshUserProfile();
+          })
+          .catch(error => {
+            console.error("Error updating user profile:", error);
+          });
       }
     }
   };
@@ -329,6 +336,11 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       setUserProgress(updatedProgressMap);
       updateOverallScore(updatedProgressMap);
       setShowResultScreen(true);
+      
+      // Refresh user profile data
+      if (updatedProgressMap && modulesCompleted + 1 === modules.length) {
+        await refreshUserProfile();
+      }
     } catch (error) {
       console.error("Error saving quiz results:", error);
       setError("Failed to save your quiz results. Please try again.");
@@ -353,7 +365,12 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   };
   
   const handleCloseModal = () => {
-    onClose();
+    refreshUserProfile().then(() => {
+      onClose();
+    }).catch(error => {
+      console.error("Error refreshing user profile:", error);
+      onClose();
+    });
   };
   
   const handleNextModule = () => {
@@ -523,7 +540,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleCloseModal}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>ReadyMode Training</DialogTitle>

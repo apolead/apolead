@@ -71,9 +71,9 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
   // Determine button text based on whether this module has a quiz
   const getButtonText = () => {
     if (isCompleted) {
-      return "Next Module";
+      return hasQuiz ? "Continue to Quiz" : "Next Module";
     }
-    return hasQuiz ? "Start Quiz" : "Next Module";
+    return hasQuiz ? "Start Quiz" : "Complete Module";
   };
   
   return (
@@ -118,7 +118,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           className="bg-blue-500 text-white hover:bg-blue-600"
           variant="default"
         >
-          {getButtonText()}
+          {getButtonText()} {!isCompleted && <ChevronRight className="ml-1 h-4 w-4" />}
         </Button>
       </div>
     </div>
