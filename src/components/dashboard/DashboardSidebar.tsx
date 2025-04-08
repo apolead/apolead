@@ -25,13 +25,13 @@ export interface DashboardSidebarProps {
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem = 'dashboard' }) => {
   const [collapsed, setCollapsed] = React.useState(false);
-  const { logout, userProfile } = useAuth();
+  const { signOut, userProfile } = useAuth();
   const navigate = useNavigate();
   
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
-      await logout();
+      await signOut();
     } catch (error) {
       console.error('Error during logout:', error);
     } finally {
