@@ -189,7 +189,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
     
     const scorePercentage = Math.round((correctCount / questions.length) * 100);
     
-    const passed = scorePercentage >= 80; // Set a clear passing threshold for consistency
+    const passed = scorePercentage >= 90; // Updated from 80% to 90% threshold
     
     console.log('Quiz completed. Passed:', passed, 'Score:', scorePercentage);
     console.log('Answers submitted:', answers);
