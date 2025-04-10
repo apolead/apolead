@@ -2,6 +2,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
+import { Json } from '@/integrations/supabase/types';
 
 export interface UserProfile {
   id: string;
@@ -31,6 +32,7 @@ export interface UserProfile {
   eligible_for_training?: boolean;
   training_video_watched?: boolean;
   quiz_passed?: boolean;
+  quiz_score?: number; // Added quiz_score property
   agent_standing?: string;
   created_at?: string;
   updated_at?: string;
@@ -58,7 +60,7 @@ interface AuthContextValue {
   loading: boolean;
   signUp: (email: string, password: string) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
-  signOut: () => Promise<any>;
+  signOut: () => Promise<any>; // Changed from logout to signOut
   updateProfile: (updates: Partial<UserProfile>) => Promise<any>;
   refreshUserProfile: () => Promise<any>;
 }
@@ -83,7 +85,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (error) {
           console.error('Error fetching user profile:', error);
         } else if (data) {
-          setUserProfile(data);
+          // Explicitly cast to UserProfile
+          setUserProfile(data as unknown as UserProfile);
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -219,7 +222,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Create new profile
         const { data, error } = await supabase
           .from('user_profiles')
-          .insert([profileData])
+          .insert(profileData)
           .select()
           .single();
           
@@ -228,7 +231,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       
       // Update local state
-      setUserProfile(result as UserProfile);
+      setUserProfile(result as unknown as UserProfile);
       return result;
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -247,7 +250,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
         
       if (error) throw error;
-      setUserProfile(data as UserProfile);
+      setUserProfile(data as unknown as UserProfile);
       return data;
     } catch (error) {
       console.error('Error refreshing user profile:', error);
@@ -262,7 +265,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loading,
     signUp,
     signIn,
-    signOut,
+    signOut, // Changed from logout to signOut
     updateProfile,
     refreshUserProfile
   };

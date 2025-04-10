@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -26,7 +26,7 @@ const Header = () => {
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
-      await logout();
+      await signOut();
     } catch (error) {
       console.error('Error during logout:', error);
     } finally {
