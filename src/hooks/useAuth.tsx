@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -32,14 +31,13 @@ export interface UserProfile {
   eligible_for_training?: boolean;
   training_video_watched?: boolean;
   quiz_passed?: boolean;
-  quiz_score?: number; // Added quiz_score property
+  quiz_score?: number;
   agent_standing?: string;
   created_at?: string;
   updated_at?: string;
   credentials?: string;
   probation_training_completed?: boolean;
   probation_training_passed?: boolean;
-  // Add missing fields referenced in other files
   account_type?: string;
   routing_number?: string;
   account_number?: string;
@@ -60,7 +58,7 @@ interface AuthContextValue {
   loading: boolean;
   signUp: (email: string, password: string) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
-  signOut: () => Promise<any>; // Changed from logout to signOut
+  signOut: () => Promise<any>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<any>;
   refreshUserProfile: () => Promise<any>;
 }
@@ -94,13 +92,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const setUpAuthStateListener = async () => {
-      // Set up auth state listener FIRST
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, newSession) => {
           setSession(newSession);
           setUser(newSession?.user ?? null);
           
-          // Defer Supabase calls with setTimeout to prevent auth deadlocks
           if (newSession?.user) {
             setTimeout(() => {
               fetchUserProfile(newSession.user.id);
@@ -111,7 +107,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       );
 
-      // THEN check for existing session
       const { data } = await supabase.auth.getSession();
       const initialSession = data.session;
       
@@ -129,7 +124,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
     };
 
-    // Fix the type issue by proper handling of the return value from setUpAuthStateListener
     const unsubscribePromise = setUpAuthStateListener();
 
     return () => {
@@ -164,7 +158,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
         
       if (fetchError && fetchError.code !== 'PGRST116') {
-        // PGRST116 means no results found, which is fine for a new profile
         throw fetchError;
       }
       
@@ -194,7 +187,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         (updates.solve_problems === true || existingProfile?.solve_problems === true) && 
         (updates.complete_training === true || existingProfile?.complete_training === true);
       
-      // Set onboarding status for the profile
       const onboarding_completed = hasCompletedBasicInfo && hasAnsweredAllQuestions;
       const eligible_for_training = isEligible;
       
@@ -207,7 +199,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       let result;
       if (existingProfile) {
-        // Update existing profile
         const { data, error } = await supabase
           .from('user_profiles')
           .update(profileData)
@@ -218,14 +209,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (error) throw error;
         result = data;
       } else {
-        // Create new profile with appropriate type casting to satisfy TypeScript
-        // The error is because first_name and last_name are required in the database schema
-        // but optional in our interface. We need to ensure they're provided or default them.
         const newProfileData = {
           ...profileData,
           email: user.email || '', 
-          first_name: profileData.first_name || '', // Provide default empty string
-          last_name: profileData.last_name || ''    // Provide default empty string
+          first_name: profileData.first_name || '',
+          last_name: profileData.last_name || ''
         };
         
         const { data, error } = await supabase
@@ -238,7 +226,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         result = data;
       }
       
-      // Update local state
       setUserProfile(result as unknown as UserProfile);
       return result;
     } catch (error) {
@@ -251,14 +238,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return null;
     
     try {
+      console.log("Refreshing user profile for user:", user.id);
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
         
-      if (error) throw error;
-      setUserProfile(data as unknown as UserProfile);
+      if (error) {
+        console.error("Error in refreshUserProfile:", error);
+        throw error;
+      }
+      
+      if (data) {
+        console.log("Refreshed user profile data:", data);
+        // Explicitly cast to UserProfile
+        setUserProfile(data as unknown as UserProfile);
+      } else {
+        console.warn("No user profile found during refresh");
+      }
       return data;
     } catch (error) {
       console.error('Error refreshing user profile:', error);

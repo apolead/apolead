@@ -246,7 +246,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       const calculatedAvgScore = Math.round(totalScore / scoreCount);
       setOverallScore(calculatedAvgScore);
       
-      if (completedCount === modules.length) {
+      if (completedCount === modules.length && modules.length > 0) {
         const allPassed = calculatedAvgScore >= 90;
         
         updateProfile({
@@ -256,6 +256,14 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         .then(() => {
           console.log("Training status updated successfully:", 
             {passed: allPassed, score: calculatedAvgScore});
+            
+          refreshUserProfile()
+            .then(() => {
+              console.log("User profile refreshed after training update");
+            })
+            .catch(error => {
+              console.error("Error refreshing user profile after training update:", error);
+            });
         })
         .catch(error => {
           console.error("Error updating training status:", error);
@@ -337,7 +345,15 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   };
   
   const handleCloseModal = () => {
-    onClose();
+    refreshUserProfile()
+      .then(() => {
+        console.log("User profile refreshed on modal close");
+        onClose();
+      })
+      .catch(error => {
+        console.error("Error refreshing user profile on modal close:", error);
+        onClose();
+      });
   };
   
   const handleNextModule = () => {
