@@ -210,6 +210,7 @@ export type Database = {
           onboarding_score: number | null
           personal_statement: string | null
           probation_training_completed: boolean | null
+          probation_training_passed: boolean | null
           quiz_passed: boolean | null
           quiz_score: number | null
           ram_amount: string | null
@@ -275,6 +276,7 @@ export type Database = {
           onboarding_score?: number | null
           personal_statement?: string | null
           probation_training_completed?: boolean | null
+          probation_training_passed?: boolean | null
           quiz_passed?: boolean | null
           quiz_score?: number | null
           ram_amount?: string | null
@@ -340,6 +342,7 @@ export type Database = {
           onboarding_score?: number | null
           personal_statement?: string | null
           probation_training_completed?: boolean | null
+          probation_training_passed?: boolean | null
           quiz_passed?: boolean | null
           quiz_score?: number | null
           ram_amount?: string | null
@@ -422,6 +425,7 @@ export type Database = {
           onboarding_score: number | null
           personal_statement: string | null
           probation_training_completed: boolean | null
+          probation_training_passed: boolean | null
           quiz_passed: boolean | null
           quiz_score: number | null
           ram_amount: string | null
@@ -490,6 +494,7 @@ export type Database = {
           onboarding_score: number | null
           personal_statement: string | null
           probation_training_completed: boolean | null
+          probation_training_passed: boolean | null
           quiz_passed: boolean | null
           quiz_score: number | null
           ram_amount: string | null

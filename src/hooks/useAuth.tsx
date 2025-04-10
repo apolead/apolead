@@ -151,6 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) throw new Error('User must be logged in to update profile');
     
     try {
+      console.log("Updating profile with:", updates);
       const { data: existingProfile, error: fetchError } = await supabase
         .from('user_profiles')
         .select('*')
@@ -252,8 +253,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (data) {
         console.log("Refreshed user profile data:", data);
-        // Explicitly cast to UserProfile
-        setUserProfile(data as unknown as UserProfile);
+        // Explicitly cast to UserProfile and ensure the probation_training fields are properly typed
+        const typedData = {
+          ...data,
+          probation_training_completed: Boolean(data.probation_training_completed),
+          probation_training_passed: Boolean(data.probation_training_passed)
+        } as unknown as UserProfile;
+        
+        setUserProfile(typedData);
+        return typedData;
       } else {
         console.warn("No user profile found during refresh");
       }
