@@ -218,11 +218,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (error) throw error;
         result = data;
       } else {
-        // Create new profile - Fix TypeScript error by ensuring email is included
-        // Explicitly add email from user object to satisfy the required field constraint
+        // Create new profile with appropriate type casting to satisfy TypeScript
+        // The error is because first_name and last_name are required in the database schema
+        // but optional in our interface. We need to ensure they're provided or default them.
         const newProfileData = {
           ...profileData,
-          email: user.email || '', // Ensure email field is always present
+          email: user.email || '', 
+          first_name: profileData.first_name || '', // Provide default empty string
+          last_name: profileData.last_name || ''    // Provide default empty string
         };
         
         const { data, error } = await supabase
@@ -270,7 +273,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loading,
     signUp,
     signIn,
-    signOut, // Changed from logout to signOut
+    signOut,
     updateProfile,
     refreshUserProfile
   };
