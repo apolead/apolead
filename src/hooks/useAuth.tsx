@@ -129,16 +129,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
     };
 
-    const unsubscribe = setUpAuthStateListener();
+    // Fix the type issue by proper handling of the return value from setUpAuthStateListener
+    const unsubscribePromise = setUpAuthStateListener();
 
     return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      } else if (unsubscribe instanceof Promise) {
-        unsubscribe.then(fn => {
-          if (fn) fn();
-        });
-      }
+      unsubscribePromise.then(unsubscribeFn => {
+        if (unsubscribeFn) unsubscribeFn();
+      }).catch(error => {
+        console.error('Error when unsubscribing from auth state listener:', error);
+      });
     };
   }, []);
 
@@ -219,7 +218,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (error) throw error;
         result = data;
       } else {
-        // Create new profile
+        // Create new profile - Fix: Pass profileData as an object, not as an array
         const { data, error } = await supabase
           .from('user_profiles')
           .insert(profileData)

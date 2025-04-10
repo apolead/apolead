@@ -35,6 +35,7 @@ const Dashboard = () => {
   const [onboardingProgress, setOnboardingProgress] = useState(20);
   const [onboardingStatus, setOnboardingStatus] = useState('not_started');
   const [trainingStatus, setTrainingStatus] = useState('not_started');
+  const [additionalTrainingStatus, setAdditionalTrainingStatus] = useState('not_started');
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const navigate = useNavigate();
@@ -62,7 +63,9 @@ const Dashboard = () => {
         complete_training: userProfile.complete_training,
         quiz_passed: userProfile.quiz_passed,
         training_video_watched: userProfile.training_video_watched,
-        agent_standing: userProfile.agent_standing
+        agent_standing: userProfile.agent_standing,
+        probation_training_passed: userProfile.probation_training_passed,
+        probation_training_completed: userProfile.probation_training_completed
       });
       
       const isOnboardingCompletedFlag = userProfile.onboarding_completed === true;
@@ -89,6 +92,17 @@ const Dashboard = () => {
         setTrainingStatus('not_started');
       }
       
+      // Handle additional training status
+      if (userProfile.probation_training_completed === true) {
+        if (userProfile.probation_training_passed === true) {
+          setAdditionalTrainingStatus('completed');
+        } else {
+          setAdditionalTrainingStatus('failed');
+        }
+      } else {
+        setAdditionalTrainingStatus('not_started');
+      }
+      
       console.log("Dashboard: Eligibility check", {
         isOnboardingCompletedFlag,
         isEligible,
@@ -96,8 +110,11 @@ const Dashboard = () => {
         eligible_for_training_type: typeof userProfile.eligible_for_training,
         onboarding_completed_type: typeof userProfile.onboarding_completed,
         trainingStatus,
+        additionalTrainingStatus,
         quiz_passed: userProfile.quiz_passed,
-        quiz_passed_type: typeof userProfile.quiz_passed
+        quiz_passed_type: typeof userProfile.quiz_passed,
+        probation_training_passed: userProfile.probation_training_passed,
+        probation_training_completed: userProfile.probation_training_completed
       });
       
       if (isOnboardingCompletedFlag) {
@@ -195,6 +212,9 @@ const Dashboard = () => {
   
   const closeAdditionalTrainingModal = () => {
     setIsProbationTrainingOpen(false);
+    refreshUserProfile().then(() => {
+      processedProfileRef.current = false;
+    });
   };
   
   const handleScheduleInterview = () => {
@@ -276,6 +296,40 @@ const Dashboard = () => {
         return <CheckCircle className="mr-[8px] text-[16px]" />;
     }
   };
+
+  // New methods to handle additional training status
+  const getAdditionalTrainingButtonStyle = () => {
+    switch (additionalTrainingStatus) {
+      case 'completed':
+        return 'card-button p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]';
+      case 'failed':
+        return 'card-button p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(239,68,68,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(239,68,68,0.3)]';
+      default:
+        return 'card-button p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(59,130,246,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(59,130,246,0.3)]';
+    }
+  };
+  
+  const getAdditionalTrainingButtonText = () => {
+    switch (additionalTrainingStatus) {
+      case 'completed':
+        return 'Training Completed';
+      case 'failed':
+        return 'Waitlisted';
+      default:
+        return 'Start Training';
+    }
+  };
+  
+  const getAdditionalTrainingIcon = () => {
+    switch (additionalTrainingStatus) {
+      case 'completed':
+        return <CheckCircle className="mr-[8px] text-[16px]" />;
+      case 'failed':
+        return <AlertTriangle className="mr-[8px] text-[16px]" />;
+      default:
+        return <GraduationCap className="mr-[8px] text-[16px]" />;
+    }
+  };
   
   useEffect(() => {
     if (showScheduleDialog) {
@@ -297,6 +351,8 @@ const Dashboard = () => {
   }
   
   const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
+  // Check if the user has passed additional training to unlock the next step
+  const hasPassedAdditionalTraining = userProfile?.probation_training_passed === true;
   
   return (
     <div className="flex w-full min-h-screen bg-[#f8fafc]">
@@ -533,6 +589,8 @@ const Dashboard = () => {
                 </div>
               )}
               <div className={`action-icon ${
+                additionalTrainingStatus === 'completed' ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 
+                additionalTrainingStatus === 'failed' ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#ef4444] to-[#dc2626] shadow-[0_8px_20px_rgba(239,68,68,0.2)]' : 
                 isProbationAgent ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#3b82f6] to-[#2563eb] shadow-[0_8px_20px_rgba(59,130,246,0.2)]' : 'locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B]'
               } text-white flex items-center justify-center text-[30px] shadow-none relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
                 <GraduationCap size={30} />
@@ -542,10 +600,11 @@ const Dashboard = () => {
               {isProbationAgent ? (
                 <button 
                   id="additional-training-btn"
-                  onClick={openAdditionalTrainingModal}
-                  className="card-button p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(59,130,246,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(59,130,246,0.3)]"
+                  onClick={additionalTrainingStatus !== 'failed' ? openAdditionalTrainingModal : undefined}
+                  className={getAdditionalTrainingButtonStyle()}
+                  disabled={additionalTrainingStatus === 'failed'}
                 >
-                  <GraduationCap className="mr-[8px] text-[16px]" /> Start Training
+                  {getAdditionalTrainingIcon()} {getAdditionalTrainingButtonText()}
                 </button>
               ) : (
                 <button className="card-button button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70">
@@ -554,20 +613,26 @@ const Dashboard = () => {
               )}
             </div>
             
-            <div className="action-card locked bg-[rgba(241,245,249,0.5)] rounded-[16px] p-[30px_25px] flex flex-col items-center text-center border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50 relative z-[2] h-full">
-              <div className="step-number locked absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B] text-white flex items-center justify-center font-[600] text-[16px] shadow-none z-[3] border-[3px] border-white">
+            <div className={`action-card ${hasPassedAdditionalTraining ? 'bg-white border border-[#10B981] hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full`}>
+              <div className={`step-number locked absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${hasPassedAdditionalTraining ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 'bg-gradient-to-r from-[#94A3B8] to-[#64748B]'} text-white flex items-center justify-center font-[600] text-[16px] shadow-none z-[3] border-[3px] border-white`}>
                 5
               </div>
-              <div className="lock-icon absolute top-[-12px] right-[-12px] w-[32px] h-[32px] rounded-full bg-[#94A3B8] text-white flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.1)] z-[3] text-[14px]">
-                <Lock size={14} />
-              </div>
-              <div className="action-icon locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B] text-white flex items-center justify-center text-[30px] shadow-none relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]">
+              {!hasPassedAdditionalTraining && (
+                <div className="lock-icon absolute top-[-12px] right-[-12px] w-[32px] h-[32px] rounded-full bg-[#94A3B8] text-white flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.1)] z-[3] text-[14px]">
+                  <Lock size={14} />
+                </div>
+              )}
+              <div className={`action-icon ${hasPassedAdditionalTraining ? 'w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_8px_20px_rgba(16,185,129,0.2)]' : 'locked w-[80px] h-[80px] rounded-full bg-gradient-to-r from-[#94A3B8] to-[#64748B]'} text-white flex items-center justify-center text-[30px] shadow-none relative overflow-hidden mb-[15px] before:content-[''] before:absolute before:top-[-50%] before:left-[-50%] before:w-[200%] before:h-[200%] before:bg-radial-gradient before:from-[rgba(255,255,255,0.3)] before:to-[rgba(255,255,255,0)]`}>
                 <i className="fas fa-rocket"></i>
               </div>
               <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Kickoff & Setup</h3>
               <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Add your banking info, join Discord, and complete final onboarding steps to get started.</p>
-              <button className="card-button button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70">
-                <i className="fas fa-lock mr-[8px] text-[16px]"></i> Locked
+              <button className={`card-button ${hasPassedAdditionalTraining ? 'p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]' : 'button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70'}`}>
+                {hasPassedAdditionalTraining ? (
+                  <><CheckCircle className="mr-[8px] text-[16px]" /> Get Started</>
+                ) : (
+                  <><i className="fas fa-lock mr-[8px] text-[16px]"></i> Locked</>
+                )}
               </button>
             </div>
           </div>
