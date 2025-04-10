@@ -29,66 +29,108 @@ const PrivacyPolicy = () => {
           </div>
           
           <div className="bg-white shadow-md rounded-lg p-8">
-            <p className="text-gray-700 mb-6">Last Updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+            <p className="text-gray-700 mb-6">Last Updated: April 9, 2025</p>
             
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-800">Introduction</h2>
-              <p className="mb-4">
-                ApoLead ("we," "our," or "us") respects your privacy and is committed to protecting it through our compliance with this policy. This policy describes:
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">1. Introduction</h2>
+              <p className="mb-4 text-gray-700">
+                Apolead ("Company," "we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your personal information when you visit our website or interact with our services.
               </p>
+            </section>
+            
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">2. Information We Collect</h2>
+              <p className="mb-4 text-gray-700">We collect the following types of personally identifiable information (PII):</p>
               <ul className="list-disc pl-6 mb-4 space-y-2 text-gray-700">
-                <li>The types of information we may collect from you or that you may provide when you visit our website at apolead.com ("Website").</li>
-                <li>Our practices for collecting, using, maintaining, protecting, and disclosing that information.</li>
+                <li>Name</li>
+                <li>Address</li>
+                <li>Phone Number</li>
+              </ul>
+              <p className="mb-4 text-gray-700">
+                This information is obtained through third-party lead providers and web forms submitted by consumers.
+              </p>
+            </section>
+            
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">3. How We Use Your Information</h2>
+              <p className="mb-4 text-gray-700">We use the collected PII for the following purposes:</p>
+              <ul className="list-disc pl-6 mb-4 space-y-2 text-gray-700">
+                <li>Lead Qualification: To assess consumer interest and eligibility for products or services.</li>
+                <li>Marketing Communications: To send relevant offers, promotions, and updates (with the option to opt out).</li>
               </ul>
             </section>
             
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-800">Information We Collect</h2>
-              <p className="mb-4">We collect several types of information from and about users of our Website, including:</p>
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">4. Data Retention</h2>
+              <p className="mb-4 text-gray-700">
+                We retain consumer PII for 120 days, after which it is securely deleted.
+              </p>
+            </section>
+            
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">5. How We Protect Your Information</h2>
+              <p className="mb-4 text-gray-700">
+                We take data security seriously and employ the following safeguards:
+              </p>
               <ul className="list-disc pl-6 mb-4 space-y-2 text-gray-700">
-                <li>Personal information such as name, email address, phone number, and government-issued ID that you provide when applying to become an agent.</li>
-                <li>Information about your internet connection, the equipment you use to access our Website, and usage details.</li>
-                <li>Non-personal information about your interactions with our Website, including browser type and language, access times, and referring website addresses.</li>
+                <li>Encryption at Rest: All stored data is encrypted.</li>
+                <li>Secure Databases: Information is stored in protected databases using industry-standard security measures.</li>
+                <li>Access Controls: Only authorized personnel have access to stored PII.</li>
               </ul>
             </section>
             
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-800">How We Use Your Information</h2>
-              <p className="mb-4">We use information that we collect about you or that you provide to us, including any personal information:</p>
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">6. Consumer Rights</h2>
+              <p className="mb-4 text-gray-700">
+                You have the right to opt out of marketing communications at any time. To do so, please submit a request via our [Webform].
+              </p>
+            </section>
+            
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">7. Cookies and Tracking Technologies</h2>
+              <p className="mb-4 text-gray-700">
+                We use analytics and advertising cookies to enhance user experience and improve marketing effectiveness. You can manage your cookie preferences through our standard cookie management settings.
+              </p>
+            </section>
+            
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">8. Data Storage and Processing</h2>
+              <p className="mb-4 text-gray-700">
+                All data is processed and stored within the United States. We do not transfer consumer data internationally.
+              </p>
+            </section>
+            
+            <section className="mb-8">
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">9. Compliance with Laws</h2>
+              <p className="mb-4 text-gray-700">
+                Apolead complies with the following regulations:
+              </p>
               <ul className="list-disc pl-6 mb-4 space-y-2 text-gray-700">
-                <li>To present our Website and its contents to you.</li>
-                <li>To process your application to become an ApoLead agent.</li>
-                <li>To provide you with information, products, or services that you request from us.</li>
-                <li>To fulfill any other purpose for which you provide it.</li>
-                <li>To carry out our obligations and enforce our rights arising from any contracts entered into between you and us.</li>
-                <li>To notify you about changes to our Website or any products or services we offer or provide through it.</li>
+                <li>Telephone Consumer Protection Act (TCPA): Governs telemarketing and call consent.</li>
+                <li>CAN-SPAM Act: Regulates marketing emails and provides opt-out mechanisms.</li>
               </ul>
             </section>
             
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-800">Data Security</h2>
-              <p className="mb-4">
-                We have implemented measures designed to secure your personal information from accidental loss and from unauthorized access, use, alteration, and disclosure. All information you provide to us is stored on secure servers behind firewalls.
-              </p>
-              <p className="mb-4">
-                The safety and security of your information also depends on you. We urge you to be careful about giving out information in public areas of the Website. The information you share in public areas may be viewed by any user of the Website.
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">10. Privacy Policy Updates</h2>
+              <p className="mb-4 text-gray-700">
+                We may update this Privacy Policy periodically. Any changes will be posted on our website with a revised effective date.
               </p>
             </section>
             
             <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-800">Changes to Our Privacy Policy</h2>
-              <p className="mb-4">
-                It is our policy to post any changes we make to our privacy policy on this page. If we make material changes to how we treat our users' personal information, we will notify you through a notice on the Website home page.
-              </p>
-              <p className="mb-4">
-                The date the privacy policy was last revised is identified at the top of the page. You are responsible for periodically visiting our Website and this privacy policy to check for any changes.
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">11. Age Restrictions</h2>
+              <p className="mb-4 text-gray-700">
+                Our services are intended for individuals aged 18 or older. We do not knowingly collect information from anyone under the age of 18.
               </p>
             </section>
             
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-gray-800">Contact Information</h2>
-              <p className="mb-4">
-                To ask questions or comment about this privacy policy and our privacy practices, contact us at: privacy@apolead.com
+              <h2 className="text-2xl font-semibold mb-4 text-gray-800">12. Contact Information</h2>
+              <p className="mb-4 text-gray-700">
+                For privacy-related inquiries, please contact us at:
+                <br />
+                Email: support@apolead.com
               </p>
             </section>
           </div>
