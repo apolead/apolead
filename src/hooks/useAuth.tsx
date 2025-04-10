@@ -218,10 +218,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (error) throw error;
         result = data;
       } else {
-        // Create new profile - Fix: Pass profileData as an object, not as an array
+        // Create new profile - Fix TypeScript error by ensuring email is included
+        // Explicitly add email from user object to satisfy the required field constraint
+        const newProfileData = {
+          ...profileData,
+          email: user.email || '', // Ensure email field is always present
+        };
+        
         const { data, error } = await supabase
           .from('user_profiles')
-          .insert(profileData)
+          .insert(newProfileData)
           .select()
           .single();
           

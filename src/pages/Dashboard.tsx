@@ -92,7 +92,6 @@ const Dashboard = () => {
         setTrainingStatus('not_started');
       }
       
-      // Handle additional training status
       if (userProfile.probation_training_completed === true) {
         if (userProfile.probation_training_passed === true) {
           setAdditionalTrainingStatus('completed');
@@ -297,7 +296,6 @@ const Dashboard = () => {
     }
   };
 
-  // New methods to handle additional training status
   const getAdditionalTrainingButtonStyle = () => {
     switch (additionalTrainingStatus) {
       case 'completed':
@@ -351,7 +349,6 @@ const Dashboard = () => {
   }
   
   const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
-  // Check if the user has passed additional training to unlock the next step
   const hasPassedAdditionalTraining = userProfile?.probation_training_passed === true;
   
   return (
