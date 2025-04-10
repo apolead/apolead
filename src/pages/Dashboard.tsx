@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
@@ -16,7 +16,9 @@ import {
   Bell,
   AlertTriangle,
   XCircle,
-  GraduationCap
+  GraduationCap,
+  CreditCard,
+  ExternalLink
 } from 'lucide-react';
 import {
   Dialog,
@@ -24,7 +26,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
   const { user, userProfile, loading, refreshUserProfile } = useAuth();
@@ -38,6 +42,7 @@ const Dashboard = () => {
   const [additionalTrainingStatus, setAdditionalTrainingStatus] = useState('not_started');
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [showBankingDialog, setShowBankingDialog] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -219,6 +224,16 @@ const Dashboard = () => {
   const handleScheduleInterview = () => {
     console.log("Dashboard: Opening schedule interview dialog");
     setShowScheduleDialog(true);
+  };
+  
+  const handleGetStarted = () => {
+    console.log("Dashboard: Opening banking info dialog");
+    setShowBankingDialog(true);
+  };
+  
+  const navigateToBilling = () => {
+    setShowBankingDialog(false);
+    navigate('/billing-information');
   };
   
   const getOnboardingButtonText = () => {
@@ -610,7 +625,7 @@ const Dashboard = () => {
               )}
             </div>
             
-            <div className={`action-card ${hasPassedAdditionalTraining ? 'bg-white border border-[#10B981] hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full`}>
+            <div className={`action-card ${hasPassedAdditionalTraining ? 'bg-white border border-[#10B981] hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : 'locked bg-[rgba(241,245,249,0.5)] border border-dashed border-[#cbd5e1] shadow-none filter grayscale opacity-50'} rounded-[16px] p-[30px_25px] flex flex-col items-center text-center relative z-[2] h-full ${hasPassedAdditionalTraining ? 'hover:transform hover:-translate-y-[8px] hover:shadow-[0_15px_30px_rgba(16,185,129,0.1)]' : ''}`}>
               <div className={`step-number locked absolute top-[-18px] left-1/2 transform -translate-x-1/2 w-[36px] h-[36px] rounded-full ${hasPassedAdditionalTraining ? 'bg-gradient-to-r from-[#10B981] to-[#059669] shadow-[0_4px_10px_rgba(16,185,129,0.3)]' : 'bg-gradient-to-r from-[#94A3B8] to-[#64748B]'} text-white flex items-center justify-center font-[600] text-[16px] shadow-none z-[3] border-[3px] border-white`}>
                 5
               </div>
@@ -624,7 +639,11 @@ const Dashboard = () => {
               </div>
               <h3 className="text-[18px] mb-[10px] text-[#1e293b] font-[600]">Kickoff & Setup</h3>
               <p className="text-[#64748b] text-[14px] mb-[25px] flex-grow leading-[1.6]">Add your banking info, join Discord, and complete final onboarding steps to get started.</p>
-              <button className={`card-button ${hasPassedAdditionalTraining ? 'p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]' : 'button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70'}`}>
+              <button 
+                className={`card-button ${hasPassedAdditionalTraining ? 'p-[12px_24px] rounded-[12px] bg-gradient-to-r from-[#10B981] to-[#059669] text-white border-0 cursor-pointer font-[500] transition-all w-full flex items-center justify-center text-[14px] shadow-[0_4px_10px_rgba(16,185,129,0.2)] hover:transform hover:-translate-y-[3px] hover:shadow-[0_6px_15px_rgba(16,185,129,0.3)]' : 'button-locked p-[12px_24px] rounded-[12px] bg-[#94A3B8] text-white border-0 cursor-not-allowed font-[500] transition-all w-full flex items-center justify-center text-[14px] opacity-70'}`}
+                onClick={hasPassedAdditionalTraining ? handleGetStarted : undefined}
+                disabled={!hasPassedAdditionalTraining}
+              >
                 {hasPassedAdditionalTraining ? (
                   <><CheckCircle className="mr-[8px] text-[16px]" /> Get Started</>
                 ) : (
@@ -674,6 +693,57 @@ const Dashboard = () => {
               className="rounded-lg"
             ></iframe>
           </div>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={showBankingDialog} onOpenChange={setShowBankingDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Complete Your Setup</DialogTitle>
+            <DialogDescription className="mt-2 text-base">
+              Before you can start working, you need to:
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            <div className="flex items-start gap-3 p-3 border rounded-lg bg-amber-50 border-amber-200">
+              <CreditCard className="w-5 h-5 mt-0.5 text-amber-600" />
+              <div>
+                <h3 className="font-medium text-amber-900">Add your banking information</h3>
+                <p className="mt-1 text-sm text-amber-700">
+                  Please provide your banking details so we can process your payments.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3 p-3 border rounded-lg bg-indigo-50 border-indigo-200">
+              <ExternalLink className="w-5 h-5 mt-0.5 text-indigo-600" />
+              <div>
+                <h3 className="font-medium text-indigo-900">Join our Discord server</h3>
+                <p className="mt-1 text-sm text-indigo-700">
+                  Connect with other agents, get updates, and access support resources.
+                </p>
+                <a 
+                  href="https://discord.gg/aZtPvxQv" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center mt-2 text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                >
+                  Join Discord Server
+                  <ExternalLink className="w-3.5 h-3.5 ml-1" />
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowBankingDialog(false)}>
+              I'll do this later
+            </Button>
+            <Button onClick={navigateToBilling}>
+              Add Banking Information
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

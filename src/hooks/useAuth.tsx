@@ -83,7 +83,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (error) {
           console.error('Error fetching user profile:', error);
         } else if (data) {
-          // Explicitly cast to UserProfile
           setUserProfile(data as unknown as UserProfile);
         }
       } catch (error) {
@@ -253,7 +252,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (data) {
         console.log("Refreshed user profile data:", data);
-        // Explicitly cast to UserProfile and ensure the probation_training fields are properly typed
         const typedData = {
           ...data,
           probation_training_completed: Boolean(data.probation_training_completed),
