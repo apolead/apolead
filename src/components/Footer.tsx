@@ -115,11 +115,11 @@ const Footer = () => {
             <ul className="list-none">
               <li className="mb-3 flex items-center">
                 <i className="fas fa-envelope mr-2"></i> 
-                <a href="mailto:careers@apolead.com" className="text-gray-300 hover:text-white transition-colors duration-300">careers@apolead.com</a>
+                <a href="mailto:support@apolead.com" className="text-gray-300 hover:text-white transition-colors duration-300">support@apolead.com</a>
               </li>
               <li className="mb-3 flex items-center">
                 <i className="fas fa-phone mr-2"></i> 
-                <a href="tel:+18001234567" className="text-gray-300 hover:text-white transition-colors duration-300">+1 (800) 123-4567</a>
+                <a href="tel:+18188350387" className="text-gray-300 hover:text-white transition-colors duration-300">818 835 0387</a>
               </li>
               <li className="mb-3 flex items-center">
                 <i className="fas fa-globe mr-2"></i> 
