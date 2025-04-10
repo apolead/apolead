@@ -252,10 +252,12 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         updateProfile({
           probation_training_completed: true,
           probation_training_passed: allPassed
-        }).then(() => {
+        })
+        .then(() => {
           console.log("Training status updated successfully:", 
             {passed: allPassed, score: calculatedAvgScore});
-        }).catch(error => {
+        })
+        .catch(error => {
           console.error("Error updating training status:", error);
           setError("Failed to save your progress. Please try again.");
         });
