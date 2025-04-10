@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
@@ -247,8 +248,9 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       setOverallScore(calculatedAvgScore);
       
       if (completedCount === modules.length && modules.length > 0) {
-        const allPassed = calculatedAvgScore >= 90;
+        const allPassed = calculatedAvgScore >= 90; // Using 90% threshold consistently
         
+        // Update user profile with training results
         updateProfile({
           probation_training_completed: true,
           probation_training_passed: allPassed
