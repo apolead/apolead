@@ -27,24 +27,36 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showScorePopup, setShowScorePopup] = useState(false);
-  const videoRef = useRef<HTMLIFrameElement>(null);
+  const videoRef = useRef<HTMLIFrameElement | null>(null);
+  const isMountedRef = useRef<boolean>(true);
   
   useEffect(() => {
+    // Set mounted flag to true
+    isMountedRef.current = true;
+    
     // If the video is already marked as completed, allow completion
     if (isCompleted) {
       setCanComplete(true);
     }
     
     const loadTimer = setTimeout(() => {
-      setLoading(false);
-      // Always enable completion
-      setCanComplete(true);
+      if (isMountedRef.current) {
+        setLoading(false);
+        // Always enable completion
+        setCanComplete(true);
+      }
     }, 2000);
     
-    return () => clearTimeout(loadTimer);
+    // Cleanup function to run when component unmounts
+    return () => {
+      isMountedRef.current = false;
+      clearTimeout(loadTimer);
+    };
   }, [isCompleted]);
   
   const handleComplete = () => {
+    if (!isMountedRef.current) return;
+    
     if (canComplete) {
       // For the final module, show score popup
       if (moduleNumber === totalModules) {
@@ -54,16 +66,31 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
       }
     } else {
       setError("Please watch more of the video before continuing.");
-      setTimeout(() => setError(null), 3000);
+      
+      // Use the mounted ref to safely clear the timeout
+      if (isMountedRef.current) {
+        const errorTimer = setTimeout(() => {
+          if (isMountedRef.current) {
+            setError(null);
+          }
+        }, 3000);
+        
+        // Cleanup the timeout if component unmounts before timeout completes
+        return () => clearTimeout(errorTimer);
+      }
     }
   };
   
   const handleContinueAfterScore = () => {
+    if (!isMountedRef.current) return;
+    
     setShowScorePopup(false);
     onComplete();
   };
   
   const handleError = () => {
+    if (!isMountedRef.current) return;
+    
     setError("There was an issue loading the video. Please try again later.");
     setLoading(false);
   };
@@ -75,7 +102,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
       const match = url.match(regExp);
       
       return (match && match[2].length === 11)
-        ? `https://www.youtube.com/embed/${match[2]}?autoplay=0&modestbranding=1&rel=0`
+        ? `https://www.youtube.com/embed/${match[2]}?autoplay=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`
         : url; // Return original if not a valid YouTube URL
     } catch (err) {
       console.error("Error parsing YouTube URL:", err);
@@ -133,7 +160,11 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           onError={handleError}
-          onLoad={() => setLoading(false)}
+          onLoad={() => {
+            if (isMountedRef.current) {
+              setLoading(false);
+            }
+          }}
           title="Training Video"
         ></iframe>
       </div>
