@@ -36,19 +36,44 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
   // Add retry mechanism state
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
+  // Track transition state to prevent multiple clicks
+  const [isTransitioning, setIsTransitioning] = useState(false);
   
   // Clean up function to safely remove video iframe
   const cleanupVideoPlayer = () => {
     try {
+      if (!isMountedRef.current) return;
+      
       if (videoRef.current && videoRef.current.parentNode) {
-        // Create a clone without event listeners to safely replace the original
-        const clone = videoRef.current.cloneNode(false);
-        if (videoRef.current.parentNode) {
-          videoRef.current.parentNode.replaceChild(clone, videoRef.current);
-        }
+        // Instead of direct DOM manipulation, use safer approach
+        const parentNode = videoRef.current.parentNode;
+        const originalSrc = videoRef.current.src;
+        
+        // Create a clean iframe without the event listeners
+        const newIframe = document.createElement('iframe');
+        newIframe.className = videoRef.current.className;
+        newIframe.title = videoRef.current.title;
+        newIframe.allow = videoRef.current.allow;
+        newIframe.frameBorder = videoRef.current.frameBorder;
+        newIframe.allowFullscreen = videoRef.current.allowFullscreen;
+        
+        // Only set src after attaching to prevent premature loading
+        parentNode.insertBefore(newIframe, videoRef.current);
+        parentNode.removeChild(videoRef.current);
+        
+        // Now set the src
+        setTimeout(() => {
+          if (isMountedRef.current && newIframe) {
+            newIframe.src = originalSrc;
+          }
+        }, 50);
+        
+        // Update the ref to point to the new iframe
+        videoRef.current = newIframe;
       }
     } catch (err) {
       console.error("Error cleaning up video player:", err);
+      // Don't throw an error, just log it
     }
   };
   
@@ -77,6 +102,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
     // If the video is already marked as completed, allow completion
     if (isCompleted) {
       setCanComplete(true);
+      setLoading(false);
     }
     
     const loadTimer = loadVideo();
@@ -85,87 +111,120 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
     return () => {
       clearTimeout(loadTimer);
       isMountedRef.current = false;
-      cleanupVideoPlayer();
+      // Don't perform DOM operations in the cleanup phase
+      // as they can cause React errors
     };
   }, [isCompleted, videoUrl, retryCount]); // Added retryCount as dependency to trigger reload
   
   const handleComplete = () => {
-    if (!isMountedRef.current) return;
+    if (!isMountedRef.current || isTransitioning) return;
     
-    if (canComplete) {
-      // For the final module, show score popup
-      if (moduleNumber === totalModules) {
-        setShowScorePopup(true);
-      } else {
-        try {
-          // Clean up video player before completing
-          cleanupVideoPlayer();
-          onComplete();
-        } catch (err) {
-          console.error("Error during module completion:", err);
-          
-          // Instead of showing error to user, retry the operation
-          if (retryCount < maxRetries) {
-            console.log(`Retrying module completion (attempt ${retryCount + 1})`);
-            setRetryCount(prev => prev + 1);
+    try {
+      setIsTransitioning(true);
+      
+      if (canComplete) {
+        // For the final module, show score popup
+        if (moduleNumber === totalModules) {
+          setShowScorePopup(true);
+          setIsTransitioning(false);
+        } else {
+          try {
+            // Don't manipulate DOM directly just before state updates
+            // this can cause React reconciliation issues
             setTimeout(() => {
-              if (isMountedRef.current) {
-                try {
-                  cleanupVideoPlayer();
+              try {
+                if (isMountedRef.current) {
                   onComplete();
-                } catch (retryErr) {
-                  console.error("Error during retry attempt:", retryErr);
                 }
+              } catch (innerErr) {
+                handleTransitionError(innerErr);
               }
-            }, 1000);
-          } else {
-            // Only after max retries, show error to user
-            setError("There was an issue completing this module. Please try again.");
-            toast({
-              title: "Module Transition Error",
-              description: "There was an issue moving to the next module. Please try again.",
-              variant: "destructive",
-            });
-            setTimeout(() => {
-              if (isMountedRef.current) {
-                setError(null);
-                // Reset retry counter after showing error
-                setRetryCount(0);
-              }
-            }, 3000);
+            }, 50);
+          } catch (err) {
+            handleTransitionError(err);
           }
         }
+      } else {
+        setError("Please watch more of the video before continuing.");
+        setIsTransitioning(false);
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            setError(null);
+          }
+        }, 3000);
       }
-    } else {
-      setError("Please watch more of the video before continuing.");
-      setTimeout(() => {
-        if (isMountedRef.current) {
-          setError(null);
-        }
-      }, 3000);
+    } catch (err) {
+      handleTransitionError(err);
     }
   };
   
-  const handleContinueAfterScore = () => {
+  const handleTransitionError = (err: any) => {
+    console.error("Error during module transition:", err);
+    
+    // Reset transition state
+    setIsTransitioning(false);
+    
+    // Implement retry mechanism
+    if (retryCount < maxRetries) {
+      console.log(`Retrying module completion (attempt ${retryCount + 1})`);
+      setRetryCount(prev => prev + 1);
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          try {
+            onComplete();
+          } catch (retryErr) {
+            console.error("Error during retry attempt:", retryErr);
+            // If still failing after a retry, show error after a small delay
+            if (retryCount >= maxRetries - 1) {
+              showTransitionError();
+            }
+          }
+        }
+      }, 800);
+    } else {
+      showTransitionError();
+    }
+  };
+  
+  const showTransitionError = () => {
     if (!isMountedRef.current) return;
     
-    try {
-      setShowScorePopup(false);
-      // Clean up video player before continuing
-      cleanupVideoPlayer();
-      onComplete();
-    } catch (err) {
-      console.error("Error during score continuation:", err);
-      // Auto-retry logic
-      if (retryCount < maxRetries) {
-        console.log(`Retrying score continuation (attempt ${retryCount + 1})`);
-        setRetryCount(prev => prev + 1);
-        setTimeout(() => {
-          if (isMountedRef.current) {
-            handleContinueAfterScore();
-          }
-        }, 1000);
+    setError("There was an issue completing this module. Please try again.");
+    toast({
+      title: "Module Transition Error",
+      description: "There was an issue moving to the next module. Please try again.",
+      variant: "destructive",
+    });
+    
+    // Reset state after showing error
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        setError(null);
+        setRetryCount(0);
+        setIsTransitioning(false);
       }
+    }, 3000);
+  };
+  
+  const handleContinueAfterScore = () => {
+    if (!isMountedRef.current || isTransitioning) return;
+    
+    try {
+      setIsTransitioning(true);
+      setShowScorePopup(false);
+      
+      // Use setTimeout to ensure state updates complete before transition
+      setTimeout(() => {
+        try {
+          if (isMountedRef.current) {
+            onComplete();
+          }
+        } catch (err) {
+          handleTransitionError(err);
+        }
+      }, 50);
+    } catch (err) {
+      handleTransitionError(err);
     }
   };
   
@@ -231,8 +290,9 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
         <Button 
           onClick={handleContinueAfterScore}
           className="bg-blue-500 text-white hover:bg-blue-600 mt-4"
+          disabled={isTransitioning}
         >
-          Continue
+          {isTransitioning ? 'Processing...' : 'Continue'}
         </Button>
       </div>
     );
@@ -283,8 +343,9 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           onClick={handleComplete}
           className="bg-blue-500 text-white hover:bg-blue-600"
           variant="default"
+          disabled={isTransitioning}
         >
-          {getButtonText()}
+          {isTransitioning ? 'Processing...' : getButtonText()}
         </Button>
       </div>
     </div>
