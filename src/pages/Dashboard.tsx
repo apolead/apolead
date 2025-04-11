@@ -367,7 +367,8 @@ const Dashboard = () => {
   const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
   const hasPassedAdditionalTraining = userProfile?.probation_training_passed === true;
 
-  return <div className="flex w-full min-h-screen bg-[#f8fafc]">
+  return (
+    <div className="flex w-full min-h-screen bg-[#f8fafc]">
       <DashboardSidebar activeItem="dashboard" />
       
       <div className="flex-1 p-[20px_30px]">
@@ -469,4 +470,74 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <div className="action-cards-container bg-white rounded-[20px] p-[25px]
+        <div className="action-cards-container bg-white rounded-[20px] p-[25px]">
+          {/* Rest of the Dashboard content goes here... */}
+        </div>
+      </div>
+      
+      <OnboardingModal 
+        isOpen={isModalOpen} 
+        onClose={closeOnboardingModal} 
+      />
+
+      <TrainingModal 
+        isOpen={isTrainingModalOpen}
+        onClose={closeTrainingModal}
+      />
+      
+      <AdditionalTrainingModal 
+        isOpen={isProbationTrainingOpen}
+        onClose={closeAdditionalTrainingModal}
+      />
+
+      <PolicyAcknowledgmentDialog 
+        isOpen={isPolicyAcknowledgmentOpen}
+        onClose={() => setIsPolicyAcknowledgmentOpen(false)}
+        onComplete={handlePolicyAcknowledgmentComplete}
+      />
+      
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-semibold">Schedule Your Interview</DialogTitle>
+            <DialogDescription>Please select a time for your virtual interview.</DialogDescription>
+          </DialogHeader>
+          <div className="h-[500px]">
+            <div 
+              className="calendly-inline-widget w-full h-full"
+              data-url="https://calendly.com/apolead/30min"
+            ></div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={showBankingDialog} onOpenChange={setShowBankingDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-semibold">Banking Information Required</DialogTitle>
+            <DialogDescription>To receive your commission payments, we need your banking information.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              We need your banking details to process any commission payments you earn. This information will be securely stored and used only for payment purposes.
+            </p>
+            <div className="flex items-center p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <CreditCard className="w-5 h-5 text-amber-600 mr-3" />
+              <p className="text-sm text-amber-700">All banking information is encrypted and securely stored.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBankingDialog(false)}>
+              Later
+            </Button>
+            <Button className="bg-gradient-to-r from-indigo-600 to-cyan-500 hover:from-indigo-700 hover:to-cyan-600" onClick={navigateToBilling}>
+              Enter Banking Details
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default Dashboard;
