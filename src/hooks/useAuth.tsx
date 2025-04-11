@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -49,6 +50,10 @@ export interface UserProfile {
   zip_code?: string;
   ssn_last_four?: string;
   account_holder_name?: string;
+  telemarketing_policy_acknowledged?: boolean;
+  do_not_call_policy_acknowledged?: boolean;
+  policy_acknowledgment_name?: string;
+  policy_acknowledged_at?: string;
 }
 
 interface AuthContextValue {
@@ -61,6 +66,7 @@ interface AuthContextValue {
   signOut: () => Promise<any>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<any>;
   refreshUserProfile: () => Promise<any>;
+  acknowledgePolicies: (name: string) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -234,6 +240,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
+  const acknowledgePolicies = async (name: string) => {
+    if (!user) throw new Error('User must be logged in to acknowledge policies');
+    
+    try {
+      const updates = {
+        telemarketing_policy_acknowledged: true,
+        do_not_call_policy_acknowledged: true,
+        policy_acknowledgment_name: name,
+        policy_acknowledged_at: new Date().toISOString()
+      };
+      
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update(updates)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      setUserProfile(prev => prev ? {...prev, ...updates} : null);
+      return data;
+    } catch (error) {
+      console.error('Error acknowledging policies:', error);
+      throw error;
+    }
+  };
+  
   const refreshUserProfile = async () => {
     if (!user) return null;
     
@@ -255,7 +289,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const typedData = {
           ...data,
           probation_training_completed: Boolean(data.probation_training_completed),
-          probation_training_passed: Boolean(data.probation_training_passed)
+          probation_training_passed: Boolean(data.probation_training_passed),
+          telemarketing_policy_acknowledged: Boolean(data.telemarketing_policy_acknowledged),
+          do_not_call_policy_acknowledged: Boolean(data.do_not_call_policy_acknowledged)
         } as unknown as UserProfile;
         
         setUserProfile(typedData);
@@ -279,7 +315,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signIn,
     signOut,
     updateProfile,
-    refreshUserProfile
+    refreshUserProfile,
+    acknowledgePolicies
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

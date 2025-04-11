@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import OnboardingModal from '@/components/dashboard/OnboardingModal';
 import TrainingModal from '@/components/training/TrainingModal';
 import AdditionalTrainingModal from '@/components/training/AdditionalTrainingModal';
+import PolicyAcknowledgmentDialog from '@/components/dashboard/PolicyAcknowledgmentDialog';
 import { CheckCircle, ChevronDown, Lock, Search, Settings, Bell, AlertTriangle, XCircle, GraduationCap, CreditCard, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,7 +18,8 @@ const Dashboard = () => {
     user,
     userProfile,
     loading,
-    refreshUserProfile
+    refreshUserProfile,
+    acknowledgePolicies
   } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTrainingModalOpen, setIsTrainingModalOpen] = useState(false);
@@ -29,10 +32,9 @@ const Dashboard = () => {
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [showBankingDialog, setShowBankingDialog] = useState(false);
+  const [showPolicyDialog, setShowPolicyDialog] = useState(false);
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const processedProfileRef = useRef(false);
   const initialLoadRef = useRef(true);
 
@@ -57,7 +59,9 @@ const Dashboard = () => {
         training_video_watched: userProfile.training_video_watched,
         agent_standing: userProfile.agent_standing,
         probation_training_passed: userProfile.probation_training_passed,
-        probation_training_completed: userProfile.probation_training_completed
+        probation_training_completed: userProfile.probation_training_completed,
+        telemarketing_policy_acknowledged: userProfile.telemarketing_policy_acknowledged,
+        do_not_call_policy_acknowledged: userProfile.do_not_call_policy_acknowledged
       });
       const isOnboardingCompletedFlag = userProfile.onboarding_completed === true;
       const isEligible = userProfile.eligible_for_training === true;
@@ -90,7 +94,9 @@ const Dashboard = () => {
         quiz_passed: userProfile.quiz_passed,
         quiz_passed_type: typeof userProfile.quiz_passed,
         probation_training_passed: userProfile.probation_training_passed,
-        probation_training_completed: userProfile.probation_training_completed
+        probation_training_completed: userProfile.probation_training_completed,
+        telemarketing_policy_acknowledged: userProfile.telemarketing_policy_acknowledged,
+        do_not_call_policy_acknowledged: userProfile.do_not_call_policy_acknowledged
       });
       if (isOnboardingCompletedFlag) {
         if (isEligible) {
@@ -188,8 +194,33 @@ const Dashboard = () => {
   };
 
   const handleGetStarted = () => {
-    console.log("Dashboard: Opening banking info dialog");
-    setShowBankingDialog(true);
+    console.log("Dashboard: Opening policy acknowledgment dialog");
+    // Check if policies are already acknowledged
+    if (userProfile?.telemarketing_policy_acknowledged && userProfile?.do_not_call_policy_acknowledged) {
+      setShowBankingDialog(true);
+    } else {
+      setShowPolicyDialog(true);
+    }
+  };
+
+  const handlePolicyAcknowledge = async (name: string) => {
+    try {
+      await acknowledgePolicies(name);
+      toast({
+        title: "Policies Acknowledged",
+        description: "Thank you for acknowledging our policies.",
+        variant: "default"
+      });
+      setShowPolicyDialog(false);
+      setShowBankingDialog(true);
+    } catch (error) {
+      console.error("Error acknowledging policies:", error);
+      toast({
+        title: "Error",
+        description: "There was an error acknowledging the policies. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const navigateToBilling = () => {
@@ -311,6 +342,7 @@ const Dashboard = () => {
       script.src = 'https://assets.calendly.com/assets/external/widget.js';
       script.async = true;
       document.body.appendChild(script);
+      
       return () => {
         if (document.body.contains(script)) {
           document.body.removeChild(script);
@@ -326,7 +358,8 @@ const Dashboard = () => {
   const isProbationAgent = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'Probation';
   const hasPassedAdditionalTraining = userProfile?.probation_training_passed === true;
 
-  return <div className="flex w-full min-h-screen bg-[#f8fafc]">
+  return (
+    <div className="flex w-full min-h-screen bg-[#f8fafc]">
       <DashboardSidebar activeItem="dashboard" />
       
       <div className="flex-1 p-[20px_30px]">
@@ -542,11 +575,33 @@ const Dashboard = () => {
         </div>
       </div>
       
-      <OnboardingModal isOpen={isModalOpen} onClose={closeOnboardingModal} user={user} initialUserData={userProfile} />
+      {user && userProfile && (
+        <OnboardingModal 
+          isOpen={isModalOpen} 
+          onClose={closeOnboardingModal} 
+          user={user} 
+          initialUserData={userProfile} 
+        />
+      )}
 
-      <TrainingModal isOpen={isTrainingModalOpen} onClose={closeTrainingModal} onComplete={passed => closeTrainingModal(passed)} />
+      <TrainingModal 
+        isOpen={isTrainingModalOpen} 
+        onClose={() => closeTrainingModal()} 
+        onComplete={(passed) => closeTrainingModal(passed)} 
+      />
       
-      {isProbationAgent && <AdditionalTrainingModal isOpen={isProbationTrainingOpen} onClose={closeAdditionalTrainingModal} />}
+      {isProbationAgent && (
+        <AdditionalTrainingModal 
+          isOpen={isProbationTrainingOpen} 
+          onClose={closeAdditionalTrainingModal} 
+        />
+      )}
+      
+      <PolicyAcknowledgmentDialog
+        isOpen={showPolicyDialog}
+        onClose={() => setShowPolicyDialog(false)}
+        onAcknowledge={handlePolicyAcknowledge}
+      />
       
       <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -622,7 +677,8 @@ const Dashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 };
 
 export default Dashboard;
