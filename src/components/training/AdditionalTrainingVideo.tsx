@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, CheckCircle, ChevronRight } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { toast } from '@/hooks/use-toast';
 
 interface AdditionalTrainingVideoProps {
   videoUrl: string;
@@ -28,42 +29,100 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
   const [loading, setLoading] = useState(true);
   const [showScorePopup, setShowScorePopup] = useState(false);
   const videoRef = useRef<HTMLIFrameElement>(null);
+  // Add a ref to track component mount state
+  const isMountedRef = useRef<boolean>(true);
+  // Track video container element
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Clean up function to safely remove video iframe
+  const cleanupVideoPlayer = () => {
+    try {
+      if (videoRef.current && videoRef.current.parentNode) {
+        // Create a clone without event listeners to safely replace the original
+        const clone = videoRef.current.cloneNode(false);
+        if (videoRef.current.parentNode) {
+          videoRef.current.parentNode.replaceChild(clone, videoRef.current);
+        }
+      }
+    } catch (err) {
+      console.error("Error cleaning up video player:", err);
+    }
+  };
   
   useEffect(() => {
+    // Set mounted flag
+    isMountedRef.current = true;
+    
     // If the video is already marked as completed, allow completion
     if (isCompleted) {
       setCanComplete(true);
     }
     
     const loadTimer = setTimeout(() => {
-      setLoading(false);
-      // Always enable completion
-      setCanComplete(true);
+      if (isMountedRef.current) {
+        setLoading(false);
+        // Always enable completion
+        setCanComplete(true);
+      }
     }, 2000);
     
-    return () => clearTimeout(loadTimer);
-  }, [isCompleted]);
+    // Cleanup function
+    return () => {
+      clearTimeout(loadTimer);
+      isMountedRef.current = false;
+      cleanupVideoPlayer();
+    };
+  }, [isCompleted, videoUrl]); // Added videoUrl as dependency to reset when URL changes
   
   const handleComplete = () => {
+    if (!isMountedRef.current) return;
+    
     if (canComplete) {
       // For the final module, show score popup
       if (moduleNumber === totalModules) {
         setShowScorePopup(true);
       } else {
-        onComplete();
+        try {
+          // Clean up video player before completing
+          cleanupVideoPlayer();
+          onComplete();
+        } catch (err) {
+          console.error("Error during module completion:", err);
+          setError("There was an issue completing this module. Please try again.");
+          toast({
+            title: "Module Transition Error",
+            description: "There was an issue moving to the next module. Please try again.",
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              setError(null);
+            }
+          }, 3000);
+        }
       }
     } else {
       setError("Please watch more of the video before continuing.");
-      setTimeout(() => setError(null), 3000);
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          setError(null);
+        }
+      }, 3000);
     }
   };
   
   const handleContinueAfterScore = () => {
+    if (!isMountedRef.current) return;
+    
     setShowScorePopup(false);
+    // Clean up video player before continuing
+    cleanupVideoPlayer();
     onComplete();
   };
   
   const handleError = () => {
+    if (!isMountedRef.current) return;
+    
     setError("There was an issue loading the video. Please try again later.");
     setLoading(false);
   };
@@ -118,7 +177,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
   
   return (
     <div className="space-y-4" id="training-video-container">
-      <div className="aspect-video relative bg-gray-100 rounded-lg overflow-hidden">
+      <div className="aspect-video relative bg-gray-100 rounded-lg overflow-hidden" ref={containerRef}>
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
             <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
@@ -133,7 +192,11 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           onError={handleError}
-          onLoad={() => setLoading(false)}
+          onLoad={() => {
+            if (isMountedRef.current) {
+              setLoading(false);
+            }
+          }}
           title="Training Video"
         ></iframe>
       </div>
