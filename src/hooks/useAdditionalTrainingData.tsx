@@ -503,14 +503,14 @@ export const useAdditionalTrainingData = () => {
           },
           {
             id: `q6-5`,
-            question: "What views are available in the Callback Calendar? (Select the most complete answer)",
+            question: "What view is NOT available in the Callback Calendar?",
             options: [
-              "Day view only",
-              "Day, Week, and Month views",
-              "Week view only",
-              "Day, Week, Month, and Year views"
+              "Day view",
+              "Week view",
+              "Month view",
+              "Year view"
             ],
-            correct_answer: 1,
+            correct_answer: 3,
             module_id: moduleId,
             question_order: 5
           }
