@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +25,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   const [currentModule, setCurrentModule] = useState<ProbationTrainingModule | null>(null);
   const [questions, setQuestions] = useState<ProbationTrainingQuestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [moduleTransitioning, setModuleTransitioning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizScore, setQuizScore] = useState<number>(0);
@@ -33,6 +34,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   const [modulesCompleted, setModulesCompleted] = useState<number>(0);
   const [totalModules, setTotalModules] = useState<number>(0);
   const [showResultScreen, setShowResultScreen] = useState(false);
+  const [questionsLoadRetries, setQuestionsLoadRetries] = useState<number>(0);
   
   useEffect(() => {
     if (isOpen && user) {
@@ -110,7 +112,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     }
   };
 
-  const loadQuestionsForModule = async (moduleId: string) => {
+  const loadQuestionsForModule = async (moduleId: string, retryCount = 0): Promise<boolean> => {
     try {
       console.log("Loading questions for module:", moduleId);
       const { data, error } = await supabase
@@ -128,13 +130,23 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
           options: Array.isArray(q.options) ? q.options : []
         }));
         setQuestions(formattedQuestions as ProbationTrainingQuestion[]);
+        setQuestionsLoadRetries(0);
+        return true;
       } else {
         console.log("No questions found for this module");
         setQuestions([]);
+        return true;
       }
     } catch (error) {
       console.error("Error loading questions:", error);
+      
+      if (retryCount < 3) {
+        setQuestionsLoadRetries(retryCount + 1);
+        return false;
+      }
+      
       setError("Failed to load quiz questions. Please try again later.");
+      return false;
     }
   };
   
@@ -218,7 +230,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       
       updateOverallScore(updatedProgressMap);
       
-      handleNextModule();
+      await handleNextModule();
     } catch (error) {
       console.error("Error auto-completing module:", error);
       setError("Failed to complete this module. Please try again.");
@@ -247,9 +259,8 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       setOverallScore(calculatedAvgScore);
       
       if (completedCount === modules.length && modules.length > 0) {
-        const allPassed = calculatedAvgScore >= 90; // Using 90% threshold consistently
+        const allPassed = calculatedAvgScore >= 90;
         
-        // Update user profile with training results
         updateProfile({
           probation_training_completed: true,
           probation_training_passed: allPassed
@@ -330,19 +341,45 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     }
   };
   
-  const handleSelectModule = (module: ProbationTrainingModule) => {
-    setCurrentModule(module);
-    setQuizScore(0);
-    setShowQuiz(false);
-    setShowResultScreen(false);
+  const handleSelectModule = async (module: ProbationTrainingModule) => {
+    if (moduleTransitioning) return;
     
-    const moduleProgress = userProgress[module.id];
-    if (moduleProgress && moduleProgress.completed) {
-      setQuizScore(moduleProgress.score || 0);
-      setShowResultScreen(true);
+    try {
+      setError(null);
+      setModuleTransitioning(true);
+      setCurrentModule(module);
+      setQuizScore(0);
+      setShowQuiz(false);
+      setShowResultScreen(false);
+      
+      const moduleProgress = userProgress[module.id];
+      if (moduleProgress && moduleProgress.completed) {
+        setQuizScore(moduleProgress.score || 0);
+        setShowResultScreen(true);
+      }
+      
+      let questionsLoaded = false;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (!questionsLoaded && retryCount < maxRetries) {
+        questionsLoaded = await loadQuestionsForModule(module.id, retryCount);
+        if (!questionsLoaded) {
+          console.log(`Retry ${retryCount + 1} loading questions for module ${module.id}`);
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!questionsLoaded) {
+        setError("Failed to load quiz questions after multiple attempts. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error selecting module:", error);
+      setError("Failed to load the selected module. Please try again.");
+    } finally {
+      setModuleTransitioning(false);
     }
-    
-    loadQuestionsForModule(module.id);
   };
   
   const handleCloseModal = () => {
@@ -357,15 +394,43 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       });
   };
   
-  const handleNextModule = () => {
-    if (!currentModule) return;
+  const handleNextModule = async () => {
+    if (!currentModule || moduleTransitioning) return;
     
-    const currentIndex = modules.findIndex(m => m.id === currentModule.id);
-    if (currentIndex < modules.length - 1) {
-      const nextModule = modules[currentIndex + 1];
-      handleSelectModule(nextModule);
-    } else {
-      onClose();
+    try {
+      setModuleTransitioning(true);
+      setError(null);
+      
+      const currentIndex = modules.findIndex(m => m.id === currentModule.id);
+      if (currentIndex < modules.length - 1) {
+        const nextModule = modules[currentIndex + 1];
+        await handleSelectModule(nextModule);
+      } else {
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error navigating to next module:", error);
+      setError("Failed to load the next module. Please try again.");
+    } finally {
+      setModuleTransitioning(false);
+    }
+  };
+  
+  const handleRetryLoadQuestions = async () => {
+    if (!currentModule) return;
+    setError(null);
+    setModuleTransitioning(true);
+    
+    try {
+      const success = await loadQuestionsForModule(currentModule.id, questionsLoadRetries);
+      if (!success && questionsLoadRetries >= 3) {
+        setError("Failed to load questions after multiple attempts. Please try again later.");
+      }
+    } catch (error) {
+      console.error("Error retrying question load:", error);
+      setError("Failed to load quiz questions. Please try again later.");
+    } finally {
+      setModuleTransitioning(false);
     }
   };
   
@@ -447,10 +512,37 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     
     if (error) {
       return (
-        <Alert variant="destructive" className="mb-4">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="flex flex-col items-center py-8">
+          <Alert variant="destructive" className="mb-4 max-w-md">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <Button 
+            onClick={handleRetryLoadQuestions} 
+            variant="outline" 
+            className="mt-4"
+            disabled={moduleTransitioning}
+          >
+            {moduleTransitioning ? (
+              <span className="flex items-center gap-2">
+                <span className="animate-spin h-4 w-4 border-2 border-current rounded-full border-t-transparent"></span>
+                Retrying...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Retry Loading Content
+              </span>
+            )}
+          </Button>
+          <Button 
+            onClick={() => setError(null)} 
+            variant="ghost" 
+            className="mt-2"
+          >
+            Go Back to Modules
+          </Button>
+        </div>
       );
     }
     
@@ -470,51 +562,66 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         </div>
         
         <div className="w-full md:w-3/4">
-          <ScrollArea className="h-[70vh] pr-4">
-            <div className="mb-4">
-              <h2 className="text-xl font-bold">{currentModule.title}</h2>
-              {currentModule.description && (
-                <p className="text-gray-600 mt-1">{currentModule.description}</p>
-              )}
+          {moduleTransitioning ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent mb-4"></div>
+              <p className="text-sm text-gray-500">Loading module content...</p>
             </div>
-            
-            <AdditionalTrainingVideo 
-              videoUrl={currentModule.video_url}
-              onComplete={handleVideoComplete}
-              isCompleted={userProgress[currentModule.id]?.completed === true}
-              isPending={isCurrentModuleInProgress(currentModule.id)}
-            />
-            
-            {showQuiz && !showResultScreen && questions.length > 0 && (
-              <div className="mt-8" id="quiz-section">
-                <h3 className="text-lg font-medium mb-4">Module Quiz</h3>
-                <AdditionalTrainingQuiz
-                  questions={questions}
-                  onComplete={handleQuizComplete}
-                />
+          ) : (
+            <ScrollArea className="h-[70vh] pr-4">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold">{currentModule.title}</h2>
+                {currentModule.description && (
+                  <p className="text-gray-600 mt-1">{currentModule.description}</p>
+                )}
               </div>
-            )}
-            
-            {showResultScreen && (
-              <div className="text-center py-6 mt-8">
-                <div className="flex justify-center mb-6">
-                  <CheckCircle className="h-20 w-20 text-green-500" />
+              
+              <AdditionalTrainingVideo 
+                videoUrl={currentModule.video_url}
+                onComplete={handleVideoComplete}
+                isCompleted={userProgress[currentModule.id]?.completed === true}
+                isPending={isCurrentModuleInProgress(currentModule.id)}
+              />
+              
+              {showQuiz && !showResultScreen && questions.length > 0 && (
+                <div className="mt-8" id="quiz-section">
+                  <h3 className="text-lg font-medium mb-4">Module Quiz</h3>
+                  <AdditionalTrainingQuiz
+                    questions={questions}
+                    onComplete={handleQuizComplete}
+                  />
                 </div>
-                <h3 className="text-2xl font-bold mb-4 text-green-600">
-                  Module Completed
-                </h3>
-                
-                <div className="mt-6">
-                  <Button 
-                    onClick={handleNextModule}
-                    className="px-6 py-2 rounded-full text-white font-medium bg-purple-600 hover:bg-purple-700 transition-colors"
-                  >
-                    Continue to Next Module
-                  </Button>
+              )}
+              
+              {showResultScreen && (
+                <div className="text-center py-6 mt-8">
+                  <div className="flex justify-center mb-6">
+                    <CheckCircle className="h-20 w-20 text-green-500" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-4 text-green-600">
+                    Module Completed
+                  </h3>
+                  
+                  <div className="mt-6">
+                    <Button 
+                      onClick={handleNextModule}
+                      disabled={moduleTransitioning}
+                      className="px-6 py-2 rounded-full text-white font-medium bg-purple-600 hover:bg-purple-700 transition-colors"
+                    >
+                      {moduleTransitioning ? (
+                        <span className="flex items-center gap-2">
+                          <span className="animate-spin h-4 w-4 border-2 border-current rounded-full border-t-transparent"></span>
+                          Loading Next Module...
+                        </span>
+                      ) : (
+                        "Continue to Next Module"
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </ScrollArea>
+              )}
+            </ScrollArea>
+          )}
         </div>
       </div>
     );
