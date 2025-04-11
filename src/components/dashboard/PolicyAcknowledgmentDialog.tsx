@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,13 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, Check } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
 interface PolicyAcknowledgmentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onAcknowledge: (name: string) => Promise<void>;
 }
-
 const telemarketing_policy = `Telemarketing Policy, Practice, and Procedure 
 Purpose
 This document outlines the telemarketing policy, practice, and procedure to ensure compliance with applicable telemarketing laws, including the Telephone Consumer Protection Act (TCPA) and the Telemarketing Sales Rule (TSR). Our objective is to conduct telemarketing activities in a manner that respects consumer rights and adheres to legal requirements.
@@ -69,7 +66,6 @@ Conclusion
 Compliance with telemarketing laws is critical to maintaining consumer trust and avoiding legal penalties. By following this policy, practice, and procedure document, we ensure that our telemarketing activities are conducted ethically and in accordance with all applicable regulations.
 Review and Update
 This document will be reviewed and updated annually or as needed to reflect changes in laws, regulations, or company practices.`;
-
 const do_not_call_policy = `Do Not Call Policy
 Introduction
 Apolead is committed to protecting the privacy and preferences of our customers and potential customers. This Do Not Call (DNC) Policy outlines our procedures for complying with the Telephone Consumer Protection Act (TCPA), the Telemarketing Sales Rule (TSR), and other relevant state and federal regulations. We respect the wishes of individuals who do not want to receive telemarketing calls and have implemented measures to ensure compliance with applicable laws.
@@ -102,29 +98,28 @@ Policy Updates
 Apolead reserves the right to update or modify this Do Not Call Policy at any time. Any changes will be posted on our website and will be effective immediately upon posting.
 Acknowledgment
 By engaging in telemarketing activities on behalf of Apolead, employees and representatives acknowledge that they have read, understood, and will comply with this Do Not Call Policy and all applicable regulations.`;
-
-const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({ isOpen, onClose, onAcknowledge }) => {
+const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
+  isOpen,
+  onClose,
+  onAcknowledge
+}) => {
   const [activeTab, setActiveTab] = useState("telemarketing");
   const [acknowledgedTelemarketing, setAcknowledgedTelemarketing] = useState(false);
   const [acknowledgedDoNotCall, setAcknowledgedDoNotCall] = useState(false);
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
   const handleAcknowledge = async () => {
     if (!acknowledgedTelemarketing || !acknowledgedDoNotCall) {
       setError("You must acknowledge both policies to continue.");
       return;
     }
-
     if (!fullName.trim()) {
       setError("Please enter your full name to acknowledge the policies.");
       return;
     }
-
     setSubmitting(true);
     setError("");
-
     try {
       await onAcknowledge(fullName);
       onClose();
@@ -135,11 +130,9 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
       setSubmitting(false);
     }
   };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) onClose();
-    }}>
+  return <Dialog open={isOpen} onOpenChange={open => {
+    if (!open) onClose();
+  }}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Policy Acknowledgment Required</DialogTitle>
@@ -166,11 +159,7 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
             </ScrollArea>
             
             <div className="flex items-center space-x-2 mt-4">
-              <Checkbox 
-                id="telemarketing-acknowledgment" 
-                checked={acknowledgedTelemarketing}
-                onCheckedChange={(checked) => setAcknowledgedTelemarketing(checked === true)}
-              />
+              <Checkbox id="telemarketing-acknowledgment" checked={acknowledgedTelemarketing} onCheckedChange={checked => setAcknowledgedTelemarketing(checked === true)} />
               <Label htmlFor="telemarketing-acknowledgment" className="text-sm">
                 I acknowledge that I have read, understood, and will comply with the Telemarketing Policy
               </Label>
@@ -183,11 +172,7 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
             </ScrollArea>
             
             <div className="flex items-center space-x-2 mt-4">
-              <Checkbox 
-                id="donotcall-acknowledgment" 
-                checked={acknowledgedDoNotCall}
-                onCheckedChange={(checked) => setAcknowledgedDoNotCall(checked === true)}
-              />
+              <Checkbox id="donotcall-acknowledgment" checked={acknowledgedDoNotCall} onCheckedChange={checked => setAcknowledgedDoNotCall(checked === true)} />
               <Label htmlFor="donotcall-acknowledgment" className="text-sm">
                 I acknowledge that I have read, understood, and will comply with the Do Not Call Policy
               </Label>
@@ -197,34 +182,20 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
 
         <div className="mt-4">
           <Label htmlFor="full-name">Enter your full legal name to acknowledge these policies:</Label>
-          <Input 
-            id="full-name"
-            placeholder="Your Full Name"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            className="mt-1"
-          />
+          <Input id="full-name" placeholder="Your Full Name" value={fullName} onChange={e => setFullName(e.target.value)} className="mt-1" />
         </div>
 
-        {error && (
-          <Alert variant="destructive" className="mt-4">
+        {error && <Alert variant="destructive" className="mt-4">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+          </Alert>}
 
         <DialogFooter className="flex justify-end gap-2 mt-4">
-          <Button 
-            variant="default" 
-            onClick={handleAcknowledge} 
-            disabled={submitting || !acknowledgedTelemarketing || !acknowledgedDoNotCall || !fullName.trim()}
-          >
+          <Button variant="default" onClick={handleAcknowledge} disabled={submitting || !acknowledgedTelemarketing || !acknowledgedDoNotCall || !fullName.trim()} className="text-neutral-50">
             {submitting ? "Submitting..." : "I Acknowledge & Accept"}
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
-
 export default PolicyAcknowledgmentDialog;
