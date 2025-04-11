@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -19,6 +20,9 @@ const billingFormSchema = z.object({
   confirmAccountNumber: z.string().min(5, 'Must be at least 5 digits').regex(/^\d+$/, 'Must contain only numbers'),
   accountType: z.enum(['checking', 'savings'], {
     required_error: 'Please select an account type'
+  }),
+  bankName: z.enum(['Grey', 'Payoneer', 'Wise', 'Paypal', 'WorldPay', 'Other'], {
+    required_error: 'Please select a bank'
   })
 });
 
@@ -60,7 +64,8 @@ const BillingInformation = () => {
     routingNumber: '',
     accountNumber: '',
     confirmAccountNumber: '',
-    accountType: userProfile?.account_type as any || ''
+    accountType: userProfile?.account_type as any || '',
+    bankName: userProfile?.bank_name as any || ''
   };
 
   const form = useForm<BillingFormValues>({
@@ -79,6 +84,7 @@ const BillingInformation = () => {
   useEffect(() => {
     if (userProfile) {
       form.setValue('accountType', userProfile.account_type as any || '');
+      form.setValue('bankName', userProfile.bank_name as any || '');
       
       if (userProfile.routing_number) {
         setMaskedRoutingNumber(maskNumber(userProfile.routing_number));
@@ -104,7 +110,7 @@ const BillingInformation = () => {
     try {
       const { error } = await supabase.rpc('update_billing_information', {
         p_user_id: user.id,
-        p_bank_name: userProfile?.bank_name || "Default Bank", 
+        p_bank_name: data.bankName, 
         p_account_number: data.accountNumber,
         p_routing_number: data.routingNumber,
         p_account_holder_name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim(),
@@ -123,13 +129,15 @@ const BillingInformation = () => {
         await updateProfile({
           routing_number: data.routingNumber,
           account_number: data.accountNumber,
-          account_type: data.accountType
+          account_type: data.accountType,
+          bank_name: data.bankName
         });
       } else {
         await updateProfile({
           routing_number: data.routingNumber,
           account_number: data.accountNumber,
-          account_type: data.accountType
+          account_type: data.accountType,
+          bank_name: data.bankName
         });
       }
       
@@ -236,6 +244,13 @@ const BillingInformation = () => {
           {!isEditing && (userProfile?.routing_number || userProfile?.account_number) ? (
             <div className="max-w-[600px] mb-8">
               <div className="mb-6">
+                <h4 className="font-medium text-[#334155] mb-2">Bank Name</h4>
+                <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3">
+                  {userProfile?.bank_name || 'Not specified'}
+                </div>
+              </div>
+              
+              <div className="mb-6">
                 <h4 className="font-medium text-[#334155] mb-2">Routing Number</h4>
                 <div className="flex items-center">
                   <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3 flex-1">
@@ -271,6 +286,36 @@ const BillingInformation = () => {
           ) : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-[600px]">
+                <FormField 
+                  control={form.control} 
+                  name="bankName" 
+                  render={({ field }) => (
+                    <FormItem className="mb-6">
+                      <FormLabel className="font-medium text-[#334155]">Bank Name</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3">
+                            <SelectValue placeholder="Select your bank" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Grey">Grey</SelectItem>
+                          <SelectItem value="Payoneer">Payoneer</SelectItem>
+                          <SelectItem value="Wise">Wise</SelectItem>
+                          <SelectItem value="Paypal">Paypal</SelectItem>
+                          <SelectItem value="WorldPay">WorldPay</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs text-red-500 mt-1" />
+                    </FormItem>
+                  )} 
+                />
+                
                 <FormField 
                   control={form.control} 
                   name="routingNumber" 
