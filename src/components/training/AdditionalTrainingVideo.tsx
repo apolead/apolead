@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, CheckCircle, ChevronRight } from 'lucide-react';
+import { AlertCircle, CheckCircle, ChevronRight, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from '@/hooks/use-toast';
 
@@ -35,9 +35,14 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   // Add retry mechanism state
   const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 3;
+  const maxRetries = 5; // Increased from 3 to 5
   // Track transition state to prevent multiple clicks
   const [isTransitioning, setIsTransitioning] = useState(false);
+  // Track completion attempts
+  const [completionAttempts, setCompletionAttempts] = useState(0);
+  const maxCompletionAttempts = 3;
+  // Track if a retry is in progress to avoid overlapping retries
+  const retryInProgressRef = useRef<boolean>(false);
   
   // Clean up function to safely remove video iframe
   const cleanupVideoPlayer = () => {
@@ -45,31 +50,38 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
       if (!isMountedRef.current) return;
       
       if (videoRef.current && videoRef.current.parentNode) {
-        // Instead of direct DOM manipulation, use safer approach
-        const parentNode = videoRef.current.parentNode;
-        const originalSrc = videoRef.current.src;
-        
-        // Create a clean iframe without the event listeners
-        const newIframe = document.createElement('iframe');
-        newIframe.className = videoRef.current.className;
-        newIframe.title = videoRef.current.title;
-        newIframe.allow = videoRef.current.allow;
-        newIframe.frameBorder = videoRef.current.frameBorder;
-        newIframe.allowFullscreen = videoRef.current.allowFullscreen;
-        
-        // Only set src after attaching to prevent premature loading
-        parentNode.insertBefore(newIframe, videoRef.current);
-        parentNode.removeChild(videoRef.current);
-        
-        // Now set the src
-        setTimeout(() => {
-          if (isMountedRef.current && newIframe) {
-            newIframe.src = originalSrc;
+        // Use a different approach that's less prone to DOM manipulation issues
+        if (containerRef.current) {
+          // Create a placeholder div for the iframe
+          const placeholder = document.createElement('div');
+          placeholder.style.width = '100%';
+          placeholder.style.height = '100%';
+          
+          // Replace the iframe temporarily with the placeholder
+          containerRef.current.appendChild(placeholder);
+          if (videoRef.current.parentNode) {
+            videoRef.current.parentNode.removeChild(videoRef.current);
           }
-        }, 50);
-        
-        // Update the ref to point to the new iframe
-        videoRef.current = newIframe;
+          
+          // Create a new iframe
+          const newIframe = document.createElement('iframe');
+          newIframe.className = "w-full h-full";
+          newIframe.title = "Training Video";
+          newIframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+          newIframe.frameBorder = "0";
+          newIframe.setAttribute("allowFullScreen", "true");
+          
+          // Replace the placeholder with the new iframe after a short delay
+          setTimeout(() => {
+            if (isMountedRef.current && placeholder.parentNode) {
+              placeholder.parentNode.replaceChild(newIframe, placeholder);
+              if (getYouTubeEmbedUrl(videoUrl)) {
+                newIframe.src = getYouTubeEmbedUrl(videoUrl);
+              }
+              videoRef.current = newIframe;
+            }
+          }, 100);
+        }
       }
     } catch (err) {
       console.error("Error cleaning up video player:", err);
@@ -84,13 +96,22 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
     setLoading(true);
     setError(null);
     
+    try {
+      // If video ref exists, set its src to trigger reload
+      if (videoRef.current) {
+        videoRef.current.src = getYouTubeEmbedUrl(videoUrl);
+      }
+    } catch (err) {
+      console.error("Error setting video src:", err);
+    }
+    
     // Use timeout to simulate loading and then enable completion
     const loadTimer = setTimeout(() => {
       if (isMountedRef.current) {
         setLoading(false);
         setCanComplete(true);
       }
-    }, 2000);
+    }, 1500);
     
     return loadTimer;
   };
@@ -111,11 +132,12 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
     return () => {
       clearTimeout(loadTimer);
       isMountedRef.current = false;
-      // Don't perform DOM operations in the cleanup phase
-      // as they can cause React errors
+      // Clear any ongoing retry state
+      retryInProgressRef.current = false;
     };
   }, [isCompleted, videoUrl, retryCount]); // Added retryCount as dependency to trigger reload
   
+  // Robust completion handler with retries
   const handleComplete = () => {
     if (!isMountedRef.current || isTransitioning) return;
     
@@ -128,21 +150,27 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           setShowScorePopup(true);
           setIsTransitioning(false);
         } else {
-          try {
-            // Don't manipulate DOM directly just before state updates
-            // this can cause React reconciliation issues
-            setTimeout(() => {
-              try {
-                if (isMountedRef.current) {
-                  onComplete();
+          // Wrap the completion logic in a retry mechanism
+          const attemptCompletion = () => {
+            try {
+              // Use a safe approach to execute the callback
+              setTimeout(() => {
+                try {
+                  if (isMountedRef.current && !retryInProgressRef.current) {
+                    onComplete();
+                  }
+                } catch (innerErr) {
+                  console.error("Inner completion error:", innerErr);
+                  handleCompletionRetry();
                 }
-              } catch (innerErr) {
-                handleTransitionError(innerErr);
-              }
-            }, 50);
-          } catch (err) {
-            handleTransitionError(err);
-          }
+              }, 100);
+            } catch (err) {
+              console.error("Outer completion error:", err);
+              handleCompletionRetry();
+            }
+          };
+          
+          attemptCompletion();
         }
       } else {
         setError("Please watch more of the video before continuing.");
@@ -154,7 +182,66 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
         }, 3000);
       }
     } catch (err) {
-      handleTransitionError(err);
+      console.error("Error during handleComplete:", err);
+      handleCompletionRetry();
+    }
+  };
+  
+  const handleCompletionRetry = () => {
+    // Avoid multiple overlapping retries
+    if (retryInProgressRef.current) return;
+    
+    retryInProgressRef.current = true;
+    const currentAttempt = completionAttempts + 1;
+    setCompletionAttempts(currentAttempt);
+    
+    if (currentAttempt < maxCompletionAttempts) {
+      // Show informative toast
+      toast({
+        title: "Retry in progress",
+        description: `Retrying to save progress (attempt ${currentAttempt})...`,
+        duration: 3000,
+      });
+      
+      // Try again after a delay
+      setTimeout(() => {
+        if (!isMountedRef.current) {
+          retryInProgressRef.current = false;
+          return;
+        }
+        
+        try {
+          onComplete();
+          // Reset the transitioning state if successful
+          setIsTransitioning(false);
+        } catch (retryErr) {
+          console.error("Error during completion retry:", retryErr);
+          
+          // If still failing, show error
+          if (currentAttempt >= maxCompletionAttempts - 1) {
+            setError("There was an issue completing this module. Please try again.");
+            toast({
+              title: "Module Transition Error",
+              description: "There was an issue moving to the next module. Please try again.",
+              variant: "destructive",
+            });
+            setIsTransitioning(false);
+          }
+        } finally {
+          retryInProgressRef.current = false;
+        }
+      }, 1000 * currentAttempt); // Increasing delay for each retry
+    } else {
+      // Reset for next attempt after showing error
+      setError("There was an issue completing this module. Please try again.");
+      toast({
+        title: "Module Transition Error",
+        description: "There was an issue moving to the next module. Please try again.",
+        variant: "destructive",
+      });
+      setCompletionAttempts(0);
+      setIsTransitioning(false);
+      retryInProgressRef.current = false;
     }
   };
   
@@ -168,6 +255,12 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
     if (retryCount < maxRetries) {
       console.log(`Retrying module completion (attempt ${retryCount + 1})`);
       setRetryCount(prev => prev + 1);
+      toast({
+        title: "Retrying...",
+        description: `Attempting to complete module (try ${retryCount + 1})`,
+        duration: 2000,
+      });
+      
       setTimeout(() => {
         if (isMountedRef.current) {
           try {
@@ -180,7 +273,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
             }
           }
         }
-      }, 800);
+      }, 800 * (retryCount + 1)); // Increase delay with each retry
     } else {
       showTransitionError();
     }
@@ -214,15 +307,35 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
       setShowScorePopup(false);
       
       // Use setTimeout to ensure state updates complete before transition
-      setTimeout(() => {
-        try {
-          if (isMountedRef.current) {
-            onComplete();
+      // and add retry mechanism for final continuation
+      const attemptContinuation = () => {
+        setTimeout(() => {
+          try {
+            if (isMountedRef.current) {
+              onComplete();
+            }
+          } catch (err) {
+            console.error("Error during final continuation:", err);
+            
+            if (retryCount < maxRetries) {
+              setRetryCount(prev => prev + 1);
+              toast({
+                title: "Retrying...",
+                description: `Attempting to complete training (try ${retryCount + 1})`,
+                duration: 2000,
+              });
+              
+              setTimeout(attemptContinuation, 1000);
+            } else {
+              setError("Could not complete training. Please try again.");
+              setShowScorePopup(true);
+              setIsTransitioning(false);
+            }
           }
-        } catch (err) {
-          handleTransitionError(err);
-        }
-      }, 50);
+        }, 150);
+      };
+      
+      attemptContinuation();
     } catch (err) {
       handleTransitionError(err);
     }
@@ -237,6 +350,13 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
     if (retryCount < maxRetries) {
       console.log(`Retrying video load (attempt ${retryCount + 1})`);
       setRetryCount(prev => prev + 1);
+      
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          cleanupVideoPlayer();
+          loadVideo();
+        }
+      }, 1000); // Wait a bit before retrying
     } else {
       setError("There was an issue loading the video. Please try again later.");
       setLoading(false);
@@ -249,19 +369,51 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
     }
   };
   
-  // Extract video ID from URL to use in embed
+  // Extract video ID from URL to use in embed with more robust handling
   const getYouTubeEmbedUrl = (url: string) => {
     try {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
       const match = url.match(regExp);
       
-      return (match && match[2].length === 11)
-        ? `https://www.youtube.com/embed/${match[2]}?autoplay=0&modestbranding=1&rel=0`
-        : url; // Return original if not a valid YouTube URL
+      if (match && match[2].length === 11) {
+        // Add additional parameters to improve stability
+        return `https://www.youtube.com/embed/${match[2]}?autoplay=0&modestbranding=1&rel=0&enablejsapi=1`;
+      }
+      
+      // If it doesn't match YouTube format but looks like a URL, return it
+      if (url.match(/^https?:\/\//)) {
+        return url;
+      }
+      
+      // Default fallback
+      console.error("Could not parse video URL:", url);
+      return "about:blank";
     } catch (err) {
-      console.error("Error parsing YouTube URL:", err);
-      return url;
+      console.error("Error parsing video URL:", err);
+      return "about:blank"; // Safer fallback
     }
+  };
+  
+  // Function to retry loading content manually
+  const handleRetryLoading = () => {
+    setRetryCount(0);
+    setError(null);
+    setLoading(true);
+    
+    // Clear and recreate the video player
+    cleanupVideoPlayer();
+    
+    // Schedule video loading
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        loadVideo();
+      }
+    }, 300);
+    
+    toast({
+      title: "Reloading content",
+      description: "Attempting to reload training content...",
+    });
   };
   
   // Determine button text based on whether this module has a quiz and is the last module
@@ -292,7 +444,12 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           className="bg-blue-500 text-white hover:bg-blue-600 mt-4"
           disabled={isTransitioning}
         >
-          {isTransitioning ? 'Processing...' : 'Continue'}
+          {isTransitioning ? 
+            <span className="flex items-center gap-2">
+              <span className="animate-spin h-4 w-4 border-2 border-current rounded-full border-t-transparent"></span>
+              Processing...
+            </span>
+            : 'Continue'}
         </Button>
       </div>
     );
@@ -339,14 +496,33 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           </span>
         </div>
         
-        <Button 
-          onClick={handleComplete}
-          className="bg-blue-500 text-white hover:bg-blue-600"
-          variant="default"
-          disabled={isTransitioning}
-        >
-          {isTransitioning ? 'Processing...' : getButtonText()}
-        </Button>
+        <div className="space-x-2 flex">
+          <Button
+            onClick={handleRetryLoading}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+            title="Retry loading video content if you're experiencing issues"
+            type="button"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span className="sr-only md:not-sr-only">Reload</span>
+          </Button>
+          
+          <Button 
+            onClick={handleComplete}
+            className="bg-blue-500 text-white hover:bg-blue-600"
+            variant="default"
+            disabled={isTransitioning}
+          >
+            {isTransitioning ? 
+              <span className="flex items-center gap-2">
+                <span className="animate-spin h-4 w-4 border-2 border-current rounded-full border-t-transparent"></span>
+                Processing...
+              </span>
+              : getButtonText()}
+          </Button>
+        </div>
       </div>
     </div>
   );
