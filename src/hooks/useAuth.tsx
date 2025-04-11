@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -49,6 +50,10 @@ export interface UserProfile {
   zip_code?: string;
   ssn_last_four?: string;
   account_holder_name?: string;
+  telemarketing_policy_acknowledged?: boolean;
+  do_not_call_policy_acknowledged?: boolean;
+  policy_acknowledgment_name?: string;
+  policy_acknowledged_at?: string;
 }
 
 interface AuthContextValue {
@@ -255,7 +260,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const typedData = {
           ...data,
           probation_training_completed: Boolean(data.probation_training_completed),
-          probation_training_passed: Boolean(data.probation_training_passed)
+          probation_training_passed: Boolean(data.probation_training_passed),
+          telemarketing_policy_acknowledged: Boolean(data.telemarketing_policy_acknowledged),
+          do_not_call_policy_acknowledged: Boolean(data.do_not_call_policy_acknowledged)
         } as unknown as UserProfile;
         
         setUserProfile(typedData);
