@@ -193,7 +193,6 @@ export type Database = {
           created_at: string | null
           credentials: string | null
           day_hours: Json | null
-          do_not_call_policy_acknowledged: boolean | null
           eligible_for_training: boolean | null
           email: string
           first_name: string
@@ -210,8 +209,6 @@ export type Database = {
           onboarding_date: string | null
           onboarding_score: number | null
           personal_statement: string | null
-          policy_acknowledged_at: string | null
-          policy_acknowledgment_name: string | null
           probation_training_completed: boolean | null
           probation_training_passed: boolean | null
           quiz_passed: boolean | null
@@ -234,7 +231,6 @@ export type Database = {
           state: string | null
           supervisor_notes: string | null
           system_settings: string | null
-          telemarketing_policy_acknowledged: boolean | null
           training_video_watched: boolean | null
           updated_at: string | null
           user_id: string
@@ -263,7 +259,6 @@ export type Database = {
           created_at?: string | null
           credentials?: string | null
           day_hours?: Json | null
-          do_not_call_policy_acknowledged?: boolean | null
           eligible_for_training?: boolean | null
           email: string
           first_name: string
@@ -280,8 +275,6 @@ export type Database = {
           onboarding_date?: string | null
           onboarding_score?: number | null
           personal_statement?: string | null
-          policy_acknowledged_at?: string | null
-          policy_acknowledgment_name?: string | null
           probation_training_completed?: boolean | null
           probation_training_passed?: boolean | null
           quiz_passed?: boolean | null
@@ -304,7 +297,6 @@ export type Database = {
           state?: string | null
           supervisor_notes?: string | null
           system_settings?: string | null
-          telemarketing_policy_acknowledged?: boolean | null
           training_video_watched?: boolean | null
           updated_at?: string | null
           user_id: string
@@ -333,7 +325,6 @@ export type Database = {
           created_at?: string | null
           credentials?: string | null
           day_hours?: Json | null
-          do_not_call_policy_acknowledged?: boolean | null
           eligible_for_training?: boolean | null
           email?: string
           first_name?: string
@@ -350,8 +341,6 @@ export type Database = {
           onboarding_date?: string | null
           onboarding_score?: number | null
           personal_statement?: string | null
-          policy_acknowledged_at?: string | null
-          policy_acknowledgment_name?: string | null
           probation_training_completed?: boolean | null
           probation_training_passed?: boolean | null
           quiz_passed?: boolean | null
@@ -374,7 +363,6 @@ export type Database = {
           state?: string | null
           supervisor_notes?: string | null
           system_settings?: string | null
-          telemarketing_policy_acknowledged?: boolean | null
           training_video_watched?: boolean | null
           updated_at?: string | null
           user_id?: string
@@ -420,7 +408,6 @@ export type Database = {
           created_at: string | null
           credentials: string | null
           day_hours: Json | null
-          do_not_call_policy_acknowledged: boolean | null
           eligible_for_training: boolean | null
           email: string
           first_name: string
@@ -437,8 +424,6 @@ export type Database = {
           onboarding_date: string | null
           onboarding_score: number | null
           personal_statement: string | null
-          policy_acknowledged_at: string | null
-          policy_acknowledgment_name: string | null
           probation_training_completed: boolean | null
           probation_training_passed: boolean | null
           quiz_passed: boolean | null
@@ -461,7 +446,6 @@ export type Database = {
           state: string | null
           supervisor_notes: string | null
           system_settings: string | null
-          telemarketing_policy_acknowledged: boolean | null
           training_video_watched: boolean | null
           updated_at: string | null
           user_id: string
@@ -493,7 +477,6 @@ export type Database = {
           created_at: string | null
           credentials: string | null
           day_hours: Json | null
-          do_not_call_policy_acknowledged: boolean | null
           eligible_for_training: boolean | null
           email: string
           first_name: string
@@ -510,8 +493,6 @@ export type Database = {
           onboarding_date: string | null
           onboarding_score: number | null
           personal_statement: string | null
-          policy_acknowledged_at: string | null
-          policy_acknowledgment_name: string | null
           probation_training_completed: boolean | null
           probation_training_passed: boolean | null
           quiz_passed: boolean | null
@@ -534,7 +515,6 @@ export type Database = {
           state: string | null
           supervisor_notes: string | null
           system_settings: string | null
-          telemarketing_policy_acknowledged: boolean | null
           training_video_watched: boolean | null
           updated_at: string | null
           user_id: string

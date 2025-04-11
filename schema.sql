@@ -90,16 +90,12 @@ BEGIN
       application_status,
       credentials,
       onboarding_completed,
-      eligible_for_training,
-      telemarketing_policy_acknowledged,
-      do_not_call_policy_acknowledged
+      eligible_for_training
     ) VALUES (
       NEW.id,
       NEW.email,
       'pending',
       'agent',
-      FALSE,
-      FALSE,
       FALSE,
       FALSE
     );
