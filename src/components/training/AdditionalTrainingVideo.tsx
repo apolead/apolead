@@ -33,6 +33,9 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
   const isMountedRef = useRef<boolean>(true);
   // Track video container element
   const containerRef = useRef<HTMLDivElement>(null);
+  // Add retry mechanism state
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
   
   // Clean up function to safely remove video iframe
   const cleanupVideoPlayer = () => {
@@ -49,6 +52,24 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
     }
   };
   
+  // Function to load/reload the video with retry mechanism
+  const loadVideo = () => {
+    if (!isMountedRef.current) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    // Use timeout to simulate loading and then enable completion
+    const loadTimer = setTimeout(() => {
+      if (isMountedRef.current) {
+        setLoading(false);
+        setCanComplete(true);
+      }
+    }, 2000);
+    
+    return loadTimer;
+  };
+  
   useEffect(() => {
     // Set mounted flag
     isMountedRef.current = true;
@@ -58,13 +79,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
       setCanComplete(true);
     }
     
-    const loadTimer = setTimeout(() => {
-      if (isMountedRef.current) {
-        setLoading(false);
-        // Always enable completion
-        setCanComplete(true);
-      }
-    }, 2000);
+    const loadTimer = loadVideo();
     
     // Cleanup function
     return () => {
@@ -72,7 +87,7 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
       isMountedRef.current = false;
       cleanupVideoPlayer();
     };
-  }, [isCompleted, videoUrl]); // Added videoUrl as dependency to reset when URL changes
+  }, [isCompleted, videoUrl, retryCount]); // Added retryCount as dependency to trigger reload
   
   const handleComplete = () => {
     if (!isMountedRef.current) return;
@@ -88,17 +103,37 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
           onComplete();
         } catch (err) {
           console.error("Error during module completion:", err);
-          setError("There was an issue completing this module. Please try again.");
-          toast({
-            title: "Module Transition Error",
-            description: "There was an issue moving to the next module. Please try again.",
-            variant: "destructive",
-          });
-          setTimeout(() => {
-            if (isMountedRef.current) {
-              setError(null);
-            }
-          }, 3000);
+          
+          // Instead of showing error to user, retry the operation
+          if (retryCount < maxRetries) {
+            console.log(`Retrying module completion (attempt ${retryCount + 1})`);
+            setRetryCount(prev => prev + 1);
+            setTimeout(() => {
+              if (isMountedRef.current) {
+                try {
+                  cleanupVideoPlayer();
+                  onComplete();
+                } catch (retryErr) {
+                  console.error("Error during retry attempt:", retryErr);
+                }
+              }
+            }, 1000);
+          } else {
+            // Only after max retries, show error to user
+            setError("There was an issue completing this module. Please try again.");
+            toast({
+              title: "Module Transition Error",
+              description: "There was an issue moving to the next module. Please try again.",
+              variant: "destructive",
+            });
+            setTimeout(() => {
+              if (isMountedRef.current) {
+                setError(null);
+                // Reset retry counter after showing error
+                setRetryCount(0);
+              }
+            }, 3000);
+          }
         }
       }
     } else {
@@ -114,17 +149,45 @@ const AdditionalTrainingVideo: React.FC<AdditionalTrainingVideoProps> = ({
   const handleContinueAfterScore = () => {
     if (!isMountedRef.current) return;
     
-    setShowScorePopup(false);
-    // Clean up video player before continuing
-    cleanupVideoPlayer();
-    onComplete();
+    try {
+      setShowScorePopup(false);
+      // Clean up video player before continuing
+      cleanupVideoPlayer();
+      onComplete();
+    } catch (err) {
+      console.error("Error during score continuation:", err);
+      // Auto-retry logic
+      if (retryCount < maxRetries) {
+        console.log(`Retrying score continuation (attempt ${retryCount + 1})`);
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            handleContinueAfterScore();
+          }
+        }, 1000);
+      }
+    }
   };
   
   const handleError = () => {
     if (!isMountedRef.current) return;
     
-    setError("There was an issue loading the video. Please try again later.");
-    setLoading(false);
+    console.error("Video loading error encountered");
+    
+    // Instead of showing error, retry loading automatically
+    if (retryCount < maxRetries) {
+      console.log(`Retrying video load (attempt ${retryCount + 1})`);
+      setRetryCount(prev => prev + 1);
+    } else {
+      setError("There was an issue loading the video. Please try again later.");
+      setLoading(false);
+      // Reset retry counter after showing error
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          setRetryCount(0);
+        }
+      }, 5000);
+    }
   };
   
   // Extract video ID from URL to use in embed
