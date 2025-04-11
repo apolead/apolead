@@ -212,6 +212,7 @@ const Dashboard = () => {
         variant: "default"
       });
       setShowPolicyDialog(false);
+      // Immediately show banking dialog after acknowledging policies
       setShowBankingDialog(true);
     } catch (error) {
       console.error("Error acknowledging policies:", error);
@@ -586,7 +587,7 @@ const Dashboard = () => {
 
       <TrainingModal 
         isOpen={isTrainingModalOpen} 
-        onClose={() => closeTrainingModal()} 
+        onClose={closeTrainingModal} 
         onComplete={(passed) => closeTrainingModal(passed)} 
       />
       
