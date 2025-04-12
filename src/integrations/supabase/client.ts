@@ -17,50 +17,24 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     detectSessionInUrl: true,
     flowType: 'pkce'
   },
-  // Add global error handling and logging with retry logic
+  // Add global error handling and logging
   global: {
     fetch: (...args: [RequestInfo | URL, RequestInit?]) => {
-      let retries = 0;
-      const maxRetries = 2;
-      
-      const fetchWithRetry = async (): Promise<Response> => {
-        try {
-          const response = await fetch(...args);
-          
+      return fetch(...args)
+        .then(response => {
           // Log info about the response for debugging
           if (!response.ok) {
             console.error(`Supabase fetch error: ${response.status} ${response.statusText}`, 
               `URL: ${typeof args[0] === 'string' ? args[0] : 'complex URL'}`,
               `Method: ${args[1]?.method || 'GET'}`
             );
-            
-            // For some specific status codes, retry the request
-            if ((response.status === 429 || response.status >= 500) && retries < maxRetries) {
-              retries++;
-              const delay = Math.min(1000 * (2 ** retries), 5000); // Exponential backoff with max 5s
-              console.log(`Retrying request (${retries}/${maxRetries}) after ${delay}ms`);
-              await new Promise(resolve => setTimeout(resolve, delay));
-              return fetchWithRetry();
-            }
           }
-          
           return response;
-        } catch (err) {
-          console.error('Supabase fetch network error:', err);
-          
-          if (retries < maxRetries) {
-            retries++;
-            const delay = Math.min(1000 * (2 ** retries), 5000); // Exponential backoff with max 5s
-            console.log(`Retrying request (${retries}/${maxRetries}) after ${delay}ms due to network error`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return fetchWithRetry();
-          }
-          
+        })
+        .catch(err => {
+          console.error('Supabase fetch error:', err);
           throw err;
-        }
-      };
-      
-      return fetchWithRetry();
+        });
     }
   }
 });
