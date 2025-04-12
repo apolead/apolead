@@ -93,6 +93,11 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
   
   const handleSubmit = () => {
     try {
+      if (isSubmitting) {
+        console.log('Submission already in progress, preventing duplicate submission');
+        return;
+      }
+      
       setIsSubmitting(true);
       
       let correctCount = 0;
@@ -106,8 +111,11 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
       console.log('Quiz completed. Score:', scorePercentage);
       console.log('Answers submitted:', answers);
       
-      // We're not determining pass/fail per module anymore
-      onComplete(scorePercentage);
+      // Add small delay before calling onComplete to prevent UI thrashing
+      setTimeout(() => {
+        // We're not determining pass/fail per module anymore
+        onComplete(scorePercentage);
+      }, 300);
     } catch (err) {
       console.error("Error submitting quiz:", err);
       setError("There was an error submitting your quiz. Please try again.");

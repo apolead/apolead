@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +13,7 @@ import {
   ProbationTrainingQuestion, 
   UserProbationProgress 
 } from '@/types/probation-training';
+import { toast } from '@/hooks/use-toast';
 
 interface AdditionalTrainingModalProps {
   isOpen: boolean;
@@ -36,22 +37,89 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   const [showResultScreen, setShowResultScreen] = useState(false);
   const [questionsLoadRetries, setQuestionsLoadRetries] = useState<number>(0);
   
+  const isLoadingRef = useRef(false);
+  const questionsCache = useRef<Record<string, ProbationTrainingQuestion[]>>({});
+  const profileUpdateInProgress = useRef(false);
+  const profileRefreshTimeout = useRef<NodeJS.Timeout | null>(null);
+  const lastProfileRefresh = useRef<number>(0);
+  
+  const REFRESH_THROTTLE_MS = 2000;
+  const MAX_CONCURRENT_REQUESTS = 2;
+  const activeRequests = useRef<number>(0);
+  
   useEffect(() => {
     if (isOpen && user) {
       loadModulesAndProgress();
     }
+    
+    return () => {
+      if (profileRefreshTimeout.current) {
+        clearTimeout(profileRefreshTimeout.current);
+      }
+    };
   }, [isOpen, user]);
   
-  const loadModulesAndProgress = async () => {
+  const throttledRefreshProfile = useCallback(async () => {
+    if (profileUpdateInProgress.current) {
+      console.log('Profile update already in progress, skipping refresh');
+      return;
+    }
+    
+    const now = Date.now();
+    if (now - lastProfileRefresh.current < REFRESH_THROTTLE_MS) {
+      console.log('Throttling profile refresh');
+      if (!profileRefreshTimeout.current) {
+        profileRefreshTimeout.current = setTimeout(() => {
+          lastProfileRefresh.current = Date.now();
+          refreshUserProfile().catch(console.error);
+          profileRefreshTimeout.current = null;
+        }, REFRESH_THROTTLE_MS);
+      }
+      return;
+    }
+    
+    lastProfileRefresh.current = now;
     try {
+      await refreshUserProfile();
+    } catch (error) {
+      console.error('Error refreshing user profile:', error);
+    }
+  }, [refreshUserProfile]);
+  
+  const executeWithConcurrencyLimit = async (fn: () => Promise<any>) => {
+    if (activeRequests.current >= MAX_CONCURRENT_REQUESTS) {
+      console.log(`Reached max concurrent requests (${MAX_CONCURRENT_REQUESTS}), queuing`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return executeWithConcurrencyLimit(fn);
+    }
+    
+    activeRequests.current += 1;
+    try {
+      return await fn();
+    } finally {
+      activeRequests.current -= 1;
+    }
+  };
+  
+  const loadModulesAndProgress = async () => {
+    if (isLoadingRef.current) {
+      console.log('Already loading modules and progress, skipping duplicate request');
+      return;
+    }
+    
+    try {
+      isLoadingRef.current = true;
       setLoading(true);
       
-      const { data: progressData, error: progressError } = await supabase
-        .from('user_probation_progress')
-        .select('*')
-        .eq('user_id', user?.id);
-      
-      if (progressError) throw progressError;
+      const progressData = await executeWithConcurrencyLimit(async () => {
+        const { data, error } = await supabase
+          .from('user_probation_progress')
+          .select('*')
+          .eq('user_id', user?.id);
+          
+        if (error) throw error;
+        return data;
+      });
       
       const progressMap: Record<string, UserProbationProgress> = {};
       let completedCount = 0;
@@ -73,12 +141,15 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       
       setUserProgress(progressMap);
       
-      const { data: modulesData, error: modulesError } = await supabase
-        .from('probation_training_modules')
-        .select('*')
-        .order('module_order', { ascending: true });
-      
-      if (modulesError) throw modulesError;
+      const modulesData = await executeWithConcurrencyLimit(async () => {
+        const { data, error } = await supabase
+          .from('probation_training_modules')
+          .select('*')
+          .order('module_order', { ascending: true });
+          
+        if (error) throw error;
+        return data;
+      });
       
       if (modulesData && modulesData.length > 0) {
         setModules(modulesData as ProbationTrainingModule[]);
@@ -109,17 +180,27 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       setLoading(false);
       setShowQuiz(false);
       setShowResultScreen(false);
+      isLoadingRef.current = false;
     }
   };
 
   const loadQuestionsForModule = async (moduleId: string, retryCount = 0): Promise<boolean> => {
+    if (questionsCache.current[moduleId]) {
+      console.log("Using cached questions for module:", moduleId);
+      setQuestions(questionsCache.current[moduleId]);
+      return true;
+    }
+    
     try {
       console.log("Loading questions for module:", moduleId);
-      const { data, error } = await supabase
-        .from('probation_training_questions')
-        .select('*')
-        .eq('module_id', moduleId)
-        .order('question_order', { ascending: true });
+      
+      const { data, error } = await executeWithConcurrencyLimit(async () => {
+        return await supabase
+          .from('probation_training_questions')
+          .select('*')
+          .eq('module_id', moduleId)
+          .order('question_order', { ascending: true });
+      });
       
       if (error) throw error;
       
@@ -129,11 +210,14 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
           ...q,
           options: Array.isArray(q.options) ? q.options : []
         }));
+        
+        questionsCache.current[moduleId] = formattedQuestions as ProbationTrainingQuestion[];
         setQuestions(formattedQuestions as ProbationTrainingQuestion[]);
         setQuestionsLoadRetries(0);
         return true;
       } else {
         console.log("No questions found for this module");
+        questionsCache.current[moduleId] = [];
         setQuestions([]);
         return true;
       }
@@ -142,7 +226,9 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       
       if (retryCount < 3) {
         setQuestionsLoadRetries(retryCount + 1);
-        return false;
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return loadQuestionsForModule(moduleId, retryCount + 1);
       }
       
       setError("Failed to load quiz questions. Please try again later.");
@@ -155,13 +241,15 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     
     try {
       if (!userProgress[currentModule.id]) {
-        const { error } = await supabase
-          .from('user_probation_progress')
-          .insert({
-            user_id: user.id,
-            module_id: currentModule.id,
-            completed: false
-          });
+        const { error } = await executeWithConcurrencyLimit(async () => {
+          return await supabase
+            .from('user_probation_progress')
+            .insert({
+              user_id: user.id,
+              module_id: currentModule.id,
+              completed: false
+            });
+        });
         
         if (error) throw error;
         
@@ -192,16 +280,18 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     if (!user?.id || !currentModule) return;
     
     try {
-      const { error } = await supabase
-        .from('user_probation_progress')
-        .update({
-          passed: null,
-          score: 100,
-          completed: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id)
-        .eq('module_id', currentModule.id);
+      const { error } = await executeWithConcurrencyLimit(async () => {
+        return await supabase
+          .from('user_probation_progress')
+          .update({
+            passed: null,
+            score: 100,
+            completed: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('module_id', currentModule.id);
+      });
       
       if (error) throw error;
       
@@ -230,7 +320,9 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       
       updateOverallScore(updatedProgressMap);
       
-      await handleNextModule();
+      setTimeout(() => {
+        handleNextModule();
+      }, 300);
     } catch (error) {
       console.error("Error auto-completing module:", error);
       setError("Failed to complete this module. Please try again.");
@@ -261,6 +353,12 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       if (completedCount === modules.length && modules.length > 0) {
         const allPassed = calculatedAvgScore >= 90;
         
+        if (profileUpdateInProgress.current) {
+          console.log('Profile update already in progress, skipping');
+          return;
+        }
+        
+        profileUpdateInProgress.current = true;
         updateProfile({
           probation_training_completed: true,
           probation_training_passed: allPassed
@@ -269,17 +367,21 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
           console.log("Training status updated successfully:", 
             {passed: allPassed, score: calculatedAvgScore});
             
-          refreshUserProfile()
-            .then(() => {
-              console.log("User profile refreshed after training update");
-            })
-            .catch(error => {
-              console.error("Error refreshing user profile after training update:", error);
+          throttledRefreshProfile()
+            .finally(() => {
+              profileUpdateInProgress.current = false;
             });
         })
         .catch(error => {
+          profileUpdateInProgress.current = false;
           console.error("Error updating training status:", error);
           setError("Failed to save your progress. Please try again.");
+          
+          toast({
+            title: "Error saving progress",
+            description: "There was a problem saving your training progress. Your completion may not be recorded.",
+            variant: "destructive",
+          });
         });
       }
     }
@@ -294,28 +396,32 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       const progress = userProgress[currentModule.id];
       
       if (progress) {
-        const { error } = await supabase
-          .from('user_probation_progress')
-          .update({
-            passed: null,
-            score,
-            completed: true,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', user.id)
-          .eq('module_id', currentModule.id);
+        const { error } = await executeWithConcurrencyLimit(async () => {
+          return await supabase
+            .from('user_probation_progress')
+            .update({
+              passed: null,
+              score,
+              completed: true,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', user.id)
+            .eq('module_id', currentModule.id);
+        });
         
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from('user_probation_progress')
-          .insert({
-            user_id: user.id,
-            module_id: currentModule.id,
-            passed: null,
-            score,
-            completed: true
-          });
+        const { error } = await executeWithConcurrencyLimit(async () => {
+          return await supabase
+            .from('user_probation_progress')
+            .insert({
+              user_id: user.id,
+              module_id: currentModule.id,
+              passed: null,
+              score,
+              completed: true
+            });
+        });
         
         if (error) throw error;
       }
@@ -334,10 +440,19 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       
       setUserProgress(updatedProgressMap);
       updateOverallScore(updatedProgressMap);
-      setShowResultScreen(true);
+      
+      setTimeout(() => {
+        setShowResultScreen(true);
+      }, 300);
     } catch (error) {
       console.error("Error saving quiz results:", error);
       setError("Failed to save your quiz results. Please try again.");
+      
+      toast({
+        title: "Error saving quiz results",
+        description: "There was a problem saving your quiz results. Please try again.",
+        variant: "destructive",
+      });
     }
   };
   
@@ -383,7 +498,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   };
   
   const handleCloseModal = () => {
-    refreshUserProfile()
+    throttledRefreshProfile()
       .then(() => {
         console.log("User profile refreshed on modal close");
         onClose();
@@ -404,6 +519,8 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       const currentIndex = modules.findIndex(m => m.id === currentModule.id);
       if (currentIndex < modules.length - 1) {
         const nextModule = modules[currentIndex + 1];
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
         await handleSelectModule(nextModule);
       } else {
         onClose();

@@ -1,8 +1,8 @@
-
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { Json } from '@/integrations/supabase/types';
+import { toast } from '@/hooks/use-toast';
 
 export interface UserProfile {
   id: string;
@@ -76,6 +76,61 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  const isRefreshingProfile = useRef<boolean>(false);
+  const lastProfileRefreshTime = useRef<number>(0);
+  const REFRESH_COOLDOWN = 2000;
+  const refreshQueue = useRef<(() => void)[]>([]);
+  
+  const fetchUserProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
+    if (isRefreshingProfile.current) {
+      return new Promise((resolve) => {
+        refreshQueue.current.push(() => {
+          resolve(userProfile);
+        });
+      });
+    }
+    
+    const now = Date.now();
+    if (now - lastProfileRefreshTime.current < REFRESH_COOLDOWN) {
+      console.log("Profile refresh throttled, returning current profile");
+      return userProfile;
+    }
+    
+    isRefreshingProfile.current = true;
+    lastProfileRefreshTime.current = now;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      } 
+      
+      if (data) {
+        const typedData = data as unknown as UserProfile;
+        setUserProfile(typedData);
+        return typedData;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    } finally {
+      isRefreshingProfile.current = false;
+      
+      if (refreshQueue.current.length > 0) {
+        const nextRefresh = refreshQueue.current.shift();
+        if (nextRefresh) nextRefresh();
+      }
+    }
+  }, [userProfile]);
 
   useEffect(() => {
     const fetchUserProfile = async (userId: string) => {
@@ -204,38 +259,62 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
       
       let result;
-      if (existingProfile) {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .update(profileData)
-          .eq('user_id', user.id)
-          .select()
-          .single();
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        try {
+          if (existingProfile) {
+            const { data, error } = await supabase
+              .from('user_profiles')
+              .update(profileData)
+              .eq('user_id', user.id)
+              .select()
+              .single();
+              
+            if (error) throw error;
+            result = data;
+            break;
+          } else {
+            const newProfileData = {
+              ...profileData,
+              email: user.email || '', 
+              first_name: profileData.first_name || '',
+              last_name: profileData.last_name || ''
+            };
+            
+            const { data, error } = await supabase
+              .from('user_profiles')
+              .insert(newProfileData)
+              .select()
+              .single();
+              
+            if (error) throw error;
+            result = data;
+            break;
+          }
+        } catch (error: any) {
+          console.error(`Error updating profile (attempt ${attempts + 1}/${maxAttempts}):`, error);
+          attempts++;
           
-        if (error) throw error;
-        result = data;
-      } else {
-        const newProfileData = {
-          ...profileData,
-          email: user.email || '', 
-          first_name: profileData.first_name || '',
-          last_name: profileData.last_name || ''
-        };
-        
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .insert(newProfileData)
-          .select()
-          .single();
+          if (attempts >= maxAttempts) {
+            throw error;
+          }
           
-        if (error) throw error;
-        result = data;
+          const delay = Math.min(1000 * Math.pow(2, attempts), 5000);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
       
       setUserProfile(result as unknown as UserProfile);
       return result;
     } catch (error) {
       console.error('Error updating profile:', error);
+      toast({
+        title: "Error updating profile",
+        description: "There was an issue saving your information. Please try again.",
+        variant: "destructive",
+      });
       throw error;
     }
   };
@@ -268,43 +347,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const refreshUserProfile = async () => {
+  const refreshUserProfile = useCallback(async () => {
     if (!user) return null;
     
     try {
       console.log("Refreshing user profile for user:", user.id);
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-        
-      if (error) {
-        console.error("Error in refreshUserProfile:", error);
-        throw error;
-      }
-      
-      if (data) {
-        console.log("Refreshed user profile data:", data);
-        const typedData = {
-          ...data,
-          probation_training_completed: Boolean(data.probation_training_completed),
-          probation_training_passed: Boolean(data.probation_training_passed),
-          telemarketing_policy_acknowledged: Boolean(data.telemarketing_policy_acknowledged),
-          do_not_call_policy_acknowledged: Boolean(data.do_not_call_policy_acknowledged)
-        } as unknown as UserProfile;
-        
-        setUserProfile(typedData);
-        return typedData;
-      } else {
-        console.warn("No user profile found during refresh");
-      }
-      return data;
+      return await fetchUserProfile(user.id);
     } catch (error) {
       console.error('Error refreshing user profile:', error);
       throw error;
     }
-  };
+  }, [user, fetchUserProfile]);
   
   const value = {
     user,
