@@ -21,7 +21,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
   global: {
     fetch: (...args: [RequestInfo | URL, RequestInit?]) => {
       let retries = 0;
-      const maxRetries = 2;
+      const maxRetries = 3;
       
       const fetchWithRetry = async (): Promise<Response> => {
         try {

@@ -27,6 +27,23 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
     setAnswers({});
     setCurrentQuestionIndex(0);
     setIsSubmitting(false);
+    
+    // Validate questions structure when they change
+    if (Array.isArray(questions)) {
+      const invalidQuestions = questions.filter(q => 
+        !q || 
+        typeof q !== 'object' || 
+        !Array.isArray(q.options) ||
+        q.options.length === 0 ||
+        typeof q.correct_answer !== 'number' ||
+        q.correct_answer >= q.options.length
+      );
+      
+      if (invalidQuestions.length > 0) {
+        console.error('Invalid quiz questions structure:', invalidQuestions);
+        setError("Some quiz questions have an invalid format. Please contact support.");
+      }
+    }
   }, [questions]);
   
   if (!Array.isArray(questions) || questions.length === 0) {
@@ -106,8 +123,17 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
       console.log('Quiz completed. Score:', scorePercentage);
       console.log('Answers submitted:', answers);
       
-      // We're not determining pass/fail per module anymore
-      onComplete(scorePercentage);
+      // Make the callback asynchronous to avoid UI freezing
+      setTimeout(() => {
+        try {
+          // We're not determining pass/fail per module anymore
+          onComplete(scorePercentage);
+        } catch (err) {
+          console.error("Error in onComplete callback:", err);
+          setError("There was an error submitting your quiz. Please try again.");
+          setIsSubmitting(false);
+        }
+      }, 100);
     } catch (err) {
       console.error("Error submitting quiz:", err);
       setError("There was an error submitting your quiz. Please try again.");
