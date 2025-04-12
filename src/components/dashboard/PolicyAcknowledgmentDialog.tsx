@@ -249,7 +249,7 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Policy Acknowledgment Required</DialogTitle>
           <DialogDescription>
@@ -269,8 +269,8 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="telemarketing" className="flex-1 flex flex-col mt-0 overflow-hidden">
-            <ScrollArea className="border rounded-md p-4 flex-1 bg-slate-50 overflow-y-auto">
+          <TabsContent value="telemarketing" className="flex-1 flex flex-col mt-0">
+            <ScrollArea className="border rounded-md p-4 h-[400px] bg-slate-50">
               <TelemarketingPolicy />
             </ScrollArea>
             
@@ -286,8 +286,8 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
             </div>
           </TabsContent>
           
-          <TabsContent value="donotcall" className="flex-1 flex flex-col mt-0 overflow-hidden">
-            <ScrollArea className="border rounded-md p-4 flex-1 bg-slate-50 overflow-y-auto">
+          <TabsContent value="donotcall" className="flex-1 flex flex-col mt-0">
+            <ScrollArea className="border rounded-md p-4 h-[400px] bg-slate-50">
               <DoNotCallPolicy />
             </ScrollArea>
             
