@@ -249,7 +249,7 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Policy Acknowledgment Required</DialogTitle>
           <DialogDescription>
@@ -257,7 +257,7 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="grid grid-cols-2 mb-4">
             <TabsTrigger value="telemarketing" className="flex items-center gap-2">
               {acknowledgedTelemarketing && <Check size={16} className="text-green-500" />}
@@ -269,39 +269,41 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="telemarketing" className="flex-1 flex flex-col mt-0">
-            <ScrollArea className="border rounded-md p-4 h-[400px] bg-slate-50">
-              <TelemarketingPolicy />
-            </ScrollArea>
+          <div className="flex-1 overflow-auto">
+            <TabsContent value="telemarketing" className="h-full">
+              <ScrollArea className="h-full border rounded-md p-4 bg-slate-50">
+                <TelemarketingPolicy />
+              </ScrollArea>
+              
+              <div className="flex items-center space-x-2 mt-4">
+                <Checkbox 
+                  id="telemarketing-acknowledgment" 
+                  checked={acknowledgedTelemarketing} 
+                  onCheckedChange={checked => setAcknowledgedTelemarketing(checked === true)} 
+                />
+                <Label htmlFor="telemarketing-acknowledgment" className="text-sm">
+                  I acknowledge that I have read, understood, and will comply with the Telemarketing Policy
+                </Label>
+              </div>
+            </TabsContent>
             
-            <div className="flex items-center space-x-2 mt-4">
-              <Checkbox 
-                id="telemarketing-acknowledgment" 
-                checked={acknowledgedTelemarketing} 
-                onCheckedChange={checked => setAcknowledgedTelemarketing(checked === true)} 
-              />
-              <Label htmlFor="telemarketing-acknowledgment" className="text-sm">
-                I acknowledge that I have read, understood, and will comply with the Telemarketing Policy
-              </Label>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="donotcall" className="flex-1 flex flex-col mt-0">
-            <ScrollArea className="border rounded-md p-4 h-[400px] bg-slate-50">
-              <DoNotCallPolicy />
-            </ScrollArea>
-            
-            <div className="flex items-center space-x-2 mt-4">
-              <Checkbox 
-                id="donotcall-acknowledgment" 
-                checked={acknowledgedDoNotCall} 
-                onCheckedChange={checked => setAcknowledgedDoNotCall(checked === true)} 
-              />
-              <Label htmlFor="donotcall-acknowledgment" className="text-sm">
-                I acknowledge that I have read, understood, and will comply with the Do Not Call Policy
-              </Label>
-            </div>
-          </TabsContent>
+            <TabsContent value="donotcall" className="h-full">
+              <ScrollArea className="h-full border rounded-md p-4 bg-slate-50">
+                <DoNotCallPolicy />
+              </ScrollArea>
+              
+              <div className="flex items-center space-x-2 mt-4">
+                <Checkbox 
+                  id="donotcall-acknowledgment" 
+                  checked={acknowledgedDoNotCall} 
+                  onCheckedChange={checked => setAcknowledgedDoNotCall(checked === true)} 
+                />
+                <Label htmlFor="donotcall-acknowledgment" className="text-sm">
+                  I acknowledge that I have read, understood, and will comply with the Do Not Call Policy
+                </Label>
+              </div>
+            </TabsContent>
+          </div>
         </Tabs>
 
         <div className="mt-4">
