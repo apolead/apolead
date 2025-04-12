@@ -36,6 +36,27 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
           throw err;
         });
     }
+  },
+  // Add better retry logic for transient errors
+  db: {
+    schema: 'public',
+    // Improved query handling with standard backoff
+    retryAlgorithm: {
+      maxRetryCount: 3,
+      initialBackoff: 200,  // Start with short retry delay
+      maxBackoff: 2000,     // Don't wait longer than 2 seconds
+      retry: (count, error) => {
+        // Only retry on network errors and ambiguous column errors
+        if (error.message?.includes('ERR_INSUFFICIENT_RESOURCES') || 
+            error.message?.includes('ambiguous') ||
+            error.code === 'PGRST109' || 
+            error.code === '42702') {
+          console.log(`Retrying query due to error (attempt ${count}):`, error.message);
+          return true;
+        }
+        return false;
+      }
+    }
   }
 });
 

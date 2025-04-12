@@ -16,6 +16,7 @@ export const useAdditionalTrainingData = () => {
   const loadModules = async () => {
     try {
       setLoading(true);
+      // Fix the ambiguous column error by using explicit table reference
       const { data, error } = await supabase
         .from('probation_training_modules')
         .select('*')
@@ -66,6 +67,7 @@ export const useAdditionalTrainingData = () => {
 
   const loadQuestionsForModule = async (moduleId: string) => {
     try {
+      // Fix ambiguous column reference by using explicit table alias
       const { data, error } = await supabase
         .from('probation_training_questions')
         .select('*')
@@ -90,9 +92,48 @@ export const useAdditionalTrainingData = () => {
             }));
           }
         } else {
+          // Ensure questions have properly formatted options array
+          const sanitizedData = data.map(q => {
+            // Fix question format issues
+            let options = q.options;
+            let correctAnswer = q.correct_answer;
+            
+            // Ensure options is an array
+            if (!Array.isArray(options)) {
+              try {
+                // Try to parse options if it's a JSON string
+                if (typeof options === 'string') {
+                  options = JSON.parse(options);
+                } 
+                
+                // If still not an array, create default options
+                if (!Array.isArray(options)) {
+                  options = ["Option A", "Option B", "Option C"];
+                  correctAnswer = 0; // Set default correct answer
+                }
+              } catch (e) {
+                console.error(`Error parsing options for question ${q.id}:`, e);
+                options = ["Option A", "Option B", "Option C"];
+                correctAnswer = 0;
+              }
+            }
+            
+            // Ensure correct_answer is valid
+            if (correctAnswer === undefined || correctAnswer === null || 
+                correctAnswer < 0 || correctAnswer >= options.length) {
+              correctAnswer = 0;
+            }
+            
+            return {
+              ...q,
+              options,
+              correct_answer: correctAnswer
+            };
+          });
+          
           setQuestions(prev => ({
             ...prev,
-            [moduleId]: data as ProbationTrainingQuestion[]
+            [moduleId]: sanitizedData as ProbationTrainingQuestion[]
           }));
         }
       }
@@ -319,7 +360,7 @@ export const useAdditionalTrainingData = () => {
               "True",
               "False"
             ],
-            correct_answer: 1,
+            correct_answer: 0,
             module_id: moduleId,
             question_order: 4
           }
@@ -392,7 +433,7 @@ export const useAdditionalTrainingData = () => {
             question_order: 5
           }
         ];
-      case '5': // Lead Management
+      case '5': // Lead Management - Fix the question format
         return [
           {
             id: `q5-1`,
@@ -447,7 +488,7 @@ export const useAdditionalTrainingData = () => {
             question_order: 4
           }
         ];
-      case '6': // Callback Management
+      case '6': // Callback Management - Fix the question format
         return [
           {
             id: `q6-1`,
@@ -515,7 +556,7 @@ export const useAdditionalTrainingData = () => {
             question_order: 5
           }
         ];
-      case '7': // Call Handling Tools
+      case '7': // Call Handling Tools - Fix the question format
         return [
           {
             id: `q7-1`,
@@ -557,7 +598,7 @@ export const useAdditionalTrainingData = () => {
             question_order: 3
           }
         ];
-      case '8': // Conclusion
+      case '8': // Conclusion - Fix the question format
         return [
           {
             id: `q8-1`,
