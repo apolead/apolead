@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ProbationTrainingModule, ProbationTrainingQuestion } from '@/types/probation-training';
@@ -16,6 +15,8 @@ export const useAdditionalTrainingData = () => {
   const loadModules = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('probation_training_modules')
         .select('*')
@@ -40,15 +41,27 @@ export const useAdditionalTrainingData = () => {
         } else {
           setModules(data as ProbationTrainingModule[]);
           
-          // Load all questions for all modules at once
+          // Load all questions for all modules in a controlled manner
+          const questionsMap: Record<string, ProbationTrainingQuestion[]> = {};
           for (const module of data) {
-            await loadQuestionsForModule(module.id);
+            try {
+              const questions = await loadQuestionsForModuleData(module.id);
+              if (questions) {
+                questionsMap[module.id] = questions;
+              }
+            } catch (moduleError) {
+              console.error(`Error loading questions for module ${module.id}:`, moduleError);
+              
+              // Use fallback dummy questions for this module
+              questionsMap[module.id] = createDummyQuestions(module.id, module.title);
+            }
           }
+          setQuestions(questionsMap);
         }
       }
     } catch (err) {
       console.error("Error loading training modules:", err);
-      setError("Failed to load training modules");
+      setError("Failed to load training modules. Please try refreshing the page.");
       
       // Use dummy data as fallback
       const dummyModules = createDummyModules();
@@ -64,50 +77,111 @@ export const useAdditionalTrainingData = () => {
     }
   };
 
-  const loadQuestionsForModule = async (moduleId: string) => {
+  const loadQuestionsForModuleData = async (moduleId: string): Promise<ProbationTrainingQuestion[] | null> => {
     try {
+      console.log("Loading questions for module:", moduleId);
       const { data, error } = await supabase
         .from('probation_training_questions')
         .select('*')
         .eq('module_id', moduleId)
         .order('question_order', { ascending: true });
-
+      
       if (error) throw error;
-
-      if (data) {
-        console.log(`Loaded questions for module ${moduleId}:`, data);
+      
+      if (data && data.length > 0) {
+        console.log(`Loaded ${data.length} questions for module ${moduleId}`);
         
-        // Make sure all modules have dummy questions, even the first introduction module
-        if (data.length === 0) {
+        // Validate and fix any question data
+        const formattedQuestions = data.map(q => {
+          // Make sure options is always an array
+          let options = q.options;
+          if (!Array.isArray(options)) {
+            console.warn(`Module ${moduleId} question ${q.id} has invalid options, fixing`, q.options);
+            options = [];
+          }
+          
+          // Make sure correct_answer is valid
+          let correct_answer = q.correct_answer;
+          if (typeof correct_answer !== 'number' || correct_answer >= options.length) {
+            console.warn(`Module ${moduleId} question ${q.id} has invalid correct_answer, fixing`, q.correct_answer);
+            correct_answer = 0;
+          }
+          
+          return {
+            ...q,
+            options,
+            correct_answer
+          };
+        });
+        
+        return formattedQuestions as ProbationTrainingQuestion[];
+      } else {
+        console.log(`No questions found for module ${moduleId}, using fallback`);
+        const module = modules.find(m => m.id === moduleId);
+        if (module) {
+          return createDummyQuestions(moduleId, module.title);
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`Error loading questions for module ${moduleId}:`, error);
+      throw error;
+    }
+  };
+
+  const loadQuestionsForModule = async (moduleId: string, retryCount = 0): Promise<boolean> => {
+    try {
+      const maxRetries = 3;
+      
+      try {
+        const questionsData = await loadQuestionsForModuleData(moduleId);
+        
+        if (questionsData) {
+          setQuestions(prev => ({
+            ...prev,
+            [moduleId]: questionsData
+          }));
+          return true;
+        } else if (retryCount < maxRetries) {
+          // Try again after a short delay
+          console.log(`Retry ${retryCount + 1} of ${maxRetries} for module ${moduleId}`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return loadQuestionsForModule(moduleId, retryCount + 1);
+        } else {
+          // As a last resort, create dummy questions
           const module = modules.find(m => m.id === moduleId);
           if (module) {
-            // Always create at least one dummy question for every module
-            // For module 1, we'll make sure it has proper questions too
             const dummyQuestions = createDummyQuestions(moduleId, module.title);
             setQuestions(prev => ({
               ...prev,
               [moduleId]: dummyQuestions
             }));
           }
-        } else {
+          return false;
+        }
+      } catch (error) {
+        if (retryCount < maxRetries) {
+          console.log(`Error loading questions, retry ${retryCount + 1} of ${maxRetries}`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return loadQuestionsForModule(moduleId, retryCount + 1);
+        }
+        
+        // As a last resort, create dummy questions
+        const module = modules.find(m => m.id === moduleId);
+        if (module) {
+          const dummyQuestions = createDummyQuestions(moduleId, module.title);
           setQuestions(prev => ({
             ...prev,
-            [moduleId]: data as ProbationTrainingQuestion[]
+            [moduleId]: dummyQuestions
           }));
         }
+        throw error;
       }
-    } catch (err) {
-      console.error(`Error loading questions for module ${moduleId}:`, err);
-      
-      // Use dummy questions as fallback
-      const module = modules.find(m => m.id === moduleId);
-      if (module) {
-        const dummyQuestions = createDummyQuestions(moduleId, module.title);
-        setQuestions(prev => ({
-          ...prev,
-          [moduleId]: dummyQuestions
-        }));
-      }
+    } catch (error) {
+      console.error(`Failed to load questions for module ${moduleId} after multiple retries:`, error);
+      setError(`Failed to load questions for this module. Please try again later.`);
+      return false;
     }
   };
 
@@ -173,6 +247,76 @@ export const useAdditionalTrainingData = () => {
   };
 
   const createDummyQuestions = (moduleId: string, moduleTitle: string): ProbationTrainingQuestion[] => {
+    if (moduleId === '6') {
+      return [
+        {
+          id: `q6-1`,
+          question: "Which method should you use to book a callback for a specific time, like Monday at 10am?",
+          options: [
+            "The Callback Time drop-down menu",
+            "The Appointment Calendar",
+            "The Quick Callback feature", 
+            "The Scheduling Assistant"
+          ],
+          correct_answer: 1,
+          module_id: moduleId,
+          question_order: 1
+        },
+        {
+          id: `q6-2`,
+          question: "To access the Appointment Calendar, what must you check?",
+          options: [
+            "The Use calendar checkbox",
+            "The Schedule Meeting option",
+            "The Manual Callback setting",
+            "The Time Zone Adjustment feature"
+          ],
+          correct_answer: 0,
+          module_id: moduleId,
+          question_order: 2
+        },
+        {
+          id: `q6-3`,
+          question: "What Agent Dialer setting would enable the system to call your callbacks automatically at the scheduled time?",
+          options: [
+            "Call manually",
+            "Auto dial on time",
+            "Auto dial callback",
+            "Scheduled dialing"
+          ],
+          correct_answer: 1,
+          module_id: moduleId,
+          question_order: 3
+        },
+        {
+          id: `q6-4`,
+          question: "How do you reschedule a callback appointment?",
+          options: [
+            "Delete the original appointment and create a new one",
+            "Open the Lead, select the Call Result, choose a new time, and submit",
+            "Email the support team to change the time",
+            "Use the Reschedule button in Calendar view"
+          ],
+          correct_answer: 1,
+          module_id: moduleId,
+          question_order: 4
+        },
+        {
+          id: `q6-5`,
+          question: "What view is NOT available in the Callback Calendar?",
+          options: [
+            "Day view",
+            "Week view", 
+            "Month view",
+            "Year view"
+          ],
+          correct_answer: 3,
+          module_id: moduleId,
+          question_order: 5
+        }
+      ];
+    }
+    
     switch (moduleId) {
       case '1': // Introduction - Add dummy questions to make it consistent
         return [
@@ -319,7 +463,7 @@ export const useAdditionalTrainingData = () => {
               "True",
               "False"
             ],
-            correct_answer: 1,
+            correct_answer: 0,
             module_id: moduleId,
             question_order: 4
           }
@@ -445,74 +589,6 @@ export const useAdditionalTrainingData = () => {
             correct_answer: 2,
             module_id: moduleId,
             question_order: 4
-          }
-        ];
-      case '6': // Callback Management
-        return [
-          {
-            id: `q6-1`,
-            question: "Which method should you use to book a callback for a specific time, like Monday at 10am?",
-            options: [
-              "The Callback Time drop-down menu",
-              "The Appointment Calendar",
-              "The Quick Callback feature",
-              "The Scheduling Assistant"
-            ],
-            correct_answer: 1,
-            module_id: moduleId,
-            question_order: 1
-          },
-          {
-            id: `q6-2`,
-            question: "To access the Appointment Calendar, what must you check?",
-            options: [
-              "The Use calendar checkbox",
-              "The Schedule Meeting option",
-              "The Manual Callback setting",
-              "The Time Zone Adjustment feature"
-            ],
-            correct_answer: 0,
-            module_id: moduleId,
-            question_order: 2
-          },
-          {
-            id: `q6-3`,
-            question: "What Agent Dialer setting would enable the system to call your callbacks automatically at the scheduled time?",
-            options: [
-              "Call manually",
-              "Auto dial on time",
-              "Auto dial callback",
-              "Scheduled dialing"
-            ],
-            correct_answer: 1,
-            module_id: moduleId,
-            question_order: 3
-          },
-          {
-            id: `q6-4`,
-            question: "How do you reschedule a callback appointment?",
-            options: [
-              "Delete the original appointment and create a new one",
-              "Open the Lead, select the Call Result, choose a new time, and submit",
-              "Email the support team to change the time",
-              "Use the Reschedule button in Calendar view"
-            ],
-            correct_answer: 1,
-            module_id: moduleId,
-            question_order: 4
-          },
-          {
-            id: `q6-5`,
-            question: "What view is NOT available in the Callback Calendar?",
-            options: [
-              "Day view",
-              "Week view",
-              "Month view",
-              "Year view"
-            ],
-            correct_answer: 3,
-            module_id: moduleId,
-            question_order: 5
           }
         ];
       case '7': // Call Handling Tools
