@@ -17,45 +17,50 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     detectSessionInUrl: true,
     flowType: 'pkce'
   },
-  // Add global error handling and logging
+  // Add global error handling and logging with retry logic
   global: {
     fetch: (...args: [RequestInfo | URL, RequestInit?]) => {
-      return fetch(...args)
-        .then(response => {
+      let retries = 0;
+      const maxRetries = 2;
+      
+      const fetchWithRetry = async (): Promise<Response> => {
+        try {
+          const response = await fetch(...args);
+          
           // Log info about the response for debugging
           if (!response.ok) {
             console.error(`Supabase fetch error: ${response.status} ${response.statusText}`, 
               `URL: ${typeof args[0] === 'string' ? args[0] : 'complex URL'}`,
               `Method: ${args[1]?.method || 'GET'}`
             );
+            
+            // For some specific status codes, retry the request
+            if ((response.status === 429 || response.status >= 500) && retries < maxRetries) {
+              retries++;
+              const delay = Math.min(1000 * (2 ** retries), 5000); // Exponential backoff with max 5s
+              console.log(`Retrying request (${retries}/${maxRetries}) after ${delay}ms`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              return fetchWithRetry();
+            }
           }
+          
           return response;
-        })
-        .catch(err => {
-          console.error('Supabase fetch error:', err);
+        } catch (err) {
+          console.error('Supabase fetch network error:', err);
+          
+          if (retries < maxRetries) {
+            retries++;
+            const delay = Math.min(1000 * (2 ** retries), 5000); // Exponential backoff with max 5s
+            console.log(`Retrying request (${retries}/${maxRetries}) after ${delay}ms due to network error`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry();
+          }
+          
           throw err;
-        });
-    }
-  },
-  // Add better retry logic for transient errors
-  db: {
-    schema: 'public',
-    // Improved query handling with standard backoff
-    retryAlgorithm: {
-      maxRetryCount: 3,
-      initialBackoff: 200,  // Start with short retry delay
-      maxBackoff: 2000,     // Don't wait longer than 2 seconds
-      retry: (count, error) => {
-        // Only retry on network errors and ambiguous column errors
-        if (error.message?.includes('ERR_INSUFFICIENT_RESOURCES') || 
-            error.message?.includes('ambiguous') ||
-            error.code === 'PGRST109' || 
-            error.code === '42702') {
-          console.log(`Retrying query due to error (attempt ${count}):`, error.message);
-          return true;
         }
-        return false;
-      }
+      };
+      
+      return fetchWithRetry();
     }
   }
 });

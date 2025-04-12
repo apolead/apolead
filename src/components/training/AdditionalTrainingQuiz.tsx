@@ -4,9 +4,8 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Check, ChevronRight } from 'lucide-react';
+import { Check, ChevronRight, RefreshCw } from 'lucide-react';
 import { ProbationTrainingQuestion } from '@/types/probation-training';
-import { toast } from '@/hooks/use-toast';
 
 interface AdditionalTrainingQuizProps {
   questions: ProbationTrainingQuestion[];
@@ -21,53 +20,54 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitRetries, setSubmitRetries] = useState(0);
   
-  // Validate questions on component mount
+  // Safety check for questions array
   useEffect(() => {
-    const invalidQuestions = questions.filter(q => 
-      !q.options || 
-      !Array.isArray(q.options) || 
-      q.options.length === 0 ||
-      q.correct_answer === undefined || 
-      q.correct_answer < 0 || 
-      q.correct_answer >= (q.options?.length || 0)
-    );
-    
-    if (invalidQuestions.length > 0) {
-      console.error("Invalid question format detected:", invalidQuestions);
-      toast({
-        title: "Warning",
-        description: "Some questions may have invalid formats. Please contact support if you experience issues.",
-        variant: "destructive",
-      });
-    }
+    // Reset answers when questions change
+    setAnswers({});
+    setCurrentQuestionIndex(0);
+    setIsSubmitting(false);
   }, [questions]);
   
-  if (questions.length === 0) {
+  if (!Array.isArray(questions) || questions.length === 0) {
     return (
       <Alert variant="destructive" className="mb-4">
         <AlertTitle>Error</AlertTitle>
-        <AlertDescription>No quiz questions are available for this module.</AlertDescription>
+        <AlertDescription>No quiz questions are available for this module. Please try refreshing the page.</AlertDescription>
       </Alert>
     );
   }
   
-  const currentQuestion = questions[currentQuestionIndex];
-  const totalQuestions = questions.length;
-  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+  // Extra safety check to ensure currentQuestionIndex is within bounds
+  const safeCurrentIndex = Math.min(currentQuestionIndex, questions.length - 1);
+  const currentQuestion = questions[safeCurrentIndex];
   
-  // Check if current question is valid
-  const isCurrentQuestionValid = currentQuestion && 
-    Array.isArray(currentQuestion.options) && 
-    currentQuestion.options.length > 0 &&
-    currentQuestion.correct_answer !== undefined &&
-    currentQuestion.correct_answer >= 0 && 
-    currentQuestion.correct_answer < currentQuestion.options.length;
+  // Make sure the current question is valid
+  if (!currentQuestion || typeof currentQuestion !== 'object') {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          There was an issue loading the current question. Please try refreshing the page.
+        </AlertDescription>
+        <div className="mt-4">
+          <Button 
+            onClick={() => window.location.reload()}
+            variant="outline" 
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" /> Refresh Page
+          </Button>
+        </div>
+      </Alert>
+    );
+  }
+  
+  const totalQuestions = questions.length;
+  const isLastQuestion = safeCurrentIndex === totalQuestions - 1;
   
   const handleChange = (value: string) => {
-    if (!currentQuestion) return;
-    
     console.log('Answer selected:', value, 'for question:', currentQuestion.id);
     const answerIndex = parseInt(value, 10);
     setAnswers(prev => ({
@@ -77,7 +77,7 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
   };
   
   const handleNext = () => {
-    if (!currentQuestion || answers[currentQuestion.id] === undefined) {
+    if (answers[currentQuestion.id] === undefined) {
       setError("Please select an answer before continuing.");
       return;
     }
@@ -91,83 +91,32 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
     }
   };
   
-  const handleSubmit = async () => {
-    if (isSubmitting) return;
-    
+  const handleSubmit = () => {
     try {
       setIsSubmitting(true);
       
       let correctCount = 0;
-      let validQuestions = 0;
-      
       questions.forEach(question => {
-        // Only count valid questions
-        if (question && 
-            Array.isArray(question.options) && 
-            question.options.length > 0 && 
-            question.correct_answer !== undefined &&
-            answers[question.id] !== undefined) {
-          validQuestions++;
-          if (answers[question.id] === question.correct_answer) {
-            correctCount++;
-          }
+        if (answers[question.id] === question.correct_answer) {
+          correctCount++;
         }
       });
       
-      if (validQuestions === 0) {
-        throw new Error("No valid questions found to score");
-      }
-      
-      const scorePercentage = Math.round((correctCount / validQuestions) * 100);
+      const scorePercentage = Math.round((correctCount / questions.length) * 100);
       console.log('Quiz completed. Score:', scorePercentage);
       console.log('Answers submitted:', answers);
       
-      // Use timeout to ensure state updates complete before callback
-      setTimeout(() => {
-        onComplete(scorePercentage);
-        setIsSubmitting(false);
-      }, 100);
-      
+      // We're not determining pass/fail per module anymore
+      onComplete(scorePercentage);
     } catch (err) {
       console.error("Error submitting quiz:", err);
-      
-      // Implement retry logic for submission failures
-      if (submitRetries < 3) {
-        setSubmitRetries(prev => prev + 1);
-        toast({
-          title: "Submission error",
-          description: "Retrying submission...",
-          duration: 2000,
-        });
-        
-        setTimeout(() => {
-          handleSubmit();
-        }, 1000 * (submitRetries + 1));
-      } else {
-        setError("Failed to submit quiz after multiple attempts. Please try again.");
-        setIsSubmitting(false);
-        setSubmitRetries(0);
-      }
+      setError("There was an error submitting your quiz. Please try again.");
+      setIsSubmitting(false);
     }
   };
   
-  // Handle case where current question is invalid
-  if (!isCurrentQuestionValid) {
-    return (
-      <Alert variant="destructive" className="mb-4">
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>
-          This question appears to be invalid. Please continue to the next module.
-        </AlertDescription>
-        <Button 
-          onClick={() => onComplete(100)} 
-          className="mt-4"
-        >
-          Continue to Next Module
-        </Button>
-      </Alert>
-    );
-  }
+  // Make sure options exist and are valid
+  const safeOptions = Array.isArray(currentQuestion.options) ? currentQuestion.options : [];
   
   const currentAnswer = answers[currentQuestion?.id] !== undefined 
     ? answers[currentQuestion.id].toString() 
@@ -183,16 +132,16 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
         
         <div className="flex justify-between items-center">
           <p className="text-sm font-medium">
-            Question {currentQuestionIndex + 1} of {totalQuestions}
+            Question {safeCurrentIndex + 1} of {totalQuestions}
           </p>
           <div className="flex gap-1">
             {questions.map((_, index) => (
               <div 
                 key={index}
                 className={`h-2 w-6 rounded-full ${
-                  index < currentQuestionIndex 
+                  index < safeCurrentIndex 
                     ? 'bg-green-500' 
-                    : index === currentQuestionIndex 
+                    : index === safeCurrentIndex 
                       ? 'bg-purple-600' 
                       : 'bg-gray-200'
                 }`}
@@ -218,7 +167,7 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
           onValueChange={handleChange}
           className="space-y-3"
         >
-          {Array.isArray(currentQuestion.options) && currentQuestion.options.map((option, optIndex) => (
+          {safeOptions.map((option, optIndex) => (
             <div key={optIndex} className="flex items-start space-x-2 p-2 rounded-md hover:bg-gray-100">
               <RadioGroupItem 
                 value={optIndex.toString()} 
@@ -244,9 +193,9 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
           className="px-6 text-white bg-[#4f46e5] hover:bg-[#4338ca]"
         >
           {isSubmitting ? (
-            <span className="flex items-center">
-              <span className="animate-spin h-4 w-4 mr-2 border-2 border-white rounded-full border-t-transparent"></span>
-              Processing...
+            <span className="flex items-center gap-2">
+              <span className="animate-spin h-4 w-4 border-2 border-current rounded-full border-t-transparent"></span>
+              Submitting...
             </span>
           ) : isLastQuestion ? (
             'Submit Quiz'
