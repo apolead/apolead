@@ -269,8 +269,8 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="telemarketing" className="flex-1 flex flex-col mt-0">
-            <ScrollArea className="border rounded-md p-4 max-h-[400px] bg-slate-50 overflow-y-auto">
+          <TabsContent value="telemarketing" className="flex-1 flex flex-col mt-0 overflow-hidden">
+            <ScrollArea className="border rounded-md p-4 flex-1 bg-slate-50 overflow-y-auto">
               <TelemarketingPolicy />
             </ScrollArea>
             
@@ -286,8 +286,8 @@ const PolicyAcknowledgmentDialog: React.FC<PolicyAcknowledgmentDialogProps> = ({
             </div>
           </TabsContent>
           
-          <TabsContent value="donotcall" className="flex-1 flex flex-col mt-0">
-            <ScrollArea className="border rounded-md p-4 max-h-[400px] bg-slate-50 overflow-y-auto">
+          <TabsContent value="donotcall" className="flex-1 flex flex-col mt-0 overflow-hidden">
+            <ScrollArea className="border rounded-md p-4 flex-1 bg-slate-50 overflow-y-auto">
               <DoNotCallPolicy />
             </ScrollArea>
             
