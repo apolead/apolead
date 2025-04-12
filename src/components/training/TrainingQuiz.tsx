@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -181,7 +180,11 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
   };
   
   const handleSubmit = () => {
-    // Set submitting state to show loading indicator
+    if (isSubmitting) {
+      console.log('Submission already in progress, preventing duplicate submission');
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -193,18 +196,12 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
       });
       
       const scorePercentage = Math.round((correctCount / questions.length) * 100);
-      
-      const passed = scorePercentage >= 90; // Updated from 80% to 90% threshold
+      const passed = scorePercentage >= 90;
       
       console.log('Quiz completed. Passed:', passed, 'Score:', scorePercentage);
       console.log('Answers submitted:', answers);
       
-      // Add a small delay to show the loading indicator
-      setTimeout(() => {
-        // Ensure we call onComplete with the correct values
-        onComplete(passed, scorePercentage);
-        setIsSubmitting(false);
-      }, 500);
+      onComplete(passed, scorePercentage);
     } catch (error) {
       console.error("Error processing quiz submission:", error);
       setError("An error occurred while processing your submission. Please try again.");
