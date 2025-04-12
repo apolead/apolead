@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Check, ChevronRight } from 'lucide-react';
+import { Check, ChevronRight, Loader } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
 
@@ -25,6 +25,7 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -180,22 +181,35 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
   };
   
   const handleSubmit = () => {
-    let correctCount = 0;
-    questions.forEach(question => {
-      if (answers[question.id] === question.correct_answer) {
-        correctCount++;
-      }
-    });
+    // Set submitting state to show loading indicator
+    setIsSubmitting(true);
     
-    const scorePercentage = Math.round((correctCount / questions.length) * 100);
-    
-    const passed = scorePercentage >= 90; // Updated from 80% to 90% threshold
-    
-    console.log('Quiz completed. Passed:', passed, 'Score:', scorePercentage);
-    console.log('Answers submitted:', answers);
-    
-    // Ensure we call onComplete with the correct values
-    onComplete(passed, scorePercentage);
+    try {
+      let correctCount = 0;
+      questions.forEach(question => {
+        if (answers[question.id] === question.correct_answer) {
+          correctCount++;
+        }
+      });
+      
+      const scorePercentage = Math.round((correctCount / questions.length) * 100);
+      
+      const passed = scorePercentage >= 90; // Updated from 80% to 90% threshold
+      
+      console.log('Quiz completed. Passed:', passed, 'Score:', scorePercentage);
+      console.log('Answers submitted:', answers);
+      
+      // Add a small delay to show the loading indicator
+      setTimeout(() => {
+        // Ensure we call onComplete with the correct values
+        onComplete(passed, scorePercentage);
+        setIsSubmitting(false);
+      }, 500);
+    } catch (error) {
+      console.error("Error processing quiz submission:", error);
+      setError("An error occurred while processing your submission. Please try again.");
+      setIsSubmitting(false);
+    }
   };
   
   const currentAnswer = answers[currentQuestion?.id] !== undefined 
@@ -271,10 +285,15 @@ const TrainingQuiz: React.FC<TrainingQuizProps> = ({ onComplete }) => {
         <Button 
           type="button" 
           onClick={handleNext}
-          disabled={answers[currentQuestion.id] === undefined}
-          className="px-6 text-white"
+          disabled={answers[currentQuestion.id] === undefined || isSubmitting}
+          className="px-6 text-white flex items-center gap-2"
         >
-          {isLastQuestion ? (
+          {isSubmitting ? (
+            <>
+              <Loader className="h-4 w-4 animate-spin" />
+              <span>Submitting...</span>
+            </>
+          ) : isLastQuestion ? (
             'Submit Quiz'
           ) : (
             <>

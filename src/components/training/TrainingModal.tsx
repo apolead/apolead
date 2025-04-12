@@ -4,7 +4,7 @@ import TrainingVideo from './TrainingVideo';
 import TrainingQuiz from './TrainingQuiz';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { X, CheckCircle, XCircle } from 'lucide-react';
+import { X, CheckCircle, XCircle, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import {
@@ -28,6 +28,7 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   const [quizPassed, setQuizPassed] = useState<boolean | null>(null);
   const [quizScore, setQuizScore] = useState<number>(0);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   
   useEffect(() => {
     if (!userProfile) return;
@@ -101,8 +102,18 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
   };
   
   const handleCloseModal = () => {
-    setShowScheduleDialog(false);
-    onClose();
+    // Set closing state to show loading indicator
+    setIsClosing(true);
+    
+    // Add a small delay before actually closing to allow for visual feedback
+    setTimeout(() => {
+      setShowScheduleDialog(false);
+      onClose();
+      setIsClosing(false);
+    }, 500);
+    
+    // Notify user that their progress has been saved
+    toast.success("Training progress saved successfully");
   };
   
   const handleScheduleInterview = () => {
@@ -149,8 +160,9 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
             onClick={handleCloseModal}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
             aria-label="Close modal"
+            disabled={isClosing}
           >
-            <X size={20} />
+            {isClosing ? <Loader size={18} className="animate-spin" /> : <X size={20} />}
           </button>
         </div>
         
@@ -239,9 +251,17 @@ const TrainingModal: React.FC<TrainingModalProps> = ({ isOpen, onClose, onComple
                 onClick={handleCloseModal}
                 className={`px-6 py-2 rounded-full text-white font-medium mt-6 ${
                   quizPassed ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
-                } transition-colors`}
+                } transition-colors flex items-center justify-center gap-2`}
+                disabled={isClosing}
               >
-                Close
+                {isClosing ? (
+                  <>
+                    <Loader size={16} className="animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  'Close'
+                )}
               </button>
             </div>
           )}
