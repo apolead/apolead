@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ProbationTrainingModule, ProbationTrainingQuestion } from '@/types/probation-training';
@@ -318,64 +317,6 @@ export const useAdditionalTrainingData = () => {
       ];
     }
     
-    // Fix for module 5 - ensuring proper structure for questions
-    if (moduleId === '5') {
-      return [
-        {
-          id: `q5-1`,
-          question: "What are the two main sections of lead information displayed in the workspace?",
-          options: [
-            "Basic Info and Advanced Info",
-            "Contact Information and Lead Details",
-            "Name/Phone and Address/Email",
-            "Primary Data and Secondary Data"
-          ],
-          correct_answer: 1,
-          module_id: moduleId,
-          question_order: 1
-        },
-        {
-          id: `q5-2`,
-          question: "How can you update incorrect lead information during a call?",
-          options: [
-            "Submit a correction request to your manager",
-            "Click directly into the field and type the new information",
-            "Create a new lead profile with the correct information",
-            "You cannot update information during a call"
-          ],
-          correct_answer: 1,
-          module_id: moduleId,
-          question_order: 2
-        },
-        {
-          id: `q5-3`,
-          question: "What type of information can you find in the Contact History tab?",
-          options: [
-            "The lead's credit score and financial history",
-            "Previous interactions with this lead and notes",
-            "The lead's purchase history with competitors",
-            "The lead's social media activity"
-          ],
-          correct_answer: 1,
-          module_id: moduleId,
-          question_order: 3
-        },
-        {
-          id: `q5-4`,
-          question: "Which folder contains lead profiles for callbacks you've scheduled?",
-          options: [
-            "Recent Folders",
-            "Shared Files",
-            "My Files",
-            "Callback Queue"
-          ],
-          correct_answer: 2,
-          module_id: moduleId,
-          question_order: 4
-        }
-      ];
-    }
-    
     switch (moduleId) {
       case '1': // Introduction - Add dummy questions to make it consistent
         return [
@@ -593,6 +534,61 @@ export const useAdditionalTrainingData = () => {
             correct_answer: 2,
             module_id: moduleId,
             question_order: 5
+          }
+        ];
+      case '5': // Lead Management
+        return [
+          {
+            id: `q5-1`,
+            question: "What are the two main sections of lead information displayed in the workspace?",
+            options: [
+              "Basic Info and Advanced Info",
+              "Contact Information and Lead Details",
+              "Name/Phone and Address/Email",
+              "Primary Data and Secondary Data"
+            ],
+            correct_answer: 1,
+            module_id: moduleId,
+            question_order: 1
+          },
+          {
+            id: `q5-2`,
+            question: "How can you update incorrect lead information during a call?",
+            options: [
+              "Submit a correction request to your manager",
+              "Click directly into the field and type the new information",
+              "Create a new lead profile with the correct information",
+              "You cannot update information during a call"
+            ],
+            correct_answer: 1,
+            module_id: moduleId,
+            question_order: 2
+          },
+          {
+            id: `q5-3`,
+            question: "What type of information can you find in the Contact History tab?",
+            options: [
+              "The lead's credit score and financial history",
+              "Previous interactions with this lead and notes",
+              "The lead's purchase history with competitors",
+              "The lead's social media activity"
+            ],
+            correct_answer: 1,
+            module_id: moduleId,
+            question_order: 3
+          },
+          {
+            id: `q5-4`,
+            question: "Which folder contains lead profiles for callbacks you've scheduled?",
+            options: [
+              "Recent Folders",
+              "Shared Files",
+              "My Files",
+              "Callback Queue"
+            ],
+            correct_answer: 2,
+            module_id: moduleId,
+            question_order: 4
           }
         ];
       case '7': // Call Handling Tools
