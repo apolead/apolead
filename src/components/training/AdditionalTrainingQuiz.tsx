@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Check, ChevronRight, RefreshCw } from 'lucide-react';
+import { Check, ChevronRight, RefreshCw, Loader } from 'lucide-react';
 import { ProbationTrainingQuestion } from '@/types/probation-training';
 
 interface AdditionalTrainingQuizProps {
@@ -194,7 +194,7 @@ const AdditionalTrainingQuiz: React.FC<AdditionalTrainingQuizProps> = ({
         >
           {isSubmitting ? (
             <span className="flex items-center gap-2">
-              <span className="animate-spin h-4 w-4 border-2 border-current rounded-full border-t-transparent"></span>
+              <Loader className="h-4 w-4 animate-spin" />
               Submitting...
             </span>
           ) : isLastQuestion ? (
