@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-route
 import { useState, useEffect } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { Analytics } from "@vercel/analytics/react";
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -287,6 +288,7 @@ const App = () => {
             <Toaster />
             <Sonner />
             <AuthWrapper />
+            <Analytics />
           </TooltipProvider>
         </AuthProvider>
       </BrowserRouter>
