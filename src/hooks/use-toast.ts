@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast"
 
@@ -9,6 +10,7 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  duration?: number
 }
 
 const actionTypes = {
@@ -143,6 +145,9 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
+  // Add auto-dismiss functionality based on duration
+  const duration = props.duration || TOAST_REMOVE_DELAY
+  
   const update = (props: ToasterToast) =>
     dispatch({
       type: actionTypes.UPDATE_TOAST,
@@ -162,9 +167,16 @@ function toast({ ...props }: Toast) {
         if (!open) {
           dismiss()
         }
+        // Also call the original onOpenChange if it exists
+        props.onOpenChange?.(open)
       },
     },
   })
+  
+  // Set up auto-dismiss timer
+  if (duration !== Infinity) {
+    setTimeout(dismiss, duration)
+  }
 
   return {
     id,
@@ -183,6 +195,9 @@ function useToast() {
       if (index > -1) {
         listeners.splice(index, 1)
       }
+      
+      // Clean up any remaining timeouts when component unmounts
+      toastTimeouts.forEach((timeout) => clearTimeout(timeout))
     }
   }, [state])
 
