@@ -269,6 +269,9 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
         await handleModuleAutoComplete();
       } else {
         setShowQuiz(true);
+        setTimeout(() => {
+          document.getElementById('quiz-section')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
       }
     } catch (error) {
       console.error("Error updating video progress:", error);
@@ -351,7 +354,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
       setOverallScore(calculatedAvgScore);
       
       if (completedCount === modules.length && modules.length > 0) {
-        const allPassed = calculatedAvgScore >= 90;
+        const allPassed = calculatedAvgScore >= 85;
         
         if (profileUpdateInProgress.current) {
           console.log('Profile update already in progress, skipping');
@@ -459,6 +462,19 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
   const handleSelectModule = async (module: ProbationTrainingModule) => {
     if (moduleTransitioning) return;
     
+    const moduleIndex = modules.findIndex(m => m.id === module.id);
+    const previousModules = modules.slice(0, moduleIndex);
+    const allPreviousCompleted = previousModules.every(m => isModuleCompleted(m.id));
+    
+    if (!allPreviousCompleted && moduleIndex > 0) {
+      toast({
+        title: "Module Locked",
+        description: "Please complete previous modules first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       setError(null);
       setModuleTransitioning(true);
@@ -561,7 +577,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
 
   const renderModuleList = () => {
     return (
-      <div className="mb-6">
+      <div className="mb-6 overflow-y-auto max-h-[calc(70vh-4rem)]">
         <h3 className="text-lg font-medium mb-3">ReadyMode Training Modules</h3>
         <div className="grid grid-cols-1 gap-2">
           {modules.map((module, index) => (
@@ -674,7 +690,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
     
     return (
       <div className="flex flex-col md:flex-row gap-6">
-        <div className="w-full md:w-1/4">
+        <div className="w-full md:w-1/4 overflow-y-auto">
           {renderModuleList()}
         </div>
         
@@ -685,7 +701,7 @@ const AdditionalTrainingModal: React.FC<AdditionalTrainingModalProps> = ({ isOpe
               <p className="text-sm text-gray-500">Loading module content...</p>
             </div>
           ) : (
-            <ScrollArea className="h-[70vh] pr-4">
+            <ScrollArea className="h-[calc(70vh-2rem)]">
               <div className="mb-4">
                 <h2 className="text-xl font-bold">{currentModule.title}</h2>
                 {currentModule.description && (
