@@ -20,7 +20,7 @@ const billingFormSchema = z.object({
   accountType: z.enum(['checking', 'savings'], {
     required_error: 'Please select an account type'
   }),
-  bankName: z.enum(['Grey', 'Payoneer', 'Wise', 'Paypal', 'WorldPay', 'Other', 'GreePay'], {
+  bankName: z.enum(['Grey', 'Payoneer', 'Wise', 'Paypal', 'WorldPay', 'Other', 'GeegPay'], {
     required_error: 'Please select a bank'
   })
 });
@@ -307,7 +307,7 @@ const BillingInformation = () => {
                           <SelectItem value="Wise">Wise</SelectItem>
                           <SelectItem value="Paypal">Paypal</SelectItem>
                           <SelectItem value="WorldPay">WorldPay</SelectItem>
-                          <SelectItem value="GreePay">GreePay</SelectItem>
+                          <SelectItem value="GeegPay">GeegPay</SelectItem>
                           <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                       </Select>
