@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast"
 
@@ -53,7 +54,8 @@ const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
-    return
+    clearTimeout(toastTimeouts.get(toastId))
+    toastTimeouts.delete(toastId)
   }
 
   const timeout = setTimeout(() => {
@@ -147,21 +149,27 @@ function toast({ ...props }: Toast) {
       type: actionTypes.UPDATE_TOAST,
       toast: { ...props, id },
     })
-  const dismiss = () => dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
+    
+  const dismiss = () => {
+    dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
+  }
 
   dispatch({
     type: actionTypes.ADD_TOAST,
     toast: {
       ...props,
+      id,
       open: true,
       onOpenChange: (open) => {
-        if (!open) dismiss()
+        if (!open) {
+          dismiss()
+        }
       },
     },
   })
 
   return {
-    id: id,
+    id,
     dismiss,
     update,
   }
