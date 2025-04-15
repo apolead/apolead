@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import { Toast, ToastActionElement, ToastProps } from "@/components/ui/toast"
 
@@ -10,7 +9,6 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
-  duration?: number
 }
 
 const actionTypes = {
@@ -55,8 +53,7 @@ const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
-    clearTimeout(toastTimeouts.get(toastId))
-    toastTimeouts.delete(toastId)
+    return
   }
 
   const timeout = setTimeout(() => {
@@ -145,18 +142,12 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
-  // Add auto-dismiss functionality based on duration
-  const duration = props.duration || TOAST_REMOVE_DELAY
-  
   const update = (props: ToasterToast) =>
     dispatch({
       type: actionTypes.UPDATE_TOAST,
       toast: { ...props, id },
     })
-    
-  const dismiss = () => {
-    dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
-  }
+  const dismiss = () => dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
 
   dispatch({
     type: actionTypes.ADD_TOAST,
@@ -164,22 +155,13 @@ function toast({ ...props }: Toast) {
       ...props,
       open: true,
       onOpenChange: (open) => {
-        if (!open) {
-          dismiss()
-        }
-        // Also call the original onOpenChange if it exists
-        props.onOpenChange?.(open)
+        if (!open) dismiss()
       },
     },
   })
-  
-  // Set up auto-dismiss timer
-  if (duration !== Infinity) {
-    setTimeout(dismiss, duration)
-  }
 
   return {
-    id,
+    id: id,
     dismiss,
     update,
   }
@@ -195,9 +177,6 @@ function useToast() {
       if (index > -1) {
         listeners.splice(index, 1)
       }
-      
-      // Clean up any remaining timeouts when component unmounts
-      toastTimeouts.forEach((timeout) => clearTimeout(timeout))
     }
   }, [state])
 
