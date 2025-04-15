@@ -653,7 +653,7 @@ const Dashboard = () => {
                   Connect with other agents, get updates, and access support resources.
                 </p>
                 <a 
-                  href="https://discord.gg/aZtPvxQv" 
+                  href="https://discord.gg/zFB38k7rnJ" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="inline-flex items-center justify-center mt-4 bg-gradient-to-r from-[#5865F2] to-[#4752C4] text-white py-3 px-6 rounded-md text-[15px] font-medium shadow-md hover:shadow-lg transition-all w-full md:w-auto"
