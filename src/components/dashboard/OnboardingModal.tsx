@@ -304,16 +304,9 @@ const OnboardingModal = ({
   useEffect(() => {
     if (initialUserData?.onboarding_completed === true) {
       console.log("Onboarding already completed, closing modal");
-      toast({
-        title: initialUserData.eligible_for_training ? "Onboarding Completed" : "Not Eligible for Training",
-        description: initialUserData.eligible_for_training ? 
-          "You have already completed the onboarding process." : 
-          "You are not eligible for training based on your previous answers.",
-        variant: initialUserData.eligible_for_training ? "default" : "destructive"
-      });
       onClose();
     }
-  }, [initialUserData, onClose, toast]);
+  }, [initialUserData, onClose]);
 
   if (initialUserData?.onboarding_completed === true) {
     return null;
