@@ -18,10 +18,10 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 import BillingInformation from "./pages/BillingInformation";
+import Scripting from "./pages/Scripting";
 
 const queryClient = new QueryClient();
 
-// Improved protected route that uses the useAuth hook
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -39,7 +39,6 @@ const ProtectedRoute = ({ children }) => {
   return user ? children : null;
 };
 
-// Simplified versions that use our improved ProtectedRoute
 const AuthRoute = ({ children }) => {
   return (
     <ProtectedRoute>{children}</ProtectedRoute>
@@ -63,7 +62,6 @@ const PublicRoute = ({ children }) => {
   return !user ? children : null;
 };
 
-// Completely revised SupervisorRoute with improved credential checking and error handling
 const SupervisorRoute = ({ children }) => {
   const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
@@ -72,7 +70,6 @@ const SupervisorRoute = ({ children }) => {
   const [checkAttempts, setCheckAttempts] = useState(0);
   
   useEffect(() => {
-    // First, make sure we have user information before checking credentials
     if (loading) {
       console.log("SupervisorRoute - Still loading auth state");
       return;
@@ -85,7 +82,6 @@ const SupervisorRoute = ({ children }) => {
       return;
     }
     
-    // Multiple retry attempts for better reliability
     if (checkAttempts > 3) {
       console.log("SupervisorRoute - Max check attempts reached, defaulting to agent");
       navigate('/dashboard', { replace: true });
@@ -96,12 +92,10 @@ const SupervisorRoute = ({ children }) => {
     console.log("SupervisorRoute - User authenticated:", user.id);
     
     const checkCredentials = async () => {
-      // 1. First check cached credentials in localStorage (fastest)
       const cachedData = localStorage.getItem('tempCredentials');
       if (cachedData) {
         try {
           const { userId, credentials, timestamp } = JSON.parse(cachedData);
-          // Check if cache is valid (30 minutes validity)
           const isValid = Date.now() - timestamp < 30 * 60 * 1000;
           
           if (isValid && userId === user.id) {
@@ -111,7 +105,6 @@ const SupervisorRoute = ({ children }) => {
               setIsChecking(false);
               return;
             }
-            // If cached credentials indicate not a supervisor, redirect now
             if (credentials === 'agent') {
               console.log("SupervisorRoute - Cached credentials show not supervisor, redirecting");
               navigate('/dashboard', { replace: true });
@@ -125,7 +118,6 @@ const SupervisorRoute = ({ children }) => {
         }
       }
       
-      // 2. Try the is_supervisor function (now that it's fixed)
       try {
         console.log('Checking supervisor status for user ID:', user.id);
         const { data: isSupervisor, error: supervisorError } = await supabase.rpc('is_supervisor', {
@@ -134,14 +126,12 @@ const SupervisorRoute = ({ children }) => {
         
         if (supervisorError) {
           console.error('Supervisor check error:', supervisorError);
-          // Fall back to next method if error
           setCheckAttempts(prev => prev + 1);
           return;
         } 
         
         console.log('SupervisorRoute - Is supervisor check result:', isSupervisor);
         
-        // Cache this result
         localStorage.setItem('tempCredentials', JSON.stringify({
           userId: user.id,
           credentials: isSupervisor ? 'supervisor' : 'agent',
@@ -161,10 +151,8 @@ const SupervisorRoute = ({ children }) => {
         }
       } catch (error) {
         console.error('Error checking supervisor status:', error);
-        // Continue to the next approach if this fails
       }
       
-      // 3. Next, check userProfile if available
       if (userProfile && userProfile.credentials) {
         console.log("SupervisorRoute - User profile available, credentials:", userProfile.credentials);
         
@@ -172,7 +160,6 @@ const SupervisorRoute = ({ children }) => {
           console.log("SupervisorRoute - Confirmed supervisor via profile");
           setIsSupervisor(true);
           
-          // Cache this result
           localStorage.setItem('tempCredentials', JSON.stringify({
             userId: user.id,
             credentials: 'supervisor',
@@ -182,7 +169,6 @@ const SupervisorRoute = ({ children }) => {
           setIsChecking(false);
           return;
         } else {
-          // If profile exists with non-supervisor credentials, redirect now
           console.log("SupervisorRoute - Not a supervisor (via profile), redirecting");
           navigate('/dashboard', { replace: true });
           setIsChecking(false);
@@ -190,7 +176,6 @@ const SupervisorRoute = ({ children }) => {
         }
       }
       
-      // 4. As a last resort, call the edge function
       try {
         console.log("SupervisorRoute - Trying get_user_credentials RPC");
         const { data, error } = await (supabase.rpc as any)('get_user_credentials', {
@@ -205,7 +190,6 @@ const SupervisorRoute = ({ children }) => {
         
         console.log("SupervisorRoute - get_user_credentials returned:", data);
         
-        // Cache the credentials result
         localStorage.setItem('tempCredentials', JSON.stringify({
           userId: user.id,
           credentials: data,
@@ -223,7 +207,6 @@ const SupervisorRoute = ({ children }) => {
         }
       } catch (error) {
         console.error("SupervisorRoute - Exception checking credentials:", error);
-        // Increment attempt counter but don't redirect yet, let it try again
         setCheckAttempts(prev => prev + 1);
       }
     };
@@ -231,7 +214,6 @@ const SupervisorRoute = ({ children }) => {
     checkCredentials();
   }, [user, userProfile, loading, navigate, checkAttempts]);
   
-  // Show loading while checking credentials
   if (loading || isChecking) {
     return <div className="flex items-center justify-center h-screen">
       <div className="flex flex-col items-center gap-2">
@@ -241,11 +223,9 @@ const SupervisorRoute = ({ children }) => {
     </div>;
   }
   
-  // Show children only if confirmed as supervisor
   return isSupervisor ? children : null;
 };
 
-// Auth wrapper that includes the router to make hooks available
 const AuthWrapper = () => {
   return (
     <Routes>
@@ -274,6 +254,11 @@ const AuthWrapper = () => {
       <Route path="/confirmation" element={<ConfirmationScreen />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
+      <Route path="/scripting" element={
+        <AuthRoute>
+          <Scripting />
+        </AuthRoute>
+      } />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

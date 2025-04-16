@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,7 +15,8 @@ import {
   Settings,
   Wrench,
   Info,
-  DollarSign
+  DollarSign,
+  MessageSquare
 } from 'lucide-react';
 
 export interface DashboardSidebarProps {
@@ -35,7 +35,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
     } catch (error) {
       console.error('Error during logout:', error);
     } finally {
-      // Always navigate to home page, even if logout had issues
       navigate('/', { replace: true });
     }
   };
@@ -44,9 +43,10 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
     setCollapsed(!collapsed);
   };
 
-  // Define which items should be active vs locked
-  const unlockedItems = ['dashboard', 'billing', 'logout'];
+  const unlockedItems = ['dashboard', 'billing', 'scripting', 'logout'];
   const isItemUnlocked = (itemName: string) => unlockedItems.includes(itemName);
+
+  const canAccessScripting = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'agent';
 
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -98,6 +98,13 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
           <FileText size={18} />
           <span>Billing Information</span>
         </Link>
+        
+        {canAccessScripting && (
+          <Link to="/scripting" className={`nav-item ${activeItem === 'scripting' ? 'active' : ''}`}>
+            <MessageSquare size={18} />
+            <span>Scripting</span>
+          </Link>
+        )}
         
         <div className="nav-divider"></div>
         
