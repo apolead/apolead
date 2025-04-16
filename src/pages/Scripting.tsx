@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
-import { Search, Clipboard, Bell } from 'lucide-react';
+import { Search, Clipboard } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   Dialog,
@@ -10,7 +11,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const scripts = [
   {
@@ -62,86 +62,70 @@ const Scripting = () => {
     script.company.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const initials = userProfile?.first_name && userProfile?.last_name
-    ? `${userProfile.first_name[0]}${userProfile.last_name[0]}`
-    : 'U';
-
   return (
     <div className="flex h-screen bg-background">
       <DashboardSidebar activeItem="scripting" />
-      <div className="flex-1 overflow-hidden">
-        {/* Header */}
-        <div className="border-b">
-          <div className="flex h-16 items-center px-4 gap-4">
-            <div className="flex-1">
-              <h1 className="text-2xl font-semibold">Scripting</h1>
-            </div>
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Header Section */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold mb-2">
+              Thanks for signing up, <span className="text-indigo-600">{userProfile?.first_name}</span>!
+            </h1>
             
-            <div className="flex items-center gap-4">
-              <button className="size-8 flex items-center justify-center rounded-full hover:bg-accent">
-                <Search className="h-5 w-5" />
-              </button>
-              <button className="size-8 flex items-center justify-center rounded-full hover:bg-accent">
-                <Bell className="h-5 w-5" />
-              </button>
-              <div className="flex items-center gap-2">
-                <Avatar>
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium">
-                  {userProfile?.first_name} {userProfile?.last_name}
-                </span>
+            <div className="bg-white rounded-lg shadow-sm border p-4 mt-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-indigo-100 p-2 rounded-lg">
+                  <Clipboard className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Scripting Resources</h2>
+                  <p className="text-muted-foreground">Access and review call scripts</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-6xl mx-auto">
-            {/* Search Bar */}
-            <div className="relative w-full max-w-sm mb-8">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search scripts..."
-                className="pl-10 bg-card border-border"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            {/* Scripts Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredScripts.map((script) => (
-                <Card 
-                  key={script.id}
-                  className="cursor-pointer hover:shadow-lg transition-shadow bg-card hover:bg-accent/5"
-                  onClick={() => setSelectedScript(script)}
-                >
-                  <CardHeader>
-                    <CardTitle className="flex flex-col gap-2">
-                      <span className="text-xl text-primary">{script.type}</span>
-                      <span className="text-sm text-muted-foreground">{script.company}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{script.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <Dialog open={!!selectedScript} onOpenChange={() => setSelectedScript(null)}>
-              <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-primary">{selectedScript?.title}</DialogTitle>
-                </DialogHeader>
-                <div className="whitespace-pre-line text-foreground prose prose-strong:text-primary">
-                  {selectedScript?.content}
-                </div>
-              </DialogContent>
-            </Dialog>
+          <div className="relative w-full max-w-sm mb-8">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search scripts..."
+              className="pl-10 bg-card border-border"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {filteredScripts.map((script) => (
+              <Card 
+                key={script.id}
+                className="cursor-pointer hover:shadow-lg transition-shadow bg-card hover:bg-accent/5"
+                onClick={() => setSelectedScript(script)}
+              >
+                <CardHeader>
+                  <CardTitle className="flex flex-col gap-2">
+                    <span className="text-xl text-primary">{script.type}</span>
+                    <span className="text-sm text-muted-foreground">{script.company}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{script.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <Dialog open={!!selectedScript} onOpenChange={() => setSelectedScript(null)}>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-primary">{selectedScript?.title}</DialogTitle>
+              </DialogHeader>
+              <div className="whitespace-pre-line text-foreground prose prose-strong:text-primary">
+                {selectedScript?.content}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
