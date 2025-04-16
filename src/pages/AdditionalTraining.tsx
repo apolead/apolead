@@ -72,6 +72,14 @@ const AdditionalTraining: React.FC = () => {
     document.body.style.overflow = 'hidden';
   };
 
+  const closeVideoModal = () => {
+    if (videoFrameRef.current) {
+      videoFrameRef.current.src = '';
+    }
+    setShowModal(false);
+    document.body.style.overflow = 'auto';
+  };
+
   const handleVideoWatched = async () => {
     if (!userProfile) return;
 
