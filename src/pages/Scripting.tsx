@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, Clipboard } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   Dialog,
@@ -67,18 +67,25 @@ const Scripting = () => {
       <DashboardSidebar activeItem="scripting" />
       <div className="flex-1 overflow-y-auto p-8">
         <div className="max-w-6xl mx-auto">
-          {/* Welcome Banner */}
-          <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6 mb-8">
-            <h1 className="text-2xl font-semibold text-primary mb-2">
-              Thanks for signing up, {userProfile?.first_name}!
+          {/* Header Section */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold mb-2">
+              Thanks for signing up, <span className="text-indigo-600">{userProfile?.first_name}</span>!
             </h1>
-            <p className="text-muted-foreground">
-              Complete all steps to start earning
-            </p>
+            
+            <div className="bg-white rounded-lg shadow-sm border p-4 mt-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-indigo-100 p-2 rounded-lg">
+                  <Clipboard className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Scripting Resources</h2>
+                  <p className="text-muted-foreground">Access and review call scripts</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <h2 className="text-3xl font-semibold mb-8 text-primary">Scripting Resources</h2>
-          
           <div className="relative w-full max-w-sm mb-8">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
