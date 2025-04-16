@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -98,6 +99,19 @@ const AdditionalTraining: React.FC = () => {
     video.tags.some(tag => tag.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  // Function to detect video ended event from YouTube iframe API
+  const setupYouTubeEventListener = () => {
+    // Create a global callback function for YouTube API to call
+    window.onYouTubePlayerEnded = () => {
+      handleVideoWatched();
+    };
+  };
+
+  useEffect(() => {
+    // Set up the event listener when the component mounts
+    setupYouTubeEventListener();
+  }, [currentVideo]); // Re-setup when current video changes
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <DashboardSidebar activeItem="additional-training" />
@@ -149,6 +163,11 @@ const AdditionalTraining: React.FC = () => {
                     <div className="play-button absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-600 bg-opacity-80 hover:bg-opacity-100 w-14 h-14 rounded-full flex items-center justify-center text-white transition">
                       <Play size={24} />
                     </div>
+                    {userProfile && userProfile[video.watchStatusColumn as keyof typeof userProfile] === true && (
+                      <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                        Watched
+                      </div>
+                    )}
                   </div>
                   <div className="p-4">
                     <div className="flex flex-wrap gap-2 mb-2">
@@ -193,17 +212,56 @@ const AdditionalTraining: React.FC = () => {
             <div className="relative pb-[56.25%] h-0">
               <iframe 
                 ref={videoFrameRef} 
-                src={`https://www.youtube.com/embed/${currentVideo.id}?autoplay=1`} 
+                src={`https://www.youtube.com/embed/${currentVideo.id}?autoplay=1&enablejsapi=1&origin=${window.location.origin}`} 
                 title={currentVideo.title} 
                 className="absolute top-0 left-0 w-full h-full" 
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                 allowFullScreen 
-                onEnded={handleVideoWatched}
+                onLoad={() => {
+                  if (videoFrameRef.current) {
+                    // Add an event listener for when the video ends
+                    videoFrameRef.current.addEventListener('load', () => {
+                      // Using postMessage to communicate with the YouTube iframe
+                      const iframe = videoFrameRef.current;
+                      if (iframe?.contentWindow) {
+                        iframe.contentWindow.postMessage('{"event":"listening"}', '*');
+                      }
+                    });
+                  }
+                }}
               />
+            </div>
+            <div className="mt-4 flex justify-between items-center p-4 bg-white rounded-b">
+              <span className="text-gray-700 font-medium">{currentVideo.title}</span>
+              <button 
+                onClick={handleVideoWatched}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm"
+              >
+                Mark as Watched
+              </button>
             </div>
           </div>
         </div>
       )}
+      
+      {/* Add event listener for YouTube iframe API messages */}
+      <script dangerouslySetInnerHTML={{
+        __html: `
+          window.addEventListener('message', function(event) {
+            try {
+              const data = JSON.parse(event.data);
+              if (data.event === 'onStateChange' && data.info === 0) {
+                // Video ended (state 0)
+                if (window.onYouTubePlayerEnded) {
+                  window.onYouTubePlayerEnded();
+                }
+              }
+            } catch (e) {
+              // Not a JSON message or other error, ignore
+            }
+          });
+        `
+      }} />
     </div>
   );
 };
