@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
-import { Search, Star, Download, Edit, Plus, X } from 'lucide-react';
+import { Search, Star, Download, Edit, Bell, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const scripts = [
   {
@@ -138,7 +139,6 @@ const Scripting = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState<number | null>(null);
   
-  // Filter scripts based on search term
   const filteredScripts = scripts.filter(script => 
     script.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     script.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -147,7 +147,6 @@ const Scripting = () => {
     script.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Close modal when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -163,19 +162,16 @@ const Scripting = () => {
     };
   }, []);
 
-  // Handle opening a modal
   const openModal = (scriptId: number) => {
     setModalOpen(scriptId);
-    document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+    document.body.style.overflow = 'hidden';
   };
 
-  // Handle closing a modal
   const closeModal = () => {
     setModalOpen(null);
-    document.body.style.overflow = 'auto'; // Re-enable scrolling
+    document.body.style.overflow = 'auto';
   };
 
-  // Create star rating display
   const renderStars = (rating: number) => {
     return Array(5).fill(0).map((_, i) => (
       <Star 
@@ -189,16 +185,29 @@ const Scripting = () => {
     <div className="flex h-screen bg-background">
       <DashboardSidebar activeItem="scripting" />
       <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          {/* Header Section */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">
-              Thanks for signing up, <span className="text-indigo-600">{userProfile?.firstName || 'Agent'}</span>!
-            </h1>
-            <p className="text-gray-600">Access your professional scripting resources below to maximize conversion.</p>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-2xl font-semibold mb-2">
+                Thanks for signing up, <span className="text-indigo-600">{userProfile?.first_name || 'Agent'}</span>!
+              </h1>
+              <p className="text-gray-600">Access your professional scripting resources below to maximize conversion.</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button className="p-2 hover:bg-gray-100 rounded-full">
+                <Bell className="w-5 h-5 text-gray-600" />
+              </button>
+              <button className="p-2 hover:bg-gray-100 rounded-full">
+                <Settings className="w-5 h-5 text-gray-600" />
+              </button>
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-indigo-600 text-white">
+                  {userProfile?.first_name?.[0]?.toUpperCase() || 'A'}
+                </AvatarFallback>
+              </Avatar>
+            </div>
           </div>
 
-          {/* Search Bar */}
           <div className="relative mb-8">
             <div className="flex items-center bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
               <div className="pl-4 pr-2 text-gray-400">
@@ -217,7 +226,6 @@ const Scripting = () => {
             </div>
           </div>
 
-          {/* Script Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredScripts.map((script) => (
               <div 
@@ -246,7 +254,6 @@ const Scripting = () => {
             ))}
           </div>
 
-          {/* Footer */}
           <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
             <p>© 2025 ApoLead.com - Professional Sales Resources</p>
           </footer>
@@ -279,7 +286,6 @@ const Scripting = () => {
                 <p className="text-gray-600 mb-2 text-sm italic">{script.content.intro}</p>
               </div>
               
-              {/* Script Sections */}
               <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
                 {script.content.sections.map((section, idx) => (
                   <div key={`section-${script.id}-${idx}`} className="mb-4">
@@ -289,7 +295,6 @@ const Scripting = () => {
                 ))}
               </div>
               
-              {/* Objections Section */}
               <div className={`${script.title === "Hard Sell" ? "bg-yellow-50 border-yellow-200" : "bg-blue-50 border-blue-200"} p-4 rounded-lg mb-6 border`}>
                 <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
                   <span className={`${script.title === "Hard Sell" ? "text-yellow-500" : "text-blue-500"} mr-2`}>
@@ -307,7 +312,6 @@ const Scripting = () => {
                 </div>
               </div>
               
-              {/* Transfer Scripts */}
               <h4 className="font-semibold text-gray-800 mb-3 mt-6">Credit Saint Warm Transfer Script</h4>
               <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
                 {script.content.transfer.map((transfer, idx) => (
@@ -320,7 +324,6 @@ const Scripting = () => {
                 ))}
               </div>
               
-              {/* Action Buttons */}
               <div className="flex justify-between">
                 <button className="px-4 py-2 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition flex items-center">
                   <Download size={16} className="mr-1" /> Download
