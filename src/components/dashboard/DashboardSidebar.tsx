@@ -16,7 +16,8 @@ import {
   Settings,
   Wrench,
   Info,
-  DollarSign
+  DollarSign,
+  FileCode
 } from 'lucide-react';
 
 export interface DashboardSidebarProps {
@@ -47,6 +48,12 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
   // Define which items should be active vs locked
   const unlockedItems = ['dashboard', 'billing', 'logout'];
   const isItemUnlocked = (itemName: string) => unlockedItems.includes(itemName);
+
+  // Check if the user is an agent or on probation to show scripting page
+  const canAccessScripting = userProfile?.agent_standing === 'probation' || 
+                             userProfile?.agent_standing === 'Probation' || 
+                             userProfile?.agent_standing === 'agent' || 
+                             userProfile?.agent_standing === 'Agent';
 
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -93,6 +100,13 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
           <span>Ranking</span>
           <Lock size={18} className="menu-lock-icon" />
         </div>
+        
+        {canAccessScripting && (
+          <Link to="/scripting" className={`nav-item ${activeItem === 'scripting' ? 'active' : ''}`}>
+            <FileCode size={18} />
+            <span>Scripting</span>
+          </Link>
+        )}
         
         <Link to="/billing" className={`nav-item ${activeItem === 'billing' ? 'active' : ''}`}>
           <FileText size={18} />

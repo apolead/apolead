@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +19,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 import BillingInformation from "./pages/BillingInformation";
+import Scripting from "./pages/Scripting";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +63,37 @@ const PublicRoute = ({ children }) => {
   }
   
   return !user ? children : null;
+};
+
+// Agent or Probation Route
+const AgentRoute = ({ children }) => {
+  const { user, userProfile, loading } = useAuth();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    
+    if (!loading && userProfile && 
+        userProfile.agent_standing !== 'probation' && 
+        userProfile.agent_standing !== 'Probation' &&
+        userProfile.agent_standing !== 'agent' &&
+        userProfile.agent_standing !== 'Agent') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, userProfile, loading, navigate]);
+  
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  return (user && userProfile && 
+         (userProfile.agent_standing === 'probation' || 
+          userProfile.agent_standing === 'Probation' ||
+          userProfile.agent_standing === 'agent' ||
+          userProfile.agent_standing === 'Agent')) ? children : null;
 };
 
 // Completely revised SupervisorRoute with improved credential checking and error handling
@@ -265,6 +298,11 @@ const AuthWrapper = () => {
         <AuthRoute>
           <BillingInformation />
         </AuthRoute>
+      } />
+      <Route path="/scripting" element={
+        <AgentRoute>
+          <Scripting />
+        </AgentRoute>
       } />
       <Route path="/supervisor" element={
         <SupervisorRoute>
