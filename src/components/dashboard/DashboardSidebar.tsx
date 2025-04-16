@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -45,8 +46,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
 
   const unlockedItems = ['dashboard', 'billing', 'scripting', 'logout'];
   const isItemUnlocked = (itemName: string) => unlockedItems.includes(itemName);
-
-  const canAccessScripting = userProfile?.agent_standing === 'probation' || userProfile?.agent_standing === 'agent';
 
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -99,12 +98,10 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
           <span>Billing Information</span>
         </Link>
         
-        {canAccessScripting && (
-          <Link to="/scripting" className={`nav-item ${activeItem === 'scripting' ? 'active' : ''}`}>
-            <MessageSquare size={18} />
-            <span>Scripting</span>
-          </Link>
-        )}
+        <Link to="/scripting" className={`nav-item ${activeItem === 'scripting' ? 'active' : ''}`}>
+          <MessageSquare size={18} />
+          <span>Scripting</span>
+        </Link>
         
         <div className="nav-divider"></div>
         
