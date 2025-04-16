@@ -19,6 +19,7 @@ import TermsOfService from "./pages/TermsOfService";
 import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 import BillingInformation from "./pages/BillingInformation";
 import Scripting from "./pages/Scripting";
+import AdditionalTraining from "./pages/AdditionalTraining";
 
 const queryClient = new QueryClient();
 
@@ -257,6 +258,11 @@ const AuthWrapper = () => {
       <Route path="/scripting" element={
         <AuthRoute>
           <Scripting />
+        </AuthRoute>
+      } />
+      <Route path="/additional-training" element={
+        <AuthRoute>
+          <AdditionalTraining />
         </AuthRoute>
       } />
       <Route path="*" element={<NotFound />} />

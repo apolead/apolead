@@ -17,7 +17,8 @@ import {
   Wrench,
   Info,
   DollarSign,
-  MessageSquare
+  MessageSquare,
+  BookOpen
 } from 'lucide-react';
 
 export interface DashboardSidebarProps {
@@ -44,7 +45,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
     setCollapsed(!collapsed);
   };
 
-  const unlockedItems = ['dashboard', 'billing', 'scripting', 'logout'];
+  const unlockedItems = ['dashboard', 'billing', 'scripting', 'additional-training', 'logout'];
   const isItemUnlocked = (itemName: string) => unlockedItems.includes(itemName);
 
   return (
@@ -101,6 +102,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
         <Link to="/scripting" className={`nav-item ${activeItem === 'scripting' ? 'active' : ''}`}>
           <MessageSquare size={18} />
           <span>Scripting</span>
+        </Link>
+        
+        <Link to="/additional-training" className={`nav-item ${activeItem === 'additional-training' ? 'active' : ''}`}>
+          <BookOpen size={18} />
+          <span>Additional Training</span>
         </Link>
         
         <div className="nav-divider"></div>
