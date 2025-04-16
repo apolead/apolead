@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,8 +12,8 @@ const scripts = [
     title: "Hard Sell",
     category: "Credit Repair",
     description: "Assertive credit repair script designed to convert leads with credit problems into Credit Saint consultations.",
-    rating: 4,
-    reviews: 42,
+    rating: 5,
+    reviews: 10,
     content: {
       intro: "Use this script when: Speaking with prospects who have credit issues and need professional help to improve their credit score.",
       sections: [
@@ -81,7 +80,7 @@ const scripts = [
     category: "Credit Repair",
     description: "Educational approach focused on understanding the prospect's credit situation and offering free consultation.",
     rating: 5,
-    reviews: 37,
+    reviews: 10,
     content: {
       intro: "Use this script when: Speaking with prospects who want to improve their credit but need education and a gentler approach.",
       sections: [
@@ -181,7 +180,7 @@ const Scripting = () => {
     return Array(5).fill(0).map((_, i) => (
       <Star 
         key={i} 
-        className={`h-4 w-4 mr-1 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+        className={`h-4 w-4 mr-1 text-yellow-400 fill-yellow-400`}
       />
     ));
   };
@@ -191,13 +190,12 @@ const Scripting = () => {
       <DashboardSidebar activeItem="scripting" />
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
-          {/* Header Banner */}
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white px-6 py-4 rounded-lg shadow-md mb-6">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-white">Scripting Resources</h1>
-              <div className="text-sm text-gray-100">ApoLead.com</div>
-            </div>
-            <p className="mt-2 text-gray-100">Access professional credit repair scripts to maximize conversion</p>
+          {/* Header Section */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">
+              Thanks for signing up, <span className="text-indigo-600">{userProfile?.firstName || 'Agent'}</span>!
+            </h1>
+            <p className="text-gray-600">Access your professional scripting resources below to maximize conversion.</p>
           </div>
 
           {/* Search Bar */}
@@ -248,13 +246,6 @@ const Scripting = () => {
             ))}
           </div>
 
-          {/* Add New Script Button */}
-          <div className="mt-8 text-center">
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-3 rounded-lg shadow transition">
-              <Plus size={16} className="inline mr-2" /> Add Custom Script
-            </button>
-          </div>
-
           {/* Footer */}
           <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-gray-500 text-sm">
             <p>© 2025 ApoLead.com - Professional Sales Resources</p>
@@ -262,7 +253,6 @@ const Scripting = () => {
         </div>
       </div>
 
-      {/* Script Modals */}
       {scripts.map((script) => (
         <div 
           key={`modal-${script.id}`} 
