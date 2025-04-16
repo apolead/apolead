@@ -1,10 +1,16 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { Play, Search, Clock, Star, Link as LinkIcon, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+
+// Add TypeScript declaration for YouTube player ended callback
+declare global {
+  interface Window {
+    onYouTubePlayerEnded: () => void;
+  }
+}
 
 const AdditionalTraining: React.FC = () => {
   const {
@@ -235,7 +241,7 @@ const AdditionalTraining: React.FC = () => {
               <span className="text-gray-700 font-medium">{currentVideo.title}</span>
               <button 
                 onClick={handleVideoWatched}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm"
               >
                 Mark as Watched
               </button>
