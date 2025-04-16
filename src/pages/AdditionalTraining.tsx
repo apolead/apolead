@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { Play, Search, Clock, Star, Link as LinkIcon, X } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
 
 // Add TypeScript declaration for YouTube player ended callback
 declare global {
@@ -84,18 +83,8 @@ const AdditionalTraining: React.FC = () => {
       await updateProfile({
         [currentVideo.watchStatusColumn]: true
       });
-
-      toast({
-        title: "Video Marked as Watched",
-        description: `You've completed the ${currentVideo.title} video.`
-      });
     } catch (error) {
       console.error('Error updating video watch status:', error);
-      toast({
-        title: "Error",
-        description: "Could not update video status.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -105,18 +94,15 @@ const AdditionalTraining: React.FC = () => {
     video.tags.some(tag => tag.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Function to detect video ended event from YouTube iframe API
   const setupYouTubeEventListener = () => {
-    // Create a global callback function for YouTube API to call
     window.onYouTubePlayerEnded = () => {
       handleVideoWatched();
     };
   };
 
   useEffect(() => {
-    // Set up the event listener when the component mounts
     setupYouTubeEventListener();
-  }, [currentVideo]); // Re-setup when current video changes
+  }, [currentVideo]);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -225,12 +211,9 @@ const AdditionalTraining: React.FC = () => {
                 allowFullScreen 
                 onLoad={() => {
                   if (videoFrameRef.current) {
-                    // Add an event listener for when the video ends
                     videoFrameRef.current.addEventListener('load', () => {
-                      // Using postMessage to communicate with the YouTube iframe
-                      const iframe = videoFrameRef.current;
-                      if (iframe?.contentWindow) {
-                        iframe.contentWindow.postMessage('{"event":"listening"}', '*');
+                      if (videoFrameRef.current?.contentWindow) {
+                        videoFrameRef.current.contentWindow.postMessage('{"event":"listening"}', '*');
                       }
                     });
                   }
@@ -250,14 +233,12 @@ const AdditionalTraining: React.FC = () => {
         </div>
       )}
       
-      {/* Add event listener for YouTube iframe API messages */}
       <script dangerouslySetInnerHTML={{
         __html: `
           window.addEventListener('message', function(event) {
             try {
               const data = JSON.parse(event.data);
               if (data.event === 'onStateChange' && data.info === 0) {
-                // Video ended (state 0)
                 if (window.onYouTubePlayerEnded) {
                   window.onYouTubePlayerEnded();
                 }
