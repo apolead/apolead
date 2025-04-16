@@ -2,12 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
-import { Play, Search, Clock, Star, Link as LinkIcon, X } from 'lucide-react';
+import { Play, Search, Clock, Star, Link as LinkIcon, X, Check } from 'lucide-react';
 
-// Add TypeScript declaration for YouTube player ended callback
 declare global {
   interface Window {
-    onYouTubePlayerEnded: () => void;
+    onYouTubePlayerEnded?: () => void;
   }
 }
 
@@ -21,7 +20,8 @@ const AdditionalTraining: React.FC = () => {
   const [currentVideo, setCurrentVideo] = useState({
     id: '',
     title: '',
-    watchStatusColumn: ''
+    watchStatusColumn: '',
+    isWatched: false
   });
   const videoFrameRef = useRef<HTMLIFrameElement>(null);
   
@@ -62,18 +62,14 @@ const AdditionalTraining: React.FC = () => {
     id: string;
     title: string;
     watchStatusColumn: string;
+    isWatched?: boolean;
   }) => {
-    setCurrentVideo(video);
+    setCurrentVideo({
+      ...video,
+      isWatched: userProfile?.[video.watchStatusColumn as keyof typeof userProfile] as boolean || false
+    });
     setShowModal(true);
     document.body.style.overflow = 'hidden';
-  };
-
-  const closeVideoModal = () => {
-    if (videoFrameRef.current) {
-      videoFrameRef.current.src = '';
-    }
-    setShowModal(false);
-    document.body.style.overflow = 'auto';
   };
 
   const handleVideoWatched = async () => {
@@ -83,6 +79,11 @@ const AdditionalTraining: React.FC = () => {
       await updateProfile({
         [currentVideo.watchStatusColumn]: true
       });
+      
+      setCurrentVideo(prev => ({
+        ...prev,
+        isWatched: true
+      }));
     } catch (error) {
       console.error('Error updating video watch status:', error);
     }
@@ -147,7 +148,8 @@ const AdditionalTraining: React.FC = () => {
                   onClick={() => openVideoModal({
                     id: video.id,
                     title: video.title,
-                    watchStatusColumn: video.watchStatusColumn
+                    watchStatusColumn: video.watchStatusColumn,
+                    isWatched: userProfile?.[video.watchStatusColumn as keyof typeof userProfile] as boolean || false
                   })}
                 >
                   <div className="video-thumbnail relative overflow-hidden pt-[56.25%]">
@@ -224,9 +226,20 @@ const AdditionalTraining: React.FC = () => {
               <span className="text-gray-700 font-medium">{currentVideo.title}</span>
               <button 
                 onClick={handleVideoWatched}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm"
+                disabled={currentVideo.isWatched}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors 
+                  ${currentVideo.isWatched 
+                    ? 'bg-green-500 text-white cursor-default' 
+                    : 'bg-purple-500 hover:bg-purple-600 text-white'}`}
               >
-                Mark as Watched
+                {currentVideo.isWatched ? (
+                  <>
+                    <Check size={16} />
+                    Completed
+                  </>
+                ) : (
+                  'Mark as Watched'
+                )}
               </button>
             </div>
           </div>
