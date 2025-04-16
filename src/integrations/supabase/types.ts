@@ -223,6 +223,7 @@ export type Database = {
           sales_months: string | null
           sales_product: string | null
           sales_skills: string | null
+          sales_training_watched: boolean | null
           service_company: string | null
           service_experience: boolean | null
           service_months: string | null
@@ -237,6 +238,7 @@ export type Database = {
           telemarketing_policy_acknowledged: boolean | null
           training_video_watched: boolean | null
           updated_at: string | null
+          usa_credit_score_watched: boolean | null
           user_id: string
           zip_code: string | null
         }
@@ -293,6 +295,7 @@ export type Database = {
           sales_months?: string | null
           sales_product?: string | null
           sales_skills?: string | null
+          sales_training_watched?: boolean | null
           service_company?: string | null
           service_experience?: boolean | null
           service_months?: string | null
@@ -307,6 +310,7 @@ export type Database = {
           telemarketing_policy_acknowledged?: boolean | null
           training_video_watched?: boolean | null
           updated_at?: string | null
+          usa_credit_score_watched?: boolean | null
           user_id: string
           zip_code?: string | null
         }
@@ -363,6 +367,7 @@ export type Database = {
           sales_months?: string | null
           sales_product?: string | null
           sales_skills?: string | null
+          sales_training_watched?: boolean | null
           service_company?: string | null
           service_experience?: boolean | null
           service_months?: string | null
@@ -377,6 +382,7 @@ export type Database = {
           telemarketing_policy_acknowledged?: boolean | null
           training_video_watched?: boolean | null
           updated_at?: string | null
+          usa_credit_score_watched?: boolean | null
           user_id?: string
           zip_code?: string | null
         }
@@ -450,6 +456,7 @@ export type Database = {
           sales_months: string | null
           sales_product: string | null
           sales_skills: string | null
+          sales_training_watched: boolean | null
           service_company: string | null
           service_experience: boolean | null
           service_months: string | null
@@ -464,6 +471,7 @@ export type Database = {
           telemarketing_policy_acknowledged: boolean | null
           training_video_watched: boolean | null
           updated_at: string | null
+          usa_credit_score_watched: boolean | null
           user_id: string
           zip_code: string | null
         }[]
@@ -523,6 +531,7 @@ export type Database = {
           sales_months: string | null
           sales_product: string | null
           sales_skills: string | null
+          sales_training_watched: boolean | null
           service_company: string | null
           service_experience: boolean | null
           service_months: string | null
@@ -537,6 +546,7 @@ export type Database = {
           telemarketing_policy_acknowledged: boolean | null
           training_video_watched: boolean | null
           updated_at: string | null
+          usa_credit_score_watched: boolean | null
           user_id: string
           zip_code: string | null
         }[]
