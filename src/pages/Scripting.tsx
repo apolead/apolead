@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { useAuth } from '@/hooks/useAuth';
-import { Search, Star, Download, Edit, Bell, Settings } from 'lucide-react';
+import { Search, Star, Bell, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { X } from 'lucide-react';
 
 const scripts = [
   {
@@ -322,15 +323,6 @@ const Scripting = () => {
                     </p>
                   </div>
                 ))}
-              </div>
-              
-              <div className="flex justify-between">
-                <button className="px-4 py-2 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition flex items-center">
-                  <Download size={16} className="mr-1" /> Download
-                </button>
-                <button className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition flex items-center">
-                  <Edit size={16} className="mr-1" /> Customize
-                </button>
               </div>
             </div>
           </div>
