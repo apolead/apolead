@@ -461,4 +461,79 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <div className="action-cards-container bg-white rounded-[20px] p
+        <div className="action-cards-container bg-white rounded-[20px] p-[30px] shadow-[0_4px_15px_rgba(0,0,0,0.05)]">
+        </div>
+      </div>
+      
+      <OnboardingModal
+        isOpen={isModalOpen}
+        onClose={closeOnboardingModal}
+      />
+      
+      <TrainingModal
+        isOpen={isTrainingModalOpen}
+        onClose={closeTrainingModal}
+      />
+      
+      <AdditionalTrainingModal
+        isOpen={isProbationTrainingOpen}
+        onClose={closeAdditionalTrainingModal}
+      />
+      
+      <PolicyAcknowledgmentDialog
+        isOpen={showPolicyDialog}
+        onClose={() => setShowPolicyDialog(false)}
+        onAcknowledge={handlePolicyAcknowledge}
+      />
+      
+      <Dialog open={showBankingDialog} onOpenChange={setShowBankingDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Setup Banking Information</DialogTitle>
+            <DialogDescription>
+              We need your banking details to process your earnings.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center space-x-2">
+              <CreditCard className="h-5 w-5 text-indigo-500" />
+              <div className="text-sm">Secure payment processing through Stripe</div>
+            </div>
+            <div className="text-sm text-gray-600">
+              You'll need to provide:
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li>Bank account information</li>
+                <li>Tax identification</li>
+                <li>Personal details</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBankingDialog(false)}>
+              Later
+            </Button>
+            <Button onClick={navigateToBilling} className="bg-gradient-to-r from-indigo-600 to-cyan-500">
+              Set Up Now <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent className="max-w-2xl h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Schedule Your Interview</DialogTitle>
+            <DialogDescription>
+              Please select a convenient time for your interview with our team.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="calendly-inline-widget h-full min-h-[500px] w-full" 
+            data-url="https://calendly.com/d/networkleads/interview?hide_gdpr_banner=1">
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default Dashboard;
