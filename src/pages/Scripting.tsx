@@ -34,8 +34,8 @@ const Scripting = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedScript, setSelectedScript] = useState<typeof scripts[0] | null>(null);
 
-  // Check if user has proper access
-  if (!userProfile || !['probation', 'agent'].includes(userProfile.agent_standing || '')) {
+  // Update the access check to be case-insensitive
+  if (!userProfile || !['probation', 'Probation', 'agent', 'Agent'].includes(userProfile.agent_standing || '')) {
     return <Navigate to="/dashboard" replace />;
   }
 
