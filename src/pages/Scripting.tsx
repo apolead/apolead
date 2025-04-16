@@ -138,7 +138,7 @@ const Scripting = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-8">
-            <div>
+            <div className="px-0 py-[6px]">
               <h1 className="text-2xl font-semibold mb-2">
                 Thanks for signing up, <span className="text-indigo-600">{userProfile?.first_name || 'Agent'}</span>!
               </h1>
