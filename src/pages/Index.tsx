@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
@@ -8,6 +7,7 @@ import Benefits from '../components/Benefits';
 import Stats from '../components/Stats';
 import Testimonials from '../components/Testimonials';
 import Footer from '../components/Footer';
+import WaitlistBanner from '../components/WaitlistBanner';
 
 // Import Font Awesome
 const FontAwesomeScript = () => {
@@ -57,6 +57,7 @@ const Index = () => {
   return (
     <div className="overflow-x-hidden">
       <FontAwesomeScript />
+      <WaitlistBanner isEnabled={true} /> {/* You can toggle this with isEnabled={false} when needed */}
       <Header />
       <Hero />
       <Features />
