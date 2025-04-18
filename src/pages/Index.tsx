@@ -55,11 +55,13 @@ const Index = () => {
     return () => window.removeEventListener('scroll', animateOnScroll);
   }, []);
 
+  const isWaitlistEnabled = true;
+
   return (
     <div className="overflow-x-hidden">
       <FontAwesomeScript />
-      <div className="flex flex-col">
-        <WaitlistBanner isEnabled={true} /> {/* Positioned at the very top */}
+      <WaitlistBanner isEnabled={isWaitlistEnabled} /> {/* At the top of the page */}
+      <div className={`flex flex-col ${isWaitlistEnabled ? 'pt-[46px]' : ''}`}>
         <Header />
         <Hero />
         <Features />
