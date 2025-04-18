@@ -14,7 +14,7 @@ const WaitlistBanner: React.FC<WaitlistBannerProps> = ({ isEnabled = true }) => 
   }
 
   return (
-    <div className="waitlist-banner bg-[#4e37b3] shadow-lg relative overflow-hidden py-2.5 px-5 font-inter">
+    <div className="waitlist-banner bg-[#4e37b3] shadow-lg relative overflow-hidden py-2.5 px-5 font-inter w-full z-[1001]">
       <div className="waitlist-container flex items-center justify-between relative z-[2] gap-5 px-[5px]">
         <div className="waitlist-left flex items-center flex-1 gap-2">
           <div className="alert-icon mr-2.5 flex">
