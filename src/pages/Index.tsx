@@ -53,8 +53,8 @@ const Index = () => {
     <div className="overflow-x-hidden">
       <FontAwesomeScript />
       <div className="flex flex-col">
-        <Header />
         {isWaitlistEnabled && <WaitlistBanner />}
+        <Header />
         <Hero />
         <Features />
         <HowItWorks />
