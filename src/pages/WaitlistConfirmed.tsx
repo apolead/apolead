@@ -36,7 +36,7 @@ const WaitlistConfirmed = () => {
           </div>
           
           <div className="space-y-4">
-            <Button asChild className="w-full bg-primary hover:bg-primary/90">
+            <Button asChild className="w-full bg-primary hover:bg-primary/90 text-white">
               <Link to="/">Return to Homepage</Link>
             </Button>
             <p className="text-sm text-muted-foreground">
@@ -50,3 +50,4 @@ const WaitlistConfirmed = () => {
 };
 
 export default WaitlistConfirmed;
+
