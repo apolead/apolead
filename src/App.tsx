@@ -20,6 +20,7 @@ import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 import BillingInformation from "./pages/BillingInformation";
 import Scripting from "./pages/Scripting";
 import AdditionalTraining from "./pages/AdditionalTraining";
+import WaitlistConfirmed from "./pages/WaitlistConfirmed";
 
 const queryClient = new QueryClient();
 
@@ -265,6 +266,7 @@ const AuthWrapper = () => {
           <AdditionalTraining />
         </AuthRoute>
       } />
+      <Route path="/waitlist-confirmed" element={<WaitlistConfirmed />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
