@@ -8,7 +8,7 @@ const MailchimpBar = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="relative bg-white border-b">
+    <div className="relative bg-white border-b z-50">
       <button 
         onClick={() => setIsVisible(false)}
         className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"

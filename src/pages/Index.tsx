@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
@@ -50,15 +51,19 @@ const Index = () => {
   return (
     <div className="overflow-x-hidden">
       <FontAwesomeScript />
-      <MailchimpBar />
-      <Header />
-      <Hero />
-      <Features />
-      <HowItWorks />
-      <Benefits />
-      <Stats />
-      <Testimonials />
-      <Footer />
+      <div className="flex flex-col min-h-screen">
+        <MailchimpBar />
+        <Header />
+        <div className="flex-grow">
+          <Hero />
+          <Features />
+          <HowItWorks />
+          <Benefits />
+          <Stats />
+          <Testimonials />
+        </div>
+        <Footer />
+      </div>
     </div>
   );
 };
