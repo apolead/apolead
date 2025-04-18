@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
@@ -54,8 +53,8 @@ const Index = () => {
     <div className="overflow-x-hidden">
       <FontAwesomeScript />
       <div className="flex flex-col">
-        <WaitlistBanner isEnabled={isWaitlistEnabled} />
         <Header />
+        {isWaitlistEnabled && <WaitlistBanner />}
         <Hero />
         <Features />
         <HowItWorks />
