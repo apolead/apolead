@@ -128,6 +128,69 @@ export type Database = {
         }
         Relationships: []
       }
+      raw_leads: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string | null
+          credit_rating: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          ip: string | null
+          last_name: string | null
+          phone: string | null
+          provider: string | null
+          raw_data: Json | null
+          source: string | null
+          state: string | null
+          status: string | null
+          time_stamp: string | null
+          updated_at: string | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          ip?: string | null
+          last_name?: string | null
+          phone?: string | null
+          provider?: string | null
+          raw_data?: Json | null
+          source?: string | null
+          state?: string | null
+          status?: string | null
+          time_stamp?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          ip?: string | null
+          last_name?: string | null
+          phone?: string | null
+          provider?: string | null
+          raw_data?: Json | null
+          source?: string | null
+          state?: string | null
+          status?: string | null
+          time_stamp?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       user_probation_progress: {
         Row: {
           completed: boolean | null

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,6 +95,12 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Check if file is an image
+      if (!file.type.startsWith('image/')) {
+        setErrorMessage('Please upload only image files (JPG, PNG, etc.)');
+        e.target.value = ''; // Reset file input
+        return;
+      }
       console.log('Government ID file selected:', file.name);
       updateUserData({ govIdImage: file });
     }
@@ -220,7 +227,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
               <input
                 type="file"
                 id="govIdImage"
-                accept="image/*,.pdf"
+                accept="image/*"
                 className="hidden"
                 onChange={handleFileChange}
               />
