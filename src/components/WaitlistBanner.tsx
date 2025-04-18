@@ -1,16 +1,22 @@
+
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+
 interface WaitlistBannerProps {
   isEnabled?: boolean;
 }
+
 const WaitlistBanner: React.FC<WaitlistBannerProps> = ({
   isEnabled = true
 }) => {
   const [isVisible, setIsVisible] = useState(true);
+
   if (!isEnabled || !isVisible) {
     return null;
   }
-  return <div className="waitlist-banner bg-[#4e37b3] shadow-lg relative overflow-hidden py-2.5 px-5 font-inter w-full z-[1001] fixed top-0 left-0">
+
+  return (
+    <div className="waitlist-banner bg-[#4e37b3] shadow-lg relative overflow-hidden py-2.5 px-5 font-inter w-full">
       <div className="waitlist-container flex items-center justify-between relative z-[2] gap-5 px-[5px] max-w-[1200px] mx-auto">
         <div className="waitlist-left flex items-center flex-1 gap-2 px-0">
           <h3 className="text-white text-base font-semibold whitespace-nowrap my-[4px] py-0 px-[41px]">Applications Closed</h3>
@@ -37,6 +43,8 @@ const WaitlistBanner: React.FC<WaitlistBannerProps> = ({
           <X size={20} />
         </button>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default WaitlistBanner;
