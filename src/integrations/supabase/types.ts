@@ -9,6 +9,154 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      approved_leads: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string | null
+          credit_rating: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          ip: string | null
+          last_name: string | null
+          lead_type: string | null
+          phone: string | null
+          provider: string | null
+          raw_lead_id: string | null
+          source: string | null
+          state: string | null
+          time_stamp: string | null
+          validation_result: Json | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          ip?: string | null
+          last_name?: string | null
+          lead_type?: string | null
+          phone?: string | null
+          provider?: string | null
+          raw_lead_id?: string | null
+          source?: string | null
+          state?: string | null
+          time_stamp?: string | null
+          validation_result?: Json | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          ip?: string | null
+          last_name?: string | null
+          lead_type?: string | null
+          phone?: string | null
+          provider?: string | null
+          raw_lead_id?: string | null
+          source?: string | null
+          state?: string | null
+          time_stamp?: string | null
+          validation_result?: Json | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approved_leads_raw_lead_id_fkey"
+            columns: ["raw_lead_id"]
+            isOneToOne: false
+            referencedRelation: "raw_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      duplicate_leads: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string | null
+          credit_rating: string | null
+          duplicate_type: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          ip: string | null
+          last_name: string | null
+          lead_type: string | null
+          original_lead_id: string | null
+          phone: string | null
+          provider: string | null
+          raw_data: Json | null
+          source: string | null
+          state: string | null
+          status: string | null
+          time_stamp: string | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          duplicate_type?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          ip?: string | null
+          last_name?: string | null
+          lead_type?: string | null
+          original_lead_id?: string | null
+          phone?: string | null
+          provider?: string | null
+          raw_data?: Json | null
+          source?: string | null
+          state?: string | null
+          status?: string | null
+          time_stamp?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          duplicate_type?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          ip?: string | null
+          last_name?: string | null
+          lead_type?: string | null
+          original_lead_id?: string | null
+          phone?: string | null
+          provider?: string | null
+          raw_data?: Json | null
+          source?: string | null
+          state?: string | null
+          status?: string | null
+          time_stamp?: string | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "duplicate_leads_original_lead_id_fkey"
+            columns: ["original_lead_id"]
+            isOneToOne: false
+            referencedRelation: "raw_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_questions: {
         Row: {
           correct_answer: number
@@ -139,6 +287,7 @@ export type Database = {
           id: string
           ip: string | null
           last_name: string | null
+          lead_type: string | null
           phone: string | null
           provider: string | null
           raw_data: Json | null
@@ -159,6 +308,7 @@ export type Database = {
           id?: string
           ip?: string | null
           last_name?: string | null
+          lead_type?: string | null
           phone?: string | null
           provider?: string | null
           raw_data?: Json | null
@@ -179,6 +329,7 @@ export type Database = {
           id?: string
           ip?: string | null
           last_name?: string | null
+          lead_type?: string | null
           phone?: string | null
           provider?: string | null
           raw_data?: Json | null
@@ -190,6 +341,80 @@ export type Database = {
           zip?: string | null
         }
         Relationships: []
+      }
+      rejected_leads: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string | null
+          credit_rating: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          ip: string | null
+          last_name: string | null
+          lead_type: string | null
+          phone: string | null
+          provider: string | null
+          raw_lead_id: string | null
+          rejection_reason: string | null
+          source: string | null
+          state: string | null
+          time_stamp: string | null
+          validation_result: Json | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          ip?: string | null
+          last_name?: string | null
+          lead_type?: string | null
+          phone?: string | null
+          provider?: string | null
+          raw_lead_id?: string | null
+          rejection_reason?: string | null
+          source?: string | null
+          state?: string | null
+          time_stamp?: string | null
+          validation_result?: Json | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          ip?: string | null
+          last_name?: string | null
+          lead_type?: string | null
+          phone?: string | null
+          provider?: string | null
+          raw_lead_id?: string | null
+          rejection_reason?: string | null
+          source?: string | null
+          state?: string | null
+          time_stamp?: string | null
+          validation_result?: Json | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rejected_leads_raw_lead_id_fkey"
+            columns: ["raw_lead_id"]
+            isOneToOne: false
+            referencedRelation: "raw_leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_probation_progress: {
         Row: {
@@ -456,6 +681,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bytea_to_text: {
+        Args: { data: string }
+        Returns: string
+      }
       get_application_status: {
         Args: { user_id: string }
         Returns: string
@@ -625,6 +854,57 @@ export type Database = {
         }
         Returns: boolean
       }
+      http: {
+        Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_delete: {
+        Args:
+          | { uri: string }
+          | { uri: string; content: string; content_type: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_get: {
+        Args: { uri: string } | { uri: string; data: Json }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_head: {
+        Args: { uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_header: {
+        Args: { field: string; value: string }
+        Returns: Database["public"]["CompositeTypes"]["http_header"]
+      }
+      http_list_curlopt: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          curlopt: string
+          value: string
+        }[]
+      }
+      http_patch: {
+        Args: { uri: string; content: string; content_type: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_post: {
+        Args:
+          | { uri: string; content: string; content_type: string }
+          | { uri: string; data: Json }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_put: {
+        Args: { uri: string; content: string; content_type: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_reset_curlopt: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      http_set_curlopt: {
+        Args: { curlopt: string; value: string }
+        Returns: boolean
+      }
       is_profile_owner: {
         Args: { profile_user_id: string }
         Returns: boolean
@@ -636,6 +916,10 @@ export type Database = {
       is_user_on_probation: {
         Args: { input_user_id: string }
         Returns: boolean
+      }
+      text_to_bytea: {
+        Args: { data: string }
+        Returns: string
       }
       update_billing_information: {
         Args: {
@@ -666,12 +950,32 @@ export type Database = {
         Args: { input_user_id: string; input_updates: Json }
         Returns: undefined
       }
+      urlencode: {
+        Args: { data: Json } | { string: string } | { string: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "agent" | "supervisor" | "admin"
     }
     CompositeTypes: {
-      [_ in never]: never
+      http_header: {
+        field: string | null
+        value: string | null
+      }
+      http_request: {
+        method: unknown | null
+        uri: string | null
+        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
+        content_type: string | null
+        content: string | null
+      }
+      http_response: {
+        status: number | null
+        content_type: string | null
+        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
+        content: string | null
+      }
     }
   }
 }
