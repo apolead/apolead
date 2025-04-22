@@ -79,7 +79,7 @@ export function AgentManagement() {
                 {agents.map((agent) => (
                   <tr key={agent.id} className="border-b hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium">{agent.first_name} {agent.last_name}</td>
-                    <td className="px-6 py-4">{agent.email || 'No email'}</td>
+                    <td className="px-6 py-4">{agent.email}</td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         agent.application_status === 'approved' 
