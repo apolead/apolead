@@ -4,12 +4,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { EditAgentDialog } from "./EditAgentDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 export function AgentManagement() {
   const [agents, setAgents] = useState([]);
+  const [filteredAgents, setFilteredAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [quizFilter, setQuizFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
   const fetchAgents = async () => {
@@ -24,6 +36,7 @@ export function AgentManagement() {
       
       console.log("Fetched agents:", data);
       setAgents(data || []);
+      setFilteredAgents(data || []);
     } catch (error) {
       console.error('Error fetching agents:', error);
       toast({
@@ -40,6 +53,36 @@ export function AgentManagement() {
     fetchAgents();
   }, []);
 
+  useEffect(() => {
+    let result = [...agents];
+
+    // Filter by status
+    if (statusFilter !== "all") {
+      result = result.filter(agent => agent.application_status === statusFilter);
+    }
+
+    // Filter by quiz status
+    if (quizFilter !== "all") {
+      if (quizFilter === "passed") {
+        result = result.filter(agent => agent.quiz_passed === true);
+      } else if (quizFilter === "failed") {
+        result = result.filter(agent => agent.quiz_passed === false);
+      } else if (quizFilter === "pending") {
+        result = result.filter(agent => agent.quiz_passed === null);
+      }
+    }
+
+    // Filter by search term (name or email)
+    if (searchTerm) {
+      result = result.filter(agent => 
+        `${agent.first_name} ${agent.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        agent.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredAgents(result);
+  }, [agents, statusFilter, quizFilter, searchTerm]);
+
   const handleEditAgent = (agent) => {
     console.log("Editing agent:", agent);
     setSelectedAgent(agent);
@@ -47,7 +90,7 @@ export function AgentManagement() {
   };
 
   const handleAgentUpdated = () => {
-    fetchAgents(); // Refresh the agent list after update
+    fetchAgents();
     toast({
       title: "Agent updated",
       description: "The agent information has been updated successfully",
@@ -57,6 +100,39 @@ export function AgentManagement() {
   return (
     <div className="container mx-auto py-6">
       <h1 className="text-2xl font-semibold mb-6">Agent Management</h1>
+      
+      <div className="flex gap-4 mb-6">
+        <Input
+          placeholder="Search by name or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-xs"
+        />
+        
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={quizFilter} onValueChange={setQuizFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by quiz" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Quiz Status</SelectItem>
+            <SelectItem value="passed">Passed</SelectItem>
+            <SelectItem value="failed">Failed</SelectItem>
+            <SelectItem value="pending">Not Taken</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       
       {loading ? (
         <div className="flex justify-center p-12">
@@ -71,12 +147,13 @@ export function AgentManagement() {
                   <th className="px-6 py-3">Name</th>
                   <th className="px-6 py-3">Email</th>
                   <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">Quiz Status</th>
                   <th className="px-6 py-3">Start Date</th>
                   <th className="px-6 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {agents.map((agent) => (
+                {filteredAgents.map((agent) => (
                   <tr key={agent.id} className="border-b hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium">{agent.first_name} {agent.last_name}</td>
                     <td className="px-6 py-4">{agent.email}</td>
@@ -91,6 +168,17 @@ export function AgentManagement() {
                         {agent.application_status}
                       </span>
                     </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        agent.quiz_passed === true
+                          ? 'bg-green-100 text-green-800'
+                          : agent.quiz_passed === false
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {agent.quiz_passed === true ? 'Passed' : agent.quiz_passed === false ? 'Failed' : 'Not Taken'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4">{agent.start_date || 'Not set'}</td>
                     <td className="px-6 py-4">
                       <Button 
@@ -103,9 +191,9 @@ export function AgentManagement() {
                     </td>
                   </tr>
                 ))}
-                {agents.length === 0 && (
+                {filteredAgents.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
                       No agents found
                     </td>
                   </tr>
