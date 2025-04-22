@@ -12,6 +12,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export function AgentManagement() {
   const [agents, setAgents] = useState([]);
@@ -101,7 +110,7 @@ export function AgentManagement() {
     <div className="container mx-auto py-6">
       <h1 className="text-2xl font-semibold mb-6">Agent Management</h1>
       
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-wrap gap-4 mb-6">
         <Input
           placeholder="Search by name or email..."
           value={searchTerm}
@@ -139,25 +148,31 @@ export function AgentManagement() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs uppercase bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3">Name</th>
-                  <th className="px-6 py-3">Email</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3">Quiz Status</th>
-                  <th className="px-6 py-3">Start Date</th>
-                  <th className="px-6 py-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAgents.map((agent) => (
-                  <tr key={agent.id} className="border-b hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium">{agent.first_name} {agent.last_name}</td>
-                    <td className="px-6 py-4">{agent.email}</td>
-                    <td className="px-6 py-4">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Quiz Status</TableHead>
+                <TableHead>Start Date</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAgents.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-gray-500 py-4">
+                    No agents found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredAgents.map((agent) => (
+                  <TableRow key={agent.id}>
+                    <TableCell className="font-medium">{agent.first_name} {agent.last_name}</TableCell>
+                    <TableCell>{agent.email || "No email"}</TableCell>
+                    <TableCell>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         agent.application_status === 'approved' 
                           ? 'bg-green-100 text-green-800' 
@@ -167,8 +182,8 @@ export function AgentManagement() {
                       }`}>
                         {agent.application_status}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">
+                    </TableCell>
+                    <TableCell>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         agent.quiz_passed === true
                           ? 'bg-green-100 text-green-800'
@@ -178,9 +193,9 @@ export function AgentManagement() {
                       }`}>
                         {agent.quiz_passed === true ? 'Passed' : agent.quiz_passed === false ? 'Failed' : 'Not Taken'}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">{agent.start_date || 'Not set'}</td>
-                    <td className="px-6 py-4">
+                    </TableCell>
+                    <TableCell>{agent.start_date || 'Not set'}</TableCell>
+                    <TableCell>
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -188,19 +203,12 @@ export function AgentManagement() {
                       >
                         Edit
                       </Button>
-                    </td>
-                  </tr>
-                ))}
-                {filteredAgents.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
-                      No agents found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       )}
 
