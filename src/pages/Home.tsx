@@ -41,68 +41,51 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Global Workforce Section */}
+        {/* Our Global Workforce Section */}
         <section className="py-20 bg-white">
           <div className="container">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-6">Our Global Advantage</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Access to a diverse, skilled workforce spanning multiple time zones ensures 24/7 coverage and cultural alignment for your business needs.
+              <h2 className="text-4xl font-bold mb-6">Our Global Workforce</h2>
+              <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+                At ApoLead, our strength lies in our talented, highly educated workforce based in the developing world. We strategically choose to hire in these regions to create meaningful opportunities, foster personal and professional growth, and support economic advancement.
               </p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-8 mb-16">
-              <div className="text-center p-6">
-                <div className="text-5xl font-bold text-primary mb-4">32+</div>
-                <div className="text-xl font-semibold mb-2">Countries Represented</div>
-                <div className="text-gray-600">Global talent pool with diverse expertise and language capabilities</div>
-              </div>
-              <div className="text-center p-6">
-                <div className="text-5xl font-bold text-primary mb-4">24/7</div>
-                <div className="text-xl font-semibold mb-2">Coverage</div>
-                <div className="text-gray-600">Round-the-clock support across all major time zones</div>
-              </div>
-              <div className="text-center p-6">
-                <div className="text-5xl font-bold text-primary mb-4">100%</div>
-                <div className="text-xl font-semibold mb-2">Remote Ready</div>
-                <div className="text-gray-600">Fully distributed workforce with proven remote work excellence</div>
-              </div>
+            <div className="text-center mb-16">
+              <p className="text-lg text-gray-700 max-w-3xl mx-auto leading-relaxed">
+                Join us in celebrating our exceptional team and the incredible impact they make every day.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* About Us Section */}
+        {/* Employment Values Section */}
         <section className="py-20 bg-gray-50">
           <div className="container">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
               <div>
-                <h2 className="text-4xl font-bold mb-6">What Makes ApoLead Different</h2>
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-6 h-6 bg-primary rounded-full flex-shrink-0 mt-1"></div>
-                    <div>
-                      <h3 className="text-xl font-semibold mb-2">Quality-First Approach</h3>
-                      <p className="text-gray-600">Rigorous screening and continuous training ensure top-tier talent for every engagement.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-6 h-6 bg-primary rounded-full flex-shrink-0 mt-1"></div>
-                    <div>
-                      <h3 className="text-xl font-semibold mb-2">Scalable Solutions</h3>
-                      <p className="text-gray-600">From startup to enterprise, our infrastructure grows with your business needs.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-6 h-6 bg-primary rounded-full flex-shrink-0 mt-1"></div>
-                    <div>
-                      <h3 className="text-xl font-semibold mb-2">Cultural Alignment</h3>
-                      <p className="text-gray-600">Global workforce trained to understand and represent your brand values effectively.</p>
-                    </div>
-                  </div>
-                </div>
+                <h2 className="text-4xl font-bold mb-6">Empowering People Through Opportunity</h2>
+                <p className="text-xl text-gray-600 leading-relaxed">
+                  Our agents are highly skilled and well-educated individuals who might otherwise face limited employment prospects. By providing secure, flexible employment with living wages, we empower our team members to thrive both personally and professionally.
+                </p>
               </div>
               <div>
-                <img src="/agent.jpg" alt="Professional Team" className="max-w-full rounded-lg shadow-lg" />
+                <img src="/agent.jpg" alt="Empowered Professional Team" className="max-w-full rounded-lg shadow-lg" />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-12">
+              <div className="bg-white p-8 rounded-lg shadow-sm">
+                <h3 className="text-2xl font-bold mb-4 text-primary">Flexible and Fair Employment</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  We believe that great work comes from balance. Our agents enjoy flexible working hours, enabling them to manage their responsibilities at home while earning a stable income. This approach enhances productivity, loyalty, and overall satisfaction.
+                </p>
+              </div>
+              <div className="bg-white p-8 rounded-lg shadow-sm">
+                <h3 className="text-2xl font-bold mb-4 text-primary">Commitment to Living Wages</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Every ApoLead agent receives a fair, competitive wage that meets or exceeds living standards in their home countries. We are proud to contribute positively to local economies and to set an example for ethical employment practices.
+                </p>
               </div>
             </div>
           </div>
