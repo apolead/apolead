@@ -12,17 +12,6 @@ const Header = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  const scrollToSection = (sectionId: string) => {
-    const targetElement = document.getElementById(sectionId);
-    if (targetElement) {
-      window.scrollTo({
-        top: targetElement.offsetTop - 80,
-        behavior: 'smooth',
-      });
-    }
-    setMobileMenuOpen(false);
-  };
-
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
@@ -38,58 +27,49 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 w-full z-[1000] py-4 bg-white bg-opacity-95 shadow-sm transition-all duration-300">
       <div className="container flex justify-between items-center">
-        <a href="#" className="flex items-center text-decoration-none">
+        <Link to="/" className="flex items-center text-decoration-none">
           <h1 className="text-[1.8rem] mb-0">
             <span className="text-[#00c2cb]">Apo</span>
             <span className="text-indigo-600">Lead</span>
           </h1>
-        </a>
+        </Link>
         <nav className="flex items-center">
           <ul className={`flex md:flex ${mobileMenuOpen ? 'flex' : 'hidden md:flex'} ${mobileMenuOpen ? 'flex-col absolute top-16 left-0 w-full bg-white shadow-md p-4' : ''}`}>
             <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-              <a 
-                href="#" 
-                onClick={() => scrollToSection('hero')}
+              <Link 
+                to="/"
                 className="text-dark hover:text-primary font-semibold transition-colors duration-300"
+                onClick={() => setMobileMenuOpen(false)}
               >
                 Home
-              </a>
+              </Link>
             </li>
             <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-              <a 
-                href="#how-it-works" 
-                onClick={(e) => {e.preventDefault(); scrollToSection('how-it-works');}}
+              <Link 
+                to="/agents"
                 className="text-dark hover:text-primary font-semibold transition-colors duration-300"
+                onClick={() => setMobileMenuOpen(false)}
               >
-                How It Works
-              </a>
+                Agents
+              </Link>
             </li>
             <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-              <a 
-                href="#benefits" 
-                onClick={(e) => {e.preventDefault(); scrollToSection('benefits');}}
+              <Link 
+                to="/partners"
                 className="text-dark hover:text-primary font-semibold transition-colors duration-300"
+                onClick={() => setMobileMenuOpen(false)}
               >
-                Benefits
-              </a>
+                Partners
+              </Link>
             </li>
             <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-              <a 
-                href="#testimonials" 
-                onClick={(e) => {e.preventDefault(); scrollToSection('testimonials');}}
+              <Link 
+                to="/contact"
                 className="text-dark hover:text-primary font-semibold transition-colors duration-300"
-              >
-                Testimonials
-              </a>
-            </li>
-            <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-              <a 
-                href="#contact" 
-                onClick={(e) => {e.preventDefault(); scrollToSection('contact');}}
-                className="text-dark hover:text-primary font-semibold transition-colors duration-300"
+                onClick={() => setMobileMenuOpen(false)}
               >
                 Contact
-              </a>
+              </Link>
             </li>
           </ul>
           

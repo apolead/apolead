@@ -8,7 +8,10 @@ import { supabase } from "./integrations/supabase/client";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { Analytics } from "@vercel/analytics/react";
 
-import Index from "./pages/Index";
+import Home from "./pages/Home";
+import Agents from "./pages/Agents";
+import Partners from "./pages/Partners";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
@@ -49,19 +52,12 @@ const AuthRoute = ({ children }) => {
 
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
-  
-  useEffect(() => {
-    if (!loading && user) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [user, loading, navigate]);
   
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
   
-  return !user ? children : null;
+  return children;
 };
 
 const SupervisorRoute = ({ children }) => {
@@ -233,7 +229,22 @@ const AuthWrapper = () => {
     <Routes>
       <Route path="/" element={
         <PublicRoute>
-          <Index />
+          <Home />
+        </PublicRoute>
+      } />
+      <Route path="/agents" element={
+        <PublicRoute>
+          <Agents />
+        </PublicRoute>
+      } />
+      <Route path="/partners" element={
+        <PublicRoute>
+          <Partners />
+        </PublicRoute>
+      } />
+      <Route path="/contact" element={
+        <PublicRoute>
+          <Contact />
         </PublicRoute>
       } />
       <Route path="/signup" element={<SignUp />} />

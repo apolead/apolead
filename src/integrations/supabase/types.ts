@@ -15,15 +15,20 @@ export type Database = {
           city: string | null
           created_at: string | null
           credit_rating: string | null
+          download_index: number
           email: string | null
+          external_system_id: string | null
+          external_system_response: Json | null
           first_name: string | null
           id: string
           ip: string | null
           last_name: string | null
+          lead_id_original: string | null
           lead_type: string | null
           phone: string | null
           provider: string | null
           raw_lead_id: string | null
+          sent_to_dialer: boolean | null
           source: string | null
           state: string | null
           time_stamp: string | null
@@ -35,15 +40,20 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           credit_rating?: string | null
+          download_index?: number
           email?: string | null
+          external_system_id?: string | null
+          external_system_response?: Json | null
           first_name?: string | null
           id?: string
           ip?: string | null
           last_name?: string | null
+          lead_id_original?: string | null
           lead_type?: string | null
           phone?: string | null
           provider?: string | null
           raw_lead_id?: string | null
+          sent_to_dialer?: boolean | null
           source?: string | null
           state?: string | null
           time_stamp?: string | null
@@ -55,15 +65,20 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           credit_rating?: string | null
+          download_index?: number
           email?: string | null
+          external_system_id?: string | null
+          external_system_response?: Json | null
           first_name?: string | null
           id?: string
           ip?: string | null
           last_name?: string | null
+          lead_id_original?: string | null
           lead_type?: string | null
           phone?: string | null
           provider?: string | null
           raw_lead_id?: string | null
+          sent_to_dialer?: boolean | null
           source?: string | null
           state?: string | null
           time_stamp?: string | null
@@ -79,6 +94,183 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      call_logs: {
+        Row: {
+          abbreviation: string | null
+          address: string | null
+          agent_name: string | null
+          call_log_id: string | null
+          call_notes: string | null
+          city: string | null
+          consent_date: string | null
+          country: string | null
+          created_at: string | null
+          credit_rating: string | null
+          credit_repair: string | null
+          email: string | null
+          first_name: string | null
+          ip: string | null
+          jornaya: string | null
+          last_name: string | null
+          lead_id: string | null
+          log_time: string | null
+          log_type: string | null
+          partner: string | null
+          ph_10: string | null
+          ph_2: string | null
+          ph_3: string | null
+          ph_4: string | null
+          ph_5: string | null
+          ph_6: string | null
+          ph_7: string | null
+          ph_8: string | null
+          ph_9: string | null
+          phone: string | null
+          recording_end: string | null
+          recording_start: string | null
+          scheduled_time: string | null
+          sent_to: string | null
+          state: string | null
+          timestamp: string | null
+          type: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          abbreviation?: string | null
+          address?: string | null
+          agent_name?: string | null
+          call_log_id?: string | null
+          call_notes?: string | null
+          city?: string | null
+          consent_date?: string | null
+          country?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          credit_repair?: string | null
+          email?: string | null
+          first_name?: string | null
+          ip?: string | null
+          jornaya?: string | null
+          last_name?: string | null
+          lead_id?: string | null
+          log_time?: string | null
+          log_type?: string | null
+          partner?: string | null
+          ph_10?: string | null
+          ph_2?: string | null
+          ph_3?: string | null
+          ph_4?: string | null
+          ph_5?: string | null
+          ph_6?: string | null
+          ph_7?: string | null
+          ph_8?: string | null
+          ph_9?: string | null
+          phone?: string | null
+          recording_end?: string | null
+          recording_start?: string | null
+          scheduled_time?: string | null
+          sent_to?: string | null
+          state?: string | null
+          timestamp?: string | null
+          type?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          abbreviation?: string | null
+          address?: string | null
+          agent_name?: string | null
+          call_log_id?: string | null
+          call_notes?: string | null
+          city?: string | null
+          consent_date?: string | null
+          country?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          credit_repair?: string | null
+          email?: string | null
+          first_name?: string | null
+          ip?: string | null
+          jornaya?: string | null
+          last_name?: string | null
+          lead_id?: string | null
+          log_time?: string | null
+          log_type?: string | null
+          partner?: string | null
+          ph_10?: string | null
+          ph_2?: string | null
+          ph_3?: string | null
+          ph_4?: string | null
+          ph_5?: string | null
+          ph_6?: string | null
+          ph_7?: string | null
+          ph_8?: string | null
+          ph_9?: string | null
+          phone?: string | null
+          recording_end?: string | null
+          recording_start?: string | null
+          scheduled_time?: string | null
+          sent_to?: string | null
+          state?: string | null
+          timestamp?: string | null
+          type?: string | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      credit_saint_lead_data: {
+        Row: {
+          created_at: string | null
+          "Date of CLAIM": string | null
+          Duration: string | null
+          id: number
+          "Last contact": string | null
+          Phone: string | null
+          Received: string | null
+          "Spoken O": string | null
+          "Spoken P": string | null
+          State: string | null
+          Status: string | null
+          SubID: string | null
+          SubID2: string | null
+          Timezone: string | null
+          Type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          "Date of CLAIM"?: string | null
+          Duration?: string | null
+          id?: number
+          "Last contact"?: string | null
+          Phone?: string | null
+          Received?: string | null
+          "Spoken O"?: string | null
+          "Spoken P"?: string | null
+          State?: string | null
+          Status?: string | null
+          SubID?: string | null
+          SubID2?: string | null
+          Timezone?: string | null
+          Type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          "Date of CLAIM"?: string | null
+          Duration?: string | null
+          id?: number
+          "Last contact"?: string | null
+          Phone?: string | null
+          Received?: string | null
+          "Spoken O"?: string | null
+          "Spoken P"?: string | null
+          State?: string | null
+          Status?: string | null
+          SubID?: string | null
+          SubID2?: string | null
+          Timezone?: string | null
+          Type?: string | null
+        }
+        Relationships: []
       }
       duplicate_leads: {
         Row: {
@@ -153,6 +345,95 @@ export type Database = {
             columns: ["original_lead_id"]
             isOneToOne: false
             referencedRelation: "raw_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_leads: {
+        Row: {
+          address: string | null
+          approved_lead_id: string | null
+          city: string | null
+          created_at: string | null
+          credit_rating: string | null
+          download_index: number | null
+          email: string | null
+          external_system_id: string | null
+          external_system_response: Json | null
+          first_name: string | null
+          id: string | null
+          ip: string | null
+          last_name: string | null
+          lead_id_original: string | null
+          lead_type: string | null
+          phone: string | null
+          provider: string | null
+          raw_lead_id: string | null
+          sent_to_dialer: boolean | null
+          source: string | null
+          state: string | null
+          time_stamp: string | null
+          validation_result: Json | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          approved_lead_id?: string | null
+          city?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          download_index?: number | null
+          email?: string | null
+          external_system_id?: string | null
+          external_system_response?: Json | null
+          first_name?: string | null
+          id?: string | null
+          ip?: string | null
+          last_name?: string | null
+          lead_id_original?: string | null
+          lead_type?: string | null
+          phone?: string | null
+          provider?: string | null
+          raw_lead_id?: string | null
+          sent_to_dialer?: boolean | null
+          source?: string | null
+          state?: string | null
+          time_stamp?: string | null
+          validation_result?: Json | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          approved_lead_id?: string | null
+          city?: string | null
+          created_at?: string | null
+          credit_rating?: string | null
+          download_index?: number | null
+          email?: string | null
+          external_system_id?: string | null
+          external_system_response?: Json | null
+          first_name?: string | null
+          id?: string | null
+          ip?: string | null
+          last_name?: string | null
+          lead_id_original?: string | null
+          lead_type?: string | null
+          phone?: string | null
+          provider?: string | null
+          raw_lead_id?: string | null
+          sent_to_dialer?: boolean | null
+          source?: string | null
+          state?: string | null
+          time_stamp?: string | null
+          validation_result?: Json | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_leads_approved_lead_id_fkey"
+            columns: ["approved_lead_id"]
+            isOneToOne: false
+            referencedRelation: "approved_leads"
             referencedColumns: ["id"]
           },
         ]
@@ -282,11 +563,13 @@ export type Database = {
           city: string | null
           created_at: string | null
           credit_rating: string | null
+          download_index: number
           email: string | null
           first_name: string | null
           id: string
           ip: string | null
           last_name: string | null
+          lead_id_original: string | null
           lead_type: string | null
           phone: string | null
           provider: string | null
@@ -303,11 +586,13 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           credit_rating?: string | null
+          download_index?: number
           email?: string | null
           first_name?: string | null
           id?: string
           ip?: string | null
           last_name?: string | null
+          lead_id_original?: string | null
           lead_type?: string | null
           phone?: string | null
           provider?: string | null
@@ -324,11 +609,13 @@ export type Database = {
           city?: string | null
           created_at?: string | null
           credit_rating?: string | null
+          download_index?: number
           email?: string | null
           first_name?: string | null
           id?: string
           ip?: string | null
           last_name?: string | null
+          lead_id_original?: string | null
           lead_type?: string | null
           phone?: string | null
           provider?: string | null
@@ -345,6 +632,7 @@ export type Database = {
       rejected_leads: {
         Row: {
           address: string | null
+          approved_lead_id: string | null
           city: string | null
           created_at: string | null
           credit_rating: string | null
@@ -366,6 +654,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          approved_lead_id?: string | null
           city?: string | null
           created_at?: string | null
           credit_rating?: string | null
@@ -387,6 +676,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          approved_lead_id?: string | null
           city?: string | null
           created_at?: string | null
           credit_rating?: string | null
@@ -407,6 +697,13 @@ export type Database = {
           zip?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "rejected_leads_approved_lead_id_fkey"
+            columns: ["approved_lead_id"]
+            isOneToOne: false
+            referencedRelation: "approved_leads"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "rejected_leads_raw_lead_id_fkey"
             columns: ["raw_lead_id"]
