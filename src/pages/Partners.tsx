@@ -7,6 +7,28 @@ import { useIsMobile } from '@/hooks/use-mobile';
 const Partners = () => {
   const isMobile = useIsMobile();
 
+  // Add debugging to check what paths are being resolved
+  React.useEffect(() => {
+    console.log('Current location:', window.location.href);
+    console.log('Base URL:', window.location.origin);
+    console.log('Attempting to load images from lovable-uploads directory');
+    
+    // Test if we can fetch the images directly
+    const testImagePaths = [
+      '/lovable-uploads/c5f8f03a-0700-44d1-a0be-9f2b7ffb32c6.png',
+      '/lovable-uploads/fe175e53-bedd-48a4-83a1-d3942b3875d8.png',
+      'lovable-uploads/c5f8f03a-0700-44d1-a0be-9f2b7ffb32c6.png',
+      'lovable-uploads/fe175e53-bedd-48a4-83a1-d3942b3875d8.png'
+    ];
+    
+    testImagePaths.forEach(path => {
+      const img = new Image();
+      img.onload = () => console.log(`✅ Image loaded successfully: ${path}`);
+      img.onerror = () => console.log(`❌ Failed to load image: ${path}`);
+      img.src = path;
+    });
+  }, []);
+
   return (
     <div className="overflow-x-hidden">
       <div className="flex flex-col">
@@ -41,14 +63,21 @@ const Partners = () => {
               <div className="text-center">
                 <div className="w-64 h-64 mx-auto mb-6 bg-gray-200 rounded-lg overflow-hidden">
                   <img 
-                    src="lovable-uploads/c5f8f03a-0700-44d1-a0be-9f2b7ffb32c6.png" 
+                    src="/lovable-uploads/c5f8f03a-0700-44d1-a0be-9f2b7ffb32c6.png" 
                     alt="Drew Conrad - CEO" 
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      console.log('Drew image failed to load:', e.currentTarget.src);
-                      e.currentTarget.style.display = 'none';
+                      console.log('Drew image failed to load with absolute path:', e.currentTarget.src);
+                      // Try relative path as fallback
+                      if (e.currentTarget.src.includes('/lovable-uploads/')) {
+                        console.log('Trying relative path fallback for Drew image');
+                        e.currentTarget.src = 'lovable-uploads/c5f8f03a-0700-44d1-a0be-9f2b7ffb32c6.png';
+                      } else {
+                        console.log('Both paths failed for Drew image, hiding element');
+                        e.currentTarget.style.display = 'none';
+                      }
                     }}
-                    onLoad={() => console.log('Drew image loaded successfully')}
+                    onLoad={() => console.log('✅ Drew image loaded successfully from:', document.querySelector('img[alt="Drew Conrad - CEO"]')?.src)}
                   />
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Drew Conrad</h3>
@@ -67,14 +96,21 @@ const Partners = () => {
               <div className="text-center">
                 <div className="w-64 h-64 mx-auto mb-6 bg-gray-200 rounded-lg overflow-hidden">
                   <img 
-                    src="lovable-uploads/fe175e53-bedd-48a4-83a1-d3942b3875d8.png" 
+                    src="/lovable-uploads/fe175e53-bedd-48a4-83a1-d3942b3875d8.png" 
                     alt="Dara Phillips - COO" 
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      console.log('Dara image failed to load:', e.currentTarget.src);
-                      e.currentTarget.style.display = 'none';
+                      console.log('Dara image failed to load with absolute path:', e.currentTarget.src);
+                      // Try relative path as fallback
+                      if (e.currentTarget.src.includes('/lovable-uploads/')) {
+                        console.log('Trying relative path fallback for Dara image');
+                        e.currentTarget.src = 'lovable-uploads/fe175e53-bedd-48a4-83a1-d3942b3875d8.png';
+                      } else {
+                        console.log('Both paths failed for Dara image, hiding element');
+                        e.currentTarget.style.display = 'none';
+                      }
                     }}
-                    onLoad={() => console.log('Dara image loaded successfully')}
+                    onLoad={() => console.log('✅ Dara image loaded successfully from:', document.querySelector('img[alt="Dara Phillips - COO"]')?.src)}
                   />
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Dara Phillips</h3>
