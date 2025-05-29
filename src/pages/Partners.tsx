@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -38,39 +37,37 @@ const Partners = () => {
             </div>
             
             <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto">
-              {/* Founder 1 */}
+              {/* Drew Conrad - CEO */}
               <div className="text-center">
                 <div className="w-64 h-64 mx-auto mb-6 bg-gray-200 rounded-lg overflow-hidden">
-                  <img src="/agent.jpg" alt="Co-Founder" className="w-full h-full object-cover" />
+                  <img src="/lovable-uploads/41a452f7-c0f8-40e9-9a04-ce931f133e3b.png" alt="Drew Conrad - CEO" className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-2xl font-bold mb-2">John Smith</h3>
-                <p className="text-lg text-primary mb-4">Co-Founder & CEO</p>
+                <h3 className="text-2xl font-bold mb-2">Drew Conrad</h3>
+                <p className="text-lg text-primary mb-4">CEO</p>
                 <div className="text-left max-w-md mx-auto">
-                  <ul className="space-y-2 text-gray-600">
-                    <li>• 15+ years in BPO and call center operations</li>
-                    <li>• Previously scaled operations from 50 to 2,000+ agents</li>
-                    <li>• Expert in workforce management and quality assurance</li>
-                    <li>• MBA in Operations Management</li>
-                    <li>• Fluent in English, Spanish, and Portuguese</li>
-                  </ul>
+                  <p className="text-gray-600 leading-relaxed">
+                    With over 25 years of experience in the call center industry, Drew has held every role from agent to director, including supporting functions like Quality Assurance, Training, Workforce Management, and Technology. He's also led vendor management for a global workforce of 25,000 employees and has spent the last five years championing AI integration in the call center space.
+                  </p>
+                  <p className="text-gray-600 leading-relaxed mt-4">
+                    Beyond the business world, Drew is an active volunteer and community leader, committed to mentoring youth and fostering growth in the Scouting America program. His work ethic and passion for helping others drive his mission to create sustainable, high-performing call centers that prioritize both compliance and care.
+                  </p>
                 </div>
               </div>
 
-              {/* Founder 2 */}
+              {/* Dara Phillips - COO */}
               <div className="text-center">
                 <div className="w-64 h-64 mx-auto mb-6 bg-gray-200 rounded-lg overflow-hidden">
-                  <img src="/agent.jpg" alt="Co-Founder" className="w-full h-full object-cover" />
+                  <img src="/lovable-uploads/f0b0cb48-b755-4b6f-a5bb-d2c603581829.png" alt="Dara Phillips - COO" className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-2xl font-bold mb-2">Sarah Johnson</h3>
-                <p className="text-lg text-primary mb-4">Co-Founder & COO</p>
+                <h3 className="text-2xl font-bold mb-2">Dara Phillips</h3>
+                <p className="text-lg text-primary mb-4">COO</p>
                 <div className="text-left max-w-md mx-auto">
-                  <ul className="space-y-2 text-gray-600">
-                    <li>• 12+ years in customer experience and sales operations</li>
-                    <li>• Former Director of Global Customer Success at Fortune 500</li>
-                    <li>• Specialist in process optimization and training development</li>
-                    <li>• Certified Six Sigma Black Belt</li>
-                    <li>• Expert in multi-channel customer engagement</li>
-                  </ul>
+                  <p className="text-gray-600 leading-relaxed">
+                    With over 15 years of experience in SaaS operations and enterprise customer success, Dara specializes in scaling technology-driven solutions that deliver measurable impact. She has led cross-functional teams, developed governance models for Fortune 100 clients, and driven digital transformation through strategic customer engagement and technology adoption.
+                  </p>
+                  <p className="text-gray-600 leading-relaxed mt-4">
+                    Outside of work, Dara is deeply committed to giving back—partnering with local shelters to support homeless families and working to improve the communities around her. Her focus on operational excellence and social impact reflects a belief that true success is measured by both business outcomes and human connection.
+                  </p>
                 </div>
               </div>
             </div>
