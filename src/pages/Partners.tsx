@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -42,7 +41,7 @@ const Partners = () => {
               <div className="text-center">
                 <div className="w-64 h-64 mx-auto mb-6 bg-gray-200 rounded-lg overflow-hidden">
                   <img 
-                    src="/lovable-uploads/c5f8f03a-0700-44d1-a0be-9f2b7ffb32c6.png" 
+                    src="lovable-uploads/c5f8f03a-0700-44d1-a0be-9f2b7ffb32c6.png" 
                     alt="Drew Conrad - CEO" 
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -68,7 +67,7 @@ const Partners = () => {
               <div className="text-center">
                 <div className="w-64 h-64 mx-auto mb-6 bg-gray-200 rounded-lg overflow-hidden">
                   <img 
-                    src="/lovable-uploads/fe175e53-bedd-48a4-83a1-d3942b3875d8.png" 
+                    src="lovable-uploads/fe175e53-bedd-48a4-83a1-d3942b3875d8.png" 
                     alt="Dara Phillips - COO" 
                     className="w-full h-full object-cover"
                     onError={(e) => {
