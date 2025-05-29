@@ -77,7 +77,10 @@ const Partners = () => {
                         e.currentTarget.style.display = 'none';
                       }
                     }}
-                    onLoad={() => console.log('✅ Drew image loaded successfully from:', document.querySelector('img[alt="Drew Conrad - CEO"]')?.src)}
+                    onLoad={() => {
+                      const imgElement = document.querySelector('img[alt="Drew Conrad - CEO"]') as HTMLImageElement;
+                      console.log('✅ Drew image loaded successfully from:', imgElement?.src);
+                    }}
                   />
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Drew Conrad</h3>
@@ -110,7 +113,10 @@ const Partners = () => {
                         e.currentTarget.style.display = 'none';
                       }
                     }}
-                    onLoad={() => console.log('✅ Dara image loaded successfully from:', document.querySelector('img[alt="Dara Phillips - COO"]')?.src)}
+                    onLoad={() => {
+                      const imgElement = document.querySelector('img[alt="Dara Phillips - COO"]') as HTMLImageElement;
+                      console.log('✅ Dara image loaded successfully from:', imgElement?.src);
+                    }}
                   />
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Dara Phillips</h3>
