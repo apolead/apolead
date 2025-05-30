@@ -4,27 +4,27 @@ import React from 'react';
 const Testimonials = () => {
   const testimonials = [
     {
-      text: "ApoLead changed my life. As a single mom, I needed flexible work that would allow me to be there for my kids. Now I work while they're at school and earn more than I did at my full-time office job!",
-      name: "Sarah J.",
-      role: "Working with ApoLead for 2 years",
+      text: "Working for a great international partner company has been a dream come true. It's so rewarding to be part of something bigger—doing meaningful work that truly improves people's lives. Nothing beats that.",
+      name: "Merry-C",
+      role: "Remote Customer Service Agent",
       icon: "fas fa-user-circle"
     },
     {
-      text: "I'm a digital nomad traveling through Southeast Asia. ApoLead gives me the freedom to work from anywhere while exploring the world. The platform is so easy to use, and the training prepared me perfectly.",
-      name: "Miguel R.",
-      role: "Working with ApoLead for 1 year",
+      text: "Working with an international brand is incredibly exciting. It brings together diverse cultures and perspectives from around the globe, fostering unity, teamwork, and mutual respect. This collaboration drives innovation and allows us to create real change together.",
+      name: "Favour B",
+      role: "Cross-Cultural Team Member",
       icon: "fas fa-user-circle"
     },
     {
-      text: "As a college student, ApoLead has been the perfect solution for earning money while studying. I can work between classes and during evenings. The flexible schedule means I never have to choose between work and education.",
-      name: "Aisha K.",
-      role: "Working with ApoLead for 6 months",
+      text: "Working with a great international partner company has truly been life-changing for me. Coming from a place where opportunities are scarce, this role has given me more than just a job—it has given me confidence, purpose, and the chance to grow beyond my comfort zone. I went from years of unemployment to speaking with people from all over the world every day. Being part of a diverse and inclusive team where different cultures are respected and valued has made me feel seen, supported, and inspired. It has been a wonderful journey that has helped me grow both personally and professionally.",
+      name: "Maureen S",
+      role: "Global Communications Specialist",
       icon: "fas fa-user-circle"
     },
     {
-      text: "After 15 years in a traditional call center, I was skeptical about remote work. Now I can't imagine going back to an office! With ApoLead, I've increased my income while working fewer hours, and the support team is always there when I need them.",
-      name: "Robert T.",
-      role: "Working with ApoLead for 3 years",
+      text: "Working at ApoLead has been a fulfilling experience. From the modern staff training techniques to the transparent decision-making style of management, this is surely the best-run organization I have ever been a part of. The compensation I receive also helps me provide quality education and healthcare for my immediate and extended family.",
+      name: "Sammy O",
+      role: "Operations Team Member",
       icon: "fas fa-user-circle"
     }
   ];
@@ -32,8 +32,8 @@ const Testimonials = () => {
   return (
     <section id="testimonials" className="py-20">
       <div className="container">
-        <h2 className="text-center mb-4">What Our <span className="text-primary">Agents Say</span></h2>
-        <p className="text-center mb-16 max-w-3xl mx-auto">Read what our agents from around the world have to say about their experience with ApoLead.</p>
+        <h2 className="text-center mb-4">What Our <span className="text-primary">Team Members Say</span></h2>
+        <p className="text-center mb-16 max-w-3xl mx-auto">Hear directly from our diverse team of professionals about their real experiences working with ApoLead and our international partners.</p>
         
         <div className="flex flex-wrap justify-between">
           {testimonials.map((testimonial, index) => (
@@ -45,7 +45,7 @@ const Testimonials = () => {
                 <div className="absolute top-[-15px] left-[-10px] text-5xl text-primary opacity-10">
                   <i className="fas fa-quote-left"></i>
                 </div>
-                <p className="italic mb-6">{testimonial.text}</p>
+                <p className="italic mb-6 leading-relaxed">{testimonial.text}</p>
                 <div className="flex items-center">
                   <div className="w-[50px] h-[50px] flex items-center justify-center text-3xl text-primary mr-4">
                     <i className={testimonial.icon}></i>
