@@ -7,7 +7,7 @@ const LeadershipTeam = () => {
     {
       name: "Drew Conrad",
       title: "CEO",
-      imageSrc: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+      imageSrc: "/lovable-uploads/c5f8f03a-0700-44d1-a0be-9f2b7ffb32c6.png",
       altText: "Drew Conrad - CEO",
       description: [
         "With over 25 years of experience in the call center industry, Drew has held every role from agent to director, including supporting functions like Quality Assurance, Training, Workforce Management, and Technology. He's also led vendor management for a global workforce of 25,000 employees and has spent the last five years championing AI integration in the call center space.",
@@ -17,7 +17,7 @@ const LeadershipTeam = () => {
     {
       name: "Dara Phillips",
       title: "COO",
-      imageSrc: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+      imageSrc: "/lovable-uploads/fe175e53-bedd-48a4-83a1-d3942b3875d8.png",
       altText: "Dara Phillips - COO",
       description: [
         "With over 15 years of experience in SaaS operations and enterprise customer success, Dara specializes in scaling technology-driven solutions that deliver measurable impact. She has led cross-functional teams, developed governance models for Fortune 100 clients, and driven digital transformation through strategic customer engagement and technology adoption.",
