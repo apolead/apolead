@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -237,9 +236,6 @@ const Contact = () => {
                     <div className="space-y-2">
                       <p className="text-gray-600">
                         <strong>Email:</strong> partnerships@apolead.com
-                      </p>
-                      <p className="text-gray-600">
-                        <strong>Direct Line:</strong> +1 (555) 012-3457
                       </p>
                     </div>
                   </div>
