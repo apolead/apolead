@@ -17,21 +17,6 @@ const LeaderProfile = ({ name, title, imageSrc, altText, description }: LeaderPr
           src={imageSrc} 
           alt={altText} 
           className="w-full h-full object-cover"
-          onError={(e) => {
-            console.log(`${name} image failed to load with absolute path:`, e.currentTarget.src);
-            // Try relative path as fallback
-            if (e.currentTarget.src.includes('/lovable-uploads/')) {
-              console.log(`Trying relative path fallback for ${name} image`);
-              e.currentTarget.src = imageSrc.replace('/lovable-uploads/', 'lovable-uploads/');
-            } else {
-              console.log(`Both paths failed for ${name} image, hiding element`);
-              e.currentTarget.style.display = 'none';
-            }
-          }}
-          onLoad={() => {
-            const imgElement = document.querySelector(`img[alt="${altText}"]`) as HTMLImageElement;
-            console.log(`✅ ${name} image loaded successfully from:`, imgElement?.src);
-          }}
         />
       </div>
       <h3 className="text-2xl font-bold mb-2">{name}</h3>
