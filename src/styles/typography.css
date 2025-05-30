@@ -1,0 +1,52 @@
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold leading-tight mb-4;
+  }
+
+  h1 {
+    font-size: 3.5rem;
+  }
+
+  h2 {
+    font-size: 2.5rem;
+  }
+
+  h3 {
+    font-size: 1.75rem;
+  }
+
+  p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    color: #555;
+  }
+
+  /* Lighten text on dark backgrounds */
+  .bg-primary p,
+  .bg-indigo-600 p,
+  .bg-indigo-700 p,
+  .bg-purple-600 p,
+  .bg-purple-700 p,
+  .bg-blue-600 p,
+  .bg-blue-700 p,
+  [class*="bg-indigo"] p,
+  [class*="bg-purple"] p,
+  [class*="bg-blue"] p {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .bg-primary .text-gray-600,
+  .bg-indigo-600 .text-gray-600,
+  .bg-indigo-700 .text-gray-600,
+  .bg-purple-600 .text-gray-600,
+  .bg-purple-700 .text-gray-600,
+  .bg-blue-600 .text-gray-600,
+  .bg-blue-700 .text-gray-600,
+  [class*="bg-indigo"] .text-gray-600,
+  [class*="bg-purple"] .text-gray-600,
+  [class*="bg-blue"] .text-gray-600 {
+    color: rgba(255, 255, 255, 0.8) !important;
+  }
+}

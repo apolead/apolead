@@ -1,0 +1,183 @@
+
+@layer components {
+  .btn {
+    @apply inline-block py-3 px-6 rounded-[50px] font-semibold transition-all duration-300 cursor-pointer border-none text-center;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-dark hover:translate-y-[-3px] hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-secondary-dark hover:translate-y-[-3px] hover:shadow-lg;
+  }
+
+  .btn-large {
+    @apply py-4 px-10 text-lg;
+  }
+
+  .animate-fadeInUp-delay-1 {
+    animation-delay: 0.2s;
+  }
+
+  .animate-fadeInUp-delay-2 {
+    animation-delay: 0.4s;
+  }
+
+  .animate-fadeInUp-delay-3 {
+    animation-delay: 0.6s;
+  }
+
+  .animate-fadeInUp-delay-4 {
+    animation-delay: 0.8s;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .feature-icon {
+    @apply inline-flex items-center justify-center w-[70px] h-[70px] rounded-full bg-primary text-white text-[1.8rem] mb-6;
+  }
+
+  .social-link {
+    @apply flex items-center justify-center w-10 h-10 rounded-full bg-opacity-10 text-white mr-4 transition-all duration-300 hover:bg-secondary hover:translate-y-[-3px];
+  }
+
+  section {
+    @apply py-20;
+  }
+
+  /* Locked item styling */
+  .locked-item {
+    @apply relative cursor-not-allowed transition-all duration-200;
+  }
+
+  .locked-item:hover {
+    @apply opacity-70;
+  }
+
+  .locked-item:hover::after {
+    content: "\f023"; /* Font Awesome lock icon */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    @apply absolute inset-0 flex items-center justify-center text-gray-500 text-2xl;
+    z-index: 10;
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .status-approved {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+  }
+
+  .status-rejected {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+  }
+
+  .status-pending {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #F59E0B;
+  }
+
+  /* Action cards styles */
+  .action-card {
+    background-color: white;
+    border-radius: 16px;
+    padding: 30px 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+    height: 100%;
+  }
+        
+  .action-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+  }
+        
+  .action-card.locked {
+    opacity: 0.5;
+    background-color: rgba(241, 245, 249, 0.5);
+    box-shadow: none;
+    filter: grayscale(100%);
+    transform: none;
+    border: 1px dashed #cbd5e1;
+  }
+        
+  .action-card.locked:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .lock-icon {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #94A3B8;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 3;
+    font-size: 14px;
+  }
+
+  .progress-indicator {
+    display: flex;
+    align-items: center;
+    background: rgba(226, 232, 240, 0.5);
+    padding: 8px 15px;
+    border-radius: 50px;
+  }
+        
+  .progress-bar {
+    width: 150px;
+    height: 8px;
+    background-color: rgba(148, 163, 184, 0.2);
+    border-radius: 4px;
+    margin-right: 15px;
+    overflow: hidden;
+    position: relative;
+  }
+        
+  .progress-fill {
+    height: 100%;
+    width: 25%; /* 1/4 steps completed */
+    background: linear-gradient(90deg, #4f46e5 0%, #00c2cb 100%);
+    border-radius: 4px;
+    position: relative;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+    100% { opacity: 0.3; }
+  }
+
+  .bg-radial-gradient {
+    background: radial-gradient(circle, var(--from) 0%, var(--to) 70%);
+  }
+}
