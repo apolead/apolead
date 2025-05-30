@@ -7,7 +7,7 @@ const LeadershipTeam = () => {
     {
       name: "Drew Conrad",
       title: "CEO",
-      imageSrc: "/lovable-uploads/913900be-1b79-44cb-997d-1967b1fea81c.png",
+      imageSrc: "/Drew.png",
       altText: "Drew Conrad - CEO",
       description: [
         "With over 25 years of experience in the call center industry, Drew has held every role from agent to director, including supporting functions like Quality Assurance, Training, Workforce Management, and Technology. He's also led vendor management for a global workforce of 25,000 employees and has spent the last five years championing AI integration in the call center space.",
@@ -17,7 +17,7 @@ const LeadershipTeam = () => {
     {
       name: "Dara Phillips",
       title: "COO",
-      imageSrc: "/lovable-uploads/920336f2-0a2a-425e-ae25-29d9efc3fb4c.png",
+      imageSrc: "/Dara Headshot 2025gen.png",
       altText: "Dara Phillips - COO",
       description: [
         "With over 15 years of experience in SaaS operations and enterprise customer success, Dara specializes in scaling technology-driven solutions that deliver measurable impact. She has led cross-functional teams, developed governance models for Fortune 100 clients, and driven digital transformation through strategic customer engagement and technology adoption.",
