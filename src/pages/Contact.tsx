@@ -223,10 +223,7 @@ const Contact = () => {
                     <h3 className="text-xl font-semibold mb-3">General Inquiries</h3>
                     <div className="space-y-2">
                       <p className="text-gray-600">
-                        <strong>Email:</strong> hello@apolead.com
-                      </p>
-                      <p className="text-gray-600">
-                        <strong>Phone:</strong> +1 (555) 012-3456
+                        <strong>Email:</strong> support@apolead.com
                       </p>
                     </div>
                   </div>
@@ -235,7 +232,7 @@ const Contact = () => {
                     <h3 className="text-xl font-semibold mb-3">Partnership Inquiries</h3>
                     <div className="space-y-2">
                       <p className="text-gray-600">
-                        <strong>Email:</strong> partnerships@apolead.com
+                        <strong>Email:</strong> partners@apolead.com
                       </p>
                     </div>
                   </div>
