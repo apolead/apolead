@@ -262,7 +262,7 @@ const Contact = () => {
 
                   <div className="bg-indigo-50 p-6 rounded-lg">
                     <h3 className="text-xl font-semibold mb-3 text-indigo-800">Quick Start</h3>
-                    <p className="text-gray-700 mb-4">
+                    <p className="text-gray-900 mb-4">
                       Ready to get started immediately? Schedule a consultation call and we'll have you up and running in no time.
                     </p>
                     <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
