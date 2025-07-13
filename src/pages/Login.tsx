@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,29 +16,41 @@ const Login = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (session) {
         console.log("Login - Found existing session, checking credentials");
-        
+
         // First check if we have cached credentials (fastest route)
         try {
           const cachedData = localStorage.getItem('tempCredentials');
           if (cachedData) {
-            const { userId, credentials, timestamp } = JSON.parse(cachedData);
+            const {
+              userId,
+              credentials,
+              timestamp
+            } = JSON.parse(cachedData);
             // Check if cache is valid (30 minutes validity)
             const isValid = Date.now() - timestamp < 30 * 60 * 1000;
-            
             if (isValid && userId === session.user.id) {
               console.log('Login - Using cached credentials:', credentials);
               if (credentials === 'supervisor') {
-                navigate('/supervisor', { replace: true });
+                navigate('/supervisor', {
+                  replace: true
+                });
                 return;
               } else {
-                navigate('/dashboard', { replace: true });
+                navigate('/dashboard', {
+                  replace: true
+                });
                 return;
               }
             }
@@ -48,35 +59,40 @@ const Login = () => {
           console.error('Error parsing cached credentials:', e);
           localStorage.removeItem('tempCredentials');
         }
-        
+
         // If no valid cache, try using the is_supervisor function (most reliable)
         try {
           console.log('Checking supervisor status for user ID:', session.user.id);
-          const { data: isSupervisor, error: supervisorError } = await supabase.rpc('is_supervisor', {
+          const {
+            data: isSupervisor,
+            error: supervisorError
+          } = await supabase.rpc('is_supervisor', {
             check_user_id: session.user.id
           });
-          
           if (supervisorError) {
             console.error('Supervisor check error:', supervisorError);
             // Fall back to the get_user_credentials if is_supervisor fails
           } else {
             console.log('Login checkSession - Is supervisor:', isSupervisor);
-            
+
             // Cache the credentials
             localStorage.setItem('tempCredentials', JSON.stringify({
               userId: session.user.id,
               credentials: isSupervisor ? 'supervisor' : 'agent',
               timestamp: Date.now()
             }));
-            
             if (isSupervisor) {
               console.log('Navigating to supervisor dashboard');
-              navigate('/supervisor', { replace: true });
+              navigate('/supervisor', {
+                replace: true
+              });
               setIsCheckingSession(false);
               return;
             } else {
               console.log('Navigating to regular dashboard');
-              navigate('/dashboard', { replace: true });
+              navigate('/dashboard', {
+                replace: true
+              });
               setIsCheckingSession(false);
               return;
             }
@@ -85,67 +101,67 @@ const Login = () => {
           console.error('Error checking supervisor status:', error);
           // Continue to the next approach
         }
-        
+
         // If that fails too, fetch from API as last resort
         try {
           console.log('Fetching credentials for user ID:', session.user.id);
-          const { data, error } = await (supabase.rpc as any)('get_user_credentials', {
+          const {
+            data,
+            error
+          } = await (supabase.rpc as any)('get_user_credentials', {
             user_id: session.user.id
           });
-          
           if (error) {
             console.error('RPC error:', error);
             throw error;
           }
-          
           console.log('Login checkSession - User credentials:', data);
-          
+
           // Cache the credentials
           localStorage.setItem('tempCredentials', JSON.stringify({
             userId: session.user.id,
             credentials: data,
             timestamp: Date.now()
           }));
-          
           if (data === 'supervisor') {
             console.log('Navigating to supervisor dashboard');
-            navigate('/supervisor', { replace: true });
+            navigate('/supervisor', {
+              replace: true
+            });
           } else {
             console.log('Navigating to regular dashboard');
-            navigate('/dashboard', { replace: true });
+            navigate('/dashboard', {
+              replace: true
+            });
           }
         } catch (error) {
           console.error('Error checking user credentials:', error);
           // Even if we have an error, still redirect the user somewhere
           setTimeout(() => {
-            navigate('/dashboard', { replace: true }); // Fallback to dashboard
+            navigate('/dashboard', {
+              replace: true
+            }); // Fallback to dashboard
           }, 100);
         }
       }
       setIsCheckingSession(false);
     };
-    
     checkSession();
   }, [navigate]);
-
   const handleEmailChange = e => {
     setEmail(e.target.value);
   };
-
   const handlePasswordChange = e => {
     setPassword(e.target.value);
   };
-
   const validateEmail = email => {
     if (!email.endsWith('@gmail.com') && !email.endsWith('@apolead.com')) {
       return 'Only Gmail and ApoLead accounts are allowed';
     }
     return null;
   };
-
-  const handleForgotPassword = async (e) => {
+  const handleForgotPassword = async e => {
     e.preventDefault();
-    
     const emailError = validateEmail(resetEmail);
     if (emailError) {
       toast({
@@ -155,30 +171,26 @@ const Login = () => {
       });
       return;
     }
-
     setIsResetting(true);
-    
     try {
       // Use the full URL to ensure proper redirection
       const resetUrl = `${window.location.origin}/reset-password`;
       console.log('Sending password reset to:', resetEmail);
       console.log('Redirect URL:', resetUrl);
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      const {
+        error
+      } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: resetUrl
       });
-
       if (error) {
         console.error('Password reset error:', error);
         throw error;
       }
-
       console.log('Password reset email sent successfully');
-      
+
       // Show confirmation screen instead of toast
       setShowResetConfirmation(true);
       setShowForgotPassword(false);
-      
     } catch (error) {
       console.error('Password reset error:', error);
       // Even on error, show confirmation (security best practice)
@@ -188,10 +200,8 @@ const Login = () => {
       setIsResetting(false);
     }
   };
-
   const handleLogin = async e => {
     e.preventDefault();
-
     const emailError = validateEmail(email);
     if (emailError) {
       toast({
@@ -201,17 +211,16 @@ const Login = () => {
       });
       return;
     }
-
     setIsLoading(true);
-    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const {
+        data,
+        error
+      } = await supabase.auth.signInWithPassword({
         email,
         password
       });
-
       if (error) throw error;
-      
       toast({
         title: "Login successful",
         description: "Welcome back!"
@@ -220,30 +229,35 @@ const Login = () => {
       // Check user credentials and redirect accordingly
       try {
         // First try the is_supervisor function (most reliable)
-        const { data: isSupervisor, error: supervisorError } = await supabase.rpc('is_supervisor', {
+        const {
+          data: isSupervisor,
+          error: supervisorError
+        } = await supabase.rpc('is_supervisor', {
           check_user_id: data.user.id
         });
-        
         if (supervisorError) {
           console.error('Supervisor check error:', supervisorError);
           // Fall back to the get_user_credentials if is_supervisor fails
         } else {
           console.log('Login successful - Is supervisor:', isSupervisor);
-          
+
           // Cache the credentials
           localStorage.setItem('tempCredentials', JSON.stringify({
             userId: data.user.id,
             credentials: isSupervisor ? 'supervisor' : 'agent',
             timestamp: Date.now()
           }));
-          
           if (isSupervisor) {
             console.log('Redirecting to supervisor dashboard');
-            navigate('/supervisor', { replace: true });
+            navigate('/supervisor', {
+              replace: true
+            });
             return;
           } else {
             console.log('Redirecting to regular dashboard');
-            navigate('/dashboard', { replace: true });
+            navigate('/dashboard', {
+              replace: true
+            });
             return;
           }
         }
@@ -251,7 +265,7 @@ const Login = () => {
         console.error('Error checking supervisor status:', error);
         // Continue to the next approach if this fails
       }
-        
+
       // Try with regular get_user_credentials as fallback
       try {
         // Make multiple attempts with timeouts to ensure we get a valid credential check
@@ -260,24 +274,25 @@ const Login = () => {
         const checkCredentials = async () => {
           try {
             console.log('Checking credentials for user ID:', data.user.id);
-            const { data: credentialData, error: credentialError } = await (supabase.rpc as any)('get_user_credentials', {
+            const {
+              data: credentialData,
+              error: credentialError
+            } = await (supabase.rpc as any)('get_user_credentials', {
               user_id: data.user.id
             });
-            
             if (credentialError) {
               console.error('RPC error:', credentialError);
               throw credentialError;
             }
-            
             console.log('Login successful - User credentials:', credentialData);
-            
+
             // Cache the credentials in localStorage for faster access
             localStorage.setItem('tempCredentials', JSON.stringify({
               userId: data.user.id,
               credentials: credentialData,
               timestamp: Date.now()
             }));
-            
+
             // Force caching the credentials in localStorage to avoid any RLS issues
             if (credentialData) {
               const cachedProfile = localStorage.getItem('userProfile');
@@ -292,17 +307,20 @@ const Login = () => {
                 }
               }
             }
-            
             if (credentialData === 'supervisor') {
               // Redirect with delay to ensure all state updates are processed
               console.log('Redirecting to supervisor dashboard');
-              navigate('/supervisor', { replace: true });
+              navigate('/supervisor', {
+                replace: true
+              });
             } else {
               console.log('Redirecting to regular dashboard');
-              navigate('/dashboard', { replace: true });
+              navigate('/dashboard', {
+                replace: true
+              });
             }
           } catch (error) {
-            console.error(`Error getting user credentials (attempt ${attempts+1}/${maxAttempts}):`, error);
+            console.error(`Error getting user credentials (attempt ${attempts + 1}/${maxAttempts}):`, error);
             attempts++;
             if (attempts < maxAttempts) {
               // Try again after a short delay
@@ -310,18 +328,21 @@ const Login = () => {
             } else {
               // After max attempts, default to dashboard
               console.log('Max credential check attempts reached, defaulting to dashboard');
-              navigate('/dashboard', { replace: true });
+              navigate('/dashboard', {
+                replace: true
+              });
             }
           }
         };
-        
+
         // Start the credential check process
         checkCredentials();
-        
       } catch (error) {
         console.error('Error getting user credentials:', error);
         setTimeout(() => {
-          navigate('/dashboard', { replace: true });
+          navigate('/dashboard', {
+            replace: true
+          });
         }, 500);
       }
     } catch (error) {
@@ -334,7 +355,6 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-
   if (isCheckingSession) {
     return <div className="flex items-center justify-center h-screen">
       <div className="flex flex-col items-center gap-2">
@@ -343,7 +363,6 @@ const Login = () => {
       </div>
     </div>;
   }
-
   return <div className="flex flex-col md:flex-row w-full h-screen">
       <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
@@ -394,8 +413,7 @@ const Login = () => {
             </h2>
           </div>
 
-          {showResetConfirmation ? (
-            <>
+          {showResetConfirmation ? <>
               <div className="text-center mb-8">
                 <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
                   <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -418,37 +436,25 @@ const Login = () => {
                     <li>• The link will expire in 24 hours</li>
                   </ul>
                 </div>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Important:</strong> The reset link will take you directly to the password reset page, not the home page.
-                  </p>
-                </div>
+                
               </div>
               
               <div className="space-y-4">
-                <Button 
-                  onClick={() => {
-                    setShowResetConfirmation(false);
-                    setResetEmail('');
-                  }}
-                  className="w-full py-6 text-neutral-50"
-                >
+                <Button onClick={() => {
+              setShowResetConfirmation(false);
+              setResetEmail('');
+            }} className="w-full py-6 text-neutral-50">
                   Back to Sign In
                 </Button>
                 
-                <button 
-                  onClick={() => {
-                    setShowResetConfirmation(false);
-                    setShowForgotPassword(true);
-                  }}
-                  className="w-full text-sm text-indigo-600 hover:underline"
-                >
+                <button onClick={() => {
+              setShowResetConfirmation(false);
+              setShowForgotPassword(true);
+            }} className="w-full text-sm text-indigo-600 hover:underline">
                   Try a different email address
                 </button>
               </div>
-            </>
-          ) : !showForgotPassword ? (
-            <>
+            </> : !showForgotPassword ? <>
               <h1 className="text-2xl font-bold mb-2 text-center">Sign in</h1>
               <p className="text-gray-600 mb-8 text-center">Sign in to your account</p>
               
@@ -472,10 +478,7 @@ const Login = () => {
               </form>
               
               <div className="mt-4 text-center">
-                <button 
-                  onClick={() => setShowForgotPassword(true)}
-                  className="text-sm text-indigo-600 hover:underline"
-                >
+                <button onClick={() => setShowForgotPassword(true)} className="text-sm text-indigo-600 hover:underline">
                   Forgot your password?
                 </button>
               </div>
@@ -485,23 +488,14 @@ const Login = () => {
                   Don't have an account? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link>
                 </p>
               </div>
-            </>
-          ) : (
-            <>
+            </> : <>
               <h1 className="text-2xl font-bold mb-2 text-center">Reset Password</h1>
               <p className="text-gray-600 mb-8 text-center">Enter your email to receive reset instructions</p>
               
               <form onSubmit={handleForgotPassword} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="resetEmail">Email</Label>
-                  <Input 
-                    id="resetEmail" 
-                    type="email" 
-                    placeholder="your.name@gmail.com" 
-                    value={resetEmail} 
-                    onChange={(e) => setResetEmail(e.target.value)} 
-                    required 
-                  />
+                  <Input id="resetEmail" type="email" placeholder="your.name@gmail.com" value={resetEmail} onChange={e => setResetEmail(e.target.value)} required />
                 </div>
                 
                 <Button type="submit" disabled={isResetting} className="w-full py-6 text-neutral-50">
@@ -513,18 +507,14 @@ const Login = () => {
               </form>
               
               <div className="mt-4 text-center">
-                <button 
-                  onClick={() => {
-                    setShowForgotPassword(false);
-                    setResetEmail('');
-                  }}
-                  className="text-sm text-indigo-600 hover:underline"
-                >
+                <button onClick={() => {
+              setShowForgotPassword(false);
+              setResetEmail('');
+            }} className="text-sm text-indigo-600 hover:underline">
                   Back to sign in
                 </button>
               </div>
-            </>
-          )}
+            </>}
           
           <div className="mt-4 text-center">
             <p className="text-sm text-gray-500">Only Gmail and ApoLead accounts are supported</p>
@@ -537,5 +527,4 @@ const Login = () => {
       </div>
     </div>;
 };
-
 export default Login;
