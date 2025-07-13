@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,9 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -138,6 +140,47 @@ const Login = () => {
       return 'Only Gmail and ApoLead accounts are allowed';
     }
     return null;
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    
+    const emailError = validateEmail(resetEmail);
+    if (emailError) {
+      toast({
+        title: "Invalid email",
+        description: emailError,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsResetting(true);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Reset email sent",
+        description: "Check your email for a password reset link."
+      });
+      
+      setShowForgotPassword(false);
+      setResetEmail('');
+    } catch (error) {
+      console.error('Password reset error:', error);
+      toast({
+        title: "Reset failed",
+        description: error.message || "Failed to send reset email",
+        variant: "destructive"
+      });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   const handleLogin = async e => {
@@ -345,33 +388,84 @@ const Login = () => {
             </h2>
           </div>
 
-          <h1 className="text-2xl font-bold mb-2 text-center">Sign in</h1>
-          <p className="text-gray-600 mb-8 text-center">Sign in to your account</p>
-          
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="your.name@gmail.com" value={email} onChange={handleEmailChange} required />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={handlePasswordChange} required />
-            </div>
-            
-            <Button type="submit" disabled={isLoading} className="w-full py-6 text-neutral-50">
-              {isLoading ? <div className="flex items-center justify-center">
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Signing in...
-                </div> : "Sign in"}
-            </Button>
-          </form>
-          
-          <div className="mt-6 text-center">
-            <p className="text-sm">
-              Don't have an account? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link>
-            </p>
-          </div>
+          {!showForgotPassword ? (
+            <>
+              <h1 className="text-2xl font-bold mb-2 text-center">Sign in</h1>
+              <p className="text-gray-600 mb-8 text-center">Sign in to your account</p>
+              
+              <form onSubmit={handleLogin} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" placeholder="your.name@gmail.com" value={email} onChange={handleEmailChange} required />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" type="password" placeholder="••••••••" value={password} onChange={handlePasswordChange} required />
+                </div>
+                
+                <Button type="submit" disabled={isLoading} className="w-full py-6 text-neutral-50">
+                  {isLoading ? <div className="flex items-center justify-center">
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Signing in...
+                    </div> : "Sign in"}
+                </Button>
+              </form>
+              
+              <div className="mt-4 text-center">
+                <button 
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-sm text-indigo-600 hover:underline"
+                >
+                  Forgot your password?
+                </button>
+              </div>
+              
+              <div className="mt-6 text-center">
+                <p className="text-sm">
+                  Don't have an account? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link>
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold mb-2 text-center">Reset Password</h1>
+              <p className="text-gray-600 mb-8 text-center">Enter your email to receive a reset link</p>
+              
+              <form onSubmit={handleForgotPassword} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="resetEmail">Email</Label>
+                  <Input 
+                    id="resetEmail" 
+                    type="email" 
+                    placeholder="your.name@gmail.com" 
+                    value={resetEmail} 
+                    onChange={(e) => setResetEmail(e.target.value)} 
+                    required 
+                  />
+                </div>
+                
+                <Button type="submit" disabled={isResetting} className="w-full py-6 text-neutral-50">
+                  {isResetting ? <div className="flex items-center justify-center">
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Sending reset email...
+                    </div> : "Send reset email"}
+                </Button>
+              </form>
+              
+              <div className="mt-4 text-center">
+                <button 
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setResetEmail('');
+                  }}
+                  className="text-sm text-indigo-600 hover:underline"
+                >
+                  Back to sign in
+                </button>
+              </div>
+            </>
+          )}
           
           <div className="mt-4 text-center">
             <p className="text-sm text-gray-500">Only Gmail and ApoLead accounts are supported</p>

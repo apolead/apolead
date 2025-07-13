@@ -67,6 +67,8 @@ interface AuthContextValue {
   updateProfile: (updates: Partial<UserProfile>) => Promise<any>;
   refreshUserProfile: () => Promise<any>;
   acknowledgePolicies: (name: string) => Promise<any>;
+  resetPassword: (email: string) => Promise<any>;
+  updatePassword: (password: string) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -205,6 +207,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     return await supabase.auth.signOut();
+  };
+
+  const resetPassword = async (email: string) => {
+    return await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    });
+  };
+
+  const updatePassword = async (password: string) => {
+    return await supabase.auth.updateUser({ password });
   };
   
   const updateProfile = async (updates: Partial<UserProfile>) => {
@@ -369,7 +381,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signOut,
     updateProfile,
     refreshUserProfile,
-    acknowledgePolicies
+    acknowledgePolicies,
+    resetPassword,
+    updatePassword
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

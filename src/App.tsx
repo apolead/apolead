@@ -15,6 +15,7 @@ import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -249,6 +250,7 @@ const AuthWrapper = () => {
       } />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/dashboard" element={
         <AuthRoute>
           <Dashboard />
