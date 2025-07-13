@@ -152,10 +152,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       type === 'recovery' || 
       (code && type === 'recovery') || 
       (accessToken && type === 'recovery') ||
-      window.location.pathname === '/reset-password'
+      window.location.pathname === '/reset-password' ||
+      sessionStorage.getItem('passwordResetUrl') !== null
     );
     
-    console.log('Checking for password reset flow:', { type, hasCode: !!code, hasAccessToken: !!accessToken, isPasswordReset });
+    console.log('Checking for password reset flow:', { type, hasCode: !!code, hasAccessToken: !!accessToken, isPasswordReset, pathname: window.location.pathname });
     
     if (isPasswordReset) {
       setIsRecoveryMode(true);
@@ -197,33 +198,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         (event, newSession) => {
           console.log('Auth state change:', event, !!newSession, 'recovery mode:', isRecoveryMode);
           
-          // Special handling for recovery sessions
-          if (event === 'SIGNED_IN' && newSession?.user && checkForPasswordResetFlow()) {
-            console.log('Recovery session detected, setting recovery mode');
+          // Check if this is a recovery session
+          const currentIsPasswordReset = checkForPasswordResetFlow();
+          
+          // Special handling for recovery sessions - don't redirect or fetch profile
+          if (event === 'SIGNED_IN' && newSession?.user && currentIsPasswordReset) {
+            console.log('Recovery session detected, setting recovery mode and preventing redirects');
             setIsRecoveryMode(true);
             setSession(newSession);
             setUser(newSession.user);
-            // Don't fetch profile or redirect during recovery
+            // Don't fetch profile or trigger any other auth flows during recovery
             return;
           }
           
           setSession(newSession);
           setUser(newSession?.user ?? null);
           
-          // Special handling for recovery sessions
-          if (event === 'TOKEN_REFRESHED' && isRecoveryMode) {
+          // Special handling for token refresh during recovery
+          if (event === 'TOKEN_REFRESHED' && (isRecoveryMode || currentIsPasswordReset)) {
             console.log('Token refreshed during recovery mode, maintaining recovery state');
             return;
           }
           
           // Don't trigger profile fetch or other side effects during recovery
-          if (newSession?.user && !isRecoveryMode && !checkForPasswordResetFlow()) {
+          if (newSession?.user && !isRecoveryMode && !currentIsPasswordReset) {
             setTimeout(() => {
               fetchUserProfile(newSession.user.id);
             }, 0);
           } else if (!newSession) {
             setUserProfile(null);
-            setIsRecoveryMode(false); // Clear recovery mode when signing out
+            // Only clear recovery mode if we're not on the reset password page
+            if (window.location.pathname !== '/reset-password') {
+              setIsRecoveryMode(false);
+            }
           }
         }
       );

@@ -42,6 +42,9 @@ export const usePasswordResetDetection = () => {
     if (isPasswordReset && location.pathname !== '/reset-password') {
       console.log('Detected password reset flow, redirecting to /reset-password');
       
+      // Store the original URL with parameters for the reset page to handle
+      sessionStorage.setItem('passwordResetUrl', window.location.href);
+      
       // Preserve all URL parameters when redirecting
       const resetUrl = `/reset-password${location.search}${location.hash}`;
       
