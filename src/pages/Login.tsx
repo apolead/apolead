@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -181,8 +182,8 @@ const Login = () => {
     setIsResetting(true);
     
     try {
-      // Use the full URL to ensure proper redirection - this is critical
-      const resetUrl = `${window.location.origin}/reset-password`;
+      // Use the production URL directly to ensure consistency
+      const resetUrl = 'https://www.apolead.com/reset-password';
       console.log('Sending password reset to:', resetEmail);
       console.log('Redirect URL:', resetUrl);
       

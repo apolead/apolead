@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ const ResetPassword = () => {
         console.log('Current URL:', window.location.href);
         console.log('Search params:', window.location.search);
         
-        // Get all URL parameters
+        // Get all URL parameters for debugging
         const allParams = Object.fromEntries(searchParams.entries());
         console.log('All URL params:', allParams);
         
@@ -32,24 +33,39 @@ const ResetPassword = () => {
         const refreshToken = searchParams.get('refresh_token');
         const type = searchParams.get('type');
         const code = searchParams.get('code');
+        const error = searchParams.get('error');
+        const errorDescription = searchParams.get('error_description');
         
         console.log('Parameter check:', { 
           hasAccessToken: !!accessToken, 
           hasRefreshToken: !!refreshToken, 
           type, 
-          hasCode: !!code 
+          hasCode: !!code,
+          error,
+          errorDescription
         });
+
+        // Check for errors in URL first
+        if (error) {
+          console.error('URL contains error:', error, errorDescription);
+          if (error === 'access_denied' || error === 'otp_expired') {
+            console.log('Reset link is invalid or expired');
+            setIsValidSession(false);
+            setIsCheckingSession(false);
+            return;
+          }
+        }
         
-        // If we have recovery type with tokens, set the session
+        // Handle recovery type with tokens (direct token method)
         if (accessToken && refreshToken && type === 'recovery') {
           console.log('Found recovery tokens, setting session...');
-          const { data, error } = await supabase.auth.setSession({
+          const { data, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
           });
           
-          if (error) {
-            console.error('Session error:', error);
+          if (sessionError) {
+            console.error('Session error:', sessionError);
             setIsValidSession(false);
           } else if (data.session) {
             console.log('Recovery session set successfully');
@@ -62,9 +78,9 @@ const ResetPassword = () => {
         // Handle PKCE flow with authorization code
         else if (code) {
           console.log('Found authorization code, exchanging for session...');
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) {
-            console.error('Code exchange error:', error);
+          const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (codeError) {
+            console.error('Code exchange error:', codeError);
             setIsValidSession(false);
           } else if (data.session) {
             console.log('Session established via code exchange');
@@ -74,16 +90,16 @@ const ResetPassword = () => {
             setIsValidSession(false);
           }
         }
-        // Check for existing session (but only if we have some indication this is a reset)
-        else if (type === 'recovery' || window.location.pathname === '/reset-password') {
+        // Check for existing valid session if we're on the reset password page
+        else if (window.location.pathname === '/reset-password') {
           console.log('Checking for existing session...');
-          const { data: { session }, error } = await supabase.auth.getSession();
+          const { data: { session }, error: getSessionError } = await supabase.auth.getSession();
           
-          if (error) {
-            console.error('Session check error:', error);
+          if (getSessionError) {
+            console.error('Session check error:', getSessionError);
             setIsValidSession(false);
           } else if (session) {
-            console.log('Found existing session');
+            console.log('Found existing valid session');
             setIsValidSession(true);
           } else {
             console.log('No valid session found');
@@ -91,7 +107,7 @@ const ResetPassword = () => {
           }
         }
         else {
-          console.log('No recovery parameters found');
+          console.log('No recovery parameters found, invalid reset link');
           setIsValidSession(false);
         }
       } catch (error) {
@@ -222,10 +238,11 @@ const ResetPassword = () => {
                   <strong>Possible reasons:</strong>
                 </p>
                 <ul className="text-sm text-red-700 mt-2 space-y-1">
-                  <li>• The reset link has expired (links expire after 24 hours)</li>
+                  <li>• The reset link has expired (links expire after 1 hour)</li>
                   <li>• The link has already been used</li>
                   <li>• You may have clicked an old reset link</li>
                   <li>• The link may be malformed</li>
+                  <li>• URL configuration mismatch in Supabase settings</li>
                 </ul>
               </div>
               <p className="text-gray-600 mb-6">Please request a new password reset link.</p>
