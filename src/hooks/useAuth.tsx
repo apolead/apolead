@@ -148,15 +148,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const code = urlParams.get('code');
     const accessToken = urlParams.get('access_token');
     
-    // Check stored parameters as well
     const storedParams = sessionStorage.getItem('passwordResetParams');
     let isPasswordReset = false;
     
     if (storedParams) {
       try {
         const parsed = JSON.parse(storedParams);
-        // Check if stored params are recent (within 5 minutes)
-        const isRecent = Date.now() - parsed.timestamp < 5 * 60 * 1000;
+        const isRecent = Date.now() - parsed.timestamp < 10 * 60 * 1000; // 10 minutes
         if (isRecent && parsed.type === 'recovery') {
           isPasswordReset = true;
         }
@@ -165,16 +163,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     
-    // Also check current URL
     isPasswordReset = isPasswordReset || (
       type === 'recovery' || 
       (code && type === 'recovery') || 
       (accessToken && type === 'recovery') ||
-      window.location.pathname === '/reset-password' ||
-      sessionStorage.getItem('passwordResetUrl') !== null
+      window.location.pathname === '/reset-password'
     );
     
-    console.log('Checking for password reset flow:', { 
+    console.log('Auth Provider - Password reset check:', { 
       type, 
       hasCode: !!code, 
       hasAccessToken: !!accessToken, 
@@ -183,17 +179,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       hasStoredParams: !!storedParams
     });
     
-    if (isPasswordReset) {
-      setIsRecoveryMode(true);
-    }
-    
     return isPasswordReset;
   }, []);
 
   useEffect(() => {
-    // Check for password reset flow IMMEDIATELY on mount
+    // Check for password reset flow IMMEDIATELY
     const isPasswordResetFlow = checkForPasswordResetFlow();
     
+    if (isPasswordResetFlow) {
+      console.log('AUTH PROVIDER: Recovery flow detected, setting recovery mode immediately');
+      setIsRecoveryMode(true);
+    }
+
     const fetchUserProfile = async (userId: string) => {
       // Don't fetch profile during recovery mode
       if (isRecoveryMode || isPasswordResetFlow) {
@@ -223,40 +220,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         (event, newSession) => {
           console.log('Auth state change:', event, !!newSession, 'recovery mode:', isRecoveryMode);
           
-          // Check if this is still a recovery session
+          // CRITICAL: Check if this is a recovery flow before processing normally
           const currentIsPasswordReset = checkForPasswordResetFlow();
           
-          // Special handling for recovery sessions - don't process normally
           if (currentIsPasswordReset || isRecoveryMode) {
-            console.log('Recovery session detected, preventing normal auth flow');
+            console.log('AUTH STATE CHANGE: Recovery session detected, preventing normal flow');
             
-            // Only set session/user for recovery, don't fetch profile or redirect
+            // For recovery sessions, ONLY set session/user but don't trigger normal auth flow
             if (event === 'SIGNED_IN' && newSession?.user) {
+              console.log('Setting recovery session without profile fetch');
               setSession(newSession);
               setUser(newSession.user);
               setIsRecoveryMode(true);
+              return; // CRITICAL: Exit here to prevent normal auth processing
             } else if (event === 'TOKEN_REFRESHED' && newSession?.user) {
               setSession(newSession);
               setUser(newSession.user);
-              // Maintain recovery mode during token refresh
+              return; // CRITICAL: Exit here
             }
-            return;
+            
+            // Don't process sign out during recovery unless explicitly requested
+            if (event === 'SIGNED_OUT' && window.location.pathname === '/reset-password') {
+              console.log('Ignoring sign out during password reset');
+              return;
+            }
           }
           
           // Normal auth flow for non-recovery sessions
+          console.log('Processing normal auth state change');
           setSession(newSession);
           setUser(newSession?.user ?? null);
           
           if (newSession?.user && !isRecoveryMode && !currentIsPasswordReset) {
+            console.log('Fetching user profile for normal auth');
             setTimeout(() => {
               fetchUserProfile(newSession.user.id);
             }, 0);
           } else if (!newSession) {
             setUserProfile(null);
-            // Only clear recovery mode if we're not on the reset password page
             if (window.location.pathname !== '/reset-password') {
               setIsRecoveryMode(false);
-              // Clean up stored reset data
               sessionStorage.removeItem('passwordResetUrl');
               sessionStorage.removeItem('passwordResetParams');
             }
@@ -264,19 +267,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       );
 
+      // Handle initial session
       const { data } = await supabase.auth.getSession();
       const initialSession = data.session;
       
-      // Don't process initial session if in password reset flow
       if (isPasswordResetFlow) {
-        console.log('Initial session detected during password reset flow - maintaining recovery mode');
+        console.log('AUTH PROVIDER: Initial session during recovery - maintaining recovery mode');
         setIsRecoveryMode(true);
         if (initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
         }
       } else {
-        // Normal session processing
+        console.log('AUTH PROVIDER: Processing initial session normally');
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
         
