@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -38,7 +39,7 @@ const ResetPassword = () => {
           code: !!code 
         });
         
-        // Handle PKCE flow with code
+        // Handle PKCE flow with code (most common with modern Supabase)
         if (code) {
           console.log('Found auth code, exchanging for session...');
           try {
@@ -58,7 +59,7 @@ const ResetPassword = () => {
             setIsValidSession(false);
           }
         }
-        // Handle direct token flow
+        // Handle direct token flow (legacy)
         else if (accessToken && refreshToken && type === 'recovery') {
           console.log('Found recovery tokens, setting session...');
           try {
@@ -112,14 +113,14 @@ const ResetPassword = () => {
     checkResetSession();
   }, [searchParams]);
 
-  const validatePassword = (password) => {
+  const validatePassword = (password: string) => {
     if (password.length < 6) {
       return 'Password must be at least 6 characters long';
     }
     return null;
   };
 
-  const handleResetPassword = async (e) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate password
@@ -162,7 +163,7 @@ const ResetPassword = () => {
       await supabase.auth.signOut();
       navigate('/login', { replace: true });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Password update error:', error);
       toast({
         title: "Password update failed",
@@ -260,7 +261,7 @@ const ResetPassword = () => {
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
         <div className="relative z-10">
-          <Link to="/" className="inline-flex items-components text-white hover:text-white/80 mb-12">
+          <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>

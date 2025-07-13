@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +20,7 @@ const Login = () => {
   const {
     toast
   } = useToast();
+
   useEffect(() => {
     const checkSession = async () => {
       const {
@@ -148,19 +150,23 @@ const Login = () => {
     };
     checkSession();
   }, [navigate]);
+
   const handleEmailChange = e => {
     setEmail(e.target.value);
   };
+
   const handlePasswordChange = e => {
     setPassword(e.target.value);
   };
+
   const validateEmail = email => {
     if (!email.endsWith('@gmail.com') && !email.endsWith('@apolead.com')) {
       return 'Only Gmail and ApoLead accounts are allowed';
     }
     return null;
   };
-  const handleForgotPassword = async e => {
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     const emailError = validateEmail(resetEmail);
     if (emailError) {
@@ -171,27 +177,31 @@ const Login = () => {
       });
       return;
     }
+
     setIsResetting(true);
+    
     try {
-      // Use the full URL to ensure proper redirection
+      // Use the full URL to ensure proper redirection - this is critical
       const resetUrl = `${window.location.origin}/reset-password`;
       console.log('Sending password reset to:', resetEmail);
       console.log('Redirect URL:', resetUrl);
-      const {
-        error
-      } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: resetUrl
       });
+      
       if (error) {
         console.error('Password reset error:', error);
         throw error;
       }
+      
       console.log('Password reset email sent successfully');
 
       // Show confirmation screen instead of toast
       setShowResetConfirmation(true);
       setShowForgotPassword(false);
-    } catch (error) {
+      
+    } catch (error: any) {
       console.error('Password reset error:', error);
       // Even on error, show confirmation (security best practice)
       setShowResetConfirmation(true);
@@ -200,6 +210,7 @@ const Login = () => {
       setIsResetting(false);
     }
   };
+
   const handleLogin = async e => {
     e.preventDefault();
     const emailError = validateEmail(email);
@@ -355,6 +366,7 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
   if (isCheckingSession) {
     return <div className="flex items-center justify-center h-screen">
       <div className="flex flex-col items-center gap-2">
@@ -363,6 +375,7 @@ const Login = () => {
       </div>
     </div>;
   }
+
   return <div className="flex flex-col md:flex-row w-full h-screen">
       <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
@@ -527,4 +540,5 @@ const Login = () => {
       </div>
     </div>;
 };
+
 export default Login;
