@@ -20,24 +20,21 @@ const ResetPassword = () => {
   const { setRecoveryMode } = useAuth();
 
   useEffect(() => {
-    console.log('🔐 RESET PASSWORD: Component mounted, activating recovery mode');
+    console.log('🔐 RESET PASSWORD: Component mounted, checking for recovery data');
     setRecoveryMode(true);
     window.__RECOVERY_MODE_ACTIVE = true;
     
     const establishRecoverySession = async () => {
       try {
         console.log('=== ENHANCED RECOVERY SESSION ESTABLISHMENT ===');
-        console.log('Current URL:', window.location.href);
         
-        // PRIORITY 1: Use stored parameters (most reliable)
+        // PRIORITY 1: Use stored parameters from interceptor
         const storedParams = sessionStorage.getItem('passwordResetParams');
         const recoveryMode = sessionStorage.getItem('recoveryMode');
-        const recoveryTimestamp = sessionStorage.getItem('recoveryTimestamp');
         
-        console.log('Stored recovery data available:', {
+        console.log('Checking stored recovery data:', {
           hasStoredParams: !!storedParams,
-          recoveryMode,
-          hasTimestamp: !!recoveryTimestamp
+          recoveryMode
         });
         
         let recoveryData = null;
@@ -48,11 +45,12 @@ const ResetPassword = () => {
             const age = Date.now() - recoveryData.timestamp;
             const isValid = age < 30 * 60 * 1000; // 30 minutes
             
-            console.log('Stored recovery data:', {
+            console.log('Stored recovery data analysis:', {
               age: Math.round(age / 1000) + 's',
               isValid,
               hasCode: !!recoveryData.code,
-              hasTokens: !!(recoveryData.accessToken && recoveryData.refreshToken),
+              intercepted: recoveryData.intercepted,
+              fallback: recoveryData.fallback,
               processed: recoveryData.processed
             });
             
@@ -62,27 +60,17 @@ const ResetPassword = () => {
               sessionStorage.removeItem('recoveryMode');
               sessionStorage.removeItem('recoveryTimestamp');
               recoveryData = null;
-            } else if (recoveryData.processed) {
-              console.log('Recovery data already processed, checking for existing session');
-              // Try to use existing session
-              const { data: { session: existingSession } } = await supabase.auth.getSession();
-              if (existingSession) {
-                console.log('Found existing valid session after processing');
-                setIsValidSession(true);
-                return;
-              }
             }
           } catch (parseError) {
             console.error('Error parsing stored recovery data:', parseError);
             sessionStorage.removeItem('passwordResetParams');
             sessionStorage.removeItem('recoveryMode');
-            sessionStorage.removeItem('recoveryTimestamp');
           }
         }
         
-        // PRIORITY 2: Extract from URL if no valid stored data
+        // PRIORITY 2: Check URL parameters as absolute fallback
         if (!recoveryData) {
-          console.log('No valid stored data, extracting from URL');
+          console.log('No stored data found, checking URL parameters');
           const code = searchParams.get('code');
           const type = searchParams.get('type');
           const accessToken = searchParams.get('access_token');
@@ -97,29 +85,29 @@ const ResetPassword = () => {
               refreshToken,
               error,
               timestamp: Date.now(),
-              processed: false
+              processed: false,
+              fromUrl: true
             };
-            console.log('Extracted recovery data from URL:', {
+            console.log('Recovery data extracted from URL:', {
               hasCode: !!code,
               type,
-              hasTokens: !!(accessToken && refreshToken),
               error
             });
           }
         }
         
-        // Check for errors first
+        // Check for errors
         if (recoveryData?.error) {
           console.error('Recovery URL contains error:', recoveryData.error);
           setIsValidSession(false);
           return;
         }
         
-        // PRIORITY 3: Try progressive session establishment
+        // Try to establish session
         let sessionEstablished = false;
         
-        // Method 1: Authorization code exchange (most common)
-        if (recoveryData?.code && recoveryData?.type === 'recovery' && !recoveryData.processed) {
+        // Method 1: Authorization code exchange
+        if (recoveryData?.code && !recoveryData.processed) {
           console.log('🔄 Attempting authorization code exchange...');
           try {
             const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(recoveryData.code);
@@ -147,7 +135,7 @@ const ResetPassword = () => {
           }
         }
         
-        // Method 2: Direct token session (if available)
+        // Method 2: Direct token session
         if (!sessionEstablished && recoveryData?.accessToken && recoveryData?.refreshToken) {
           console.log('🔄 Attempting direct token session...');
           try {
@@ -168,7 +156,7 @@ const ResetPassword = () => {
           }
         }
         
-        // Method 3: Check for existing valid session (fallback)
+        // Method 3: Check existing session
         if (!sessionEstablished) {
           console.log('🔄 Checking for existing session...');
           try {
@@ -196,7 +184,6 @@ const ResetPassword = () => {
         console.error('Overall recovery session establishment error:', error);
         setIsValidSession(false);
       } finally {
-        console.log('Session establishment completed, isValidSession:', isValidSession);
         setIsCheckingSession(false);
       }
     };
@@ -206,8 +193,6 @@ const ResetPassword = () => {
     // Cleanup function
     return () => {
       console.log('ResetPassword component unmounting');
-      // Only clear recovery mode after successful password reset
-      // This will be handled in handleResetPassword
     };
   }, [searchParams, setRecoveryMode]);
 
