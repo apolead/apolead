@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -24,94 +23,76 @@ const ResetPassword = () => {
         console.log('=== RESET PASSWORD SESSION CHECK ===');
         console.log('Current URL:', window.location.href);
         console.log('Search params:', window.location.search);
-        console.log('All URL params:', Object.fromEntries(searchParams.entries()));
         
-        // Extract URL parameters
+        // Get all URL parameters
+        const allParams = Object.fromEntries(searchParams.entries());
+        console.log('All URL params:', allParams);
+        
         const accessToken = searchParams.get('access_token');
         const refreshToken = searchParams.get('refresh_token');
         const type = searchParams.get('type');
         const code = searchParams.get('code');
         
-        console.log('Extracted parameters:', { 
+        console.log('Parameter check:', { 
           hasAccessToken: !!accessToken, 
           hasRefreshToken: !!refreshToken, 
           type, 
           hasCode: !!code 
         });
         
-        // Handle PKCE flow with authorization code
-        if (code) {
-          console.log('Found authorization code, exchanging for session...');
-          try {
-            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) {
-              console.error('Code exchange error:', error);
-              setIsValidSession(false);
-            } else if (data.session) {
-              console.log('Session established via code exchange');
-              setIsValidSession(true);
-            } else {
-              console.log('No session from code exchange');
-              setIsValidSession(false);
-            }
-          } catch (error) {
-            console.error('Error exchanging code for session:', error);
+        // If we have recovery type with tokens, set the session
+        if (accessToken && refreshToken && type === 'recovery') {
+          console.log('Found recovery tokens, setting session...');
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (error) {
+            console.error('Session error:', error);
+            setIsValidSession(false);
+          } else if (data.session) {
+            console.log('Recovery session set successfully');
+            setIsValidSession(true);
+          } else {
+            console.log('No session data returned');
             setIsValidSession(false);
           }
         }
-        // Handle direct token flow (legacy/direct links)
-        else if (accessToken && refreshToken && type === 'recovery') {
-          console.log('Found recovery tokens, setting session...');
-          try {
-            const { data, error } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken
-            });
-            
-            if (error) {
-              console.error('Session error:', error);
-              setIsValidSession(false);
-            } else if (data.session) {
-              console.log('Recovery session set successfully');
-              setIsValidSession(true);
-            } else {
-              console.log('No session data returned');
-              setIsValidSession(false);
-            }
-          } catch (error) {
-            console.error('Error setting session:', error);
+        // Handle PKCE flow with authorization code
+        else if (code) {
+          console.log('Found authorization code, exchanging for session...');
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error('Code exchange error:', error);
+            setIsValidSession(false);
+          } else if (data.session) {
+            console.log('Session established via code exchange');
+            setIsValidSession(true);
+          } else {
+            console.log('No session from code exchange');
             setIsValidSession(false);
           }
-        } 
-        // Check for existing valid session
+        }
+        // Check for existing session (but only if we have some indication this is a reset)
+        else if (type === 'recovery' || window.location.pathname === '/reset-password') {
+          console.log('Checking for existing session...');
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('Session check error:', error);
+            setIsValidSession(false);
+          } else if (session) {
+            console.log('Found existing session');
+            setIsValidSession(true);
+          } else {
+            console.log('No valid session found');
+            setIsValidSession(false);
+          }
+        }
         else {
-          console.log('No reset tokens found, checking existing session...');
-          try {
-            const { data: { session }, error } = await supabase.auth.getSession();
-            
-            if (error) {
-              console.error('Session check error:', error);
-              setIsValidSession(false);
-            } else if (session) {
-              console.log('Existing session found, verifying it\'s a recovery session');
-              // Additional check to ensure this is actually a password recovery session
-              // In a real recovery flow, the session should be fresh from the email link
-              const sessionAge = Date.now() - new Date(session.expires_at || 0).getTime();
-              if (sessionAge < 60000) { // Session is less than 1 minute old
-                console.log('Fresh session found, likely from recovery link');
-                setIsValidSession(true);
-              } else {
-                console.log('Session exists but may not be from recovery link');
-                setIsValidSession(false);
-              }
-            } else {
-              console.log('No valid session found');
-              setIsValidSession(false);
-            }
-          } catch (error) {
-            console.error('Error checking session:', error);
-            setIsValidSession(false);
-          }
+          console.log('No recovery parameters found');
+          setIsValidSession(false);
         }
       } catch (error) {
         console.error('Overall session check error:', error);
@@ -134,7 +115,6 @@ const ResetPassword = () => {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate password
     const passwordError = validatePassword(password);
     if (passwordError) {
       toast({
@@ -145,7 +125,6 @@ const ResetPassword = () => {
       return;
     }
 
-    // Check if passwords match
     if (password !== confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -200,9 +179,7 @@ const ResetPassword = () => {
   if (!isValidSession) {
     return (
       <div className="flex flex-col md:flex-row w-full h-screen">
-        {/* Left side styling */}
         <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
-          {/* Decorative elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
           <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -221,7 +198,6 @@ const ResetPassword = () => {
         </div>
         
         <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
-          {/* Mobile back button */}
           <div className="block md:hidden mb-8">
             <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -269,9 +245,7 @@ const ResetPassword = () => {
 
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
-      {/* Left side styling */}
       <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
-        {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -290,7 +264,6 @@ const ResetPassword = () => {
       </div>
       
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
-        {/* Mobile back button */}
         <div className="block md:hidden mb-8">
           <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
