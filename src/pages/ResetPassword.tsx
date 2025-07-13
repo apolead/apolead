@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,52 +20,89 @@ const ResetPassword = () => {
   useEffect(() => {
     const checkResetSession = async () => {
       try {
-        console.log('Checking reset session...');
-        console.log('URL search params:', window.location.search);
+        console.log('=== RESET PASSWORD SESSION CHECK ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Search params:', window.location.search);
+        console.log('All URL params:', Object.fromEntries(searchParams.entries()));
         
-        // Check URL parameters for reset tokens
-        const accessToken = searchParams.get('access_token');
+        // Check for different possible parameter formats
+        const accessToken = searchParams.get('access_token') || searchParams.get('token');
         const refreshToken = searchParams.get('refresh_token');
         const type = searchParams.get('type');
+        const code = searchParams.get('code');
         
-        console.log('Reset tokens from URL:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+        console.log('Extracted tokens:', { 
+          accessToken: !!accessToken, 
+          refreshToken: !!refreshToken, 
+          type, 
+          code: !!code 
+        });
         
-        if (accessToken && refreshToken && type === 'recovery') {
-          console.log('Setting session with recovery tokens...');
-          // Set the session with the tokens from URL
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
-          
-          if (error) {
-            console.error('Session error:', error);
+        // Handle PKCE flow with code
+        if (code) {
+          console.log('Found auth code, exchanging for session...');
+          try {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) {
+              console.error('Code exchange error:', error);
+              setIsValidSession(false);
+            } else if (data.session) {
+              console.log('Session established via code exchange');
+              setIsValidSession(true);
+            } else {
+              console.log('No session from code exchange');
+              setIsValidSession(false);
+            }
+          } catch (error) {
+            console.error('Error exchanging code for session:', error);
             setIsValidSession(false);
-          } else if (data.session) {
-            console.log('Recovery session set successfully');
-            setIsValidSession(true);
-          } else {
-            console.log('No session data returned');
+          }
+        }
+        // Handle direct token flow
+        else if (accessToken && refreshToken && type === 'recovery') {
+          console.log('Found recovery tokens, setting session...');
+          try {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            });
+            
+            if (error) {
+              console.error('Session error:', error);
+              setIsValidSession(false);
+            } else if (data.session) {
+              console.log('Recovery session set successfully');
+              setIsValidSession(true);
+            } else {
+              console.log('No session data returned');
+              setIsValidSession(false);
+            }
+          } catch (error) {
+            console.error('Error setting session:', error);
             setIsValidSession(false);
           }
         } else {
-          console.log('No recovery tokens found, checking existing session...');
-          // Check if there's already a valid session
-          const { data: { session }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error('Session error:', error);
-            setIsValidSession(false);
-          } else if (session) {
-            console.log('Existing session found');
-            setIsValidSession(true);
-          } else {
-            console.log('No valid session found');
+          console.log('No reset tokens found, checking existing session...');
+          try {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            
+            if (error) {
+              console.error('Session check error:', error);
+              setIsValidSession(false);
+            } else if (session) {
+              console.log('Existing session found');
+              setIsValidSession(true);
+            } else {
+              console.log('No valid session found');
+              setIsValidSession(false);
+            }
+          } catch (error) {
+            console.error('Error checking session:', error);
             setIsValidSession(false);
           }
         }
       } catch (error) {
-        console.error('Error checking session:', error);
+        console.error('Overall session check error:', error);
         setIsValidSession(false);
       } finally {
         setIsCheckingSession(false);
@@ -189,9 +225,21 @@ const ResetPassword = () => {
 
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold mb-2">Invalid Reset Link</h1>
-            <p className="text-gray-600 mb-6">This password reset link is invalid or has expired.</p>
+            <p className="text-gray-600 mb-4">This password reset link is invalid or has expired.</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-red-800">
+                <strong>Possible reasons:</strong>
+              </p>
+              <ul className="text-sm text-red-700 mt-2 space-y-1">
+                <li>• The reset link has expired (links expire after 24 hours)</li>
+                <li>• The link has already been used</li>
+                <li>• You may have clicked an old reset link</li>
+                <li>• The link may be malformed</li>
+              </ul>
+            </div>
+            <p className="text-gray-600 mb-6">Please request a new password reset link.</p>
             <Link to="/login" className="text-indigo-600 hover:underline">
-              Back to login
+              Back to login and request new reset link
             </Link>
           </div>
         </div>

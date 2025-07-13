@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -160,12 +159,22 @@ const Login = () => {
     setIsResetting(true);
     
     try {
+      // Use the full URL to ensure proper redirection
+      const resetUrl = `${window.location.origin}/reset-password`;
+      console.log('Sending password reset to:', resetEmail);
+      console.log('Redirect URL:', resetUrl);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: resetUrl
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Password reset error:', error);
+        throw error;
+      }
 
+      console.log('Password reset email sent successfully');
+      
       // Show confirmation screen instead of toast
       setShowResetConfirmation(true);
       setShowForgotPassword(false);
@@ -404,9 +413,15 @@ const Login = () => {
                   <ul className="text-sm text-blue-700 mt-2 space-y-1">
                     <li>• Check your inbox for an email from ApoLead</li>
                     <li>• Click the "Reset Password" link in the email</li>
+                    <li>• You'll be taken to a page to set your new password</li>
                     <li>• If you don't see it, check your spam folder</li>
                     <li>• The link will expire in 24 hours</li>
                   </ul>
+                </div>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Important:</strong> The reset link will take you directly to the password reset page, not the home page.
+                  </p>
                 </div>
               </div>
               
