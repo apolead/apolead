@@ -30,162 +30,115 @@ const ResetPassword = () => {
         console.log('Current URL:', window.location.href);
         console.log('Search params:', window.location.search);
         
-        // Check if we have the original URL stored
+        // Get parameters from stored data first (most reliable)
+        const storedParams = sessionStorage.getItem('passwordResetParams');
         const storedUrl = sessionStorage.getItem('passwordResetUrl');
-        if (storedUrl) {
-          console.log('Found stored password reset URL:', storedUrl);
-          const storedUrlObj = new URL(storedUrl);
-          const storedParams = new URLSearchParams(storedUrlObj.search);
-          
-          // Use stored parameters if current ones are missing
-          const code = searchParams.get('code') || storedParams.get('code');
-          const type = searchParams.get('type') || storedParams.get('type');
-          const accessToken = searchParams.get('access_token') || storedParams.get('access_token');
-          const refreshToken = searchParams.get('refresh_token') || storedParams.get('refresh_token');
-          
-          console.log('Using parameters:', { 
-            hasCode: !!code, 
-            type, 
-            hasAccessToken: !!accessToken, 
-            hasRefreshToken: !!refreshToken 
-          });
-          
-          // Try to exchange code if we have it
-          if (code && type === 'recovery') {
-            console.log('Attempting to exchange authorization code for session...');
+        
+        let code = searchParams.get('code');
+        let type = searchParams.get('type');
+        let accessToken = searchParams.get('access_token');
+        let refreshToken = searchParams.get('refresh_token');
+        let error = searchParams.get('error');
+        
+        // Use stored parameters if available and recent
+        if (storedParams) {
+          try {
+            const parsed = JSON.parse(storedParams);
+            const isRecent = Date.now() - parsed.timestamp < 5 * 60 * 1000; // 5 minutes
             
-            try {
-              const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
-              
-              if (codeError) {
-                console.error('Code exchange error:', codeError);
-                // If code exchange fails, check if we already have a session
-                const { data: sessionData } = await supabase.auth.getSession();
-                if (sessionData.session) {
-                  console.log('Found existing session despite code exchange error');
-                  setIsValidSession(true);
-                } else {
-                  setIsValidSession(false);
-                }
-              } else if (data.session) {
-                console.log('Successfully exchanged code for recovery session');
-                setIsValidSession(true);
-                // Clear the stored URL since we've successfully used it
-                sessionStorage.removeItem('passwordResetUrl');
-              } else {
-                console.log('No session from code exchange');
-                setIsValidSession(false);
-              }
-            } catch (exchangeError) {
-              console.error('Exception during code exchange:', exchangeError);
-              // Check if we already have a valid session
-              const { data: sessionData } = await supabase.auth.getSession();
-              if (sessionData.session) {
-                console.log('Found existing session despite exchange exception');
-                setIsValidSession(true);
-              } else {
-                setIsValidSession(false);
-              }
-            }
-          }
-          // Handle direct token method
-          else if (accessToken && refreshToken && type === 'recovery') {
-            console.log('Setting session with provided tokens...');
-            const { data, error: sessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken
-            });
-            
-            if (sessionError) {
-              console.error('Session error:', sessionError);
-              setIsValidSession(false);
-            } else if (data.session) {
-              console.log('Recovery session set successfully');
-              setIsValidSession(true);
-              sessionStorage.removeItem('passwordResetUrl');
+            if (isRecent) {
+              console.log('Using stored password reset parameters');
+              code = code || parsed.code;
+              type = type || parsed.type;
+              accessToken = accessToken || parsed.accessToken;
+              refreshToken = refreshToken || parsed.refreshToken;
+              error = error || parsed.error;
             } else {
-              console.log('No session data returned');
-              setIsValidSession(false);
+              console.log('Stored parameters are too old, clearing them');
+              sessionStorage.removeItem('passwordResetParams');
+              sessionStorage.removeItem('passwordResetUrl');
             }
+          } catch (parseError) {
+            console.error('Error parsing stored parameters:', parseError);
+            sessionStorage.removeItem('passwordResetParams');
+            sessionStorage.removeItem('passwordResetUrl');
           }
         }
         
-        // If no stored URL, try with current parameters
-        if (!isValidSession) {
-          const code = searchParams.get('code');
-          const type = searchParams.get('type');
-          const accessToken = searchParams.get('access_token');
-          const refreshToken = searchParams.get('refresh_token');
-          const error = searchParams.get('error');
-          
-          console.log('Checking current URL parameters:', { 
-            hasCode: !!code, 
-            type, 
-            hasAccessToken: !!accessToken, 
-            hasRefreshToken: !!refreshToken,
-            error
-          });
+        console.log('Using parameters:', { 
+          hasCode: !!code, 
+          type, 
+          hasAccessToken: !!accessToken, 
+          hasRefreshToken: !!refreshToken,
+          error,
+          hasStoredParams: !!storedParams
+        });
 
-          // Check for errors in URL first
-          if (error) {
-            console.error('URL contains error:', error);
-            setIsValidSession(false);
-          }
-          // Handle PKCE flow with authorization code
-          else if (code && type === 'recovery') {
-            console.log('Found recovery authorization code, exchanging for session...');
-            
-            try {
-              const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
-              if (codeError) {
-                console.error('Code exchange error:', codeError);
-                setIsValidSession(false);
-              } else if (data.session) {
-                console.log('Recovery session established via code exchange');
-                setIsValidSession(true);
-              } else {
-                console.log('No session from code exchange');
-                setIsValidSession(false);
-              }
-            } catch (exchangeError) {
-              console.error('Exception during code exchange:', exchangeError);
-              setIsValidSession(false);
-            }
-          }
-          // Handle recovery type with tokens
-          else if (accessToken && refreshToken && type === 'recovery') {
-            console.log('Found recovery tokens, setting session...');
-            const { data, error: sessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken
-            });
-            
-            if (sessionError) {
-              console.error('Session error:', sessionError);
+        // Check for errors in URL first
+        if (error) {
+          console.error('URL contains error:', error);
+          setIsValidSession(false);
+          return;
+        }
+
+        // Handle PKCE flow with authorization code
+        if (code && type === 'recovery') {
+          console.log('Found recovery authorization code, exchanging for session...');
+          
+          try {
+            const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
+            if (codeError) {
+              console.error('Code exchange error:', codeError);
               setIsValidSession(false);
             } else if (data.session) {
-              console.log('Recovery session set successfully');
+              console.log('Recovery session established via code exchange');
               setIsValidSession(true);
+              // Clear stored parameters after successful use
+              sessionStorage.removeItem('passwordResetParams');
             } else {
-              console.log('No session data returned');
+              console.log('No session from code exchange');
               setIsValidSession(false);
             }
+          } catch (exchangeError) {
+            console.error('Exception during code exchange:', exchangeError);
+            setIsValidSession(false);
           }
-          // Check for existing valid session
-          else {
-            console.log('Checking for existing session...');
-            const { data: { session }, error: getSessionError } = await supabase.auth.getSession();
-            
-            if (getSessionError) {
-              console.error('Session check error:', getSessionError);
-              setIsValidSession(false);
-            } else if (session) {
-              console.log('Found existing valid session for password reset');
-              setIsValidSession(true);
-            } else {
-              console.log('No valid session found');
-              setIsValidSession(false);
-            }
+        }
+        // Handle recovery type with tokens
+        else if (accessToken && refreshToken && type === 'recovery') {
+          console.log('Found recovery tokens, setting session...');
+          const { data, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          
+          if (sessionError) {
+            console.error('Session error:', sessionError);
+            setIsValidSession(false);
+          } else if (data.session) {
+            console.log('Recovery session set successfully');
+            setIsValidSession(true);
+            // Clear stored parameters after successful use
+            sessionStorage.removeItem('passwordResetParams');
+          } else {
+            console.log('No session data returned');
+            setIsValidSession(false);
+          }
+        }
+        // Check for existing valid session
+        else {
+          console.log('Checking for existing session...');
+          const { data: { session }, error: getSessionError } = await supabase.auth.getSession();
+          
+          if (getSessionError) {
+            console.error('Session check error:', getSessionError);
+            setIsValidSession(false);
+          } else if (session) {
+            console.log('Found existing valid session for password reset');
+            setIsValidSession(true);
+          } else {
+            console.log('No valid session found');
+            setIsValidSession(false);
           }
         }
       } catch (error) {
@@ -203,10 +156,13 @@ const ResetPassword = () => {
     return () => {
       console.log('ResetPassword component unmounting, clearing recovery mode');
       setRecoveryMode(false);
-      // Clean up stored URL when leaving the page
-      sessionStorage.removeItem('passwordResetUrl');
+      // Clean up stored URL when leaving the page successfully
+      if (isValidSession) {
+        sessionStorage.removeItem('passwordResetUrl');
+        sessionStorage.removeItem('passwordResetParams');
+      }
     };
-  }, [searchParams, setRecoveryMode]);
+  }, [searchParams, setRecoveryMode, isValidSession]);
 
   const validatePassword = (password: string) => {
     if (password.length < 6) {
@@ -251,6 +207,10 @@ const ResetPassword = () => {
         title: "Password updated successfully",
         description: "You can now sign in with your new password"
       });
+      
+      // Clean up stored reset data
+      sessionStorage.removeItem('passwordResetUrl');
+      sessionStorage.removeItem('passwordResetParams');
       
       // Reset recovery mode and sign out the user
       setRecoveryMode(false);

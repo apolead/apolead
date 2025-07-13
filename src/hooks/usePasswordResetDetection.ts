@@ -42,16 +42,42 @@ export const usePasswordResetDetection = () => {
     if (isPasswordReset && location.pathname !== '/reset-password') {
       console.log('Detected password reset flow, redirecting to /reset-password');
       
-      // Store the original URL with parameters for the reset page to handle
-      sessionStorage.setItem('passwordResetUrl', window.location.href);
+      // IMMEDIATELY store the original URL to preserve the authorization code
+      const fullUrl = window.location.href;
+      sessionStorage.setItem('passwordResetUrl', fullUrl);
+      console.log('Stored password reset URL:', fullUrl);
       
-      // Preserve all URL parameters when redirecting
-      const resetUrl = `/reset-password${location.search}${location.hash}`;
+      // Also store individual parameters as backup
+      sessionStorage.setItem('passwordResetParams', JSON.stringify({
+        code,
+        type,
+        error,
+        accessToken,
+        refreshToken,
+        timestamp: Date.now()
+      }));
       
-      // Use replace to avoid adding to history
-      navigate(resetUrl, { replace: true });
+      // Navigate to reset page with clean URL to prevent duplicate processing
+      navigate('/reset-password', { replace: true });
       
       return; // Exit early to prevent other auth logic from running
+    }
+
+    // If we're on the reset password page, ensure the URL is preserved
+    if (location.pathname === '/reset-password') {
+      const storedUrl = sessionStorage.getItem('passwordResetUrl');
+      if (!storedUrl && (code || accessToken)) {
+        // Store current URL if not already stored
+        sessionStorage.setItem('passwordResetUrl', window.location.href);
+        sessionStorage.setItem('passwordResetParams', JSON.stringify({
+          code,
+          type,
+          error,
+          accessToken,
+          refreshToken,
+          timestamp: Date.now()
+        }));
+      }
     }
   }, [location.search, location.hash, location.pathname, navigate]);
 };
