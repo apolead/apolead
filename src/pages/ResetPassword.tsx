@@ -137,7 +137,9 @@ const ResetPassword = () => {
 
   if (!isValidSession) {
     return <div className="flex flex-col md:flex-row w-full h-screen">
+      {/* Left side - same styling as login page */}
       <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+        {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -156,6 +158,7 @@ const ResetPassword = () => {
       </div>
       
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+        {/* Mobile back button */}
         <div className="block md:hidden mb-8">
           <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -189,7 +192,9 @@ const ResetPassword = () => {
   }
 
   return <div className="flex flex-col md:flex-row w-full h-screen">
+      {/* Left side - same styling as login page */}
       <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+        {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
@@ -208,6 +213,7 @@ const ResetPassword = () => {
       </div>
       
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+        {/* Mobile back button */}
         <div className="block md:hidden mb-8">
           <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -256,7 +262,7 @@ const ResetPassword = () => {
               {isLoading ? <div className="flex items-center justify-center">
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Updating password...
-                </div> : "Update password"}
+                </div> : "Save Changes"}
             </Button>
           </form>
           
