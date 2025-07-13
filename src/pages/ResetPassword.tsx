@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,8 @@ const ResetPassword = () => {
   const { setRecoveryMode } = useAuth();
 
   useEffect(() => {
-    // Set recovery mode when component mounts
+    // Set recovery mode immediately when component mounts
+    console.log('ResetPassword component mounted, setting recovery mode');
     setRecoveryMode(true);
     
     const checkResetSession = async () => {
@@ -62,15 +64,22 @@ const ResetPassword = () => {
         // Handle PKCE flow with authorization code (most common for email links)
         if (code && type === 'recovery') {
           console.log('Found recovery authorization code, exchanging for session...');
-          const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
-          if (codeError) {
-            console.error('Code exchange error:', codeError);
-            setIsValidSession(false);
-          } else if (data.session) {
-            console.log('Recovery session established via code exchange');
-            setIsValidSession(true);
-          } else {
-            console.log('No session from code exchange');
+          
+          try {
+            const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
+            if (codeError) {
+              console.error('Code exchange error:', codeError);
+              setIsValidSession(false);
+            } else if (data.session) {
+              console.log('Recovery session established via code exchange');
+              console.log('Session user:', data.session.user?.email);
+              setIsValidSession(true);
+            } else {
+              console.log('No session from code exchange');
+              setIsValidSession(false);
+            }
+          } catch (exchangeError) {
+            console.error('Exception during code exchange:', exchangeError);
             setIsValidSession(false);
           }
         }
@@ -102,7 +111,8 @@ const ResetPassword = () => {
             console.error('Session check error:', getSessionError);
             setIsValidSession(false);
           } else if (session) {
-            console.log('Found existing valid session');
+            console.log('Found existing valid session for password reset');
+            console.log('Session user:', session.user?.email);
             setIsValidSession(true);
           } else {
             console.log('No valid session found');
@@ -117,6 +127,7 @@ const ResetPassword = () => {
         console.error('Overall session check error:', error);
         setIsValidSession(false);
       } finally {
+        console.log('Session check completed, isValidSession:', isValidSession);
         setIsCheckingSession(false);
       }
     };
@@ -125,6 +136,7 @@ const ResetPassword = () => {
 
     // Cleanup function to reset recovery mode when leaving
     return () => {
+      console.log('ResetPassword component unmounting, clearing recovery mode');
       setRecoveryMode(false);
     };
   }, [searchParams, setRecoveryMode]);

@@ -11,24 +11,32 @@ export const usePasswordResetDetection = () => {
     const code = urlParams.get('code');
     const type = urlParams.get('type');
     const error = urlParams.get('error');
+    const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
 
     console.log('Password reset detection:', { 
       pathname: location.pathname,
       code: !!code, 
       type, 
       error,
+      accessToken: !!accessToken,
+      refreshToken: !!refreshToken,
       currentUrl: window.location.href 
     });
 
-    // Check if this is a password reset flow
+    // Check if this is a password reset flow - expanded detection
     const isPasswordReset = (
-      // PKCE flow with code
+      // PKCE flow with code and recovery type
       (code && type === 'recovery') ||
-      // Error from password reset
+      // Direct token flow (legacy) with recovery type
+      (accessToken && refreshToken && type === 'recovery') ||
+      // Error from password reset attempt
       error === 'access_denied' ||
-      // Direct token flow (legacy)
-      urlParams.get('access_token') && type === 'recovery'
+      // Additional check for any recovery-related parameters
+      type === 'recovery'
     );
+
+    console.log('Is password reset flow detected:', isPasswordReset);
 
     // If we detect a password reset flow and we're not already on the reset page
     if (isPasswordReset && location.pathname !== '/reset-password') {
@@ -36,7 +44,11 @@ export const usePasswordResetDetection = () => {
       
       // Preserve all URL parameters when redirecting
       const resetUrl = `/reset-password${location.search}${location.hash}`;
+      
+      // Use replace to avoid adding to history
       navigate(resetUrl, { replace: true });
+      
+      return; // Exit early to prevent other auth logic from running
     }
   }, [location.search, location.hash, location.pathname, navigate]);
 };

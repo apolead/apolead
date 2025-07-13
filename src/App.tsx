@@ -256,6 +256,7 @@ const SupervisorRoute = ({ children }) => {
 };
 
 const AuthWrapper = () => {
+  // Run password reset detection first, before any other routing logic
   usePasswordResetDetection();
 
   return (

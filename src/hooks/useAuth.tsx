@@ -142,6 +142,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsRecoveryMode(mode);
   }, []);
 
+  const checkForPasswordResetFlow = useCallback(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get('type');
+    const code = urlParams.get('code');
+    const accessToken = urlParams.get('access_token');
+    
+    const isPasswordReset = (
+      type === 'recovery' || 
+      (code && type === 'recovery') || 
+      (accessToken && type === 'recovery') ||
+      window.location.pathname === '/reset-password'
+    );
+    
+    console.log('Checking for password reset flow:', { type, hasCode: !!code, hasAccessToken: !!accessToken, isPasswordReset });
+    
+    if (isPasswordReset) {
+      setIsRecoveryMode(true);
+    }
+    
+    return isPasswordReset;
+  }, []);
+
   useEffect(() => {
     const fetchUserProfile = async (userId: string) => {
       // Don't fetch profile during recovery mode
@@ -168,9 +190,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const setUpAuthStateListener = async () => {
+      // Check for password reset flow first
+      const isPasswordResetFlow = checkForPasswordResetFlow();
+      
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, newSession) => {
           console.log('Auth state change:', event, !!newSession, 'recovery mode:', isRecoveryMode);
+          
+          // Special handling for recovery sessions
+          if (event === 'SIGNED_IN' && newSession?.user && checkForPasswordResetFlow()) {
+            console.log('Recovery session detected, setting recovery mode');
+            setIsRecoveryMode(true);
+            setSession(newSession);
+            setUser(newSession.user);
+            // Don't fetch profile or redirect during recovery
+            return;
+          }
           
           setSession(newSession);
           setUser(newSession?.user ?? null);
@@ -182,12 +217,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
           
           // Don't trigger profile fetch or other side effects during recovery
-          if (newSession?.user && !isRecoveryMode) {
+          if (newSession?.user && !isRecoveryMode && !checkForPasswordResetFlow()) {
             setTimeout(() => {
               fetchUserProfile(newSession.user.id);
             }, 0);
           } else if (!newSession) {
             setUserProfile(null);
+            setIsRecoveryMode(false); // Clear recovery mode when signing out
           }
         }
       );
@@ -195,11 +231,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await supabase.auth.getSession();
       const initialSession = data.session;
       
+      // Check if initial session is a recovery session
+      if (initialSession && isPasswordResetFlow) {
+        console.log('Initial session is recovery session');
+        setIsRecoveryMode(true);
+      }
+      
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
       
       // Only fetch profile if not in recovery mode
-      if (initialSession?.user && !isRecoveryMode) {
+      if (initialSession?.user && !isRecoveryMode && !isPasswordResetFlow) {
         await fetchUserProfile(initialSession.user.id);
       }
       
@@ -219,7 +261,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Error when unsubscribing from auth state listener:', error);
       });
     };
-  }, [isRecoveryMode]);
+  }, [isRecoveryMode, checkForPasswordResetFlow]);
 
   const signUp = async (email: string, password: string) => {
     return await supabase.auth.signUp({ email, password });
