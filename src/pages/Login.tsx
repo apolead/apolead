@@ -165,8 +165,8 @@ const Login = () => {
       if (error) throw error;
 
       toast({
-        title: "Reset email sent",
-        description: "Check your email for a password reset link."
+        title: "Reset email instructions sent",
+        description: "If this email exists in our system, we will send you an email with instructions to reset your password. Please check your inbox and spam folder."
       });
       
       setShowForgotPassword(false);
@@ -174,10 +174,11 @@ const Login = () => {
     } catch (error) {
       console.error('Password reset error:', error);
       toast({
-        title: "Reset failed",
-        description: error.message || "Failed to send reset email",
-        variant: "destructive"
+        title: "Reset instructions sent",
+        description: "If this email exists in our system, we will send you an email with instructions to reset your password. Please check your inbox and spam folder."
       });
+      setShowForgotPassword(false);
+      setResetEmail('');
     } finally {
       setIsResetting(false);
     }
@@ -430,7 +431,7 @@ const Login = () => {
           ) : (
             <>
               <h1 className="text-2xl font-bold mb-2 text-center">Reset Password</h1>
-              <p className="text-gray-600 mb-8 text-center">Enter your email to receive a reset link</p>
+              <p className="text-gray-600 mb-8 text-center">Enter your email to receive reset instructions</p>
               
               <form onSubmit={handleForgotPassword} className="space-y-6">
                 <div className="space-y-2">
@@ -448,8 +449,8 @@ const Login = () => {
                 <Button type="submit" disabled={isResetting} className="w-full py-6 text-neutral-50">
                   {isResetting ? <div className="flex items-center justify-center">
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Sending reset email...
-                    </div> : "Send reset email"}
+                      Sending instructions...
+                    </div> : "Send reset instructions"}
                 </Button>
               </form>
               

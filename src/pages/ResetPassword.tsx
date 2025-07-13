@@ -21,26 +21,38 @@ const ResetPassword = () => {
   useEffect(() => {
     const checkResetSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Check URL parameters for reset tokens
+        const accessToken = searchParams.get('access_token');
+        const refreshToken = searchParams.get('refresh_token');
+        const type = searchParams.get('type');
         
-        if (error) {
-          console.error('Session error:', error);
-          setIsValidSession(false);
-        } else if (session) {
-          // Check if this is a password recovery session
-          const accessToken = searchParams.get('access_token');
-          const refreshToken = searchParams.get('refresh_token');
+        if (accessToken && refreshToken && type === 'recovery') {
+          // Set the session with the tokens from URL
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
           
-          if (accessToken && refreshToken) {
-            setIsValidSession(true);
-          } else if (session.user) {
-            // User is already logged in with a valid session
+          if (error) {
+            console.error('Session error:', error);
+            setIsValidSession(false);
+          } else if (data.session) {
             setIsValidSession(true);
           } else {
             setIsValidSession(false);
           }
         } else {
-          setIsValidSession(false);
+          // Check if there's already a valid session
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('Session error:', error);
+            setIsValidSession(false);
+          } else if (session) {
+            setIsValidSession(true);
+          } else {
+            setIsValidSession(false);
+          }
         }
       } catch (error) {
         console.error('Error checking session:', error);
