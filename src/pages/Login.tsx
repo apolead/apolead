@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const navigate = useNavigate();
@@ -164,21 +166,15 @@ const Login = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Reset email instructions sent",
-        description: "If this email exists in our system, we will send you an email with instructions to reset your password. Please check your inbox and spam folder."
-      });
-      
+      // Show confirmation screen instead of toast
+      setShowResetConfirmation(true);
       setShowForgotPassword(false);
-      setResetEmail('');
+      
     } catch (error) {
       console.error('Password reset error:', error);
-      toast({
-        title: "Reset instructions sent",
-        description: "If this email exists in our system, we will send you an email with instructions to reset your password. Please check your inbox and spam folder."
-      });
+      // Even on error, show confirmation (security best practice)
+      setShowResetConfirmation(true);
       setShowForgotPassword(false);
-      setResetEmail('');
     } finally {
       setIsResetting(false);
     }
@@ -389,7 +385,54 @@ const Login = () => {
             </h2>
           </div>
 
-          {!showForgotPassword ? (
+          {showResetConfirmation ? (
+            <>
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h1 className="text-2xl font-bold mb-4 text-center">Check Your Email</h1>
+                <p className="text-gray-600 mb-6 text-center">
+                  If an account with the email <strong>{resetEmail}</strong> exists, we've sent you instructions to reset your password.
+                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-blue-800">
+                    <strong>Next steps:</strong>
+                  </p>
+                  <ul className="text-sm text-blue-700 mt-2 space-y-1">
+                    <li>• Check your inbox for an email from ApoLead</li>
+                    <li>• Click the "Reset Password" link in the email</li>
+                    <li>• If you don't see it, check your spam folder</li>
+                    <li>• The link will expire in 24 hours</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <Button 
+                  onClick={() => {
+                    setShowResetConfirmation(false);
+                    setResetEmail('');
+                  }}
+                  className="w-full py-6 text-neutral-50"
+                >
+                  Back to Sign In
+                </Button>
+                
+                <button 
+                  onClick={() => {
+                    setShowResetConfirmation(false);
+                    setShowForgotPassword(true);
+                  }}
+                  className="w-full text-sm text-indigo-600 hover:underline"
+                >
+                  Try a different email address
+                </button>
+              </div>
+            </>
+          ) : !showForgotPassword ? (
             <>
               <h1 className="text-2xl font-bold mb-2 text-center">Sign in</h1>
               <p className="text-gray-600 mb-8 text-center">Sign in to your account</p>
