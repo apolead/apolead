@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { Analytics } from "@vercel/analytics/react";
+import { usePasswordResetDetection } from "./hooks/usePasswordResetDetection";
 
 import Home from "./pages/Home";
 import Agents from "./pages/Agents";
@@ -255,6 +256,8 @@ const SupervisorRoute = ({ children }) => {
 };
 
 const AuthWrapper = () => {
+  usePasswordResetDetection();
+
   return (
     <Routes>
       <Route path="/" element={

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,6 @@ const ResetPassword = () => {
         console.log('Current URL:', window.location.href);
         console.log('Search params:', window.location.search);
         
-        // Get all URL parameters for debugging
         const allParams = Object.fromEntries(searchParams.entries());
         console.log('All URL params:', allParams);
         
@@ -61,8 +59,23 @@ const ResetPassword = () => {
           }
         }
         
+        // Handle PKCE flow with authorization code (most common for email links)
+        if (code && type === 'recovery') {
+          console.log('Found recovery authorization code, exchanging for session...');
+          const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (codeError) {
+            console.error('Code exchange error:', codeError);
+            setIsValidSession(false);
+          } else if (data.session) {
+            console.log('Recovery session established via code exchange');
+            setIsValidSession(true);
+          } else {
+            console.log('No session from code exchange');
+            setIsValidSession(false);
+          }
+        }
         // Handle recovery type with tokens (direct token method)
-        if (accessToken && refreshToken && type === 'recovery') {
+        else if (accessToken && refreshToken && type === 'recovery') {
           console.log('Found recovery tokens, setting session...');
           const { data, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -77,21 +90,6 @@ const ResetPassword = () => {
             setIsValidSession(true);
           } else {
             console.log('No session data returned');
-            setIsValidSession(false);
-          }
-        }
-        // Handle PKCE flow with authorization code
-        else if (code) {
-          console.log('Found authorization code, exchanging for session...');
-          const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
-          if (codeError) {
-            console.error('Code exchange error:', codeError);
-            setIsValidSession(false);
-          } else if (data.session) {
-            console.log('Session established via code exchange');
-            setIsValidSession(true);
-          } else {
-            console.log('No session from code exchange');
             setIsValidSession(false);
           }
         }

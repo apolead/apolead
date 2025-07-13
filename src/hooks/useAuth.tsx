@@ -175,6 +175,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSession(newSession);
           setUser(newSession?.user ?? null);
           
+          // Special handling for recovery sessions
+          if (event === 'TOKEN_REFRESHED' && isRecoveryMode) {
+            console.log('Token refreshed during recovery mode, maintaining recovery state');
+            return;
+          }
+          
           // Don't trigger profile fetch or other side effects during recovery
           if (newSession?.user && !isRecoveryMode) {
             setTimeout(() => {
