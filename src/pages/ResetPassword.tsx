@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -17,8 +18,12 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const { setRecoveryMode } = useAuth();
 
   useEffect(() => {
+    // Set recovery mode when component mounts
+    setRecoveryMode(true);
+    
     const checkResetSession = async () => {
       try {
         console.log('=== RESET PASSWORD SESSION CHECK ===');
@@ -119,7 +124,12 @@ const ResetPassword = () => {
     };
 
     checkResetSession();
-  }, [searchParams]);
+
+    // Cleanup function to reset recovery mode when leaving
+    return () => {
+      setRecoveryMode(false);
+    };
+  }, [searchParams, setRecoveryMode]);
 
   const validatePassword = (password: string) => {
     if (password.length < 6) {
@@ -165,7 +175,8 @@ const ResetPassword = () => {
         description: "You can now sign in with your new password"
       });
       
-      // Sign out the user and redirect to login
+      // Reset recovery mode and sign out the user
+      setRecoveryMode(false);
       await supabase.auth.signOut();
       navigate('/login', { replace: true });
       

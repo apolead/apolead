@@ -61,6 +61,7 @@ interface AuthContextValue {
   session: Session | null;
   userProfile: UserProfile | null;
   loading: boolean;
+  isRecoveryMode: boolean;
   signUp: (email: string, password: string) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<any>;
@@ -69,6 +70,7 @@ interface AuthContextValue {
   acknowledgePolicies: (name: string) => Promise<any>;
   resetPassword: (email: string) => Promise<any>;
   updatePassword: (password: string) => Promise<any>;
+  setRecoveryMode: (mode: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -78,6 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   
   const isRefreshingProfile = useRef<boolean>(false);
   const lastProfileRefreshTime = useRef<number>(0);
@@ -134,8 +137,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [userProfile]);
 
+  const setRecoveryMode = useCallback((mode: boolean) => {
+    console.log('Setting recovery mode:', mode);
+    setIsRecoveryMode(mode);
+  }, []);
+
   useEffect(() => {
     const fetchUserProfile = async (userId: string) => {
+      // Don't fetch profile during recovery mode
+      if (isRecoveryMode) {
+        console.log('Skipping profile fetch - in recovery mode');
+        return;
+      }
+      
       try {
         const { data, error } = await supabase
           .from('user_profiles')
@@ -156,14 +170,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const setUpAuthStateListener = async () => {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, newSession) => {
+          console.log('Auth state change:', event, !!newSession, 'recovery mode:', isRecoveryMode);
+          
           setSession(newSession);
           setUser(newSession?.user ?? null);
           
-          if (newSession?.user) {
+          // Don't trigger profile fetch or other side effects during recovery
+          if (newSession?.user && !isRecoveryMode) {
             setTimeout(() => {
               fetchUserProfile(newSession.user.id);
             }, 0);
-          } else {
+          } else if (!newSession) {
             setUserProfile(null);
           }
         }
@@ -175,7 +192,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(initialSession);
       setUser(initialSession?.user ?? null);
       
-      if (initialSession?.user) {
+      // Only fetch profile if not in recovery mode
+      if (initialSession?.user && !isRecoveryMode) {
         await fetchUserProfile(initialSession.user.id);
       }
       
@@ -195,7 +213,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Error when unsubscribing from auth state listener:', error);
       });
     };
-  }, []);
+  }, [isRecoveryMode]);
 
   const signUp = async (email: string, password: string) => {
     return await supabase.auth.signUp({ email, password });
@@ -377,6 +395,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     session,
     userProfile,
     loading,
+    isRecoveryMode,
     signUp,
     signIn,
     signOut,
@@ -384,7 +403,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refreshUserProfile,
     acknowledgePolicies,
     resetPassword,
-    updatePassword
+    updatePassword,
+    setRecoveryMode
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

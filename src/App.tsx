@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
@@ -29,17 +29,28 @@ import WaitlistConfirmed from "./pages/WaitlistConfirmed";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isRecoveryMode } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   
   useEffect(() => {
+    // Don't redirect if we're in recovery mode or on the reset password page
+    if (isRecoveryMode || location.pathname === '/reset-password') {
+      return;
+    }
+    
     if (!loading && !user) {
       navigate('/login', { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, isRecoveryMode, location.pathname]);
   
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  // Allow access if in recovery mode or on reset password page
+  if (isRecoveryMode || location.pathname === '/reset-password') {
+    return children;
   }
   
   return user ? children : null;
@@ -52,23 +63,36 @@ const AuthRoute = ({ children }) => {
 };
 
 const PublicRoute = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isRecoveryMode } = useAuth();
+  const location = useLocation();
   
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  // Don't redirect if we're in recovery mode or on reset password page
+  if (isRecoveryMode || location.pathname === '/reset-password') {
+    return children;
   }
   
   return children;
 };
 
 const SupervisorRoute = ({ children }) => {
-  const { user, userProfile, loading } = useAuth();
+  const { user, userProfile, loading, isRecoveryMode } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isChecking, setIsChecking] = useState(true);
   const [isSupervisor, setIsSupervisor] = useState(false);
   const [checkAttempts, setCheckAttempts] = useState(0);
   
   useEffect(() => {
+    // Don't check credentials if in recovery mode or on reset password page
+    if (isRecoveryMode || location.pathname === '/reset-password') {
+      setIsChecking(false);
+      return;
+    }
+    
     if (loading) {
       console.log("SupervisorRoute - Still loading auth state");
       return;
@@ -211,7 +235,7 @@ const SupervisorRoute = ({ children }) => {
     };
     
     checkCredentials();
-  }, [user, userProfile, loading, navigate, checkAttempts]);
+  }, [user, userProfile, loading, navigate, checkAttempts, isRecoveryMode, location.pathname]);
   
   if (loading || isChecking) {
     return <div className="flex items-center justify-center h-screen">
@@ -220,6 +244,11 @@ const SupervisorRoute = ({ children }) => {
         <div className="text-sm text-gray-500">Please wait</div>
       </div>
     </div>;
+  }
+  
+  // Allow access if in recovery mode
+  if (isRecoveryMode || location.pathname === '/reset-password') {
+    return children;
   }
   
   return isSupervisor ? children : null;
