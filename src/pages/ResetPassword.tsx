@@ -21,12 +21,18 @@ const ResetPassword = () => {
   useEffect(() => {
     const checkResetSession = async () => {
       try {
+        console.log('Checking reset session...');
+        console.log('URL search params:', window.location.search);
+        
         // Check URL parameters for reset tokens
         const accessToken = searchParams.get('access_token');
         const refreshToken = searchParams.get('refresh_token');
         const type = searchParams.get('type');
         
+        console.log('Reset tokens from URL:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+        
         if (accessToken && refreshToken && type === 'recovery') {
+          console.log('Setting session with recovery tokens...');
           // Set the session with the tokens from URL
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -37,11 +43,14 @@ const ResetPassword = () => {
             console.error('Session error:', error);
             setIsValidSession(false);
           } else if (data.session) {
+            console.log('Recovery session set successfully');
             setIsValidSession(true);
           } else {
+            console.log('No session data returned');
             setIsValidSession(false);
           }
         } else {
+          console.log('No recovery tokens found, checking existing session...');
           // Check if there's already a valid session
           const { data: { session }, error } = await supabase.auth.getSession();
           
@@ -49,8 +58,10 @@ const ResetPassword = () => {
             console.error('Session error:', error);
             setIsValidSession(false);
           } else if (session) {
+            console.log('Existing session found');
             setIsValidSession(true);
           } else {
+            console.log('No valid session found');
             setIsValidSession(false);
           }
         }
@@ -99,6 +110,7 @@ const ResetPassword = () => {
     setIsLoading(true);
     
     try {
+      console.log('Updating user password...');
       const { error } = await supabase.auth.updateUser({
         password: password
       });
@@ -200,7 +212,7 @@ const ResetPassword = () => {
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
         <div className="relative z-10">
-          <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
+          <Link to="/" className="inline-flex items-components text-white hover:text-white/80 mb-12">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
