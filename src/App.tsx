@@ -35,12 +35,14 @@ const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   
   useEffect(() => {
-    // Don't redirect if we're in recovery mode or on the reset password page
-    if (isRecoveryMode || location.pathname === '/reset-password') {
+    // CRITICAL: Don't redirect if we're in recovery mode or on the reset password page
+    if (isRecoveryMode || location.pathname === '/reset-password' || window.__RECOVERY_MODE_ACTIVE) {
+      console.log('ProtectedRoute: Recovery mode active, allowing access');
       return;
     }
     
     if (!loading && !user) {
+      console.log('ProtectedRoute: No user and not loading, redirecting to login');
       navigate('/login', { replace: true });
     }
   }, [user, loading, navigate, isRecoveryMode, location.pathname]);
@@ -50,7 +52,7 @@ const ProtectedRoute = ({ children }) => {
   }
   
   // Allow access if in recovery mode or on reset password page
-  if (isRecoveryMode || location.pathname === '/reset-password') {
+  if (isRecoveryMode || location.pathname === '/reset-password' || window.__RECOVERY_MODE_ACTIVE) {
     return children;
   }
   
@@ -72,7 +74,7 @@ const PublicRoute = ({ children }) => {
   }
   
   // Don't redirect if we're in recovery mode or on reset password page
-  if (isRecoveryMode || location.pathname === '/reset-password') {
+  if (isRecoveryMode || location.pathname === '/reset-password' || window.__RECOVERY_MODE_ACTIVE) {
     return children;
   }
   
@@ -248,7 +250,7 @@ const SupervisorRoute = ({ children }) => {
   }
   
   // Allow access if in recovery mode
-  if (isRecoveryMode || location.pathname === '/reset-password') {
+  if (isRecoveryMode || location.pathname === '/reset-password' || window.__RECOVERY_MODE_ACTIVE) {
     return children;
   }
   
