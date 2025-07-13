@@ -26,22 +26,22 @@ const ResetPassword = () => {
         console.log('Search params:', window.location.search);
         console.log('All URL params:', Object.fromEntries(searchParams.entries()));
         
-        // Check for different possible parameter formats
-        const accessToken = searchParams.get('access_token') || searchParams.get('token');
+        // Extract URL parameters
+        const accessToken = searchParams.get('access_token');
         const refreshToken = searchParams.get('refresh_token');
         const type = searchParams.get('type');
         const code = searchParams.get('code');
         
-        console.log('Extracted tokens:', { 
-          accessToken: !!accessToken, 
-          refreshToken: !!refreshToken, 
+        console.log('Extracted parameters:', { 
+          hasAccessToken: !!accessToken, 
+          hasRefreshToken: !!refreshToken, 
           type, 
-          code: !!code 
+          hasCode: !!code 
         });
         
-        // Handle PKCE flow with code (most common with modern Supabase)
+        // Handle PKCE flow with authorization code
         if (code) {
-          console.log('Found auth code, exchanging for session...');
+          console.log('Found authorization code, exchanging for session...');
           try {
             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
             if (error) {
@@ -59,7 +59,7 @@ const ResetPassword = () => {
             setIsValidSession(false);
           }
         }
-        // Handle direct token flow (legacy)
+        // Handle direct token flow (legacy/direct links)
         else if (accessToken && refreshToken && type === 'recovery') {
           console.log('Found recovery tokens, setting session...');
           try {
@@ -82,7 +82,9 @@ const ResetPassword = () => {
             console.error('Error setting session:', error);
             setIsValidSession(false);
           }
-        } else {
+        } 
+        // Check for existing valid session
+        else {
           console.log('No reset tokens found, checking existing session...');
           try {
             const { data: { session }, error } = await supabase.auth.getSession();
@@ -91,8 +93,17 @@ const ResetPassword = () => {
               console.error('Session check error:', error);
               setIsValidSession(false);
             } else if (session) {
-              console.log('Existing session found');
-              setIsValidSession(true);
+              console.log('Existing session found, verifying it\'s a recovery session');
+              // Additional check to ensure this is actually a password recovery session
+              // In a real recovery flow, the session should be fresh from the email link
+              const sessionAge = Date.now() - new Date(session.expires_at || 0).getTime();
+              if (sessionAge < 60000) { // Session is less than 1 minute old
+                console.log('Fresh session found, likely from recovery link');
+                setIsValidSession(true);
+              } else {
+                console.log('Session exists but may not be from recovery link');
+                setIsValidSession(false);
+              }
             } else {
               console.log('No valid session found');
               setIsValidSession(false);
@@ -176,84 +187,89 @@ const ResetPassword = () => {
   };
 
   if (isCheckingSession) {
-    return <div className="flex items-center justify-center h-screen">
-      <div className="flex flex-col items-center gap-2">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <div className="text-lg font-medium">Validating reset session...</div>
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="text-lg font-medium">Validating reset session...</div>
+        </div>
       </div>
-    </div>;
+    );
   }
 
   if (!isValidSession) {
-    return <div className="flex flex-col md:flex-row w-full h-screen">
-      {/* Left side - same styling as login page */}
-      <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
-        <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
-        
-        <div className="relative z-10">
-          <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-            Back to Home
-          </Link>
+    return (
+      <div className="flex flex-col md:flex-row w-full h-screen">
+        {/* Left side styling */}
+        <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
+          <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
+          
+          <div className="relative z-10">
+            <Link to="/" className="inline-flex items-center text-white hover:text-white/80 mb-12">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+              Back to Home
+            </Link>
 
-          <h2 className="text-3xl font-bold mb-6 text-white">Password Reset</h2>
-          <p className="text-white/80">Secure password reset for your account.</p>
-        </div>
-      </div>
-      
-      <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
-        {/* Mobile back button */}
-        <div className="block md:hidden mb-8">
-          <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-            Back to Home
-          </Link>
-        </div>
-      
-        <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
-            </h2>
+            <h2 className="text-3xl font-bold mb-6 text-white">Password Reset</h2>
+            <p className="text-white/80">Secure password reset for your account.</p>
           </div>
-
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2">Invalid Reset Link</h1>
-            <p className="text-gray-600 mb-4">This password reset link is invalid or has expired.</p>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-red-800">
-                <strong>Possible reasons:</strong>
-              </p>
-              <ul className="text-sm text-red-700 mt-2 space-y-1">
-                <li>• The reset link has expired (links expire after 24 hours)</li>
-                <li>• The link has already been used</li>
-                <li>• You may have clicked an old reset link</li>
-                <li>• The link may be malformed</li>
-              </ul>
-            </div>
-            <p className="text-gray-600 mb-6">Please request a new password reset link.</p>
-            <Link to="/login" className="text-indigo-600 hover:underline">
-              Back to login and request new reset link
+        </div>
+        
+        <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
+          {/* Mobile back button */}
+          <div className="block md:hidden mb-8">
+            <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+              Back to Home
             </Link>
           </div>
-        </div>
         
-        <div className="mt-auto pt-4">
-          <p className="text-center text-gray-500 text-xs">© 2025 ApoLead, All rights Reserved</p>
+          <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold inline">
+                <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+              </h2>
+            </div>
+
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold mb-2">Invalid Reset Link</h1>
+              <p className="text-gray-600 mb-4">This password reset link is invalid or has expired.</p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <p className="text-sm text-red-800">
+                  <strong>Possible reasons:</strong>
+                </p>
+                <ul className="text-sm text-red-700 mt-2 space-y-1">
+                  <li>• The reset link has expired (links expire after 24 hours)</li>
+                  <li>• The link has already been used</li>
+                  <li>• You may have clicked an old reset link</li>
+                  <li>• The link may be malformed</li>
+                </ul>
+              </div>
+              <p className="text-gray-600 mb-6">Please request a new password reset link.</p>
+              <Link to="/login" className="text-indigo-600 hover:underline">
+                Back to login and request new reset link
+              </Link>
+            </div>
+          </div>
+          
+          <div className="mt-auto pt-4">
+            <p className="text-center text-gray-500 text-xs">© 2025 ApoLead, All rights Reserved</p>
+          </div>
         </div>
       </div>
-    </div>;
+    );
   }
 
-  return <div className="flex flex-col md:flex-row w-full h-screen">
-      {/* Left side - same styling as login page */}
+  return (
+    <div className="flex flex-col md:flex-row w-full h-screen">
+      {/* Left side styling */}
       <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
@@ -320,10 +336,14 @@ const ResetPassword = () => {
             </div>
             
             <Button type="submit" disabled={isLoading} className="w-full py-6 text-neutral-50">
-              {isLoading ? <div className="flex items-center justify-center">
+              {isLoading ? (
+                <div className="flex items-center justify-center">
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Updating password...
-                </div> : "Save Changes"}
+                </div>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
           </form>
           
@@ -342,7 +362,8 @@ const ResetPassword = () => {
           <p className="text-center text-gray-500 text-xs">© 2025 ApoLead, All rights Reserved</p>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default ResetPassword;
