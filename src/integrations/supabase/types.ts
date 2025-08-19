@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1151,8 +1151,8 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
@@ -1162,12 +1162,12 @@ export type Database = {
       }
       http_delete: {
         Args:
+          | { content: string; content_type: string; uri: string }
           | { uri: string }
-          | { uri: string; content: string; content_type: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
       }
       http_get: {
-        Args: { uri: string } | { uri: string; data: Json }
+        Args: { data: Json; uri: string } | { uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
       }
       http_head: {
@@ -1186,17 +1186,17 @@ export type Database = {
         }[]
       }
       http_patch: {
-        Args: { uri: string; content: string; content_type: string }
+        Args: { content: string; content_type: string; uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
       }
       http_post: {
         Args:
-          | { uri: string; content: string; content_type: string }
-          | { uri: string; data: Json }
+          | { content: string; content_type: string; uri: string }
+          | { data: Json; uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
       }
       http_put: {
-        Args: { uri: string; content: string; content_type: string }
+        Args: { content: string; content_type: string; uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
       }
       http_reset_curlopt: {
@@ -1225,31 +1225,31 @@ export type Database = {
       }
       update_billing_information: {
         Args: {
-          p_user_id: string
-          p_bank_name: string
-          p_account_number: string
-          p_routing_number: string
           p_account_holder_name: string
+          p_account_number: string
           p_account_type: string
           p_address_line1: string
           p_address_line2: string
+          p_bank_name: string
           p_city: string
-          p_state: string
-          p_zip_code: string
+          p_routing_number: string
           p_ssn_last_four: string
+          p_state: string
+          p_user_id: string
+          p_zip_code: string
         }
         Returns: undefined
       }
       update_onboarding_status: {
-        Args: { p_user_id: string; p_score: number }
+        Args: { p_score: number; p_user_id: string }
         Returns: undefined
       }
       update_user_profile: {
-        Args: { p_user_id: string; p_updates: Json }
+        Args: { p_updates: Json; p_user_id: string }
         Returns: undefined
       }
       update_user_profile_direct: {
-        Args: { input_user_id: string; input_updates: Json }
+        Args: { input_updates: Json; input_user_id: string }
         Returns: undefined
       }
       urlencode: {
