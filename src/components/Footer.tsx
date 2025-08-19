@@ -128,7 +128,8 @@ const Footer = () => {
           <p className="text-sm text-gray-400">
             &copy; {new Date().getFullYear()} ApoLead. All Rights Reserved. | 
             <Link to="/privacy-policy" className="hover:text-white ml-1 mr-1">Privacy Policy</Link> | 
-            <Link to="/terms-of-service" className="hover:text-white ml-1">Terms of Service</Link>
+            <Link to="/terms-of-service" className="hover:text-white ml-1 mr-1">Terms of Service</Link> |
+            <Link to="/health-check" className="hover:text-white ml-1" title="System Health & QA">Health Check</Link>
           </p>
         </div>
       </div>

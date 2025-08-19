@@ -26,6 +26,7 @@ import BillingInformation from "./pages/BillingInformation";
 import Scripting from "./pages/Scripting";
 import AdditionalTraining from "./pages/AdditionalTraining";
 import WaitlistConfirmed from "./pages/WaitlistConfirmed";
+import HealthCheck from "./pages/HealthCheck";
 
 const queryClient = new QueryClient();
 
@@ -286,6 +287,11 @@ const AuthWrapper = () => {
       <Route path="/signup" element={<SignUp />} />
       <Route path="/login" element={<Login />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/health-check" element={
+        <PublicRoute>
+          <HealthCheck />
+        </PublicRoute>
+      } />
       <Route path="/dashboard" element={
         <AuthRoute>
           <Dashboard />
