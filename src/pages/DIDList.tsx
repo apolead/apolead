@@ -403,9 +403,9 @@ export default function DIDList() {
                     />
                   </TableCell>
                   <TableCell className="text-center">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 justify-center">
                       <Button size="sm" onClick={addNewRow}>
-                        <Save className="h-4 w-4" />
+                        <Save className="h-4 w-4 text-white" />
                       </Button>
                       <Button
                         size="sm"
@@ -506,16 +506,16 @@ export default function DIDList() {
                   </TableCell>
                   <TableCell className="text-center">
                     {editingId === did.id ? (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 justify-center">
                         <Button size="sm" onClick={saveEdit}>
-                          <Save className="h-4 w-4" />
+                          <Save className="h-4 w-4 text-white" />
                         </Button>
                         <Button size="sm" variant="outline" onClick={cancelEdit}>
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
                     ) : (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 justify-center">
                         <Button size="sm" variant="outline" onClick={() => startEdit(did)}>
                           Edit
                         </Button>
@@ -524,7 +524,7 @@ export default function DIDList() {
                           variant="destructive"
                           onClick={() => deleteRow(did.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 text-white" />
                         </Button>
                       </div>
                     )}
