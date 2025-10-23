@@ -49,6 +49,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
   const unlockedItems = ['dashboard', 'billing', 'scripting', 'additional-training', 'logout'];
   const isItemUnlocked = (itemName: string) => unlockedItems.includes(itemName);
   const isSupervisor = userProfile?.credentials === 'supervisor';
+  
+  console.log('DashboardSidebar - User credentials:', userProfile?.credentials, 'isSupervisor:', isSupervisor);
 
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
