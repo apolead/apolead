@@ -518,6 +518,41 @@ const SupervisorDashboard = () => {
             }}>Tool Page</span>
           </a>
           
+          <a href="/did-list" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            transition: 'all 0.3s',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            position: 'relative',
+            boxSizing: 'border-box',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+            textAlign: sidebarCollapsed ? 'center' : 'left',
+            overflow: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <i className="fas fa-phone" style={{
+              marginRight: sidebarCollapsed ? 0 : '12px',
+              fontSize: '18px',
+              width: '24px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}></i>
+            <span style={{
+              display: sidebarCollapsed ? 'none' : 'inline-block',
+              opacity: sidebarCollapsed ? 0 : 1,
+              visibility: sidebarCollapsed ? 'hidden' : 'visible',
+              width: sidebarCollapsed ? 0 : 'auto',
+              height: sidebarCollapsed ? 0 : 'auto',
+              overflow: sidebarCollapsed ? 'hidden' : 'visible',
+              position: sidebarCollapsed ? 'absolute' : 'static'
+            }}>DID List</span>
+          </a>
+          
           <a href="#" className="nav-item" style={{
             display: 'flex',
             alignItems: 'center',

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Save, Trash2, X } from "lucide-react";
-import { SupervisorSidebar } from "@/components/dashboard/SupervisorSidebar";
 
 interface DIDNumber {
   id: string;
@@ -39,6 +39,7 @@ export default function DIDList() {
   const [editData, setEditData] = useState<Partial<DIDNumber>>({});
   const [isAdding, setIsAdding] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const navigate = useNavigate();
   const [newRow, setNewRow] = useState<Partial<DIDNumber>>({
     number: "",
     seller: "",
@@ -57,6 +58,19 @@ export default function DIDList() {
     direction: "asc" | "desc";
   }>({ key: null, direction: "asc" });
   const { toast } = useToast();
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error logging out:', error);
+    } else {
+      navigate('/login');
+    }
+  };
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
 
   useEffect(() => {
     fetchDIDNumbers();
@@ -238,320 +252,484 @@ export default function DIDList() {
 
   if (loading) {
     return (
-      <div className="flex h-screen">
-        <SupervisorSidebar 
-          activeItem="did-list" 
-          collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">Loading...</div>
-        </div>
+      <div style={{ display: 'flex', minHeight: '100vh' }}>
+        <div style={{ padding: '20px' }}>Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <SupervisorSidebar 
-        activeItem="did-list" 
-        collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
-      <div className="flex-1 overflow-auto">
-        <div className="container mx-auto py-8 px-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">DID List Management</h1>
-        <p className="text-muted-foreground">
-          Manage phone numbers, sellers, and campaign information
-        </p>
-      </div>
-
-      <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[200px]">
-            <label className="text-sm font-medium mb-2 block">Filter by Seller</label>
-            <Input
-              placeholder="Search seller..."
-              value={filters.seller}
-              onChange={(e) => setFilters({ ...filters, seller: e.target.value })}
-            />
-          </div>
-          <div className="flex-1 min-w-[200px]">
-            <label className="text-sm font-medium mb-2 block">Filter by Vertical</label>
-            <Input
-              placeholder="Search vertical..."
-              value={filters.vertical}
-              onChange={(e) => setFilters({ ...filters, vertical: e.target.value })}
-            />
-          </div>
-          <div className="flex-1 min-w-[200px]">
-            <label className="text-sm font-medium mb-2 block">Filter by Status</label>
-            <Select
-              value={filters.campaign_status}
-              onValueChange={(value) =>
-                setFilters({ ...filters, campaign_status: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                {uniqueStatuses.map((status) => (
-                  <SelectItem key={status} value={status!}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => setFilters({ seller: "", vertical: "", campaign_status: "all" })}
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+      {/* Sidebar - Same as SupervisorDashboard */}
+      <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} style={{
+        width: sidebarCollapsed ? '60px' : '240px',
+        backgroundColor: 'white',
+        borderRight: '1px solid #eaeaea',
+        padding: '25px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 0 20px rgba(0,0,0,0.05)',
+        transition: 'all 0.3s ease',
+        position: 'relative',
+        zIndex: 10,
+        textAlign: 'left',
+        boxSizing: 'border-box'
+      }}>
+        {/* Logo */}
+        <div className="logo" style={{
+          padding: sidebarCollapsed ? '25px 0 25px 0' : '0 25px 25px',
+          borderBottom: '1px solid #eaeaea',
+          marginBottom: '25px',
+          display: 'flex',
+          justifyContent: sidebarCollapsed ? 'center' : 'space-between',
+          alignItems: 'center',
+        }}>
+          <h1 style={{
+            fontSize: '28px', 
+            fontWeight: 700,
+            opacity: sidebarCollapsed ? 0 : 1,
+            visibility: sidebarCollapsed ? 'hidden' : 'visible'
+          }}>
+            <span style={{ color: '#00c2cb' }}>Apo</span>
+            <span style={{ color: '#4f46e5' }}>Lead</span>
+          </h1>
+          <div 
+            onClick={toggleSidebar}
+            style={{
+              cursor: 'pointer',
+              fontSize: '12px',
+              color: '#64748b',
+            }}
           >
-            Clear Filters
-          </Button>
+            <i className={`fas fa-angle-${sidebarCollapsed ? 'right' : 'left'}`}></i>
+          </div>
+        </div>
+        
+        {/* Nav Menu */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          padding: sidebarCollapsed ? 0 : '0 15px',
+        }}>
+          <a href="/supervisor" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+          }}>
+            <i className="fas fa-chart-pie" style={{ marginRight: sidebarCollapsed ? 0 : '12px' }}></i>
+            {!sidebarCollapsed && <span>Dashboard</span>}
+          </a>
+          
+          <a href="/supervisor" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+          }}>
+            <i className="fas fa-user-friends" style={{ marginRight: sidebarCollapsed ? 0 : '12px' }}></i>
+            {!sidebarCollapsed && <span>Interview</span>}
+          </a>
+          
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+          }}>
+            <i className="fas fa-users" style={{ marginRight: sidebarCollapsed ? 0 : '12px' }}></i>
+            {!sidebarCollapsed && <span>Agent Roster</span>}
+          </a>
+          
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+          }}>
+            <i className="fas fa-tools" style={{ marginRight: sidebarCollapsed ? 0 : '12px' }}></i>
+            {!sidebarCollapsed && <span>Tool Page</span>}
+          </a>
+          
+          <a href="/did-list" className="nav-item active" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            fontWeight: 500,
+          }}>
+            <i className="fas fa-phone" style={{ marginRight: sidebarCollapsed ? 0 : '12px' }}></i>
+            {!sidebarCollapsed && <span>DID List</span>}
+          </a>
+          
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+          }}>
+            <i className="fas fa-money-bill-wave" style={{ marginRight: sidebarCollapsed ? 0 : '12px' }}></i>
+            {!sidebarCollapsed && <span>Payment History</span>}
+          </a>
+          
+          <div style={{ height: '1px', backgroundColor: '#eaeaea', margin: '15px 10px' }}></div>
+          
+          <a href="#" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+          }}>
+            <i className="fas fa-cog" style={{ marginRight: sidebarCollapsed ? 0 : '12px' }}></i>
+            {!sidebarCollapsed && <span>Settings</span>}
+          </a>
+          
+          <a 
+            href="#" 
+            className="nav-item" 
+            onClick={handleLogout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+              color: '#64748b',
+              textDecoration: 'none',
+              marginBottom: '8px',
+              borderRadius: '10px',
+              width: '100%',
+            }}
+          >
+            <i className="fas fa-sign-out-alt" style={{ marginRight: sidebarCollapsed ? 0 : '12px' }}></i>
+            {!sidebarCollapsed && <span>Log Out</span>}
+          </a>
         </div>
       </div>
-
-      <div className="bg-card rounded-lg border shadow-sm">
-        <div className="p-6 border-b flex justify-between items-center">
-          <div>
-            <h2 className="text-lg font-semibold">DID Numbers</h2>
-            <p className="text-sm text-muted-foreground">
-              {filteredData.length} of {didNumbers.length} numbers
+      
+      {/* Main Content */}
+      <div style={{ flex: 1, padding: '20px 30px', overflow: 'auto' }}>
+        <div className="container mx-auto py-8 px-4">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">DID List Management</h1>
+            <p className="text-muted-foreground">
+              Manage phone numbers, sellers, and campaign information
             </p>
           </div>
-          <Button onClick={() => setIsAdding(true)} disabled={isAdding} className="text-white">
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Number
-          </Button>
-        </div>
 
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[150px] text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("number")}>
-                  Number {sortConfig.key === "number" && (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </TableHead>
-                <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("seller")}>
-                  Seller {sortConfig.key === "seller" && (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </TableHead>
-                <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("vertical")}>
-                  Vertical {sortConfig.key === "vertical" && (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </TableHead>
-                <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("campaign_status")}>
-                  Campaign Status {sortConfig.key === "campaign_status" && (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </TableHead>
-                <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("lead_price")}>
-                  Lead Price {sortConfig.key === "lead_price" && (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </TableHead>
-                <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("system_config_notes")}>
-                  Config Notes {sortConfig.key === "system_config_notes" && (sortConfig.direction === "asc" ? "↑" : "↓")}
-                </TableHead>
-                <TableHead className="w-[100px] text-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isAdding && (
-                <TableRow>
-                  <TableCell className="text-center">
-                    <Input
-                      value={newRow.number}
-                      onChange={(e) => setNewRow({ ...newRow, number: e.target.value })}
-                      placeholder="(xxx) xxx-xxxx"
-                    />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Input
-                      value={newRow.seller}
-                      onChange={(e) => setNewRow({ ...newRow, seller: e.target.value })}
-                      placeholder="Seller name"
-                    />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Input
-                      value={newRow.vertical}
-                      onChange={(e) => setNewRow({ ...newRow, vertical: e.target.value })}
-                      placeholder="Vertical"
-                    />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Select
-                      value={newRow.campaign_status}
-                      onValueChange={(value) =>
-                        setNewRow({ ...newRow, campaign_status: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={newRow.lead_price}
-                      onChange={(e) => setNewRow({ ...newRow, lead_price: e.target.value })}
-                      placeholder="$100"
-                    />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Input
-                      value={newRow.system_config_notes}
-                      onChange={(e) =>
-                        setNewRow({ ...newRow, system_config_notes: e.target.value })
-                      }
-                      placeholder="Notes"
-                    />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex gap-2 justify-center">
-                      <Button size="sm" onClick={addNewRow}>
-                        <Save className="h-4 w-4 text-white" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setIsAdding(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-              {sortedData.map((did) => (
-                <TableRow key={did.id}>
-                  <TableCell className="text-center">
-                    {editingId === did.id ? (
-                      <Input
-                        value={editData.number}
-                        onChange={(e) =>
-                          setEditData({ ...editData, number: e.target.value })
-                        }
-                      />
-                    ) : (
-                      did.number
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editingId === did.id ? (
-                      <Input
-                        value={editData.seller || ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, seller: e.target.value })
-                        }
-                      />
-                    ) : (
-                      did.seller || "-"
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {editingId === did.id ? (
-                      <Input
-                        value={editData.vertical || ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, vertical: e.target.value })
-                        }
-                      />
-                    ) : (
-                      did.vertical || "-"
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {editingId === did.id ? (
-                      <Select
-                        value={editData.campaign_status || ""}
-                        onValueChange={(value) =>
-                          setEditData({ ...editData, campaign_status: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Active">Active</SelectItem>
-                          <SelectItem value="Pending">Pending</SelectItem>
-                          <SelectItem value="Inactive">Inactive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      getStatusBadge(did.campaign_status)
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {editingId === did.id ? (
-                      <Input
-                        value={editData.lead_price || ""}
-                        onChange={(e) =>
-                          setEditData({ ...editData, lead_price: e.target.value })
-                        }
-                      />
-                    ) : (
-                      did.lead_price || "-"
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {editingId === did.id ? (
-                      <Input
-                        value={editData.system_config_notes || ""}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            system_config_notes: e.target.value,
-                          })
-                        }
-                      />
-                    ) : (
-                      did.system_config_notes || "-"
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {editingId === did.id ? (
-                      <div className="flex gap-2 justify-center">
-                        <Button size="sm" onClick={saveEdit}>
-                          <Save className="h-4 w-4 text-white" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={cancelEdit}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2 justify-center">
-                        <Button size="sm" variant="outline" onClick={() => startEdit(did)}>
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => deleteRow(did.id)}
+          <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="flex-1 min-w-[200px]">
+                <label className="text-sm font-medium mb-2 block">Filter by Seller</label>
+                <Input
+                  placeholder="Search seller..."
+                  value={filters.seller}
+                  onChange={(e) => setFilters({ ...filters, seller: e.target.value })}
+                />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="text-sm font-medium mb-2 block">Filter by Vertical</label>
+                <Input
+                  placeholder="Search vertical..."
+                  value={filters.vertical}
+                  onChange={(e) => setFilters({ ...filters, vertical: e.target.value })}
+                />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="text-sm font-medium mb-2 block">Filter by Status</label>
+                <Select
+                  value={filters.campaign_status}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, campaign_status: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    {uniqueStatuses.map((status) => (
+                      <SelectItem key={status} value={status!}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setFilters({ seller: "", vertical: "", campaign_status: "all" })}
+              >
+                Clear Filters
+              </Button>
+            </div>
+          </div>
+
+          <div className="bg-card rounded-lg border shadow-sm">
+            <div className="p-6 border-b flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold">DID Numbers</h2>
+                <p className="text-sm text-muted-foreground">
+                  {filteredData.length} of {didNumbers.length} numbers
+                </p>
+              </div>
+              <Button onClick={() => setIsAdding(true)} disabled={isAdding} className="text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Number
+              </Button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[150px] text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("number")}>
+                      Number {sortConfig.key === "number" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                    </TableHead>
+                    <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("seller")}>
+                      Seller {sortConfig.key === "seller" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                    </TableHead>
+                    <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("vertical")}>
+                      Vertical {sortConfig.key === "vertical" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                    </TableHead>
+                    <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("campaign_status")}>
+                      Campaign Status {sortConfig.key === "campaign_status" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                    </TableHead>
+                    <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("lead_price")}>
+                      Lead Price {sortConfig.key === "lead_price" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                    </TableHead>
+                    <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("system_config_notes")}>
+                      Config Notes {sortConfig.key === "system_config_notes" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                    </TableHead>
+                    <TableHead className="w-[100px] text-center">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isAdding && (
+                    <TableRow>
+                      <TableCell className="text-center">
+                        <Input
+                          value={newRow.number}
+                          onChange={(e) => setNewRow({ ...newRow, number: e.target.value })}
+                          placeholder="(xxx) xxx-xxxx"
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Input
+                          value={newRow.seller}
+                          onChange={(e) => setNewRow({ ...newRow, seller: e.target.value })}
+                          placeholder="Seller name"
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Input
+                          value={newRow.vertical}
+                          onChange={(e) => setNewRow({ ...newRow, vertical: e.target.value })}
+                          placeholder="Vertical"
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Select
+                          value={newRow.campaign_status}
+                          onValueChange={(value) =>
+                            setNewRow({ ...newRow, campaign_status: value })
+                          }
                         >
-                          <Trash2 className="h-4 w-4 text-white" />
-                        </Button>
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredData.length === 0 && !isAdding && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No DID numbers found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Input
+                          value={newRow.lead_price}
+                          onChange={(e) => setNewRow({ ...newRow, lead_price: e.target.value })}
+                          placeholder="$100"
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Input
+                          value={newRow.system_config_notes}
+                          onChange={(e) =>
+                            setNewRow({ ...newRow, system_config_notes: e.target.value })
+                          }
+                          placeholder="Notes"
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex gap-2 justify-center">
+                          <Button size="sm" onClick={addNewRow}>
+                            <Save className="h-4 w-4 text-white" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setIsAdding(false)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {sortedData.map((did) => (
+                    <TableRow key={did.id}>
+                      <TableCell className="text-center">
+                        {editingId === did.id ? (
+                          <Input
+                            value={editData.number}
+                            onChange={(e) =>
+                              setEditData({ ...editData, number: e.target.value })
+                            }
+                          />
+                        ) : (
+                          did.number
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {editingId === did.id ? (
+                          <Input
+                            value={editData.seller || ""}
+                            onChange={(e) =>
+                              setEditData({ ...editData, seller: e.target.value })
+                            }
+                          />
+                        ) : (
+                          did.seller || "-"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {editingId === did.id ? (
+                          <Input
+                            value={editData.vertical || ""}
+                            onChange={(e) =>
+                              setEditData({ ...editData, vertical: e.target.value })
+                            }
+                          />
+                        ) : (
+                          did.vertical || "-"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {editingId === did.id ? (
+                          <Select
+                            value={editData.campaign_status || ""}
+                            onValueChange={(value) =>
+                              setEditData({ ...editData, campaign_status: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Active">Active</SelectItem>
+                              <SelectItem value="Pending">Pending</SelectItem>
+                              <SelectItem value="Inactive">Inactive</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          getStatusBadge(did.campaign_status)
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {editingId === did.id ? (
+                          <Input
+                            value={editData.lead_price || ""}
+                            onChange={(e) =>
+                              setEditData({ ...editData, lead_price: e.target.value })
+                            }
+                          />
+                        ) : (
+                          did.lead_price || "-"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {editingId === did.id ? (
+                          <Input
+                            value={editData.system_config_notes || ""}
+                            onChange={(e) =>
+                              setEditData({
+                                ...editData,
+                                system_config_notes: e.target.value,
+                              })
+                            }
+                          />
+                        ) : (
+                          did.system_config_notes || "-"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {editingId === did.id ? (
+                          <div className="flex gap-2 justify-center">
+                            <Button size="sm" onClick={saveEdit}>
+                              <Save className="h-4 w-4 text-white" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={cancelEdit}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2 justify-center">
+                            <Button size="sm" variant="outline" onClick={() => startEdit(did)}>
+                              Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteRow(did.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-white" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {sortedData.length === 0 && !isAdding && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        No DID numbers found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
       </div>
     </div>
   );
