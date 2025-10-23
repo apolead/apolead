@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Save, Trash2, X } from "lucide-react";
-import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { SupervisorSidebar } from "@/components/dashboard/SupervisorSidebar";
 
 interface DIDNumber {
   id: string;
@@ -38,6 +38,7 @@ export default function DIDList() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<DIDNumber>>({});
   const [isAdding, setIsAdding] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [newRow, setNewRow] = useState<Partial<DIDNumber>>({
     number: "",
     seller: "",
@@ -238,7 +239,11 @@ export default function DIDList() {
   if (loading) {
     return (
       <div className="flex h-screen">
-        <DashboardSidebar activeItem="did-list" />
+        <SupervisorSidebar 
+          activeItem="did-list" 
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">Loading...</div>
         </div>
@@ -248,7 +253,11 @@ export default function DIDList() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <DashboardSidebar activeItem="did-list" />
+      <SupervisorSidebar 
+        activeItem="did-list" 
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
       <div className="flex-1 overflow-auto">
         <div className="container mx-auto py-8 px-4">
       <div className="mb-6">
