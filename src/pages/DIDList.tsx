@@ -51,6 +51,10 @@ export default function DIDList() {
     vertical: "",
     campaign_status: "all",
   });
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof DIDNumber | null;
+    direction: "asc" | "desc";
+  }>({ key: null, direction: "asc" });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -196,17 +200,36 @@ export default function DIDList() {
   const uniqueVerticals = [...new Set(didNumbers.map((d) => d.vertical).filter(Boolean))];
   const uniqueStatuses = [...new Set(didNumbers.map((d) => d.campaign_status).filter(Boolean))];
 
+  const handleSort = (key: keyof DIDNumber) => {
+    let direction: "asc" | "desc" = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+
+    const aValue = a[sortConfig.key] || "";
+    const bValue = b[sortConfig.key] || "";
+
+    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+    return 0;
+  });
+
   const getStatusBadge = (status: string | null) => {
     if (!status) return <span className="text-muted-foreground">-</span>;
     
-    const variants: Record<string, "default" | "secondary" | "destructive"> = {
-      Active: "default",
-      Pending: "secondary",
-      Inactive: "destructive",
+    const badgeStyles: Record<string, string> = {
+      Active: "bg-green-500 text-white hover:bg-green-600",
+      Pending: "bg-yellow-500 text-white hover:bg-yellow-600",
+      Inactive: "bg-red-500 text-white hover:bg-red-600",
     };
 
     return (
-      <Badge variant={variants[status] || "secondary"}>
+      <Badge className={badgeStyles[status] || "bg-gray-500 text-white"}>
         {status}
       </Badge>
     );
@@ -301,40 +324,52 @@ export default function DIDList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[150px]">Number</TableHead>
-                <TableHead>Seller</TableHead>
-                <TableHead>Vertical</TableHead>
-                <TableHead>Campaign Status</TableHead>
-                <TableHead>Lead Price</TableHead>
-                <TableHead>Config Notes</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
+                <TableHead className="w-[150px] text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("number")}>
+                  Number {sortConfig.key === "number" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </TableHead>
+                <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("seller")}>
+                  Seller {sortConfig.key === "seller" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </TableHead>
+                <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("vertical")}>
+                  Vertical {sortConfig.key === "vertical" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </TableHead>
+                <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("campaign_status")}>
+                  Campaign Status {sortConfig.key === "campaign_status" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </TableHead>
+                <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("lead_price")}>
+                  Lead Price {sortConfig.key === "lead_price" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </TableHead>
+                <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => handleSort("system_config_notes")}>
+                  Config Notes {sortConfig.key === "system_config_notes" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </TableHead>
+                <TableHead className="w-[100px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isAdding && (
                 <TableRow>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <Input
                       value={newRow.number}
                       onChange={(e) => setNewRow({ ...newRow, number: e.target.value })}
                       placeholder="(xxx) xxx-xxxx"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <Input
                       value={newRow.seller}
                       onChange={(e) => setNewRow({ ...newRow, seller: e.target.value })}
                       placeholder="Seller name"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <Input
                       value={newRow.vertical}
                       onChange={(e) => setNewRow({ ...newRow, vertical: e.target.value })}
                       placeholder="Vertical"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <Select
                       value={newRow.campaign_status}
                       onValueChange={(value) =>
@@ -358,7 +393,7 @@ export default function DIDList() {
                       placeholder="$100"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <Input
                       value={newRow.system_config_notes}
                       onChange={(e) =>
@@ -367,7 +402,7 @@ export default function DIDList() {
                       placeholder="Notes"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     <div className="flex gap-2">
                       <Button size="sm" onClick={addNewRow}>
                         <Save className="h-4 w-4" />
@@ -383,9 +418,9 @@ export default function DIDList() {
                   </TableCell>
                 </TableRow>
               )}
-              {filteredData.map((did) => (
+              {sortedData.map((did) => (
                 <TableRow key={did.id}>
-                  <TableCell>
+                  <TableCell className="text-center">
                     {editingId === did.id ? (
                       <Input
                         value={editData.number}
@@ -409,7 +444,7 @@ export default function DIDList() {
                       did.seller || "-"
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     {editingId === did.id ? (
                       <Input
                         value={editData.vertical || ""}
@@ -421,7 +456,7 @@ export default function DIDList() {
                       did.vertical || "-"
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     {editingId === did.id ? (
                       <Select
                         value={editData.campaign_status || ""}
@@ -442,7 +477,7 @@ export default function DIDList() {
                       getStatusBadge(did.campaign_status)
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     {editingId === did.id ? (
                       <Input
                         value={editData.lead_price || ""}
@@ -454,7 +489,7 @@ export default function DIDList() {
                       did.lead_price || "-"
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     {editingId === did.id ? (
                       <Input
                         value={editData.system_config_notes || ""}
@@ -469,7 +504,7 @@ export default function DIDList() {
                       did.system_config_notes || "-"
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     {editingId === did.id ? (
                       <div className="flex gap-2">
                         <Button size="sm" onClick={saveEdit}>
