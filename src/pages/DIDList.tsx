@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -19,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Save, Trash2, X } from "lucide-react";
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 
 interface DIDNumber {
   id: string;
@@ -194,16 +196,38 @@ export default function DIDList() {
   const uniqueVerticals = [...new Set(didNumbers.map((d) => d.vertical).filter(Boolean))];
   const uniqueStatuses = [...new Set(didNumbers.map((d) => d.campaign_status).filter(Boolean))];
 
+  const getStatusBadge = (status: string | null) => {
+    if (!status) return <span className="text-muted-foreground">-</span>;
+    
+    const variants: Record<string, "default" | "secondary" | "destructive"> = {
+      Active: "default",
+      Pending: "secondary",
+      Inactive: "destructive",
+    };
+
+    return (
+      <Badge variant={variants[status] || "secondary"}>
+        {status}
+      </Badge>
+    );
+  };
+
   if (loading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="text-center">Loading...</div>
+      <div className="flex h-screen">
+        <DashboardSidebar activeItem="did-list" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">Loading...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="flex h-screen overflow-hidden">
+      <DashboardSidebar activeItem="did-list" />
+      <div className="flex-1 overflow-auto">
+        <div className="container mx-auto py-8 px-4">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">DID List Management</h1>
         <p className="text-muted-foreground">
@@ -267,7 +291,7 @@ export default function DIDList() {
               {filteredData.length} of {didNumbers.length} numbers
             </p>
           </div>
-          <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
+          <Button onClick={() => setIsAdding(true)} disabled={isAdding} className="text-white">
             <Plus className="h-4 w-4 mr-2" />
             Add New Number
           </Button>
@@ -415,7 +439,7 @@ export default function DIDList() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      did.campaign_status || "-"
+                      getStatusBadge(did.campaign_status)
                     )}
                   </TableCell>
                   <TableCell>
@@ -482,6 +506,8 @@ export default function DIDList() {
             </TableBody>
           </Table>
         </div>
+      </div>
+    </div>
       </div>
     </div>
   );
