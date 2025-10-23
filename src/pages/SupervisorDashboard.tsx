@@ -588,7 +588,7 @@ const SupervisorDashboard = () => {
             }}>Performance</span>
           </a>
           
-          <a href="#" className="nav-item" style={{
+          <a href="/did-list" className="nav-item" style={{
             display: 'flex',
             alignItems: 'center',
             padding: sidebarCollapsed ? '12px 0' : '12px 20px',
@@ -605,7 +605,7 @@ const SupervisorDashboard = () => {
             textAlign: sidebarCollapsed ? 'center' : 'left',
             overflow: sidebarCollapsed ? 'hidden' : 'visible'
           }}>
-            <i className="fas fa-trophy" style={{
+            <i className="fas fa-phone" style={{
               marginRight: sidebarCollapsed ? 0 : '12px',
               fontSize: '18px',
               width: '24px',
@@ -620,7 +620,7 @@ const SupervisorDashboard = () => {
               height: sidebarCollapsed ? 0 : 'auto',
               overflow: sidebarCollapsed ? 'hidden' : 'visible',
               position: sidebarCollapsed ? 'absolute' : 'static'
-            }}>Ranking</span>
+            }}>DID List</span>
           </a>
           
           <a href="#" className="nav-item" style={{

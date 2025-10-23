@@ -100,6 +100,48 @@ export type Database = {
           },
         ]
       }
+      call_dispositions: {
+        Row: {
+          agent_name: string | null
+          call_date: string
+          created_at: string | null
+          filename: string
+          id: string
+          phone_number: string | null
+          primary_label: string
+          processed_at: string | null
+          s3_key: string
+          secondary_label: string
+          transcript: string | null
+        }
+        Insert: {
+          agent_name?: string | null
+          call_date: string
+          created_at?: string | null
+          filename: string
+          id?: string
+          phone_number?: string | null
+          primary_label: string
+          processed_at?: string | null
+          s3_key: string
+          secondary_label: string
+          transcript?: string | null
+        }
+        Update: {
+          agent_name?: string | null
+          call_date?: string
+          created_at?: string | null
+          filename?: string
+          id?: string
+          phone_number?: string | null
+          primary_label?: string
+          processed_at?: string | null
+          s3_key?: string
+          secondary_label?: string
+          transcript?: string | null
+        }
+        Relationships: []
+      }
       call_logs: {
         Row: {
           abbreviation: string | null
@@ -274,6 +316,42 @@ export type Database = {
           SubID2?: string | null
           Timezone?: string | null
           Type?: string | null
+        }
+        Relationships: []
+      }
+      did_numbers: {
+        Row: {
+          campaign_status: string | null
+          created_at: string | null
+          id: string
+          lead_price: string | null
+          number: string
+          seller: string | null
+          system_config_notes: string | null
+          updated_at: string | null
+          vertical: string | null
+        }
+        Insert: {
+          campaign_status?: string | null
+          created_at?: string | null
+          id?: string
+          lead_price?: string | null
+          number: string
+          seller?: string | null
+          system_config_notes?: string | null
+          updated_at?: string | null
+          vertical?: string | null
+        }
+        Update: {
+          campaign_status?: string | null
+          created_at?: string | null
+          id?: string
+          lead_price?: string | null
+          number?: string
+          seller?: string | null
+          system_config_notes?: string | null
+          updated_at?: string | null
+          vertical?: string | null
         }
         Relationships: []
       }
@@ -983,18 +1061,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      bytea_to_text: {
-        Args: { data: string }
-        Returns: string
-      }
-      get_application_status: {
-        Args: { user_id: string }
-        Returns: string
-      }
-      get_user_credentials: {
-        Args: { user_id: string }
-        Returns: string
-      }
+      bytea_to_text: { Args: { data: string }; Returns: string }
+      get_application_status: { Args: { user_id: string }; Returns: string }
+      get_user_credentials: { Args: { user_id: string }; Returns: string }
       get_user_profile: {
         Args: { user_id: string }
         Returns: {
@@ -1069,6 +1138,12 @@ export type Database = {
           user_id: string
           zip_code: string | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "user_profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_user_profile_direct: {
         Args: { input_user_id: string }
@@ -1144,6 +1219,12 @@ export type Database = {
           user_id: string
           zip_code: string | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "user_profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_user_role: {
         Args: { user_id: string }
@@ -1159,27 +1240,77 @@ export type Database = {
       http: {
         Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "http_request"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      http_delete: {
-        Args:
-          | { content: string; content_type: string; uri: string }
-          | { uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
-      http_get: {
-        Args: { data: Json; uri: string } | { uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
+      http_delete:
+        | {
+            Args: { uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: { content: string; content_type: string; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+      http_get:
+        | {
+            Args: { uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: { data: Json; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       http_head: {
         Args: { uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       http_header: {
         Args: { field: string; value: string }
         Returns: Database["public"]["CompositeTypes"]["http_header"]
+        SetofOptions: {
+          from: "*"
+          to: "http_header"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       http_list_curlopt: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           curlopt: string
           value: string
@@ -1188,41 +1319,56 @@ export type Database = {
       http_patch: {
         Args: { content: string; content_type: string; uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      http_post: {
-        Args:
-          | { content: string; content_type: string; uri: string }
-          | { data: Json; uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
+      http_post:
+        | {
+            Args: { content: string; content_type: string; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: { data: Json; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       http_put: {
         Args: { content: string; content_type: string; uri: string }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      http_reset_curlopt: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      http_reset_curlopt: { Args: never; Returns: boolean }
       http_set_curlopt: {
         Args: { curlopt: string; value: string }
         Returns: boolean
       }
-      is_profile_owner: {
-        Args: { profile_user_id: string }
-        Returns: boolean
-      }
-      is_supervisor: {
-        Args: { check_user_id: string }
-        Returns: boolean
-      }
+      is_profile_owner: { Args: { profile_user_id: string }; Returns: boolean }
+      is_supervisor: { Args: { check_user_id: string }; Returns: boolean }
       is_user_on_probation: {
         Args: { input_user_id: string }
         Returns: boolean
       }
-      text_to_bytea: {
-        Args: { data: string }
-        Returns: string
-      }
+      text_to_bytea: { Args: { data: string }; Returns: string }
       update_billing_information: {
         Args: {
           p_account_holder_name: string
@@ -1252,10 +1398,20 @@ export type Database = {
         Args: { input_updates: Json; input_user_id: string }
         Returns: undefined
       }
-      urlencode: {
-        Args: { data: Json } | { string: string } | { string: string }
-        Returns: string
-      }
+      urlencode:
+        | { Args: { data: Json }; Returns: string }
+        | {
+            Args: { string: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
+        | {
+            Args: { string: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
     }
     Enums: {
       app_role: "agent" | "supervisor" | "admin"
@@ -1266,7 +1422,7 @@ export type Database = {
         value: string | null
       }
       http_request: {
-        method: unknown | null
+        method: unknown
         uri: string | null
         headers: Database["public"]["CompositeTypes"]["http_header"][] | null
         content_type: string | null

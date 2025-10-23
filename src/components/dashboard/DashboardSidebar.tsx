@@ -18,7 +18,8 @@ import {
   Info,
   DollarSign,
   MessageSquare,
-  BookOpen
+  BookOpen,
+  Phone
 } from 'lucide-react';
 
 export interface DashboardSidebarProps {
@@ -47,6 +48,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
 
   const unlockedItems = ['dashboard', 'billing', 'scripting', 'additional-training', 'logout'];
   const isItemUnlocked = (itemName: string) => unlockedItems.includes(itemName);
+  const isSupervisor = userProfile?.credentials === 'supervisor';
 
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -108,6 +110,13 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
           <BookOpen size={18} />
           <span>Additional Training</span>
         </Link>
+        
+        {isSupervisor && (
+          <Link to="/did-list" className={`nav-item ${activeItem === 'did-list' ? 'active' : ''}`}>
+            <Phone size={18} />
+            <span>DID List</span>
+          </Link>
+        )}
         
         <div className="nav-divider"></div>
         
