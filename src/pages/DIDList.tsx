@@ -47,7 +47,7 @@ export default function DIDList() {
   const [filters, setFilters] = useState({
     seller: "",
     vertical: "",
-    campaign_status: "",
+    campaign_status: "all",
   });
   const { toast } = useToast();
 
@@ -186,7 +186,7 @@ export default function DIDList() {
   const filteredData = didNumbers.filter((did) => {
     if (filters.seller && !did.seller?.toLowerCase().includes(filters.seller.toLowerCase())) return false;
     if (filters.vertical && !did.vertical?.toLowerCase().includes(filters.vertical.toLowerCase())) return false;
-    if (filters.campaign_status && did.campaign_status !== filters.campaign_status) return false;
+    if (filters.campaign_status && filters.campaign_status !== "all" && did.campaign_status !== filters.campaign_status) return false;
     return true;
   });
 
@@ -241,7 +241,7 @@ export default function DIDList() {
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All statuses</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
                 {uniqueStatuses.map((status) => (
                   <SelectItem key={status} value={status!}>
                     {status}
@@ -252,7 +252,7 @@ export default function DIDList() {
           </div>
           <Button
             variant="outline"
-            onClick={() => setFilters({ seller: "", vertical: "", campaign_status: "" })}
+            onClick={() => setFilters({ seller: "", vertical: "", campaign_status: "all" })}
           >
             Clear Filters
           </Button>
