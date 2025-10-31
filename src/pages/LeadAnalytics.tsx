@@ -271,6 +271,32 @@ export default function LeadAnalytics() {
     conversions: phoneSet.size,
   }));
 
+  // Conversion rate over 2 min by day
+  const conversionRateOver2MinByDay = filteredData.reduce((acc, call) => {
+    const day = format(new Date(call.start), "MMM dd");
+    if (!acc[day]) {
+      acc[day] = { callsOver2Min: 0, conversionsOver2Min: new Set<string>() };
+    }
+    
+    if (call.duration > 120) {
+      acc[day].callsOver2Min += 1;
+      
+      if (call.conversion_revenue && call.CID_num) {
+        const revenue = parseFloat(call.conversion_revenue.replace(/[$,]/g, ''));
+        if (!isNaN(revenue) && revenue > 0) {
+          acc[day].conversionsOver2Min.add(call.CID_num);
+        }
+      }
+    }
+    
+    return acc;
+  }, {} as Record<string, { callsOver2Min: number; conversionsOver2Min: Set<string> }>);
+
+  const conversionRateOver2MinByDayData = Object.entries(conversionRateOver2MinByDay).map(([day, data]) => ({
+    day,
+    conversionRate: data.callsOver2Min > 0 ? (data.conversionsOver2Min.size / data.callsOver2Min * 100) : 0,
+  }));
+
   // Call duration distribution by day
   const durationByDay = filteredData.reduce((acc, call) => {
     const day = format(new Date(call.start), "MMM dd");
@@ -814,7 +840,7 @@ export default function LeadAnalytics() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="day" stroke="#6b7280" />
                   <YAxis stroke="#6b7280" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
                   <Bar dataKey="calls" fill="#7c3aed" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -832,8 +858,29 @@ export default function LeadAnalytics() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="day" stroke="#6b7280" />
                   <YAxis stroke="#6b7280" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
                   <Line type="monotone" dataKey="conversions" stroke="#7c3aed" strokeWidth={3} dot={{ fill: "#581c87", r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Conversion Rate Over 2 Min by Day</CardTitle>
+              <CardDescription>Daily conversion rate for calls over 2 minutes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={conversionRateOver2MinByDayData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" unit="%" />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
+                    formatter={(value: number) => `${value.toFixed(1)}%`}
+                  />
+                  <Line type="monotone" dataKey="conversionRate" stroke="#22c55e" strokeWidth={3} dot={{ fill: "#16a34a", r: 5 }} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -853,7 +900,7 @@ export default function LeadAnalytics() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="day" stroke="#6b7280" />
                   <YAxis stroke="#6b7280" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
                   <Legend />
                   <Bar dataKey="under2min" stackId="a" fill="#c084fc" name="Under 2 min" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="over2min" stackId="a" fill="#581c87" name="Over 2 min" radius={[8, 8, 0, 0]} />
@@ -884,7 +931,7 @@ export default function LeadAnalytics() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
