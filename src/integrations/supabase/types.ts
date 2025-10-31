@@ -265,6 +265,129 @@ export type Database = {
         }
         Relationships: []
       }
+      calls_with_did: {
+        Row: {
+          cid_name: string | null
+          cid_num: string | null
+          conversion_actual_submits: number | null
+          conversion_additional_notes: string | null
+          conversion_building_height: string | null
+          conversion_contractors_allowed: string | null
+          conversion_customer_email_address: string | null
+          conversion_customer_name: string | null
+          conversion_customer_phone: string | null
+          conversion_customer_zip_code: string | null
+          conversion_email_address: string | null
+          conversion_home_or_business: string | null
+          conversion_insurance_covered: string | null
+          conversion_notes: string | null
+          conversion_phone_validation: string | null
+          conversion_refunds: string | null
+          conversion_revenue: string | null
+          conversion_roof_age: string | null
+          conversion_roof_problem: string | null
+          conversion_roof_size: string | null
+          conversion_roofing_type: string | null
+          conversion_supplier: string | null
+          conversion_timestamp: string | null
+          conversion_what_need_done: string | null
+          conversion_white_glove: string | null
+          created_at: string | null
+          did_campaign_status: string | null
+          did_lead_price: string | null
+          did_num: string | null
+          did_seller: string | null
+          did_system_config_notes: string | null
+          did_vertical: string | null
+          duration: number | null
+          id: string
+          last_status: string | null
+          row_hash: string | null
+          start: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cid_name?: string | null
+          cid_num?: string | null
+          conversion_actual_submits?: number | null
+          conversion_additional_notes?: string | null
+          conversion_building_height?: string | null
+          conversion_contractors_allowed?: string | null
+          conversion_customer_email_address?: string | null
+          conversion_customer_name?: string | null
+          conversion_customer_phone?: string | null
+          conversion_customer_zip_code?: string | null
+          conversion_email_address?: string | null
+          conversion_home_or_business?: string | null
+          conversion_insurance_covered?: string | null
+          conversion_notes?: string | null
+          conversion_phone_validation?: string | null
+          conversion_refunds?: string | null
+          conversion_revenue?: string | null
+          conversion_roof_age?: string | null
+          conversion_roof_problem?: string | null
+          conversion_roof_size?: string | null
+          conversion_roofing_type?: string | null
+          conversion_supplier?: string | null
+          conversion_timestamp?: string | null
+          conversion_what_need_done?: string | null
+          conversion_white_glove?: string | null
+          created_at?: string | null
+          did_campaign_status?: string | null
+          did_lead_price?: string | null
+          did_num?: string | null
+          did_seller?: string | null
+          did_system_config_notes?: string | null
+          did_vertical?: string | null
+          duration?: number | null
+          id?: string
+          last_status?: string | null
+          row_hash?: string | null
+          start?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cid_name?: string | null
+          cid_num?: string | null
+          conversion_actual_submits?: number | null
+          conversion_additional_notes?: string | null
+          conversion_building_height?: string | null
+          conversion_contractors_allowed?: string | null
+          conversion_customer_email_address?: string | null
+          conversion_customer_name?: string | null
+          conversion_customer_phone?: string | null
+          conversion_customer_zip_code?: string | null
+          conversion_email_address?: string | null
+          conversion_home_or_business?: string | null
+          conversion_insurance_covered?: string | null
+          conversion_notes?: string | null
+          conversion_phone_validation?: string | null
+          conversion_refunds?: string | null
+          conversion_revenue?: string | null
+          conversion_roof_age?: string | null
+          conversion_roof_problem?: string | null
+          conversion_roof_size?: string | null
+          conversion_roofing_type?: string | null
+          conversion_supplier?: string | null
+          conversion_timestamp?: string | null
+          conversion_what_need_done?: string | null
+          conversion_white_glove?: string | null
+          created_at?: string | null
+          did_campaign_status?: string | null
+          did_lead_price?: string | null
+          did_num?: string | null
+          did_seller?: string | null
+          did_system_config_notes?: string | null
+          did_vertical?: string | null
+          duration?: number | null
+          id?: string
+          last_status?: string | null
+          row_hash?: string | null
+          start?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       conversion_data: {
         Row: {
           "Actual Submits": number | null
