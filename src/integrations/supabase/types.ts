@@ -267,88 +267,92 @@ export type Database = {
       }
       conversion_data: {
         Row: {
-          actual_submits: number | null
-          anything_else_contractor_needs: string | null
+          "Actual Submits": number | null
+          "Anything else the contractor needs to know?": string | null
           created_at: string | null
-          customer_email_address: string | null
-          customer_name: string | null
-          customer_phone: string | null
-          customer_zip_code: string | null
-          email_address: string | null
-          how_big_is_roof: string | null
-          how_many_contractors_allowed: string | null
-          how_old_is_current_roof: string | null
-          how_tall_is_building: string | null
+          "Customer email address": string | null
+          "Customer Name": string | null
+          "Customer phone - Copy directly from RM": string | null
+          "Customer Zip Code": string | null
+          "Email Address": string | null
+          "How big is the roof?": string | null
+          "How many contractors are we allowed to contact?": string | null
+          "How old is the current roof?": string | null
+          "How tall is the building?": string | null
           id: string
-          is_home_or_business: string | null
-          is_work_covered_by_insurance: string | null
-          notes: string | null
-          phone_validation: string | null
-          refunds: string | null
-          revenue: string | null
-          supplier: string | null
-          timestamp: string | null
+          "Is this a home or a business?": string | null
+          "Is this work covered by insurance?": string | null
+          Notes: string | null
+          "Phone Validation": string | null
+          Refunds: string | null
+          Revenue: string | null
+          Supplier: string | null
+          Timestamp: string | null
           updated_at: string | null
-          what_do_you_need_done: string | null
-          what_is_wrong_with_roof: string | null
-          what_kind_of_roofing: string | null
-          white_glove: string | null
+          "What do you need done?": string | null
+          "What is wrong with your roof? (choose all that apply)": string | null
+          "What kind of roofing do you want?": string | null
+          "White Glove? ": string | null
         }
         Insert: {
-          actual_submits?: number | null
-          anything_else_contractor_needs?: string | null
+          "Actual Submits"?: number | null
+          "Anything else the contractor needs to know?"?: string | null
           created_at?: string | null
-          customer_email_address?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          customer_zip_code?: string | null
-          email_address?: string | null
-          how_big_is_roof?: string | null
-          how_many_contractors_allowed?: string | null
-          how_old_is_current_roof?: string | null
-          how_tall_is_building?: string | null
+          "Customer email address"?: string | null
+          "Customer Name"?: string | null
+          "Customer phone - Copy directly from RM"?: string | null
+          "Customer Zip Code"?: string | null
+          "Email Address"?: string | null
+          "How big is the roof?"?: string | null
+          "How many contractors are we allowed to contact?"?: string | null
+          "How old is the current roof?"?: string | null
+          "How tall is the building?"?: string | null
           id?: string
-          is_home_or_business?: string | null
-          is_work_covered_by_insurance?: string | null
-          notes?: string | null
-          phone_validation?: string | null
-          refunds?: string | null
-          revenue?: string | null
-          supplier?: string | null
-          timestamp?: string | null
+          "Is this a home or a business?"?: string | null
+          "Is this work covered by insurance?"?: string | null
+          Notes?: string | null
+          "Phone Validation"?: string | null
+          Refunds?: string | null
+          Revenue?: string | null
+          Supplier?: string | null
+          Timestamp?: string | null
           updated_at?: string | null
-          what_do_you_need_done?: string | null
-          what_is_wrong_with_roof?: string | null
-          what_kind_of_roofing?: string | null
-          white_glove?: string | null
+          "What do you need done?"?: string | null
+          "What is wrong with your roof? (choose all that apply)"?:
+            | string
+            | null
+          "What kind of roofing do you want?"?: string | null
+          "White Glove? "?: string | null
         }
         Update: {
-          actual_submits?: number | null
-          anything_else_contractor_needs?: string | null
+          "Actual Submits"?: number | null
+          "Anything else the contractor needs to know?"?: string | null
           created_at?: string | null
-          customer_email_address?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          customer_zip_code?: string | null
-          email_address?: string | null
-          how_big_is_roof?: string | null
-          how_many_contractors_allowed?: string | null
-          how_old_is_current_roof?: string | null
-          how_tall_is_building?: string | null
+          "Customer email address"?: string | null
+          "Customer Name"?: string | null
+          "Customer phone - Copy directly from RM"?: string | null
+          "Customer Zip Code"?: string | null
+          "Email Address"?: string | null
+          "How big is the roof?"?: string | null
+          "How many contractors are we allowed to contact?"?: string | null
+          "How old is the current roof?"?: string | null
+          "How tall is the building?"?: string | null
           id?: string
-          is_home_or_business?: string | null
-          is_work_covered_by_insurance?: string | null
-          notes?: string | null
-          phone_validation?: string | null
-          refunds?: string | null
-          revenue?: string | null
-          supplier?: string | null
-          timestamp?: string | null
+          "Is this a home or a business?"?: string | null
+          "Is this work covered by insurance?"?: string | null
+          Notes?: string | null
+          "Phone Validation"?: string | null
+          Refunds?: string | null
+          Revenue?: string | null
+          Supplier?: string | null
+          Timestamp?: string | null
           updated_at?: string | null
-          what_do_you_need_done?: string | null
-          what_is_wrong_with_roof?: string | null
-          what_kind_of_roofing?: string | null
-          white_glove?: string | null
+          "What do you need done?"?: string | null
+          "What is wrong with your roof? (choose all that apply)"?:
+            | string
+            | null
+          "What kind of roofing do you want?"?: string | null
+          "White Glove? "?: string | null
         }
         Relationships: []
       }
