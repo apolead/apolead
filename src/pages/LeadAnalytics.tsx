@@ -55,9 +55,6 @@ interface CallData {
   did_lead_price: string | null;
   conversion_revenue: string | null;
   lastStatus: string | null;
-  actual_submits?: number;
-  conversion_phone?: string;
-  conversion_revenue_amount?: number;
 }
 
 interface ExpandedProvider {
@@ -137,7 +134,7 @@ export default function LeadAnalytics() {
     try {
       setLoading(true);
       
-      // Fetch calls
+      // Fetch ONLY from calls_with_did table - no joins needed
       const { data: callsData, error: callsError } = await supabase
         .from("calls_with_did")
         .select("id, CID_num, DID_num, start, duration, did_seller, did_lead_price, conversion_revenue, lastStatus")
@@ -147,53 +144,7 @@ export default function LeadAnalytics() {
 
       if (callsError) throw callsError;
 
-      // Fetch conversions for the same date range
-      const { data: conversionsData, error: conversionsError } = await supabase
-        .from("conversion_data")
-        .select('"Customer phone - Copy directly from RM", "Actual Submits", "Revenue", "Timestamp"')
-        .gte('"Timestamp"', startDate.toISOString())
-        .lte('"Timestamp"', endDate.toISOString());
-
-      if (conversionsError) throw conversionsError;
-
-      // Create a map of phone numbers to conversions (normalize phone numbers)
-      const normalizePhone = (phone: string | null) => {
-        if (!phone) return '';
-        return phone.replace(/\D/g, ''); // Remove all non-digit characters
-      };
-
-      const conversionMap = new Map();
-      conversionsData?.forEach((conv: any) => {
-        const normalizedPhone = normalizePhone(conv["Customer phone - Copy directly from RM"]);
-        if (normalizedPhone) {
-          // Parse revenue - handle both string format with $ and plain numbers
-          let revenue = 0;
-          if (conv["Revenue"]) {
-            const revenueStr = String(conv["Revenue"]).replace(/[$,]/g, '');
-            revenue = parseFloat(revenueStr) || 0;
-          }
-          
-          conversionMap.set(normalizedPhone, {
-            actual_submits: conv["Actual Submits"] || 0,
-            revenue: revenue,
-          });
-        }
-      });
-
-      // Merge conversion data with calls
-      const mergedData = callsData?.map((call) => {
-        const normalizedPhone = normalizePhone(call.CID_num);
-        const conversion = conversionMap.get(normalizedPhone);
-        
-        return {
-          ...call,
-          actual_submits: conversion?.actual_submits || 0,
-          conversion_phone: normalizedPhone,
-          conversion_revenue_amount: conversion?.revenue || 0,
-        };
-      }) || [];
-
-      setCallData(mergedData);
+      setCallData(callsData || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -229,26 +180,33 @@ export default function LeadAnalytics() {
     return sum;
   }, 0);
 
-  // Calculate total revenue from conversion_data Revenue field
+  // Calculate total revenue from conversion_revenue column in calls_with_did
   const totalRevenue = filteredData.reduce((sum, call) => {
-    // Use the revenue from conversion_data (stored in actual_submits conversion object)
-    const conversionRevenue = (call as any).conversion_revenue_amount || 0;
-    return sum + conversionRevenue;
+    if (call.conversion_revenue) {
+      const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
+      const revenue = parseFloat(revenueStr);
+      return sum + (isNaN(revenue) ? 0 : revenue);
+    }
+    return sum;
   }, 0);
 
   // Calculate ROI
   const roi = totalCost > 0 ? ((totalRevenue - totalCost) / totalCost * 100) : 0;
 
-  // Calculate conversion rates (based on actual_submits from conversion_data)
+  // Calculate conversion rates (based on conversion_revenue field in calls_with_did)
   const callsWithConversion = filteredData.filter((c) => {
-    return c.actual_submits && c.actual_submits > 0;
+    if (!c.conversion_revenue) return false;
+    const revenue = parseFloat(c.conversion_revenue.replace(/[$,]/g, ''));
+    return !isNaN(revenue) && revenue > 0;
   }).length;
   const overallConversionRate = totalCalls > 0 ? (callsWithConversion / totalCalls * 100) : 0;
   
   const callsOver2Min = filteredData.filter((c) => c.duration > 120).length;
   const conversionsOver2Min = filteredData.filter((c) => {
     if (c.duration <= 120) return false;
-    return c.actual_submits && c.actual_submits > 0;
+    if (!c.conversion_revenue) return false;
+    const revenue = parseFloat(c.conversion_revenue.replace(/[$,]/g, ''));
+    return !isNaN(revenue) && revenue > 0;
   }).length;
   const conversionRateOver2Min = callsOver2Min > 0 ? (conversionsOver2Min / callsOver2Min * 100) : 0;
 
@@ -268,9 +226,11 @@ export default function LeadAnalytics() {
     calls: count,
   }));
 
-  // Conversions by day (based on actual_submits)
+  // Conversions by day (based on conversion_revenue in calls_with_did)
   const conversionsByDay = filteredData.reduce((acc, call) => {
-    if (!call.actual_submits || call.actual_submits <= 0) return acc;
+    if (!call.conversion_revenue) return acc;
+    const revenue = parseFloat(call.conversion_revenue.replace(/[$,]/g, ''));
+    if (isNaN(revenue) || revenue <= 0) return acc;
     
     const day = format(new Date(call.start), "MMM dd");
     acc[day] = (acc[day] || 0) + 1;
@@ -320,8 +280,10 @@ export default function LeadAnalytics() {
     }, 0);
 
     const revenue = providerCalls.reduce((sum, call) => {
-      const conversionRevenue = (call as any).conversion_revenue_amount || 0;
-      return sum + conversionRevenue;
+      if (!call.conversion_revenue) return sum;
+      const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
+      const rev = parseFloat(revenueStr);
+      return sum + (isNaN(rev) ? 0 : rev);
     }, 0);
 
     const providerROI = cost > 0 ? ((revenue - cost) / cost * 100) : 0;
@@ -939,9 +901,12 @@ export default function LeadAnalytics() {
                           format(new Date(c.start), "MMM dd") === day
                         );
                         const callsOver2Min = providerDayCalls.filter(c => c.duration > 120).length;
-                        const conversionsOver2Min = providerDayCalls.filter(c => 
-                          c.duration > 120 && c.actual_submits && c.actual_submits > 0
-                        ).length;
+                        const conversionsOver2Min = providerDayCalls.filter(c => {
+                          if (c.duration <= 120) return false;
+                          if (!c.conversion_revenue) return false;
+                          const revenue = parseFloat(c.conversion_revenue.replace(/[$,]/g, ''));
+                          return !isNaN(revenue) && revenue > 0;
+                        }).length;
                         const conversionRate = callsOver2Min > 0 ? (conversionsOver2Min / callsOver2Min) * 100 : 0;
                         
                         // Color based on conversion rate: 0% = purple (88, 28, 135), 100% = blue (124, 58, 237)
@@ -1070,7 +1035,7 @@ export default function LeadAnalytics() {
                                       <TableHead>Date/Time</TableHead>
                                       <TableHead className="text-right">Duration</TableHead>
                                       <TableHead className="text-right">Cost</TableHead>
-                                      <TableHead className="text-right">Submits</TableHead>
+                                      <TableHead className="text-right">Has Conversion</TableHead>
                                       <TableHead className="text-right">Revenue</TableHead>
                                     </TableRow>
                                   </TableHeader>
@@ -1079,7 +1044,9 @@ export default function LeadAnalytics() {
                                       const callCost = call.duration > 120 && call.did_lead_price 
                                         ? parseFloat(call.did_lead_price.replace(/[$,]/g, ''))
                                         : 0;
-                                      const callRevenue = (call as any).conversion_revenue_amount || 0;
+                                      const callRevenue = call.conversion_revenue 
+                                        ? parseFloat(call.conversion_revenue.replace(/[$,]/g, ''))
+                                        : 0;
                                       
                                       return (
                                         <TableRow key={call.id} className="text-xs">
@@ -1091,7 +1058,7 @@ export default function LeadAnalytics() {
                                             {callCost > 0 ? `$${callCost.toFixed(2)}` : '-'}
                                           </TableCell>
                                           <TableCell className="text-right">
-                                            {call.actual_submits || '-'}
+                                            {call.conversion_revenue ? 'Yes' : 'No'}
                                           </TableCell>
                                           <TableCell className="text-right font-medium">
                                             {callRevenue > 0 ? `$${callRevenue.toFixed(2)}` : '-'}
@@ -1104,7 +1071,7 @@ export default function LeadAnalytics() {
                               </div>
                               <div className="text-xs text-muted-foreground mt-2">
                                 Showing {providerCalls.length} total calls • 
-                                {' '}{providerCalls.filter(c => c.actual_submits && c.actual_submits > 0).length} with conversions
+                                {' '}{providerCalls.filter(c => c.conversion_revenue).length} with conversions
                               </div>
                             </div>
                           </TableCell>
