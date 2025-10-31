@@ -286,6 +286,7 @@ export type Database = {
           "Phone Validation": string | null
           Refunds: string | null
           Revenue: string | null
+          row_hash: string | null
           Supplier: string | null
           Timestamp: string | null
           updated_at: string | null
@@ -314,6 +315,7 @@ export type Database = {
           "Phone Validation"?: string | null
           Refunds?: string | null
           Revenue?: string | null
+          row_hash?: string | null
           Supplier?: string | null
           Timestamp?: string | null
           updated_at?: string | null
@@ -344,6 +346,7 @@ export type Database = {
           "Phone Validation"?: string | null
           Refunds?: string | null
           Revenue?: string | null
+          row_hash?: string | null
           Supplier?: string | null
           Timestamp?: string | null
           updated_at?: string | null
