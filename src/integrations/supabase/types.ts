@@ -265,6 +265,93 @@ export type Database = {
         }
         Relationships: []
       }
+      conversion_data: {
+        Row: {
+          actual_submits: number | null
+          anything_else_contractor_needs: string | null
+          created_at: string | null
+          customer_email_address: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          customer_zip_code: string | null
+          email_address: string | null
+          how_big_is_roof: string | null
+          how_many_contractors_allowed: string | null
+          how_old_is_current_roof: string | null
+          how_tall_is_building: string | null
+          id: string
+          is_home_or_business: string | null
+          is_work_covered_by_insurance: string | null
+          notes: string | null
+          phone_validation: string | null
+          refunds: string | null
+          revenue: string | null
+          supplier: string | null
+          timestamp: string | null
+          updated_at: string | null
+          what_do_you_need_done: string | null
+          what_is_wrong_with_roof: string | null
+          what_kind_of_roofing: string | null
+          white_glove: string | null
+        }
+        Insert: {
+          actual_submits?: number | null
+          anything_else_contractor_needs?: string | null
+          created_at?: string | null
+          customer_email_address?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          customer_zip_code?: string | null
+          email_address?: string | null
+          how_big_is_roof?: string | null
+          how_many_contractors_allowed?: string | null
+          how_old_is_current_roof?: string | null
+          how_tall_is_building?: string | null
+          id?: string
+          is_home_or_business?: string | null
+          is_work_covered_by_insurance?: string | null
+          notes?: string | null
+          phone_validation?: string | null
+          refunds?: string | null
+          revenue?: string | null
+          supplier?: string | null
+          timestamp?: string | null
+          updated_at?: string | null
+          what_do_you_need_done?: string | null
+          what_is_wrong_with_roof?: string | null
+          what_kind_of_roofing?: string | null
+          white_glove?: string | null
+        }
+        Update: {
+          actual_submits?: number | null
+          anything_else_contractor_needs?: string | null
+          created_at?: string | null
+          customer_email_address?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          customer_zip_code?: string | null
+          email_address?: string | null
+          how_big_is_roof?: string | null
+          how_many_contractors_allowed?: string | null
+          how_old_is_current_roof?: string | null
+          how_tall_is_building?: string | null
+          id?: string
+          is_home_or_business?: string | null
+          is_work_covered_by_insurance?: string | null
+          notes?: string | null
+          phone_validation?: string | null
+          refunds?: string | null
+          revenue?: string | null
+          supplier?: string | null
+          timestamp?: string | null
+          updated_at?: string | null
+          what_do_you_need_done?: string | null
+          what_is_wrong_with_roof?: string | null
+          what_kind_of_roofing?: string | null
+          white_glove?: string | null
+        }
+        Relationships: []
+      }
       credit_saint_lead_data: {
         Row: {
           created_at: string | null
