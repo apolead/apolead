@@ -74,6 +74,9 @@ export default function LeadAnalytics() {
   const [sortField, setSortField] = useState<keyof typeof providerStats[0]>("roi");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [expandedProviders, setExpandedProviders] = useState<ExpandedProvider>({});
+  const [conversionHeatmapExpanded, setConversionHeatmapExpanded] = useState(false);
+  const [roiHeatmapExpanded, setRoiHeatmapExpanded] = useState(false);
+  const [overallRoiExpanded, setOverallRoiExpanded] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -855,10 +858,18 @@ export default function LeadAnalytics() {
 
         {/* Provider Heatmap */}
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Provider Performance Heatmap</CardTitle>
-            <CardDescription>Conversion rate % by provider and day (Blue = High, Purple = Low)</CardDescription>
+          <CardHeader className="cursor-pointer" onClick={() => setConversionHeatmapExpanded(!conversionHeatmapExpanded)}>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Provider Performance Heatmap</CardTitle>
+                <CardDescription>Conversion rate % by provider and day (Blue = High, Purple = Low)</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm">
+                {conversionHeatmapExpanded ? '▼' : '▶'}
+              </Button>
+            </div>
           </CardHeader>
+          {conversionHeatmapExpanded && (
           <CardContent>
             <div className="overflow-x-auto">
               <div className="min-w-max">
@@ -956,14 +967,23 @@ export default function LeadAnalytics() {
               </div>
             </div>
           </CardContent>
+          )}
         </Card>
 
         {/* ROI Heatmap by Provider */}
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>ROI Heatmap by Provider</CardTitle>
-            <CardDescription>Daily ROI % by provider (Green = Positive, Red = Negative)</CardDescription>
+          <CardHeader className="cursor-pointer" onClick={() => setRoiHeatmapExpanded(!roiHeatmapExpanded)}>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>ROI Heatmap by Provider</CardTitle>
+                <CardDescription>Daily ROI % by provider (Green = Positive, Red = Negative)</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm">
+                {roiHeatmapExpanded ? '▼' : '▶'}
+              </Button>
+            </div>
           </CardHeader>
+          {roiHeatmapExpanded && (
           <CardContent>
             <div className="overflow-x-auto">
               <div className="min-w-max">
@@ -1073,14 +1093,23 @@ export default function LeadAnalytics() {
               </div>
             </div>
           </CardContent>
+          )}
         </Card>
 
         {/* Overall Average ROI by Day */}
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Overall Average ROI by Day</CardTitle>
-            <CardDescription>Combined ROI across all providers per day</CardDescription>
+          <CardHeader className="cursor-pointer" onClick={() => setOverallRoiExpanded(!overallRoiExpanded)}>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Overall Average ROI by Day</CardTitle>
+                <CardDescription>Combined ROI across all providers per day</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm">
+                {overallRoiExpanded ? '▼' : '▶'}
+              </Button>
+            </div>
           </CardHeader>
+          {overallRoiExpanded && (
           <CardContent>
             <div className="overflow-x-auto">
               <div className="min-w-max">
@@ -1198,6 +1227,7 @@ export default function LeadAnalytics() {
               </div>
             </div>
           </CardContent>
+          )}
         </Card>
 
         {/* Provider Performance Table */}
