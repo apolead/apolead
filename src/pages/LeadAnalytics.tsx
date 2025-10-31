@@ -299,9 +299,14 @@ export default function LeadAnalytics() {
     const providerCalls = filteredData.filter((c) => c.did_seller === provider);
     const providerCallsOver120 = providerCalls.filter((c) => c.duration > 120);
     
-    const cost = providerCallsOver120.reduce((sum, call) => {
-      const price = call.did_lead_price ? parseFloat(call.did_lead_price) : 0;
-      return sum + (isNaN(price) ? 0 : price);
+    // Calculate cost per call (each call over 120s has its own price)
+    const cost = providerCalls.reduce((sum, call) => {
+      if (call.duration > 120 && call.did_lead_price) {
+        const priceStr = call.did_lead_price.replace(/[$,]/g, '');
+        const price = parseFloat(priceStr);
+        return sum + (isNaN(price) ? 0 : price);
+      }
+      return sum;
     }, 0);
 
     const revenue = providerCalls.reduce((sum, call) => {
@@ -606,7 +611,6 @@ export default function LeadAnalytics() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="yesterday">Yesterday</SelectItem>
-                    <SelectItem value="today">Today</SelectItem>
                     <SelectItem value="7days">Last 7 Days</SelectItem>
                     <SelectItem value="30days">Last 30 Days</SelectItem>
                     <SelectItem value="custom">Custom Range</SelectItem>
@@ -875,42 +879,98 @@ export default function LeadAnalytics() {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Provider Performance Heatmap</CardTitle>
-            <CardDescription>Call duration distribution by provider across date range</CardDescription>
+            <CardDescription>Conversion rate % by provider and day (Blue = High, Purple = Low)</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {providerHeatmap.map((provider) => {
-                const days = Object.keys(provider.byDay);
-                const maxCalls = Math.max(...days.map(day => provider.byDay[day].under2min + provider.byDay[day].over2min));
+            <div className="overflow-x-auto">
+              <div className="min-w-max">
+                {/* Header Row - Days */}
+                <div className="flex mb-2">
+                  <div className="w-32 flex-shrink-0"></div>
+                  {Array.from(new Set(filteredData.map(c => format(new Date(c.start), "MMM dd"))))
+                    .sort((a, b) => {
+                      const dateA = new Date(a + " 2025");
+                      const dateB = new Date(b + " 2025");
+                      return dateA.getTime() - dateB.getTime();
+                    })
+                    .map((day) => (
+                      <div key={day} className="w-20 text-center text-xs font-medium px-1">
+                        {day}
+                      </div>
+                    ))}
+                </div>
                 
-                return (
-                  <div key={provider.provider} className="space-y-2">
-                    <h4 className="font-medium text-sm">{provider.provider}</h4>
-                    <div className="flex gap-1">
-                      {days.map((day) => {
-                        const data = provider.byDay[day];
+                {/* Provider Rows */}
+                {providerHeatmap.map((provider) => {
+                  const allDays = Array.from(new Set(filteredData.map(c => format(new Date(c.start), "MMM dd"))))
+                    .sort((a, b) => {
+                      const dateA = new Date(a + " 2025");
+                      const dateB = new Date(b + " 2025");
+                      return dateA.getTime() - dateB.getTime();
+                    });
+                  
+                  return (
+                    <div key={provider.provider} className="flex mb-1">
+                      <div className="w-32 flex-shrink-0 text-sm font-medium pr-2 flex items-center">
+                        {provider.provider}
+                      </div>
+                      {allDays.map((day) => {
+                        const data = provider.byDay[day] || { under2min: 0, over2min: 0 };
                         const total = data.under2min + data.over2min;
-                        const over2minPercent = total > 0 ? (data.over2min / total) * 100 : 0;
-                        const intensity = maxCalls > 0 ? (total / maxCalls) : 0;
+                        
+                        // Find conversions for this provider on this day
+                        const dayStart = new Date(day + " 2025");
+                        const providerDayCalls = filteredData.filter(c => 
+                          c.did_seller === provider.provider && 
+                          format(new Date(c.start), "MMM dd") === day
+                        );
+                        const conversions = providerDayCalls.filter(c => c.actual_submits && c.actual_submits > 0).length;
+                        const conversionRate = total > 0 ? (conversions / total) * 100 : 0;
+                        
+                        // Color based on conversion rate: 0% = purple (88, 28, 135), 100% = blue (124, 58, 237)
+                        const getColor = (rate: number) => {
+                          if (total === 0) return 'rgb(229, 231, 235)'; // gray if no calls
+                          if (rate === 0) return 'rgb(88, 28, 135)'; // dark purple
+                          if (rate < 10) return 'rgb(109, 40, 217)'; // purple
+                          if (rate < 20) return 'rgb(124, 58, 237)'; // violet
+                          if (rate < 30) return 'rgb(139, 92, 246)'; // light violet
+                          return 'rgb(167, 139, 250)'; // light blue/purple
+                        };
                         
                         return (
                           <div
                             key={day}
-                            className="flex-1 h-20 rounded flex flex-col justify-end p-1 text-xs text-white cursor-pointer hover:opacity-80 transition-opacity"
+                            className="w-20 h-12 border border-white flex items-center justify-center text-xs font-bold text-white cursor-pointer hover:opacity-80 transition-opacity"
                             style={{
-                              backgroundColor: over2minPercent > 50 ? `rgba(88, 28, 135, ${0.3 + intensity * 0.7})` : `rgba(192, 132, 252, ${0.3 + intensity * 0.7})`,
+                              backgroundColor: getColor(conversionRate),
                             }}
-                            title={`${day}: ${total} calls (${data.over2min} over 2min, ${data.under2min} under 2min)`}
+                            title={`${provider.provider} - ${day}: ${total} calls, ${conversions} conversions (${conversionRate.toFixed(1)}%)`}
                           >
-                            <div className="text-center font-bold">{total}</div>
-                            <div className="text-center text-xs opacity-75">{day}</div>
+                            {conversionRate > 0 ? `${conversionRate.toFixed(0)}%` : '-'}
                           </div>
                         );
                       })}
                     </div>
+                  );
+                })}
+                
+                {/* Legend */}
+                <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t">
+                  <span className="text-xs text-muted-foreground">Conversion Rate:</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-4" style={{ backgroundColor: 'rgb(88, 28, 135)' }}></div>
+                    <span className="text-xs">0%</span>
                   </div>
-                );
-              })}
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-4" style={{ backgroundColor: 'rgb(124, 58, 237)' }}></div>
+                    <span className="text-xs">~15%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-4" style={{ backgroundColor: 'rgb(167, 139, 250)' }}></div>
+                    <span className="text-xs">30%+</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
