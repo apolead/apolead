@@ -19,7 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
-import { Calendar as CalendarIcon, TrendingUp, TrendingDown, DollarSign, Phone, BarChart3, Search } from "lucide-react";
+import { Calendar as CalendarIcon, TrendingUp, TrendingDown, DollarSign, Phone, Download, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   BarChart,
@@ -77,6 +77,7 @@ export default function LeadAnalytics() {
   const [conversionHeatmapExpanded, setConversionHeatmapExpanded] = useState(false);
   const [roiHeatmapExpanded, setRoiHeatmapExpanded] = useState(false);
   const [overallRoiExpanded, setOverallRoiExpanded] = useState(false);
+  const [avgRevenueExpanded, setAvgRevenueExpanded] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -337,13 +338,18 @@ export default function LeadAnalytics() {
     { name: "Over 2 min", value: callsOver120s, color: "#581c87" },
   ];
 
-  // Provider distribution for calls over 2 min
-  const providerDistributionOver2Min = providers.map((provider) => {
+  // Provider distribution for calls over 2 min - use consistent purple palette
+  const purpleShades = [
+    "#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe",
+    "#6d28d9", "#5b21b6", "#4c1d95", "#9333ea", "#a855f7"
+  ];
+  
+  const providerDistributionOver2Min = providers.map((provider, index) => {
     const providerCallsOver2Min = filteredData.filter((c) => c.did_seller === provider && c.duration > 120).length;
     return {
       name: provider || "Unknown",
       value: providerCallsOver2Min,
-      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      color: purpleShades[index % purpleShades.length],
     };
   }).filter(p => p.value > 0);
 
@@ -402,6 +408,85 @@ export default function LeadAnalytics() {
     }
     return String(aValue).localeCompare(String(bValue)) * modifier;
   });
+
+  // Average revenue per call by provider over time
+  const avgRevenueByProviderOverTime = providers.map((provider) => {
+    const allDays = Array.from(new Set(filteredData.map(c => format(new Date(c.start), "MMM dd"))))
+      .sort((a, b) => {
+        const dateA = new Date(a + " 2025");
+        const dateB = new Date(b + " 2025");
+        return dateA.getTime() - dateB.getTime();
+      });
+    
+    const dataPoints = allDays.map(day => {
+      const dayCalls = filteredData.filter(c => 
+        c.did_seller === provider && 
+        format(new Date(c.start), "MMM dd") === day &&
+        c.duration > 120
+      );
+      
+      // Get unique revenue by phone
+      const revenueByPhone = dayCalls.reduce((acc, call) => {
+        if (call.conversion_revenue && call.CID_num) {
+          const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
+          const rev = parseFloat(revenueStr);
+          if (!isNaN(rev) && rev > 0) {
+            if (!acc[call.CID_num]) {
+              acc[call.CID_num] = rev;
+            }
+          }
+        }
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const totalRevenue = Object.values(revenueByPhone).reduce((sum, rev) => sum + rev, 0);
+      const callCount = dayCalls.length;
+      const avgRevenue = callCount > 0 ? totalRevenue / callCount : 0;
+      
+      return avgRevenue;
+    });
+    
+    return {
+      provider,
+      data: allDays.map((day, index) => ({
+        day,
+        avgRevenue: dataPoints[index]
+      }))
+    };
+  });
+
+  // Export charts functionality
+  const handleExportCharts = async () => {
+    toast({
+      title: "Exporting...",
+      description: "Preparing charts for download",
+    });
+    
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const chartsContainer = document.querySelector('.charts-container');
+      
+      if (chartsContainer) {
+        const canvas = await html2canvas(chartsContainer as HTMLElement);
+        const link = document.createElement('a');
+        link.download = 'analytics-charts.png';
+        link.href = canvas.toDataURL();
+        link.click();
+        
+        toast({
+          title: "Success",
+          description: "Charts exported successfully",
+        });
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export charts",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Provider heatmap data - calls distribution by provider and day
   const providerHeatmap = providers.map((provider) => {
