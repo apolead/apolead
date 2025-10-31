@@ -958,6 +958,248 @@ export default function LeadAnalytics() {
           </CardContent>
         </Card>
 
+        {/* ROI Heatmap by Provider */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>ROI Heatmap by Provider</CardTitle>
+            <CardDescription>Daily ROI % by provider (Green = Positive, Red = Negative)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <div className="min-w-max">
+                {/* Header Row - Days */}
+                <div className="flex mb-2">
+                  <div className="w-32 flex-shrink-0"></div>
+                  {Array.from(new Set(filteredData.map(c => format(new Date(c.start), "MMM dd"))))
+                    .sort((a, b) => {
+                      const dateA = new Date(a + " 2025");
+                      const dateB = new Date(b + " 2025");
+                      return dateA.getTime() - dateB.getTime();
+                    })
+                    .map((day) => (
+                      <div key={day} className="w-20 text-center text-xs font-medium px-1">
+                        {day}
+                      </div>
+                    ))}
+                </div>
+                
+                {/* Provider Rows */}
+                {providers.map((provider) => {
+                  const allDays = Array.from(new Set(filteredData.map(c => format(new Date(c.start), "MMM dd"))))
+                    .sort((a, b) => {
+                      const dateA = new Date(a + " 2025");
+                      const dateB = new Date(b + " 2025");
+                      return dateA.getTime() - dateB.getTime();
+                    });
+                  
+                  return (
+                    <div key={provider} className="flex mb-1">
+                      <div className="w-32 flex-shrink-0 text-sm font-medium pr-2 flex items-center">
+                        {provider}
+                      </div>
+                      {allDays.map((day) => {
+                        // Calculate ROI for this provider on this day
+                        const providerDayCalls = filteredData.filter(c => 
+                          c.did_seller === provider && 
+                          format(new Date(c.start), "MMM dd") === day
+                        );
+                        
+                        const dayCost = providerDayCalls.reduce((sum, call) => {
+                          if (call.duration > 120 && call.did_lead_price) {
+                            const price = parseFloat(call.did_lead_price.replace(/[$,]/g, ''));
+                            return sum + (isNaN(price) ? 0 : price);
+                          }
+                          return sum;
+                        }, 0);
+                        
+                        const dayRevenue = providerDayCalls.reduce((sum, call) => {
+                          if (call.conversion_revenue) {
+                            const revenue = parseFloat(call.conversion_revenue.replace(/[$,]/g, ''));
+                            return sum + (isNaN(revenue) ? 0 : revenue);
+                          }
+                          return sum;
+                        }, 0);
+                        
+                        const dayROI = dayCost > 0 ? ((dayRevenue - dayCost) / dayCost * 100) : 0;
+                        
+                        // Color based on ROI: negative = red, positive = green
+                        const getColor = (roi: number) => {
+                          if (dayCost === 0) return 'rgb(229, 231, 235)'; // gray if no paid calls
+                          if (roi < -50) return 'rgb(153, 27, 27)'; // dark red
+                          if (roi < -25) return 'rgb(185, 28, 28)'; // red
+                          if (roi < 0) return 'rgb(239, 68, 68)'; // light red
+                          if (roi < 25) return 'rgb(34, 197, 94)'; // light green
+                          if (roi < 50) return 'rgb(22, 163, 74)'; // green
+                          return 'rgb(21, 128, 61)'; // dark green
+                        };
+                        
+                        return (
+                          <div
+                            key={day}
+                            className="w-20 h-12 border border-white flex items-center justify-center text-xs font-bold text-white cursor-pointer hover:opacity-80 transition-opacity"
+                            style={{
+                              backgroundColor: getColor(dayROI),
+                            }}
+                            title={`${provider} - ${day}: Cost: $${dayCost.toFixed(2)}, Revenue: $${dayRevenue.toFixed(2)}, ROI: ${dayROI.toFixed(1)}%`}
+                          >
+                            {dayCost > 0 ? `${dayROI.toFixed(0)}%` : '-'}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+                
+                {/* Legend */}
+                <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t">
+                  <span className="text-xs text-muted-foreground">ROI:</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-4" style={{ backgroundColor: 'rgb(153, 27, 27)' }}></div>
+                    <span className="text-xs">{'<'}-50%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-4" style={{ backgroundColor: 'rgb(239, 68, 68)' }}></div>
+                    <span className="text-xs">-25%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-4" style={{ backgroundColor: 'rgb(34, 197, 94)' }}></div>
+                    <span className="text-xs">0%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-4" style={{ backgroundColor: 'rgb(21, 128, 61)' }}></div>
+                    <span className="text-xs">50%+</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Overall Average ROI by Day */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Overall Average ROI by Day</CardTitle>
+            <CardDescription>Combined ROI across all providers per day</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <div className="min-w-max">
+                {/* Header Row - Days */}
+                <div className="flex mb-2">
+                  <div className="w-32 flex-shrink-0 text-sm font-medium">All Providers</div>
+                  {Array.from(new Set(filteredData.map(c => format(new Date(c.start), "MMM dd"))))
+                    .sort((a, b) => {
+                      const dateA = new Date(a + " 2025");
+                      const dateB = new Date(b + " 2025");
+                      return dateA.getTime() - dateB.getTime();
+                    })
+                    .map((day) => (
+                      <div key={day} className="w-20 text-center text-xs font-medium px-1">
+                        {day}
+                      </div>
+                    ))}
+                </div>
+                
+                {/* Overall ROI Row */}
+                <div className="flex mb-1">
+                  <div className="w-32 flex-shrink-0"></div>
+                  {Array.from(new Set(filteredData.map(c => format(new Date(c.start), "MMM dd"))))
+                    .sort((a, b) => {
+                      const dateA = new Date(a + " 2025");
+                      const dateB = new Date(b + " 2025");
+                      return dateA.getTime() - dateB.getTime();
+                    })
+                    .map((day) => {
+                      // Calculate overall ROI for this day across all providers
+                      const dayCalls = filteredData.filter(c => 
+                        format(new Date(c.start), "MMM dd") === day
+                      );
+                      
+                      const dayCost = dayCalls.reduce((sum, call) => {
+                        if (call.duration > 120 && call.did_lead_price) {
+                          const price = parseFloat(call.did_lead_price.replace(/[$,]/g, ''));
+                          return sum + (isNaN(price) ? 0 : price);
+                        }
+                        return sum;
+                      }, 0);
+                      
+                      const dayRevenue = dayCalls.reduce((sum, call) => {
+                        if (call.conversion_revenue) {
+                          const revenue = parseFloat(call.conversion_revenue.replace(/[$,]/g, ''));
+                          return sum + (isNaN(revenue) ? 0 : revenue);
+                        }
+                        return sum;
+                      }, 0);
+                      
+                      const dayROI = dayCost > 0 ? ((dayRevenue - dayCost) / dayCost * 100) : 0;
+                      
+                      // Color based on ROI: negative = red, positive = green
+                      const getColor = (roi: number) => {
+                        if (dayCost === 0) return 'rgb(229, 231, 235)'; // gray if no paid calls
+                        if (roi < -50) return 'rgb(153, 27, 27)'; // dark red
+                        if (roi < -25) return 'rgb(185, 28, 28)'; // red
+                        if (roi < 0) return 'rgb(239, 68, 68)'; // light red
+                        if (roi < 25) return 'rgb(34, 197, 94)'; // light green
+                        if (roi < 50) return 'rgb(22, 163, 74)'; // green
+                        return 'rgb(21, 128, 61)'; // dark green
+                      };
+                      
+                      return (
+                        <div
+                          key={day}
+                          className="w-20 h-16 border border-white flex items-center justify-center text-sm font-bold text-white cursor-pointer hover:opacity-80 transition-opacity"
+                          style={{
+                            backgroundColor: getColor(dayROI),
+                          }}
+                          title={`${day}: Cost: $${dayCost.toFixed(2)}, Revenue: $${dayRevenue.toFixed(2)}, ROI: ${dayROI.toFixed(1)}%`}
+                        >
+                          {dayCost > 0 ? `${dayROI.toFixed(0)}%` : '-'}
+                        </div>
+                      );
+                    })}
+                </div>
+                
+                {/* Stats Row */}
+                <div className="flex mt-2 pt-2 border-t">
+                  <div className="w-32 flex-shrink-0 text-xs font-medium text-muted-foreground">Stats</div>
+                  {Array.from(new Set(filteredData.map(c => format(new Date(c.start), "MMM dd"))))
+                    .sort((a, b) => {
+                      const dateA = new Date(a + " 2025");
+                      const dateB = new Date(b + " 2025");
+                      return dateA.getTime() - dateB.getTime();
+                    })
+                    .map((day) => {
+                      const dayCalls = filteredData.filter(c => 
+                        format(new Date(c.start), "MMM dd") === day
+                      );
+                      const dayCost = dayCalls.reduce((sum, call) => {
+                        if (call.duration > 120 && call.did_lead_price) {
+                          const price = parseFloat(call.did_lead_price.replace(/[$,]/g, ''));
+                          return sum + (isNaN(price) ? 0 : price);
+                        }
+                        return sum;
+                      }, 0);
+                      const dayRevenue = dayCalls.reduce((sum, call) => {
+                        if (call.conversion_revenue) {
+                          const revenue = parseFloat(call.conversion_revenue.replace(/[$,]/g, ''));
+                          return sum + (isNaN(revenue) ? 0 : revenue);
+                        }
+                        return sum;
+                      }, 0);
+                      
+                      return (
+                        <div key={day} className="w-20 text-center text-xs px-1">
+                          <div className="text-muted-foreground">Cost: ${dayCost.toFixed(0)}</div>
+                          <div className="text-muted-foreground">Rev: ${dayRevenue.toFixed(0)}</div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Provider Performance Table */}
         <Card className="mb-6">
           <CardHeader>
