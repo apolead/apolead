@@ -383,6 +383,20 @@ export default function DIDList() {
             <i className="fas fa-phone" style={{ marginRight: sidebarCollapsed ? 0 : '12px' }}></i>
             {!sidebarCollapsed && <span>DID List</span>}
           </a>
+
+          <a href="/lead-analytics" className="nav-item" style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: sidebarCollapsed ? '12px 0' : '12px 20px',
+            color: '#64748b',
+            textDecoration: 'none',
+            marginBottom: '8px',
+            borderRadius: '10px',
+            width: '100%',
+          }}>
+            <i className="fas fa-chart-line" style={{ marginRight: sidebarCollapsed ? 0 : '12px' }}></i>
+            {!sidebarCollapsed && <span>Lead Analytics</span>}
+          </a>
           
           <a href="#" className="nav-item" style={{
             display: 'flex',

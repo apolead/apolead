@@ -27,6 +27,7 @@ import Scripting from "./pages/Scripting";
 import AdditionalTraining from "./pages/AdditionalTraining";
 import WaitlistConfirmed from "./pages/WaitlistConfirmed";
 import HealthCheck from "./pages/HealthCheck";
+import LeadAnalytics from "./pages/LeadAnalytics";
 import DIDList from "./pages/DIDList";
 
 const queryClient = new QueryClient();
@@ -311,6 +312,11 @@ const AuthWrapper = () => {
       <Route path="/did-list" element={
         <SupervisorRoute>
           <DIDList />
+        </SupervisorRoute>
+      } />
+      <Route path="/lead-analytics" element={
+        <SupervisorRoute>
+          <LeadAnalytics />
         </SupervisorRoute>
       } />
       <Route path="/confirmation" element={<ConfirmationScreen />} />
