@@ -174,7 +174,8 @@ export default function LeadAnalytics() {
   // Calculate total cost (only for calls > 120s)
   const totalCost = filteredData.reduce((sum, call) => {
     if (call.duration > 120 && call.did_lead_price) {
-      const price = parseFloat(call.did_lead_price);
+      const priceStr = call.did_lead_price.replace(/[$,]/g, '');
+      const price = parseFloat(priceStr);
       return sum + (isNaN(price) ? 0 : price);
     }
     return sum;
@@ -673,60 +674,60 @@ export default function LeadAnalytics() {
         </Card>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Calls</CardTitle>
-              <Phone className="h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
+              <CardTitle className="text-xs font-medium">Total Calls</CardTitle>
+              <Phone className="h-3 w-3 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalCalls}</div>
-              <p className="text-xs text-muted-foreground">
-                Avg {avgCallsPerDay.toFixed(1)} per day
+            <CardContent className="px-4 pb-3">
+              <div className="text-xl font-bold">{totalCalls}</div>
+              <p className="text-[10px] text-muted-foreground">
+                Avg {avgCallsPerDay.toFixed(1)}/day
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-600" />
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
+              <CardTitle className="text-xs font-medium">Revenue</CardTitle>
+              <DollarSign className="h-3 w-3 text-green-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">
-                From {callsWithConversion} conversions
+            <CardContent className="px-4 pb-3">
+              <div className="text-xl font-bold text-green-600">${totalRevenue.toFixed(2)}</div>
+              <p className="text-[10px] text-muted-foreground">
+                {callsWithConversion} conversions
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Cost</CardTitle>
-              <DollarSign className="h-4 w-4 text-red-600" />
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
+              <CardTitle className="text-xs font-medium">Cost</CardTitle>
+              <DollarSign className="h-3 w-3 text-red-600" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalCost.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">
-                {callsOver120s} paid leads ({'>'}2min)
+            <CardContent className="px-4 pb-3">
+              <div className="text-xl font-bold text-red-600">${totalCost.toFixed(2)}</div>
+              <p className="text-[10px] text-muted-foreground">
+                {callsOver120s} paid ({'>'}2min)
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">ROI</CardTitle>
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-4">
+              <CardTitle className="text-xs font-medium">ROI</CardTitle>
               {roi >= 0 ? (
-                <TrendingUp className="h-4 w-4 text-green-600" />
+                <TrendingUp className="h-3 w-3 text-green-600" />
               ) : (
-                <TrendingDown className="h-4 w-4 text-red-600" />
+                <TrendingDown className="h-3 w-3 text-red-600" />
               )}
             </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <CardContent className="px-4 pb-3">
+              <div className={`text-xl font-bold ${roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {roi.toFixed(1)}%
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] text-muted-foreground">
                 Profit: ${(totalRevenue - totalCost).toFixed(2)}
               </p>
             </CardContent>
