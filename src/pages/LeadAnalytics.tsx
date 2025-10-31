@@ -185,11 +185,20 @@ export default function LeadAnalytics() {
   const roi = totalCost > 0 ? ((totalRevenue - totalCost) / totalCost * 100) : 0;
 
   // Calculate conversion rates
-  const callsWithConversion = filteredData.filter((c) => c.conversion_revenue && parseFloat(c.conversion_revenue) > 0).length;
+  const callsWithConversion = filteredData.filter((c) => {
+    if (!c.conversion_revenue) return false;
+    const revenue = parseFloat(c.conversion_revenue);
+    return !isNaN(revenue) && revenue > 0;
+  }).length;
   const overallConversionRate = totalCalls > 0 ? (callsWithConversion / totalCalls * 100) : 0;
   
   const callsOver2Min = filteredData.filter((c) => c.duration > 120).length;
-  const conversionsOver2Min = filteredData.filter((c) => c.duration > 120 && c.conversion_revenue && parseFloat(c.conversion_revenue) > 0).length;
+  const conversionsOver2Min = filteredData.filter((c) => {
+    if (c.duration <= 120) return false;
+    if (!c.conversion_revenue) return false;
+    const revenue = parseFloat(c.conversion_revenue);
+    return !isNaN(revenue) && revenue > 0;
+  }).length;
   const conversionRateOver2Min = callsOver2Min > 0 ? (conversionsOver2Min / callsOver2Min * 100) : 0;
 
   // Calculate average calls per day
@@ -210,10 +219,12 @@ export default function LeadAnalytics() {
 
   // Conversions by day
   const conversionsByDay = filteredData.reduce((acc, call) => {
+    if (!call.conversion_revenue) return acc;
+    const revenue = parseFloat(call.conversion_revenue);
+    if (isNaN(revenue) || revenue <= 0) return acc;
+    
     const day = format(new Date(call.start), "MMM dd");
-    if (call.conversion_revenue && parseFloat(call.conversion_revenue) > 0) {
-      acc[day] = (acc[day] || 0) + 1;
-    }
+    acc[day] = (acc[day] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -873,32 +884,32 @@ export default function LeadAnalytics() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("provider")}>
+                  <TableHead className="cursor-pointer hover:bg-primary/10" onClick={() => handleSort("provider")}>
                     Provider {sortField === "provider" && (sortDirection === "asc" ? "↑" : "↓")}
                   </TableHead>
-                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("totalCalls")}>
+                  <TableHead className="text-right cursor-pointer hover:bg-primary/10" onClick={() => handleSort("totalCalls")}>
                     Total Calls {sortField === "totalCalls" && (sortDirection === "asc" ? "↑" : "↓")}
                   </TableHead>
-                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("paidCalls")}>
+                  <TableHead className="text-right cursor-pointer hover:bg-primary/10" onClick={() => handleSort("paidCalls")}>
                     Paid Calls {sortField === "paidCalls" && (sortDirection === "asc" ? "↑" : "↓")}
                   </TableHead>
-                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("cost")}>
+                  <TableHead className="text-right cursor-pointer hover:bg-primary/10" onClick={() => handleSort("cost")}>
                     Cost {sortField === "cost" && (sortDirection === "asc" ? "↑" : "↓")}
                   </TableHead>
-                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("revenue")}>
+                  <TableHead className="text-right cursor-pointer hover:bg-primary/10" onClick={() => handleSort("revenue")}>
                     Revenue {sortField === "revenue" && (sortDirection === "asc" ? "↑" : "↓")}
                   </TableHead>
-                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("profit")}>
+                  <TableHead className="text-right cursor-pointer hover:bg-primary/10" onClick={() => handleSort("profit")}>
                     Profit {sortField === "profit" && (sortDirection === "asc" ? "↑" : "↓")}
                   </TableHead>
-                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("roi")}>
+                  <TableHead className="text-right cursor-pointer hover:bg-primary/10" onClick={() => handleSort("roi")}>
                     ROI {sortField === "roi" && (sortDirection === "asc" ? "↑" : "↓")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {sortedProviderStats.map((stat) => (
-                  <TableRow key={stat.provider}>
+                  <TableRow key={stat.provider} className="hover:bg-primary/5">
                     <TableCell className="font-medium">{stat.provider}</TableCell>
                     <TableCell className="text-right">{stat.totalCalls}</TableCell>
                     <TableCell className="text-right">{stat.paidCalls}</TableCell>
