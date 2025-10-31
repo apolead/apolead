@@ -61,11 +61,14 @@ export default function LeadAnalytics() {
   const [callData, setCallData] = useState<CallData[]>([]);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [dateRange, setDateRange] = useState<"today" | "7days" | "30days" | "custom">("today");
-  const [startDate, setStartDate] = useState<Date>(startOfDay(new Date()));
-  const [endDate, setEndDate] = useState<Date>(endOfDay(new Date()));
+  const [dateRange, setDateRange] = useState<"yesterday" | "today" | "7days" | "30days" | "custom">("yesterday");
+  const yesterday = subDays(new Date(), 1);
+  const [startDate, setStartDate] = useState<Date>(startOfDay(yesterday));
+  const [endDate, setEndDate] = useState<Date>(endOfDay(yesterday));
   const [selectedProvider, setSelectedProvider] = useState<string>("all");
   const [phoneSearch, setPhoneSearch] = useState("");
+  const [sortField, setSortField] = useState<keyof typeof providerStats[0]>("roi");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -97,7 +100,12 @@ export default function LeadAnalytics() {
   useEffect(() => {
     // Set date range based on selection
     const now = new Date();
+    const yesterday = subDays(now, 1);
     switch (dateRange) {
+      case "yesterday":
+        setStartDate(startOfDay(yesterday));
+        setEndDate(endOfDay(yesterday));
+        break;
       case "today":
         setStartDate(startOfDay(now));
         setEndDate(endOfDay(now));
@@ -158,7 +166,8 @@ export default function LeadAnalytics() {
   // Calculate total cost (only for calls > 120s)
   const totalCost = filteredData.reduce((sum, call) => {
     if (call.duration > 120 && call.did_lead_price) {
-      return sum + parseFloat(call.did_lead_price);
+      const price = parseFloat(call.did_lead_price);
+      return sum + (isNaN(price) ? 0 : price);
     }
     return sum;
   }, 0);
@@ -199,10 +208,40 @@ export default function LeadAnalytics() {
     calls: count,
   }));
 
+  // Conversions by day
+  const conversionsByDay = filteredData.reduce((acc, call) => {
+    const day = format(new Date(call.start), "MMM dd");
+    if (call.conversion_revenue && parseFloat(call.conversion_revenue) > 0) {
+      acc[day] = (acc[day] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  const conversionsByDayData = Object.entries(conversionsByDay).map(([day, count]) => ({
+    day,
+    conversions: count,
+  }));
+
+  // Call duration distribution by day
+  const durationByDay = filteredData.reduce((acc, call) => {
+    const day = format(new Date(call.start), "MMM dd");
+    if (!acc[day]) {
+      acc[day] = { day, under2min: 0, over2min: 0 };
+    }
+    if (call.duration > 120) {
+      acc[day].over2min += 1;
+    } else {
+      acc[day].under2min += 1;
+    }
+    return acc;
+  }, {} as Record<string, { day: string; under2min: number; over2min: number }>);
+
+  const durationByDayData = Object.values(durationByDay);
+
   // Duration distribution
   const durationDistribution = [
-    { name: "Under 2 min", value: callsUnder120s, color: "hsl(var(--chart-1))" },
-    { name: "Over 2 min", value: callsOver120s, color: "hsl(var(--chart-2))" },
+    { name: "Under 2 min", value: callsUnder120s, color: "#7c3aed" },
+    { name: "Over 2 min", value: callsOver120s, color: "#581c87" },
   ];
 
   // Provider analytics
@@ -211,7 +250,8 @@ export default function LeadAnalytics() {
     const providerCallsOver120 = providerCalls.filter((c) => c.duration > 120);
     
     const cost = providerCallsOver120.reduce((sum, call) => {
-      return sum + (call.did_lead_price ? parseFloat(call.did_lead_price) : 0);
+      const price = call.did_lead_price ? parseFloat(call.did_lead_price) : 0;
+      return sum + (isNaN(price) ? 0 : price);
     }, 0);
 
     const revenue = providerCalls.reduce((sum, call) => {
@@ -230,17 +270,60 @@ export default function LeadAnalytics() {
       roi: providerROI,
       profit: revenue - cost,
     };
-  }).sort((a, b) => b.roi - a.roi);
+  });
+
+  // Sort provider stats
+  const sortedProviderStats = [...providerStats].sort((a, b) => {
+    const aValue = a[sortField];
+    const bValue = b[sortField];
+    const modifier = sortDirection === "asc" ? 1 : -1;
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return (aValue - bValue) * modifier;
+    }
+    return String(aValue).localeCompare(String(bValue)) * modifier;
+  });
+
+  // Provider heatmap data - calls distribution by provider and day
+  const providerHeatmap = providers.map((provider) => {
+    const providerData = filteredData.filter((c) => c.did_seller === provider);
+    const byDay = providerData.reduce((acc, call) => {
+      const day = format(new Date(call.start), "MMM dd");
+      if (!acc[day]) {
+        acc[day] = { under2min: 0, over2min: 0 };
+      }
+      if (call.duration > 120) {
+        acc[day].over2min += 1;
+      } else {
+        acc[day].under2min += 1;
+      }
+      return acc;
+    }, {} as Record<string, { under2min: number; over2min: number }>);
+
+    return {
+      provider: provider || "Unknown",
+      byDay,
+    };
+  });
 
   // Spending by day per provider
   const spendingByDay = filteredData.reduce((acc, call) => {
     if (call.duration > 120 && call.did_lead_price && call.did_seller) {
       const day = format(new Date(call.start), "MMM dd");
       if (!acc[day]) acc[day] = {};
-      acc[day][call.did_seller] = (acc[day][call.did_seller] || 0) + parseFloat(call.did_lead_price);
+      const price = parseFloat(call.did_lead_price);
+      acc[day][call.did_seller] = (acc[day][call.did_seller] || 0) + (isNaN(price) ? 0 : price);
     }
     return acc;
   }, {} as Record<string, Record<string, number>>);
+
+  const handleSort = (field: keyof typeof providerStats[0]) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("desc");
+    }
+  };
 
   if (loading) {
     return (
@@ -470,6 +553,7 @@ export default function LeadAnalytics() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="yesterday">Yesterday</SelectItem>
                     <SelectItem value="today">Today</SelectItem>
                     <SelectItem value="7days">Last 7 Days</SelectItem>
                     <SelectItem value="30days">Last 30 Days</SelectItem>
@@ -655,11 +739,52 @@ export default function LeadAnalytics() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={callsByDayData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="calls" fill="hsl(var(--primary))" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
+                  <Bar dataKey="calls" fill="#7c3aed" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Conversions by Day</CardTitle>
+              <CardDescription>Daily conversion volume</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={conversionsByDayData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
+                  <Line type="monotone" dataKey="conversions" stroke="#7c3aed" strokeWidth={3} dot={{ fill: "#581c87", r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Duration Distribution Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Call Duration Split by Day</CardTitle>
+              <CardDescription>Under vs over 2 minutes per day</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={durationByDayData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
+                  <Legend />
+                  <Bar dataKey="under2min" stackId="a" fill="#c084fc" name="Under 2 min" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="over2min" stackId="a" fill="#581c87" name="Over 2 min" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -668,7 +793,7 @@ export default function LeadAnalytics() {
           <Card>
             <CardHeader>
               <CardTitle>Call Duration Distribution</CardTitle>
-              <CardDescription>Under vs over 2 minutes</CardDescription>
+              <CardDescription>Overall split</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -687,12 +812,56 @@ export default function LeadAnalytics() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
+
+        {/* Provider Heatmap */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Provider Performance Heatmap</CardTitle>
+            <CardDescription>Call duration distribution by provider across date range</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {providerHeatmap.map((provider) => {
+                const days = Object.keys(provider.byDay);
+                const maxCalls = Math.max(...days.map(day => provider.byDay[day].under2min + provider.byDay[day].over2min));
+                
+                return (
+                  <div key={provider.provider} className="space-y-2">
+                    <h4 className="font-medium text-sm">{provider.provider}</h4>
+                    <div className="flex gap-1">
+                      {days.map((day) => {
+                        const data = provider.byDay[day];
+                        const total = data.under2min + data.over2min;
+                        const over2minPercent = total > 0 ? (data.over2min / total) * 100 : 0;
+                        const intensity = maxCalls > 0 ? (total / maxCalls) : 0;
+                        
+                        return (
+                          <div
+                            key={day}
+                            className="flex-1 h-20 rounded flex flex-col justify-end p-1 text-xs text-white cursor-pointer hover:opacity-80 transition-opacity"
+                            style={{
+                              backgroundColor: over2minPercent > 50 ? `rgba(88, 28, 135, ${0.3 + intensity * 0.7})` : `rgba(192, 132, 252, ${0.3 + intensity * 0.7})`,
+                            }}
+                            title={`${day}: ${total} calls (${data.over2min} over 2min, ${data.under2min} under 2min)`}
+                          >
+                            <div className="text-center font-bold">{total}</div>
+                            <div className="text-center text-xs opacity-75">{day}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Provider Performance Table */}
         <Card className="mb-6">
@@ -704,17 +873,31 @@ export default function LeadAnalytics() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Provider</TableHead>
-                  <TableHead className="text-right">Total Calls</TableHead>
-                  <TableHead className="text-right">Paid Calls</TableHead>
-                  <TableHead className="text-right">Cost</TableHead>
-                  <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead className="text-right">Profit</TableHead>
-                  <TableHead className="text-right">ROI</TableHead>
+                  <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("provider")}>
+                    Provider {sortField === "provider" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("totalCalls")}>
+                    Total Calls {sortField === "totalCalls" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("paidCalls")}>
+                    Paid Calls {sortField === "paidCalls" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("cost")}>
+                    Cost {sortField === "cost" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("revenue")}>
+                    Revenue {sortField === "revenue" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("profit")}>
+                    Profit {sortField === "profit" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort("roi")}>
+                    ROI {sortField === "roi" && (sortDirection === "asc" ? "↑" : "↓")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {providerStats.map((stat) => (
+                {sortedProviderStats.map((stat) => (
                   <TableRow key={stat.provider}>
                     <TableCell className="font-medium">{stat.provider}</TableCell>
                     <TableCell className="text-right">{stat.totalCalls}</TableCell>
