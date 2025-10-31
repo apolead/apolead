@@ -185,33 +185,54 @@ export default function LeadAnalytics() {
   }, 0);
 
   // Calculate total revenue from conversion_revenue column in calls_with_did
-  const totalRevenue = filteredData.reduce((sum, call) => {
-    if (call.conversion_revenue) {
+  // Deduplicate by phone number - count each unique conversion only once
+  const revenueByPhone = filteredData.reduce((acc, call) => {
+    if (call.conversion_revenue && call.CID_num) {
       const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
       const revenue = parseFloat(revenueStr);
-      return sum + (isNaN(revenue) ? 0 : revenue);
+      if (!isNaN(revenue) && revenue > 0) {
+        // Only count this revenue if we haven't seen this phone number yet
+        if (!acc[call.CID_num]) {
+          acc[call.CID_num] = revenue;
+        }
+      }
     }
-    return sum;
-  }, 0);
+    return acc;
+  }, {} as Record<string, number>);
+  
+  const totalRevenue = Object.values(revenueByPhone).reduce((sum, revenue) => sum + revenue, 0);
 
   // Calculate ROI
   const roi = totalCost > 0 ? ((totalRevenue - totalCost) / totalCost * 100) : 0;
 
   // Calculate conversion rates (based on conversion_revenue field in calls_with_did)
-  const callsWithConversion = filteredData.filter((c) => {
-    if (!c.conversion_revenue) return false;
-    const revenue = parseFloat(c.conversion_revenue.replace(/[$,]/g, ''));
-    return !isNaN(revenue) && revenue > 0;
-  }).length;
+  // Deduplicate by phone number - count unique conversions only
+  const uniqueConversions = new Set(
+    filteredData
+      .filter((c) => {
+        if (!c.conversion_revenue || !c.CID_num) return false;
+        const revenue = parseFloat(c.conversion_revenue.replace(/[$,]/g, ''));
+        return !isNaN(revenue) && revenue > 0;
+      })
+      .map((c) => c.CID_num)
+  );
+  const callsWithConversion = uniqueConversions.size;
   const overallConversionRate = totalCalls > 0 ? (callsWithConversion / totalCalls * 100) : 0;
   
   const callsOver2Min = filteredData.filter((c) => c.duration > 120).length;
-  const conversionsOver2Min = filteredData.filter((c) => {
-    if (c.duration <= 120) return false;
-    if (!c.conversion_revenue) return false;
-    const revenue = parseFloat(c.conversion_revenue.replace(/[$,]/g, ''));
-    return !isNaN(revenue) && revenue > 0;
-  }).length;
+  
+  // Count unique conversions for calls over 2 min (deduplicate by phone number)
+  const uniqueConversionsOver2Min = new Set(
+    filteredData
+      .filter((c) => {
+        if (c.duration <= 120) return false;
+        if (!c.conversion_revenue || !c.CID_num) return false;
+        const revenue = parseFloat(c.conversion_revenue.replace(/[$,]/g, ''));
+        return !isNaN(revenue) && revenue > 0;
+      })
+      .map((c) => c.CID_num)
+  );
+  const conversionsOver2Min = uniqueConversionsOver2Min.size;
   const conversionRateOver2Min = callsOver2Min > 0 ? (conversionsOver2Min / callsOver2Min * 100) : 0;
 
   // Calculate average calls per day
@@ -231,19 +252,23 @@ export default function LeadAnalytics() {
   }));
 
   // Conversions by day (based on conversion_revenue in calls_with_did)
+  // Deduplicate by phone number per day
   const conversionsByDay = filteredData.reduce((acc, call) => {
-    if (!call.conversion_revenue) return acc;
+    if (!call.conversion_revenue || !call.CID_num) return acc;
     const revenue = parseFloat(call.conversion_revenue.replace(/[$,]/g, ''));
     if (isNaN(revenue) || revenue <= 0) return acc;
     
     const day = format(new Date(call.start), "MMM dd");
-    acc[day] = (acc[day] || 0) + 1;
+    if (!acc[day]) {
+      acc[day] = new Set<string>();
+    }
+    acc[day].add(call.CID_num);
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, Set<string>>);
 
-  const conversionsByDayData = Object.entries(conversionsByDay).map(([day, count]) => ({
+  const conversionsByDayData = Object.entries(conversionsByDay).map(([day, phoneSet]) => ({
     day,
-    conversions: count,
+    conversions: phoneSet.size,
   }));
 
   // Call duration distribution by day
@@ -283,12 +308,22 @@ export default function LeadAnalytics() {
       return sum;
     }, 0);
 
-    const revenue = providerCalls.reduce((sum, call) => {
-      if (!call.conversion_revenue) return sum;
-      const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
-      const rev = parseFloat(revenueStr);
-      return sum + (isNaN(rev) ? 0 : rev);
-    }, 0);
+    // Calculate revenue per provider - deduplicate by phone number
+    const providerRevenueByPhone = providerCalls.reduce((acc, call) => {
+      if (call.conversion_revenue && call.CID_num) {
+        const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
+        const rev = parseFloat(revenueStr);
+        if (!isNaN(rev) && rev > 0) {
+          // Only count this revenue if we haven't seen this phone number yet for this provider
+          if (!acc[call.CID_num]) {
+            acc[call.CID_num] = rev;
+          }
+        }
+      }
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const revenue = Object.values(providerRevenueByPhone).reduce((sum, rev) => sum + rev, 0);
 
     const providerROI = cost > 0 ? ((revenue - cost) / cost * 100) : 0;
 
