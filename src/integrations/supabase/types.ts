@@ -267,8 +267,8 @@ export type Database = {
       }
       calls_with_did: {
         Row: {
-          cid_name: string | null
-          cid_num: string | null
+          CID_name: string | null
+          CID_num: string | null
           conversion_actual_submits: number | null
           conversion_additional_notes: string | null
           conversion_building_height: string | null
@@ -295,20 +295,20 @@ export type Database = {
           created_at: string | null
           did_campaign_status: string | null
           did_lead_price: string | null
-          did_num: string | null
+          DID_num: string | null
           did_seller: string | null
           did_system_config_notes: string | null
           did_vertical: string | null
           duration: number | null
           id: string
-          last_status: string | null
+          lastStatus: string | null
           row_hash: string | null
           start: string | null
           updated_at: string | null
         }
         Insert: {
-          cid_name?: string | null
-          cid_num?: string | null
+          CID_name?: string | null
+          CID_num?: string | null
           conversion_actual_submits?: number | null
           conversion_additional_notes?: string | null
           conversion_building_height?: string | null
@@ -335,20 +335,20 @@ export type Database = {
           created_at?: string | null
           did_campaign_status?: string | null
           did_lead_price?: string | null
-          did_num?: string | null
+          DID_num?: string | null
           did_seller?: string | null
           did_system_config_notes?: string | null
           did_vertical?: string | null
           duration?: number | null
           id?: string
-          last_status?: string | null
+          lastStatus?: string | null
           row_hash?: string | null
           start?: string | null
           updated_at?: string | null
         }
         Update: {
-          cid_name?: string | null
-          cid_num?: string | null
+          CID_name?: string | null
+          CID_num?: string | null
           conversion_actual_submits?: number | null
           conversion_additional_notes?: string | null
           conversion_building_height?: string | null
@@ -375,13 +375,13 @@ export type Database = {
           created_at?: string | null
           did_campaign_status?: string | null
           did_lead_price?: string | null
-          did_num?: string | null
+          DID_num?: string | null
           did_seller?: string | null
           did_system_config_notes?: string | null
           did_vertical?: string | null
           duration?: number | null
           id?: string
-          last_status?: string | null
+          lastStatus?: string | null
           row_hash?: string | null
           start?: string | null
           updated_at?: string | null
