@@ -59,6 +59,10 @@ interface CallData {
   conversion_phone?: string;
 }
 
+interface ExpandedProvider {
+  [key: string]: boolean;
+}
+
 export default function LeadAnalytics() {
   const [callData, setCallData] = useState<CallData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +75,7 @@ export default function LeadAnalytics() {
   const [phoneSearch, setPhoneSearch] = useState("");
   const [sortField, setSortField] = useState<keyof typeof providerStats[0]>("roi");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [expandedProviders, setExpandedProviders] = useState<ExpandedProvider>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -215,10 +220,15 @@ export default function LeadAnalytics() {
     return sum;
   }, 0);
 
-  // Calculate total revenue
+  // Calculate total revenue - using Actual Submits * average price per submit
+  // Based on user feedback, the revenue calculation should account for all conversions
+  const PRICE_PER_SUBMIT = 38.54; // Average revenue per actual submit
   const totalRevenue = filteredData.reduce((sum, call) => {
+    if (call.actual_submits && call.actual_submits > 0) {
+      return sum + (call.actual_submits * PRICE_PER_SUBMIT);
+    }
+    // Fallback to conversion_revenue if available
     if (call.conversion_revenue) {
-      // Strip dollar signs and parse
       const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
       const revenue = parseFloat(revenueStr);
       return sum + (isNaN(revenue) ? 0 : revenue);
@@ -310,6 +320,11 @@ export default function LeadAnalytics() {
     }, 0);
 
     const revenue = providerCalls.reduce((sum, call) => {
+      // Calculate from actual_submits first
+      if (call.actual_submits && call.actual_submits > 0) {
+        return sum + (call.actual_submits * 38.54); // Standard price per submit
+      }
+      // Fallback to conversion_revenue field
       if (!call.conversion_revenue) return sum;
       const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
       const rev = parseFloat(revenueStr);
@@ -380,6 +395,13 @@ export default function LeadAnalytics() {
       setSortField(field);
       setSortDirection("desc");
     }
+  };
+
+  const toggleProviderExpand = (provider: string) => {
+    setExpandedProviders(prev => ({
+      ...prev,
+      [provider]: !prev[provider]
+    }));
   };
 
   if (loading) {
@@ -985,6 +1007,7 @@ export default function LeadAnalytics() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10"></TableHead>
                   <TableHead className="cursor-pointer hover:bg-primary/10" onClick={() => handleSort("provider")}>
                     Provider {sortField === "provider" && (sortDirection === "asc" ? "↑" : "↓")}
                   </TableHead>
@@ -1009,21 +1032,92 @@ export default function LeadAnalytics() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedProviderStats.map((stat) => (
-                  <TableRow key={stat.provider} className="hover:bg-primary/5">
-                    <TableCell className="font-medium">{stat.provider}</TableCell>
-                    <TableCell className="text-right">{stat.totalCalls}</TableCell>
-                    <TableCell className="text-right">{stat.paidCalls}</TableCell>
-                    <TableCell className="text-right">${stat.cost.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${stat.revenue.toFixed(2)}</TableCell>
-                    <TableCell className={`text-right font-medium ${stat.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      ${stat.profit.toFixed(2)}
-                    </TableCell>
-                    <TableCell className={`text-right font-bold ${stat.roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {stat.roi.toFixed(1)}%
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {sortedProviderStats.map((stat) => {
+                  const providerCalls = filteredData.filter(c => c.did_seller === stat.provider);
+                  const isExpanded = expandedProviders[stat.provider];
+                  
+                  return (
+                    <>
+                      <TableRow 
+                        key={stat.provider} 
+                        className="hover:bg-primary/5 cursor-pointer"
+                        onClick={() => toggleProviderExpand(stat.provider)}
+                      >
+                        <TableCell>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            {isExpanded ? '▼' : '▶'}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="font-medium">{stat.provider}</TableCell>
+                        <TableCell className="text-right">{stat.totalCalls}</TableCell>
+                        <TableCell className="text-right">{stat.paidCalls}</TableCell>
+                        <TableCell className="text-right">${stat.cost.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">${stat.revenue.toFixed(2)}</TableCell>
+                        <TableCell className={`text-right font-medium ${stat.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ${stat.profit.toFixed(2)}
+                        </TableCell>
+                        <TableCell className={`text-right font-bold ${stat.roi >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {stat.roi.toFixed(1)}%
+                        </TableCell>
+                      </TableRow>
+                      
+                      {isExpanded && (
+                        <TableRow>
+                          <TableCell colSpan={8} className="bg-muted/50 p-4">
+                            <div className="space-y-2">
+                              <h4 className="font-semibold text-sm mb-2">Detailed Calls for {stat.provider}</h4>
+                              <div className="max-h-96 overflow-y-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Call ID</TableHead>
+                                      <TableHead>Phone</TableHead>
+                                      <TableHead>Date/Time</TableHead>
+                                      <TableHead className="text-right">Duration</TableHead>
+                                      <TableHead className="text-right">Cost</TableHead>
+                                      <TableHead className="text-right">Submits</TableHead>
+                                      <TableHead className="text-right">Revenue</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {providerCalls.map((call) => {
+                                      const callCost = call.duration > 120 && call.did_lead_price 
+                                        ? parseFloat(call.did_lead_price.replace(/[$,]/g, ''))
+                                        : 0;
+                                      const callRevenue = call.actual_submits ? call.actual_submits * 38.54 : 0;
+                                      
+                                      return (
+                                        <TableRow key={call.id} className="text-xs">
+                                          <TableCell className="font-mono">{call.id.substring(0, 8)}...</TableCell>
+                                          <TableCell>{call.CID_num}</TableCell>
+                                          <TableCell>{format(new Date(call.start), "MMM dd, HH:mm")}</TableCell>
+                                          <TableCell className="text-right">{call.duration}s</TableCell>
+                                          <TableCell className="text-right">
+                                            {callCost > 0 ? `$${callCost.toFixed(2)}` : '-'}
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                            {call.actual_submits || '-'}
+                                          </TableCell>
+                                          <TableCell className="text-right font-medium">
+                                            {callRevenue > 0 ? `$${callRevenue.toFixed(2)}` : '-'}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-2">
+                                Showing {providerCalls.length} total calls • 
+                                {' '}{providerCalls.filter(c => c.actual_submits && c.actual_submits > 0).length} with conversions
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
