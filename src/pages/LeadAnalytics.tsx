@@ -55,6 +55,8 @@ interface CallData {
   did_lead_price: string | null;
   conversion_revenue: string | null;
   lastStatus: string | null;
+  actual_submits?: number;
+  conversion_phone?: string;
 }
 
 export default function LeadAnalytics() {
@@ -128,15 +130,56 @@ export default function LeadAnalytics() {
   const fetchCallData = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch calls
+      const { data: callsData, error: callsError } = await supabase
         .from("calls_with_did")
         .select("id, CID_num, DID_num, start, duration, did_seller, did_lead_price, conversion_revenue, lastStatus")
         .gte("start", startDate.toISOString())
         .lte("start", endDate.toISOString())
         .order("start", { ascending: false });
 
-      if (error) throw error;
-      setCallData(data || []);
+      if (callsError) throw callsError;
+
+      // Fetch conversions for the same date range
+      const { data: conversionsData, error: conversionsError } = await supabase
+        .from("conversion_data")
+        .select('"Customer phone - Copy directly from RM", "Actual Submits", "Revenue", "Timestamp"')
+        .gte('"Timestamp"', startDate.toISOString())
+        .lte('"Timestamp"', endDate.toISOString());
+
+      if (conversionsError) throw conversionsError;
+
+      // Create a map of phone numbers to conversions (normalize phone numbers)
+      const normalizePhone = (phone: string | null) => {
+        if (!phone) return '';
+        return phone.replace(/\D/g, ''); // Remove all non-digit characters
+      };
+
+      const conversionMap = new Map();
+      conversionsData?.forEach((conv: any) => {
+        const normalizedPhone = normalizePhone(conv["Customer phone - Copy directly from RM"]);
+        if (normalizedPhone) {
+          conversionMap.set(normalizedPhone, {
+            actual_submits: conv["Actual Submits"] || 0,
+            revenue: conv["Revenue"] || null,
+          });
+        }
+      });
+
+      // Merge conversion data with calls
+      const mergedData = callsData?.map((call) => {
+        const normalizedPhone = normalizePhone(call.CID_num);
+        const conversion = conversionMap.get(normalizedPhone);
+        
+        return {
+          ...call,
+          actual_submits: conversion?.actual_submits || 0,
+          conversion_phone: normalizedPhone,
+        };
+      }) || [];
+
+      setCallData(mergedData);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -175,7 +218,9 @@ export default function LeadAnalytics() {
   // Calculate total revenue
   const totalRevenue = filteredData.reduce((sum, call) => {
     if (call.conversion_revenue) {
-      const revenue = parseFloat(call.conversion_revenue);
+      // Strip dollar signs and parse
+      const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
+      const revenue = parseFloat(revenueStr);
       return sum + (isNaN(revenue) ? 0 : revenue);
     }
     return sum;
@@ -184,20 +229,16 @@ export default function LeadAnalytics() {
   // Calculate ROI
   const roi = totalCost > 0 ? ((totalRevenue - totalCost) / totalCost * 100) : 0;
 
-  // Calculate conversion rates
+  // Calculate conversion rates (based on actual_submits from conversion_data)
   const callsWithConversion = filteredData.filter((c) => {
-    if (!c.conversion_revenue) return false;
-    const revenue = parseFloat(c.conversion_revenue);
-    return !isNaN(revenue) && revenue > 0;
+    return c.actual_submits && c.actual_submits > 0;
   }).length;
   const overallConversionRate = totalCalls > 0 ? (callsWithConversion / totalCalls * 100) : 0;
   
   const callsOver2Min = filteredData.filter((c) => c.duration > 120).length;
   const conversionsOver2Min = filteredData.filter((c) => {
     if (c.duration <= 120) return false;
-    if (!c.conversion_revenue) return false;
-    const revenue = parseFloat(c.conversion_revenue);
-    return !isNaN(revenue) && revenue > 0;
+    return c.actual_submits && c.actual_submits > 0;
   }).length;
   const conversionRateOver2Min = callsOver2Min > 0 ? (conversionsOver2Min / callsOver2Min * 100) : 0;
 
@@ -217,11 +258,9 @@ export default function LeadAnalytics() {
     calls: count,
   }));
 
-  // Conversions by day
+  // Conversions by day (based on actual_submits)
   const conversionsByDay = filteredData.reduce((acc, call) => {
-    if (!call.conversion_revenue) return acc;
-    const revenue = parseFloat(call.conversion_revenue);
-    if (isNaN(revenue) || revenue <= 0) return acc;
+    if (!call.actual_submits || call.actual_submits <= 0) return acc;
     
     const day = format(new Date(call.start), "MMM dd");
     acc[day] = (acc[day] || 0) + 1;
@@ -266,7 +305,9 @@ export default function LeadAnalytics() {
     }, 0);
 
     const revenue = providerCalls.reduce((sum, call) => {
-      const rev = call.conversion_revenue ? parseFloat(call.conversion_revenue) : 0;
+      if (!call.conversion_revenue) return sum;
+      const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
+      const rev = parseFloat(revenueStr);
       return sum + (isNaN(rev) ? 0 : rev);
     }, 0);
 
