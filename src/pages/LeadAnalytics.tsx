@@ -246,10 +246,16 @@ export default function LeadAnalytics() {
     return acc;
   }, {} as Record<string, number>);
 
-  const callsByDayData = Object.entries(callsByDay).map(([day, count]) => ({
-    day,
-    calls: count,
-  }));
+  const callsByDayData = Object.entries(callsByDay)
+    .sort(([dayA], [dayB]) => {
+      const dateA = new Date(dayA + " 2025");
+      const dateB = new Date(dayB + " 2025");
+      return dateA.getTime() - dateB.getTime();
+    })
+    .map(([day, count]) => ({
+      day,
+      calls: count,
+    }));
 
   // Conversions by day (based on conversion_revenue in calls_with_did)
   // Deduplicate by phone number per day
@@ -266,10 +272,16 @@ export default function LeadAnalytics() {
     return acc;
   }, {} as Record<string, Set<string>>);
 
-  const conversionsByDayData = Object.entries(conversionsByDay).map(([day, phoneSet]) => ({
-    day,
-    conversions: phoneSet.size,
-  }));
+  const conversionsByDayData = Object.entries(conversionsByDay)
+    .sort(([dayA], [dayB]) => {
+      const dateA = new Date(dayA + " 2025");
+      const dateB = new Date(dayB + " 2025");
+      return dateA.getTime() - dateB.getTime();
+    })
+    .map(([day, phoneSet]) => ({
+      day,
+      conversions: phoneSet.size,
+    }));
 
   // Conversion rate over 2 min by day
   const conversionRateOver2MinByDay = filteredData.reduce((acc, call) => {
@@ -292,10 +304,16 @@ export default function LeadAnalytics() {
     return acc;
   }, {} as Record<string, { callsOver2Min: number; conversionsOver2Min: Set<string> }>);
 
-  const conversionRateOver2MinByDayData = Object.entries(conversionRateOver2MinByDay).map(([day, data]) => ({
-    day,
-    conversionRate: data.callsOver2Min > 0 ? (data.conversionsOver2Min.size / data.callsOver2Min * 100) : 0,
-  }));
+  const conversionRateOver2MinByDayData = Object.entries(conversionRateOver2MinByDay)
+    .sort(([dayA], [dayB]) => {
+      const dateA = new Date(dayA + " 2025");
+      const dateB = new Date(dayB + " 2025");
+      return dateA.getTime() - dateB.getTime();
+    })
+    .map(([day, data]) => ({
+      day,
+      conversionRate: data.callsOver2Min > 0 ? (data.conversionsOver2Min.size / data.callsOver2Min * 100) : 0,
+    }));
 
   // Call duration distribution by day
   const durationByDay = filteredData.reduce((acc, call) => {
@@ -318,6 +336,16 @@ export default function LeadAnalytics() {
     { name: "Under 2 min", value: callsUnder120s, color: "#7c3aed" },
     { name: "Over 2 min", value: callsOver120s, color: "#581c87" },
   ];
+
+  // Provider distribution for calls over 2 min
+  const providerDistributionOver2Min = providers.map((provider) => {
+    const providerCallsOver2Min = filteredData.filter((c) => c.did_seller === provider && c.duration > 120).length;
+    return {
+      name: provider || "Unknown",
+      value: providerCallsOver2Min,
+      color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+    };
+  }).filter(p => p.value > 0);
 
   // Provider analytics
   const providerStats = providers.map((provider) => {
@@ -847,6 +875,37 @@ export default function LeadAnalytics() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle>Provider Distribution (Calls {'>'}2 min)</CardTitle>
+              <CardDescription>Distribution of paid calls by provider</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={providerDistributionOver2Min}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {providerDistributionOver2Min.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Conversion Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <Card>
             <CardHeader>
               <CardTitle>Conversions by Day</CardTitle>
