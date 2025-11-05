@@ -186,17 +186,24 @@ export default function LeadAnalytics() {
   }, 0);
 
   // Calculate total revenue from conversion_revenue column in calls_with_did
-  // Sum ALL revenues without deduplication
-  const totalRevenue = filteredData.reduce((sum, call) => {
-    if (call.conversion_revenue) {
+  // Deduplicate by phone number - count each unique conversion only once
+  const revenueByPhone = filteredData.reduce((acc, call) => {
+    if (call.conversion_revenue && call.CID_num) {
+      // Clean the phone number for consistent matching
+      const cleanPhone = call.CID_num.replace(/[\s\-\(\)]/g, '');
       const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
       const revenue = parseFloat(revenueStr);
       if (!isNaN(revenue) && revenue > 0) {
-        return sum + revenue;
+        // Take the highest revenue for this phone (in case of multiple entries)
+        if (!acc[cleanPhone] || acc[cleanPhone] < revenue) {
+          acc[cleanPhone] = revenue;
+        }
       }
     }
-    return sum;
-  }, 0);
+    return acc;
+  }, {} as Record<string, number>);
+  
+  const totalRevenue = Object.values(revenueByPhone).reduce((sum, revenue) => sum + revenue, 0);
 
   // Calculate ROI
   const roi = totalCost > 0 ? ((totalRevenue - totalCost) / totalCost * 100) : 0;
@@ -363,17 +370,23 @@ export default function LeadAnalytics() {
       return sum;
     }, 0);
 
-    // Calculate revenue per provider - sum all revenues
-    const revenue = providerCalls.reduce((sum, call) => {
-      if (call.conversion_revenue) {
+    // Calculate revenue per provider - deduplicate by phone number
+    const providerRevenueByPhone = providerCalls.reduce((acc, call) => {
+      if (call.conversion_revenue && call.CID_num) {
+        const cleanPhone = call.CID_num.replace(/[\s\-\(\)]/g, '');
         const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
         const rev = parseFloat(revenueStr);
         if (!isNaN(rev) && rev > 0) {
-          return sum + rev;
+          // Take the highest revenue for this phone
+          if (!acc[cleanPhone] || acc[cleanPhone] < rev) {
+            acc[cleanPhone] = rev;
+          }
         }
       }
-      return sum;
-    }, 0);
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const revenue = Object.values(providerRevenueByPhone).reduce((sum, rev) => sum + rev, 0);
 
     const providerROI = cost > 0 ? ((revenue - cost) / cost * 100) : 0;
 
@@ -415,17 +428,22 @@ export default function LeadAnalytics() {
         c.duration > 120
       );
       
-      // Sum all revenue for this day
-      const totalRevenue = dayCalls.reduce((sum, call) => {
-        if (call.conversion_revenue) {
+      // Get unique revenue by phone for this day
+      const revenueByPhone = dayCalls.reduce((acc, call) => {
+        if (call.conversion_revenue && call.CID_num) {
+          const cleanPhone = call.CID_num.replace(/[\s\-\(\)]/g, '');
           const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
           const rev = parseFloat(revenueStr);
           if (!isNaN(rev) && rev > 0) {
-            return sum + rev;
+            if (!acc[cleanPhone] || acc[cleanPhone] < rev) {
+              acc[cleanPhone] = rev;
+            }
           }
         }
-        return sum;
-      }, 0);
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const totalRevenue = Object.values(revenueByPhone).reduce((sum, rev) => sum + rev, 0);
       const callCount = dayCalls.length;
       const avgRevenue = callCount > 0 ? totalRevenue / callCount : 0;
       
