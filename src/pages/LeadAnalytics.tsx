@@ -1098,7 +1098,7 @@ export default function LeadAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Provider Performance Heatmap</CardTitle>
-                <CardDescription>Conversion rate % by provider and day (Blue = High, Purple = Low)</CardDescription>
+                <CardDescription>Conversion rate % by provider and day (Green = High, Red = Low)</CardDescription>
               </div>
               <Button variant="ghost" size="sm">
                 {conversionHeatmapExpanded ? '▼' : '▶'}
@@ -1157,14 +1157,14 @@ export default function LeadAnalytics() {
                         }).length;
                         const conversionRate = callsOver2Min > 0 ? (conversionsOver2Min / callsOver2Min) * 100 : 0;
                         
-                        // Color based on conversion rate: 0% = purple (88, 28, 135), 100% = blue (124, 58, 237)
+                        // Color based on conversion rate: Green (high) to Red (low)
                         const getColor = (rate: number) => {
                           if (total === 0) return 'rgb(229, 231, 235)'; // gray if no calls
-                          if (rate === 0) return 'rgb(88, 28, 135)'; // dark purple
-                          if (rate < 10) return 'rgb(109, 40, 217)'; // purple
-                          if (rate < 20) return 'rgb(124, 58, 237)'; // violet
-                          if (rate < 30) return 'rgb(139, 92, 246)'; // light violet
-                          return 'rgb(167, 139, 250)'; // light blue/purple
+                          if (rate === 0) return 'rgb(220, 38, 38)'; // red-600 - no conversions
+                          if (rate < 10) return 'rgb(239, 68, 68)'; // red-500
+                          if (rate < 20) return 'rgb(234, 179, 8)'; // yellow-500
+                          if (rate < 30) return 'rgb(132, 204, 22)'; // lime-500
+                          return 'rgb(22, 163, 74)'; // green-600 - high conversions
                         };
                         
                         return (
