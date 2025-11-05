@@ -37,6 +37,12 @@ import {
   Line,
 } from "recharts";
 import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Table,
   TableBody,
   TableCell,
@@ -1168,16 +1174,25 @@ export default function LeadAnalytics() {
                         };
                         
                         return (
-                          <div
-                            key={day}
-                            className="w-20 h-12 border border-white flex items-center justify-center text-xs font-bold text-white cursor-pointer hover:opacity-80 transition-opacity"
-                            style={{
-                              backgroundColor: getColor(conversionRate),
-                            }}
-                            title={`${provider.provider} - ${day}: ${callsOver2Min} calls over 2min, ${conversionsOver2Min} conversions (${conversionRate.toFixed(1)}%)`}
-                          >
-                            {conversionRate > 0 ? `${conversionRate.toFixed(0)}%` : '-'}
-                          </div>
+                          <TooltipProvider key={day}>
+                            <UITooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className="w-20 h-12 border border-white flex items-center justify-center text-xs font-bold text-white cursor-pointer hover:opacity-80 transition-opacity"
+                                  style={{
+                                    backgroundColor: getColor(conversionRate),
+                                  }}
+                                >
+                                  {conversionRate > 0 ? `${conversionRate.toFixed(0)}%` : '-'}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-gray-900 border-gray-700">
+                                <p className="text-white font-semibold">{provider.provider} - {day}</p>
+                                <p className="text-white text-xs">{callsOver2Min} calls over 2min</p>
+                                <p className="text-white text-xs">{conversionsOver2Min} conversions ({conversionRate.toFixed(1)}%)</p>
+                              </TooltipContent>
+                            </UITooltip>
+                          </TooltipProvider>
                         );
                       })}
                     </div>
