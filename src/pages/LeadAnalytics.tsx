@@ -63,6 +63,7 @@ interface ExpandedProvider {
 
 export default function LeadAnalytics() {
   const [callData, setCallData] = useState<CallData[]>([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dateRange, setDateRange] = useState<"yesterday" | "today" | "7days" | "30days" | "custom">("yesterday");
@@ -138,7 +139,7 @@ export default function LeadAnalytics() {
     try {
       setLoading(true);
       
-      // Fetch ONLY from calls_with_did table - no joins needed
+      // Fetch calls data
       const { data: callsData, error: callsError } = await supabase
         .from("calls_with_did")
         .select("id, CID_num, DID_num, start, duration, did_seller, did_lead_price, conversion_revenue, lastStatus")
@@ -148,7 +149,30 @@ export default function LeadAnalytics() {
 
       if (callsError) throw callsError;
 
+      // Fetch conversion data separately to get accurate total revenue
+      const { data: conversionData, error: conversionError } = await supabase
+        .from("conversion_data")
+        .select("Revenue")
+        .gte("Timestamp", startDate.toISOString())
+        .lte("Timestamp", endDate.toISOString());
+
+      if (conversionError) throw conversionError;
+
+      // Calculate total revenue from conversion_data table
+      const totalConversionRevenue = (conversionData || []).reduce((sum, row) => {
+        if (row.Revenue) {
+          const revenueStr = row.Revenue.replace(/[$,]/g, '');
+          const revenue = parseFloat(revenueStr);
+          if (!isNaN(revenue) && revenue > 0) {
+            return sum + revenue;
+          }
+        }
+        return sum;
+      }, 0);
+
+      // Store both in state
       setCallData(callsData || []);
+      setTotalRevenue(totalConversionRevenue);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -185,25 +209,7 @@ export default function LeadAnalytics() {
     return sum;
   }, 0);
 
-  // Calculate total revenue from conversion_revenue column in calls_with_did
-  // Deduplicate by phone number - count each unique conversion only once
-  const revenueByPhone = filteredData.reduce((acc, call) => {
-    if (call.conversion_revenue && call.CID_num) {
-      // Clean the phone number for consistent matching
-      const cleanPhone = call.CID_num.replace(/[\s\-\(\)]/g, '');
-      const revenueStr = call.conversion_revenue.replace(/[$,]/g, '');
-      const revenue = parseFloat(revenueStr);
-      if (!isNaN(revenue) && revenue > 0) {
-        // Take the highest revenue for this phone (in case of multiple entries)
-        if (!acc[cleanPhone] || acc[cleanPhone] < revenue) {
-          acc[cleanPhone] = revenue;
-        }
-      }
-    }
-    return acc;
-  }, {} as Record<string, number>);
-  
-  const totalRevenue = Object.values(revenueByPhone).reduce((sum, revenue) => sum + revenue, 0);
+  // Total revenue is fetched directly from conversion_data table (set in fetchCallData)
 
   // Calculate ROI
   const roi = totalCost > 0 ? ((totalRevenue - totalCost) / totalCost * 100) : 0;
