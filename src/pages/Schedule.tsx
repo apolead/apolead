@@ -458,7 +458,7 @@ const Schedule = () => {
                           type="time"
                           value={startTime}
                           onChange={(e) => setStartTime(e.target.value)}
-                          className="rounded-lg text-foreground"
+                          className="rounded-lg !text-gray-900 [color-scheme:light]"
                         />
                       </div>
                       <div>
@@ -469,7 +469,7 @@ const Schedule = () => {
                           type="time"
                           value={endTime}
                           onChange={(e) => setEndTime(e.target.value)}
-                          className="rounded-lg text-foreground"
+                          className="rounded-lg !text-gray-900 [color-scheme:light]"
                         />
                       </div>
                     </div>
