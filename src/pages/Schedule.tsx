@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
-import { format, addDays, startOfWeek, endOfWeek, addMonths, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, addMonths, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, parse } from "date-fns";
 import { Clock, Save, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import Header from '@/components/Header';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
@@ -530,10 +530,8 @@ const Schedule = () => {
                       </div>
                     ) : (
                       scheduleEntries.map((entry) => {
-                        // Parse date string as local date to avoid timezone shifts
-                        const dateStr = entry.schedule_date;
-                        const [year, month, day] = dateStr.split('-').map(Number);
-                        const localDate = new Date(year, month - 1, day);
+                        // Parse date string as local date using date-fns parse
+                        const localDate = parse(entry.schedule_date, 'yyyy-MM-dd', new Date());
                         
                         return (
                           <div
