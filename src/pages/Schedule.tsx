@@ -529,44 +529,51 @@ const Schedule = () => {
                         <p className="text-sm">Select dates on the calendar to get started</p>
                       </div>
                     ) : (
-                      scheduleEntries.map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <CalendarIcon className="w-4 h-4 text-purple-600" />
-                                <span className="font-semibold text-gray-900">
-                                  {format(new Date(entry.schedule_date), 'EEEE, MMMM d, yyyy')}
-                                </span>
-                              </div>
-                              {entry.start_time && entry.end_time && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                                  <Clock className="w-4 h-4 text-indigo-600" />
-                                  <span>
-                                    {entry.start_time} - {entry.end_time}
+                      scheduleEntries.map((entry) => {
+                        // Parse date string as local date to avoid timezone shifts
+                        const dateStr = entry.schedule_date;
+                        const [year, month, day] = dateStr.split('-').map(Number);
+                        const localDate = new Date(year, month - 1, day);
+                        
+                        return (
+                          <div
+                            key={entry.id}
+                            className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <CalendarIcon className="w-4 h-4 text-purple-600" />
+                                  <span className="font-semibold text-gray-900">
+                                    {format(localDate, 'EEEE, MMMM d, yyyy')}
                                   </span>
                                 </div>
-                              )}
-                              {entry.notes && (
-                                <p className="text-sm text-gray-600 mt-2 italic">
-                                  {entry.notes}
-                                </p>
-                              )}
+                                {entry.start_time && entry.end_time && (
+                                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                                    <Clock className="w-4 h-4 text-indigo-600" />
+                                    <span>
+                                      {entry.start_time} - {entry.end_time}
+                                    </span>
+                                  </div>
+                                )}
+                                {entry.notes && (
+                                  <p className="text-sm text-gray-600 mt-2 italic">
+                                    {entry.notes}
+                                  </p>
+                                )}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteEntry(entry.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteEntry(entry.id)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </CardContent>
