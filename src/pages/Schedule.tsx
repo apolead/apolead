@@ -443,7 +443,7 @@ const Schedule = () => {
                   <div className="space-y-4">
                     {selectedDates.length > 0 && (
                       <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
-                        <p className="text-sm font-medium text-indigo-900">
+                        <p className="text-sm font-medium text-gray-900">
                           {selectedDates.length} date(s) selected
                         </p>
                       </div>
