@@ -19,7 +19,8 @@ import {
   DollarSign,
   MessageSquare,
   BookOpen,
-  Phone
+  Phone,
+  Calendar
 } from 'lucide-react';
 
 export interface DashboardSidebarProps {
@@ -111,6 +112,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
         <Link to="/additional-training" className={`nav-item ${activeItem === 'additional-training' ? 'active' : ''}`}>
           <BookOpen size={18} />
           <span>Additional Training</span>
+        </Link>
+        
+        <Link to="/schedule" className={`nav-item ${activeItem === 'schedule' ? 'active' : ''}`}>
+          <Calendar size={18} />
+          <span>Schedule</span>
         </Link>
         
         {isSupervisor && (

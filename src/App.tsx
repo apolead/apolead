@@ -25,6 +25,7 @@ import ConfirmationScreen from "./components/signup/ConfirmationScreen";
 import BillingInformation from "./pages/BillingInformation";
 import Scripting from "./pages/Scripting";
 import AdditionalTraining from "./pages/AdditionalTraining";
+import Schedule from "./pages/Schedule";
 import WaitlistConfirmed from "./pages/WaitlistConfirmed";
 import HealthCheck from "./pages/HealthCheck";
 import LeadAnalytics from "./pages/LeadAnalytics";
@@ -330,6 +331,11 @@ const AuthWrapper = () => {
       <Route path="/additional-training" element={
         <AuthRoute>
           <AdditionalTraining />
+        </AuthRoute>
+      } />
+      <Route path="/schedule" element={
+        <AuthRoute>
+          <Schedule />
         </AuthRoute>
       } />
       <Route path="/waitlist-confirmed" element={<WaitlistConfirmed />} />
