@@ -54,8 +54,13 @@ const Schedule = () => {
 
     setScheduleEntries(data || []);
     
-    // Set selected dates from fetched entries
-    const dates = data?.map(entry => new Date(entry.schedule_date)) || [];
+    // Set selected dates from fetched entries - parse as local date to avoid timezone shifts
+    const dates = data?.map(entry => {
+      const dateStr = entry.schedule_date;
+      // Parse date string as local time, not UTC, to prevent day shifting
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }) || [];
     setSelectedDates(dates);
   };
 
@@ -67,7 +72,10 @@ const Schedule = () => {
     let totalMinutes = 0;
     
     scheduleEntries.forEach(entry => {
-      const entryDate = new Date(entry.schedule_date);
+      const dateStr = entry.schedule_date;
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const entryDate = new Date(year, month - 1, day);
+      
       if (entryDate >= weekStart && entryDate <= weekEnd && entry.start_time && entry.end_time) {
         const start = new Date(`2000-01-01T${entry.start_time}`);
         const end = new Date(`2000-01-01T${entry.end_time}`);
@@ -178,9 +186,12 @@ const Schedule = () => {
   };
 
   const getScheduleForDate = (date: Date) => {
-    return scheduleEntries.find(entry => 
-      isSameDay(new Date(entry.schedule_date), date)
-    );
+    return scheduleEntries.find(entry => {
+      const entryDateStr = entry.schedule_date;
+      const [year, month, day] = entryDateStr.split('-').map(Number);
+      const entryDate = new Date(year, month - 1, day);
+      return isSameDay(entryDate, date);
+    });
   };
 
   const calendarDays = getCalendarDays();
@@ -443,7 +454,7 @@ const Schedule = () => {
                   <div className="space-y-4">
                     {selectedDates.length > 0 && (
                       <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
-                        <p className="text-sm font-medium" style={{ color: '#111827' }}>
+                        <p className="text-sm font-medium !text-gray-900 [&]:text-gray-900" style={{ color: '#111827 !important' }}>
                           {selectedDates.length} date(s) selected
                         </p>
                       </div>
