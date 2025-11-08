@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
-import { format, addDays, startOfWeek, endOfWeek, addMonths, isSameDay } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, addMonths, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { Clock, Save, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import Header from '@/components/Header';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
@@ -29,6 +29,7 @@ const Schedule = () => {
   const [notes, setNotes] = useState('');
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [loading, setLoading] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
     if (user) {
@@ -160,6 +161,30 @@ const Schedule = () => {
 
   const weeklyHours = calculateWeeklyHours();
 
+  const getCalendarDays = () => {
+    if (viewMode === 'week') {
+      const weekStart = startOfWeek(currentDate);
+      return eachDayOfInterval({
+        start: weekStart,
+        end: endOfWeek(currentDate)
+      });
+    } else {
+      const monthStart = startOfMonth(currentDate);
+      return eachDayOfInterval({
+        start: monthStart,
+        end: endOfMonth(currentDate)
+      });
+    }
+  };
+
+  const getScheduleForDate = (date: Date) => {
+    return scheduleEntries.find(entry => 
+      isSameDay(new Date(entry.schedule_date), date)
+    );
+  };
+
+  const calendarDays = getCalendarDays();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -174,7 +199,7 @@ const Schedule = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               {/* Weekly Hours Card */}
-              <Card className="bg-gradient-to-br from-purple-500 to-purple-700 text-white border-0 rounded-xl shadow-lg">
+              <Card className="bg-gradient-to-br from-purple-500 to-purple-700 border-0 rounded-xl shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
                     <Clock className="w-5 h-5" />
@@ -196,7 +221,7 @@ const Schedule = () => {
               </Card>
 
               {/* Total Scheduled Days */}
-              <Card className="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white border-0 rounded-xl shadow-lg">
+              <Card className="bg-gradient-to-br from-indigo-500 to-indigo-700 border-0 rounded-xl shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
                     <CalendarIcon className="w-5 h-5" />
@@ -223,14 +248,14 @@ const Schedule = () => {
                     <Button
                       variant={viewMode === 'week' ? 'default' : 'outline'}
                       onClick={() => setViewMode('week')}
-                      className={viewMode === 'week' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                      className={viewMode === 'week' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}
                     >
                       Week
                     </Button>
                     <Button
                       variant={viewMode === 'month' ? 'default' : 'outline'}
                       onClick={() => setViewMode('month')}
-                      className={viewMode === 'month' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                      className={viewMode === 'month' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}
                     >
                       Month
                     </Button>
@@ -239,25 +264,121 @@ const Schedule = () => {
               </Card>
             </div>
 
+            {/* Large Google Calendar Style View */}
+            <Card className="border-0 rounded-xl shadow-lg mb-6">
+              <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-xl">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="text-gray-900">
+                      {viewMode === 'week' ? 'Week View' : 'Month View'}
+                    </CardTitle>
+                    <CardDescription className="text-gray-600">
+                      {format(currentDate, 'MMMM yyyy')}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentDate(viewMode === 'week' ? addDays(currentDate, -7) : addMonths(currentDate, -1))}
+                      className="rounded-lg"
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentDate(new Date())}
+                      className="rounded-lg"
+                    >
+                      Today
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentDate(viewMode === 'week' ? addDays(currentDate, 7) : addMonths(currentDate, 1))}
+                      className="rounded-lg"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-7 gap-2">
+                  {/* Day Headers */}
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                    <div key={day} className="text-center font-semibold text-gray-700 py-2 bg-gray-100 rounded-lg">
+                      {day}
+                    </div>
+                  ))}
+                  
+                  {/* Calendar Days */}
+                  {calendarDays.map((day, index) => {
+                    const schedule = getScheduleForDate(day);
+                    const isToday = isSameDay(day, new Date());
+                    const isSelected = selectedDates.some(d => isSameDay(d, day));
+                    
+                    return (
+                      <div
+                        key={index}
+                        onClick={() => handleDateSelect(day)}
+                        className={`min-h-[120px] p-3 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg ${
+                          isToday ? 'border-purple-500 bg-purple-50' : 
+                          isSelected ? 'border-indigo-400 bg-indigo-50' :
+                          schedule ? 'border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100' : 
+                          'border-gray-200 bg-white hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className={`text-sm font-semibold mb-2 ${
+                          isToday ? 'text-purple-700' : 
+                          schedule ? 'text-purple-600' : 
+                          'text-gray-700'
+                        }`}>
+                          {format(day, 'd')}
+                        </div>
+                        
+                        {schedule && (
+                          <div className="space-y-1">
+                            <div className="text-xs font-medium text-white bg-purple-600 rounded-lg px-2 py-1">
+                              {schedule.start_time} - {schedule.end_time}
+                            </div>
+                            {schedule.notes && (
+                              <div className="text-xs text-gray-600 truncate" title={schedule.notes}>
+                                {schedule.notes}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {isSelected && !schedule && (
+                          <div className="text-xs font-medium text-indigo-600">
+                            Selected
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Calendar Section */}
+              {/* Quick Add Section */}
               <Card className="border-0 rounded-xl shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-xl">
-                  <CardTitle className="text-gray-900">Select Work Dates</CardTitle>
+                  <CardTitle className="text-gray-900">Quick Add Schedule</CardTitle>
                   <CardDescription className="text-gray-600">
-                    Click dates to add them to your schedule
+                    Select dates from calendar above and add times here
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <Calendar
-                    mode="multiple"
-                    selected={selectedDates}
-                    onSelect={(dates) => dates && setSelectedDates(dates)}
-                    className="rounded-lg border border-gray-200 p-3 pointer-events-auto"
-                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  />
-                  
-                  <div className="mt-6 space-y-4">
+                  <div className="space-y-4">
+                    {selectedDates.length > 0 && (
+                      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                        <p className="text-sm font-medium text-indigo-900">
+                          {selectedDates.length} date(s) selected
+                        </p>
+                      </div>
+                    )}
+                    
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
