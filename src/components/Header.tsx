@@ -71,15 +71,6 @@ const Header = () => {
                 Contact
               </Link>
             </li>
-            <li className={`${mobileMenuOpen ? 'mb-3' : 'ml-8'}`}>
-              <Link 
-                to="/schedule"
-                className="text-dark hover:text-primary font-semibold transition-colors duration-300"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Schedule
-              </Link>
-            </li>
           </ul>
           
           {/* Login/Logout Button */}
