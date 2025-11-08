@@ -27,7 +27,7 @@ const Schedule = () => {
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('17:00');
   const [notes, setNotes] = useState('');
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('month');
   const [loading, setLoading] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -186,16 +186,14 @@ const Schedule = () => {
   const calendarDays = getCalendarDays();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex pt-20">
-        <DashboardSidebar activeItem="schedule" />
-        <main className="flex-1 p-8 ml-64">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Work Schedule</h1>
-              <p className="text-lg text-gray-600">Plan your availability for the upcoming weeks</p>
-            </div>
+    <div className="min-h-screen bg-background flex">
+      <DashboardSidebar activeItem="schedule" />
+      <div className="flex-1 flex flex-col">
+        <header className="h-16 border-b bg-background flex items-center px-8">
+          <h1 className="text-2xl font-bold text-foreground">Work Schedule</h1>
+        </header>
+        <main className="flex-1 p-8 overflow-auto">
+          <div className="max-w-7xl mx-auto w-full">
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               {/* Weekly Hours Card */}
@@ -209,7 +207,7 @@ const Schedule = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-5xl font-bold text-white">
-                    {weeklyHours.hours}
+                    {weeklyHours.hours || 0}
                     <span className="text-2xl text-purple-100 ml-2">hrs</span>
                   </div>
                   {weeklyHours.minutes > 0 && (
@@ -231,7 +229,7 @@ const Schedule = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-5xl font-bold text-white">
-                    {scheduleEntries.length}
+                    {scheduleEntries.length || 0}
                     <span className="text-2xl text-indigo-100 ml-2">days</span>
                   </div>
                 </CardContent>
@@ -302,61 +300,133 @@ const Schedule = () => {
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="grid grid-cols-7 gap-2">
-                  {/* Day Headers */}
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                    <div key={day} className="text-center font-semibold text-gray-700 py-2 bg-gray-100 rounded-lg">
-                      {day}
-                    </div>
-                  ))}
-                  
-                  {/* Calendar Days */}
-                  {calendarDays.map((day, index) => {
-                    const schedule = getScheduleForDate(day);
-                    const isToday = isSameDay(day, new Date());
-                    const isSelected = selectedDates.some(d => isSameDay(d, day));
-                    
-                    return (
-                      <div
-                        key={index}
-                        onClick={() => handleDateSelect(day)}
-                        className={`min-h-[120px] p-3 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg ${
-                          isToday ? 'border-purple-500 bg-purple-50' : 
-                          isSelected ? 'border-indigo-400 bg-indigo-50' :
-                          schedule ? 'border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100' : 
-                          'border-gray-200 bg-white hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className={`text-sm font-semibold mb-2 ${
-                          isToday ? 'text-purple-700' : 
-                          schedule ? 'text-purple-600' : 
-                          'text-gray-700'
-                        }`}>
-                          {format(day, 'd')}
+                {viewMode === 'week' ? (
+                  // Google Calendar Style Week View
+                  <div className="flex">
+                    {/* Time column */}
+                    <div className="w-20 flex-shrink-0">
+                      <div className="h-12"></div>
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <div key={i} className="h-16 text-xs text-gray-500 text-right pr-2 border-t">
+                          {i === 0 ? '12 AM' : i < 12 ? `${i} AM` : i === 12 ? '12 PM' : `${i - 12} PM`}
                         </div>
+                      ))}
+                    </div>
+                    
+                    {/* Days columns */}
+                    <div className="flex-1 grid grid-cols-7 gap-px bg-gray-200">
+                      {calendarDays.map((day, dayIndex) => {
+                        const schedule = getScheduleForDate(day);
+                        const isToday = isSameDay(day, new Date());
+                        const isSelected = selectedDates.some(d => isSameDay(d, day));
                         
-                        {schedule && (
-                          <div className="space-y-1">
-                            <div className="text-xs font-medium text-white bg-purple-600 rounded-lg px-2 py-1">
-                              {schedule.start_time} - {schedule.end_time}
-                            </div>
-                            {schedule.notes && (
-                              <div className="text-xs text-gray-600 truncate" title={schedule.notes}>
-                                {schedule.notes}
+                        return (
+                          <div key={dayIndex} className="bg-white">
+                            {/* Day header */}
+                            <div className={`h-12 flex flex-col items-center justify-center border-b ${
+                              isToday ? 'bg-purple-100 border-purple-300' : 'bg-gray-50'
+                            }`}>
+                              <div className="text-xs font-medium text-gray-600">
+                                {format(day, 'EEE')}
                               </div>
-                            )}
+                              <div className={`text-lg font-semibold ${
+                                isToday ? 'text-purple-700' : 'text-gray-900'
+                              }`}>
+                                {format(day, 'd')}
+                              </div>
+                            </div>
+                            
+                            {/* Hour slots */}
+                            <div className="relative">
+                              {Array.from({ length: 24 }, (_, i) => (
+                                <div 
+                                  key={i} 
+                                  className="h-16 border-t cursor-pointer hover:bg-gray-50"
+                                  onClick={() => handleDateSelect(day)}
+                                ></div>
+                              ))}
+                              
+                              {/* Scheduled time block */}
+                              {schedule && schedule.start_time && schedule.end_time && (
+                                <div 
+                                  className="absolute left-1 right-1 bg-purple-500 text-white rounded p-1 text-xs font-medium overflow-hidden"
+                                  style={{
+                                    top: `${(parseInt(schedule.start_time.split(':')[0]) + parseInt(schedule.start_time.split(':')[1]) / 60) * 64}px`,
+                                    height: `${((parseInt(schedule.end_time.split(':')[0]) + parseInt(schedule.end_time.split(':')[1]) / 60) - (parseInt(schedule.start_time.split(':')[0]) + parseInt(schedule.start_time.split(':')[1]) / 60)) * 64}px`
+                                  }}
+                                >
+                                  <div className="font-semibold">{schedule.start_time} - {schedule.end_time}</div>
+                                  {schedule.notes && <div className="truncate text-xs opacity-90">{schedule.notes}</div>}
+                                </div>
+                              )}
+                              
+                              {isSelected && !schedule && (
+                                <div className="absolute inset-0 bg-indigo-100 bg-opacity-30 pointer-events-none"></div>
+                              )}
+                            </div>
                           </div>
-                        )}
-                        
-                        {isSelected && !schedule && (
-                          <div className="text-xs font-medium text-indigo-600">
-                            Selected
-                          </div>
-                        )}
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  // Month View
+                  <div className="grid grid-cols-7 gap-2">
+                    {/* Day Headers */}
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                      <div key={day} className="text-center font-semibold text-gray-700 py-2 bg-gray-100 rounded-lg">
+                        {day}
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                    
+                    {/* Calendar Days */}
+                    {calendarDays.map((day, index) => {
+                      const schedule = getScheduleForDate(day);
+                      const isToday = isSameDay(day, new Date());
+                      const isSelected = selectedDates.some(d => isSameDay(d, day));
+                      
+                      return (
+                        <div
+                          key={index}
+                          onClick={() => handleDateSelect(day)}
+                          className={`min-h-[120px] p-3 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg ${
+                            isToday ? 'border-purple-500 bg-purple-50' : 
+                            isSelected ? 'border-indigo-400 bg-indigo-50' :
+                            schedule ? 'border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100' : 
+                            'border-gray-200 bg-white hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className={`text-sm font-semibold mb-2 ${
+                            isToday ? 'text-purple-700' : 
+                            schedule ? 'text-purple-600' : 
+                            'text-gray-700'
+                          }`}>
+                            {format(day, 'd')}
+                          </div>
+                          
+                          {schedule && (
+                            <div className="space-y-1">
+                              <div className="text-xs font-medium text-white bg-purple-600 rounded-lg px-2 py-1">
+                                {schedule.start_time} - {schedule.end_time}
+                              </div>
+                              {schedule.notes && (
+                                <div className="text-xs text-gray-600 truncate" title={schedule.notes}>
+                                  {schedule.notes}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
+                          {isSelected && !schedule && (
+                            <div className="text-xs font-medium text-indigo-600">
+                              Selected
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
