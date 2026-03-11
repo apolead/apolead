@@ -14,7 +14,7 @@ const Home = () => {
         <Header />
         
         {/* Hero Section */}
-        <section className="pt-32 pb-20 relative overflow-hidden bg-gradient-to-br from-indigo-50 to-white">
+        <section className="pt-32 pb-20 relative overflow-hidden bg-gradient-to-br from-blue-50 to-white">
           <div className="container relative z-[2] flex flex-col md:flex-row items-center justify-between">
             <div className="md:w-1/2 md:pr-8 mb-12 md:mb-0">
               <h1 className={`mb-6 text-dark font-bold ${isMobile ? 'text-3xl' : 'text-5xl'}`}>
@@ -198,17 +198,17 @@ const Home = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-indigo-600 text-white">
+        <section className="py-20 bg-primary text-white">
           <div className="container text-center">
             <h2 className="text-4xl font-bold mb-6">Helping People Take the Next Step</h2>
             <p className="text-xl mb-8 max-w-2xl mx-auto">
               Partner with ApoLead and connect with a global team built to drive meaningful engagement and measurable outcomes.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/contact" className="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+              <Link to="/contact" className="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
                 Partner With Us
               </Link>
-              <Link to="/partners" className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
+              <Link to="/partners" className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors">
                 Learn More
               </Link>
             </div>

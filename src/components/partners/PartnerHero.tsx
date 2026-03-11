@@ -6,7 +6,7 @@ const PartnerHero = () => {
   const isMobile = useIsMobile();
 
   return (
-    <section className="pt-32 pb-20 relative overflow-hidden bg-gradient-to-br from-indigo-50 to-white">
+    <section className="pt-32 pb-20 relative overflow-hidden bg-gradient-to-br from-blue-50 to-white">
       <div className="container relative z-[2]">
         <div className="text-center mb-16">
           <h1 className={`mb-6 text-dark font-bold ${isMobile ? 'text-3xl' : 'text-5xl'}`}>
