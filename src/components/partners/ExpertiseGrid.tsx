@@ -4,28 +4,28 @@ import React from 'react';
 const ExpertiseGrid = () => {
   const expertiseAreas = [
     {
-      title: "Operational Excellence",
-      description: "Proven track record of building efficient, scalable call center operations that deliver consistent results while maintaining high quality standards."
+      title: "Skilled Global Teams",
+      description: "Educated, highly motivated professionals located across developing economies, delivering exceptional engagement quality."
     },
     {
-      title: "Technology Integration",
-      description: "Deep expertise in implementing and optimizing modern call center technologies, CRM systems, and workforce management platforms."
+      title: "Structured Engagement",
+      description: "Proven conversation frameworks and follow-up processes designed to help people take the next step toward their goals."
     },
     {
-      title: "Global Workforce Management",
-      description: "Extensive experience in recruiting, training, and managing distributed teams across multiple countries and time zones."
+      title: "Scalable Operations",
+      description: "Systems and training programs that allow us to scale from hundreds to tens of thousands of daily conversations."
     },
     {
-      title: "Quality Assurance",
-      description: "Comprehensive QA frameworks that ensure consistent service delivery and continuous improvement across all client engagements."
+      title: "Measurable Outcomes",
+      description: "We measure success by real progress made—not simply interactions completed. Transparent reporting keeps you informed."
     },
     {
-      title: "Industry Knowledge",
-      description: "Cross-industry experience including healthcare, financial services, e-commerce, SaaS, and telecommunications sectors."
+      title: "Program Flexibility",
+      description: "From financial improvement and credit education to home improvement matching and service enrollment support."
     },
     {
-      title: "Strategic Partnership",
-      description: "Collaborative approach that aligns our operations with your business objectives and growth strategies."
+      title: "Social Impact",
+      description: "Creating meaningful economic opportunities for talented professionals while delivering high-quality outcomes for partners."
     }
   ];
 
@@ -33,9 +33,9 @@ const ExpertiseGrid = () => {
     <section className="py-20 bg-gray-50">
       <div className="container">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-6">Our Combined Expertise</h2>
+          <h2 className="text-4xl font-bold mb-6">What Sets Us Apart</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Together, we bring a unique combination of operational excellence, technology innovation, and global workforce management.
+            We don't just provide staffing—we provide engagement programs designed to help organizations better serve the people who rely on them.
           </p>
         </div>
         
