@@ -94,7 +94,7 @@ const Contact = () => {
               {/* Contact Form */}
               <div>
                 <h2 className="text-3xl font-bold mb-8">Send Us a Message</h2>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form id="contact-form" onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label htmlFor="inquiryType" className="block text-sm font-medium text-gray-700 mb-2">
                       What can we help you with? *
@@ -264,7 +264,10 @@ const Contact = () => {
                     <p className="text-gray-900 mb-4">
                       Ready to get started immediately? Schedule a consultation call and we'll have you up and running in no time.
                     </p>
-                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Button
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
+                    >
                       Schedule Consultation
                     </Button>
                   </div>
