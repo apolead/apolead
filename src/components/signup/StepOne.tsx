@@ -109,10 +109,10 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       {/* Left Side - Visual */}
-      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="w-full md:w-1/2 bg-darknavy text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         {/* Geometric shapes */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
         <div className="relative z-10">
@@ -150,12 +150,12 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
-            <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+            <span className="text-[#00c2cb]">Apo</span><span className="text-primary">Lead</span>
           </h2>
         </div>
         
-        <div className="w-full bg-indigo-100 h-2 rounded-full mb-8">
-          <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "33.3%" }}></div>
+        <div className="w-full bg-blue-100 h-2 rounded-full mb-8">
+          <div className="bg-primary h-2 rounded-full" style={{ width: "33.3%" }}></div>
         </div>
         
         <h2 className="text-2xl font-bold mb-4">Personal Information</h2>
@@ -280,7 +280,7 @@ const StepOne = ({ userData, updateUserData, nextStep, prevStep, isCheckingGovId
             
             <Button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="bg-primary hover:bg-primary-dark text-white"
               disabled={isCheckingGovId}
             >
               {isCheckingGovId ? (

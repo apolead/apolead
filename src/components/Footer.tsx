@@ -13,7 +13,7 @@ const Footer = () => {
   };
 
   return (
-    <footer id="contact" className="bg-[#1a1a2e] text-white pt-16 pb-8">
+    <footer id="contact" className="bg-darknavy text-white pt-16 pb-8">
       <div className="container">
         <div className="flex flex-wrap justify-between mb-12">
           <div className="w-full md:w-1/2 lg:w-1/4 mb-8">

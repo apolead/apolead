@@ -19,7 +19,6 @@ const Header = () => {
     } catch (error) {
       console.error('Error during logout:', error);
     } finally {
-      // Always navigate to home page, even if logout had issues
       navigate('/', { replace: true });
     }
   };
@@ -30,7 +29,7 @@ const Header = () => {
         <Link to="/" className="flex items-center text-decoration-none">
           <h1 className="text-[1.8rem] mb-0">
             <span className="text-[#00c2cb]">Apo</span>
-            <span className="text-indigo-600">Lead</span>
+            <span className="text-primary">Lead</span>
           </h1>
         </Link>
         <nav className="flex items-center">
@@ -78,14 +77,14 @@ const Header = () => {
             <a 
               href="#" 
               onClick={handleLogout}
-              className="ml-8 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              className="ml-8 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
             >
               Logout
             </a>
           ) : (
             <Link 
               to="/login" 
-              className="ml-8 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              className="ml-8 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
             >
               Login
             </Link>

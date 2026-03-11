@@ -70,7 +70,7 @@ const ConfirmationScreen = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto text-indigo-600 mb-4" />
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
           <h2 className="text-2xl font-bold mb-4">Loading your application status...</h2>
           <p className="text-gray-600">Please wait while we check your application status.</p>
         </div>
@@ -130,7 +130,7 @@ const ConfirmationScreen = () => {
         <div className="space-x-4">
           <Button 
             asChild
-            className={isApproved ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"}
+            className={isApproved ? "bg-primary hover:bg-primary-dark" : "bg-gray-600 hover:bg-gray-700"}
           >
             <Link to="/">Return to Homepage</Link>
           </Button>

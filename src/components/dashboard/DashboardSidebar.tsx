@@ -57,7 +57,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="logo">
         <h1 style={{ fontSize: '28px', fontWeight: 700 }}>
-          <span style={{ color: '#00c2cb' }}>Apo</span><span style={{ color: '#4f46e5' }}>Lead</span>
+          <span style={{ color: '#00c2cb' }}>Apo</span><span style={{ color: '#1e3a8a' }}>Lead</span>
         </h1>
         <div className="toggle-btn" onClick={toggleSidebar}>
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -142,7 +142,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ activeItem =
         <div style={{ flexGrow: 1 }}></div>
       </div>
       <div className="sidebar-footer">
-        <Info size={16} className="mr-1" /> Need help? <Link to="/support" className="text-indigo-600 ml-1">Support Center</Link>
+        <Info size={16} className="mr-1" /> Need help? <Link to="/support" className="text-primary ml-1">Support Center</Link>
       </div>
     </div>
   );
