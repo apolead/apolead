@@ -94,7 +94,7 @@ const Contact = () => {
               {/* Contact Form */}
               <div>
                 <h2 className="text-3xl font-bold mb-8">Send Us a Message</h2>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form id="contact-form" onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label htmlFor="inquiryType" className="block text-sm font-medium text-gray-700 mb-2">
                       What can we help you with? *
