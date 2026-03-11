@@ -264,7 +264,10 @@ const Contact = () => {
                     <p className="text-gray-900 mb-4">
                       Ready to get started immediately? Schedule a consultation call and we'll have you up and running in no time.
                     </p>
-                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Button
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
+                    >
                       Schedule Consultation
                     </Button>
                   </div>
