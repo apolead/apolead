@@ -6,13 +6,13 @@ const PartnershipCTA = () => {
   return (
     <section className="py-20 bg-indigo-600 text-white">
       <div className="container text-center">
-        <h2 className="text-4xl font-bold mb-6">Ready to Explore Partnership?</h2>
+        <h2 className="text-4xl font-bold mb-6">Helping People Take the Next Step</h2>
         <p className="text-xl mb-8 max-w-2xl mx-auto">
-          Let's discuss how ApoLead can become your strategic BPO partner and help drive your business forward.
+          Let's discuss how ApoLead's global teams and engagement programs can help your organization reach the people who matter most.
         </p>
         <div className="flex justify-center">
           <Link to="/contact" className="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-            Schedule a Consultation
+            Partner With Us
           </Link>
         </div>
       </div>

@@ -18,131 +18,198 @@ const Home = () => {
           <div className="container relative z-[2] flex flex-col md:flex-row items-center justify-between">
             <div className="md:w-1/2 md:pr-8 mb-12 md:mb-0">
               <h1 className={`mb-6 text-dark font-bold ${isMobile ? 'text-3xl' : 'text-5xl'}`}>
-                Global BPO Excellence. <span className="text-primary">Delivered.</span>
+                Human-Powered Engagement <span className="text-primary">at Scale</span>
               </h1>
-              <p className="mb-8 text-xl text-gray-600 leading-relaxed">
-                ApoLead connects businesses with world-class talent across 32+ countries. 
-                Our distributed workforce delivers exceptional call center and customer service solutions that scale with your business.
+              <p className="mb-4 text-xl text-gray-600 leading-relaxed">
+                ApoLead connects organizations with highly trained global teams who help people take action—whether that means improving their financial future, completing major home projects, or accessing important services.
+              </p>
+              <p className="mb-8 text-lg text-gray-500 leading-relaxed">
+                We combine skilled people, structured processes, and scalable systems to help organizations engage the people they serve and drive meaningful outcomes.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/partners" className="btn btn-primary btn-large">
-                  Explore Partnership →
-                </Link>
-                <Link to="/contact" className="btn btn-outline btn-large">
-                  Get Started Today
+                <Link to="/contact" className="btn btn-primary btn-large">
+                  Partner With Us →
                 </Link>
               </div>
             </div>
             {!isMobile && (
               <div className="md:w-1/2">
-                <img src="/pexels-yankrukov-8867257.jpg" alt="Global BPO Team" className="max-w-full rounded-lg shadow-xl" />
+                <img src="/pexels-yankrukov-8867257.jpg" alt="Global Engagement Team" className="max-w-full rounded-lg shadow-xl" />
               </div>
             )}
           </div>
         </section>
 
-        {/* Our Global Workforce Section */}
+        {/* What We Do Section */}
         <section className="py-20 bg-white">
           <div className="container">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-6">Our Global Workforce</h2>
+              <h2 className="text-4xl font-bold mb-6">What We Do</h2>
               <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-                At ApoLead, our strength lies in our talented, highly educated workforce based in the developing world. We strategically choose to hire in these regions to create meaningful opportunities, foster personal and professional growth, and support economic advancement.
+                ApoLead helps organizations connect with people in meaningful ways. Our teams manage conversations, follow-ups, and guided support that help individuals move forward with important decisions.
+              </p>
+              <p className="text-lg text-gray-500 max-w-3xl mx-auto mt-4 leading-relaxed">
+                Instead of focusing only on generating leads or handling calls, we focus on helping people take the next step, while delivering measurable outcomes for the organizations we support.
               </p>
             </div>
             
-            <div className="text-center mb-16">
-              <p className="text-lg text-gray-700 max-w-3xl mx-auto leading-relaxed">
-                Join us in celebrating our exceptional team and the incredible impact they make every day.
-              </p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow text-center">
+                <h3 className="text-lg font-semibold mb-3">Financial Improvement</h3>
+                <p className="text-gray-600">Credit education and financial improvement programs</p>
+              </div>
+              <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow text-center">
+                <h3 className="text-lg font-semibold mb-3">Home Improvement</h3>
+                <p className="text-gray-600">Contractor matching and home project support</p>
+              </div>
+              <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow text-center">
+                <h3 className="text-lg font-semibold mb-3">Service Enrollment</h3>
+                <p className="text-gray-600">Onboarding and service enrollment assistance</p>
+              </div>
+              <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow text-center">
+                <h3 className="text-lg font-semibold mb-3">Follow-Up Engagement</h3>
+                <p className="text-gray-600">Re-engagement for incomplete applications</p>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Employment Values Section */}
+        {/* Our Approach - People First */}
         <section className="py-20 bg-gray-50">
           <div className="container">
-            <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold mb-6">Our Approach</h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
               <div>
-                <h2 className="text-4xl font-bold mb-6">Empowering People Through Opportunity</h2>
-                <p className="text-xl text-gray-600 leading-relaxed">
-                  Our agents are highly skilled and well-educated individuals who might otherwise face limited employment prospects. By providing secure, flexible employment with living wages, we empower our team members to thrive both personally and professionally.
+                <h3 className="text-2xl font-bold mb-4 text-primary">People First</h3>
+                <p className="text-gray-600 leading-relaxed mb-4">
+                  At the heart of ApoLead is our global team. Our agents are educated, highly motivated professionals located across developing economies where meaningful employment opportunities can be limited.
+                </p>
+                <p className="text-gray-600 leading-relaxed">
+                  By creating stable, consistent work, we help our team members build long-term careers while delivering exceptional support to the people they speak with. This approach allows us to combine social impact with high-quality engagement.
                 </p>
               </div>
               <div>
-                <img src="/agent.jpg" alt="Empowered Professional Team" className="max-w-full rounded-lg shadow-lg" />
+                <img src="/agent.jpg" alt="Our Global Team" className="max-w-full rounded-lg shadow-lg" />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-12">
+              {/* Focused on Outcomes */}
               <div className="bg-white p-8 rounded-lg shadow-sm">
-                <h3 className="text-2xl font-bold mb-4 text-primary">Flexible and Fair Employment</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  We believe that great work comes from balance. Our agents enjoy flexible working hours, enabling them to manage their responsibilities at home while earning a stable income. This approach enhances productivity, loyalty, and overall satisfaction.
+                <h3 className="text-2xl font-bold mb-4 text-primary">Focused on Outcomes</h3>
+                <p className="text-gray-600 leading-relaxed mb-4">
+                  Every conversation our teams have is designed to help people move toward a clear outcome. We measure success by real progress made, not simply interactions completed.
                 </p>
+                <ul className="space-y-2 text-gray-600">
+                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span> Helping someone start rebuilding their credit</li>
+                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span> Connecting a homeowner with the right contractor</li>
+                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span> Assisting someone in completing an application</li>
+                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span> Guiding someone through the next step in accessing a service</li>
+                </ul>
               </div>
+
+              {/* Built to Scale */}
               <div className="bg-white p-8 rounded-lg shadow-sm">
-                <h3 className="text-2xl font-bold mb-4 text-primary">Commitment to Living Wages</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Every ApoLead agent receives a fair, competitive wage that meets or exceeds living standards in their home countries. We are proud to contribute positively to local economies and to set an example for ethical employment practices.
+                <h3 className="text-2xl font-bold mb-4 text-primary">Built to Scale</h3>
+                <p className="text-gray-600 leading-relaxed mb-4">
+                  Our systems, training programs, and operational structure allow us to scale quickly without sacrificing quality.
+                </p>
+                <ul className="space-y-2 text-gray-600">
+                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span> Flexible staffing</li>
+                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span> Rapid program launches</li>
+                  <li className="flex items-start gap-2"><span className="text-primary mt-1">•</span> Consistent performance at high volume</li>
+                </ul>
+                <p className="text-gray-600 leading-relaxed mt-4">
+                  Whether a program requires hundreds of daily conversations or tens of thousands, ApoLead is designed to grow alongside our partners.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Services Section */}
+        {/* Why Partner Section */}
         <section className="py-20 bg-white">
           <div className="container">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-6">Our BPO Services</h2>
+              <h2 className="text-4xl font-bold mb-6">Why Organizations Partner With ApoLead</h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Comprehensive call center and customer service solutions tailored to your industry and business objectives.
+                We don't just provide staffing—we provide engagement programs designed to help organizations better serve the people who rely on them.
               </p>
             </div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow">
-                <h3 className="text-xl font-semibold mb-4">Inbound Customer Support</h3>
-                <p className="text-gray-600">24/7 customer service, technical support, and order processing with multilingual capabilities.</p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="p-6 border rounded-lg text-center">
+                <div className="text-primary text-2xl mb-3">✔</div>
+                <h3 className="text-lg font-semibold mb-2">Skilled Global Teams</h3>
+                <p className="text-gray-600">Dedicated and trained professionals delivering quality engagement</p>
               </div>
-              <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow">
-                <h3 className="text-xl font-semibold mb-4">Outbound Sales</h3>
-                <p className="text-gray-600">Lead generation, appointment setting, and sales campaigns that drive measurable results.</p>
+              <div className="p-6 border rounded-lg text-center">
+                <div className="text-primary text-2xl mb-3">✔</div>
+                <h3 className="text-lg font-semibold mb-2">Cost-Efficient Operations</h3>
+                <p className="text-gray-600">High-quality output with sustainable cost structures</p>
               </div>
-              <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow">
-                <h3 className="text-xl font-semibold mb-4">Back Office Support</h3>
-                <p className="text-gray-600">Data entry, processing, and administrative tasks to streamline your operations.</p>
+              <div className="p-6 border rounded-lg text-center">
+                <div className="text-primary text-2xl mb-3">✔</div>
+                <h3 className="text-lg font-semibold mb-2">Structured Processes</h3>
+                <p className="text-gray-600">Proven engagement frameworks that drive consistency</p>
               </div>
-              <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow">
-                <h3 className="text-xl font-semibold mb-4">Live Chat Support</h3>
-                <p className="text-gray-600">Real-time customer engagement across your digital channels and platforms.</p>
-              </div>
-              <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow">
-                <h3 className="text-xl font-semibold mb-4">Quality Assurance</h3>
-                <p className="text-gray-600">Comprehensive monitoring and reporting to ensure service excellence.</p>
-              </div>
-              <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow">
-                <h3 className="text-xl font-semibold mb-4">Custom Solutions</h3>
-                <p className="text-gray-600">Tailored BPO services designed specifically for your unique business requirements.</p>
+              <div className="p-6 border rounded-lg text-center">
+                <div className="text-primary text-2xl mb-3">✔</div>
+                <h3 className="text-lg font-semibold mb-2">Measurable Outcomes</h3>
+                <p className="text-gray-600">Real results tracked and reported transparently</p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Mission Section */}
+        <section className="py-20 bg-gray-50">
+          <div className="container text-center max-w-4xl mx-auto">
+            <h2 className="text-4xl font-bold mb-6">Our Mission</h2>
+            <p className="text-xl text-gray-600 leading-relaxed mb-6">
+              ApoLead was built on a simple belief: <strong>business success and human impact can go hand in hand.</strong>
+            </p>
+            <p className="text-lg text-gray-600 leading-relaxed mb-6">
+              We help organizations grow and operate more effectively while creating meaningful economic opportunities for talented professionals around the world.
+            </p>
+            <p className="text-lg text-gray-500 leading-relaxed">
+              When the organizations we partner with succeed, our people succeed—and the individuals they serve move closer to their goals.
+            </p>
+          </div>
+        </section>
+
+        {/* Real People Real Progress */}
+        <section className="py-20 bg-white">
+          <div className="container text-center max-w-4xl mx-auto">
+            <h2 className="text-4xl font-bold mb-6">Real People. Real Progress.</h2>
+            <p className="text-xl text-gray-600 leading-relaxed mb-6">
+              Every day our teams speak with people who are trying to improve their lives—whether that means repairing their credit, starting a home project, continuing their education, or accessing important services.
+            </p>
+            <p className="text-lg text-gray-600 leading-relaxed mb-8">
+              By combining empathy, training, and structure, our teams help people move forward with clarity and confidence.
+            </p>
+            <p className="text-2xl font-bold text-primary">
+              Human Conversations. Real Outcomes.
+            </p>
           </div>
         </section>
 
         {/* CTA Section */}
         <section className="py-20 bg-indigo-600 text-white">
           <div className="container text-center">
-            <h2 className="text-4xl font-bold mb-6">Ready to Scale Your Operations?</h2>
+            <h2 className="text-4xl font-bold mb-6">Helping People Take the Next Step</h2>
             <p className="text-xl mb-8 max-w-2xl mx-auto">
-              Partner with ApoLead and access a world-class workforce that delivers exceptional results for your business.
+              Partner with ApoLead and connect with a global team built to drive meaningful engagement and measurable outcomes.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/partners" className="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                Learn About Partnership
+              <Link to="/contact" className="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                Partner With Us
               </Link>
-              <Link to="/contact" className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
-                Contact Us Today
+              <Link to="/partners" className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
+                Learn More
               </Link>
             </div>
           </div>

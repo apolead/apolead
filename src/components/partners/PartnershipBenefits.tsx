@@ -5,23 +5,23 @@ const PartnershipBenefits = () => {
   const benefits = [
     {
       number: "1",
-      title: "Rapid Deployment",
-      description: "Get your operations up and running in weeks, not months, with our proven onboarding process."
+      title: "Rapid Program Launches",
+      description: "Get your engagement programs up and running quickly with our proven onboarding and training processes."
     },
     {
       number: "2",
       title: "Transparent Reporting",
-      description: "Real-time dashboards and comprehensive analytics keep you informed every step of the way."
+      description: "Real-time dashboards and outcome tracking keep you informed on real progress, not just activity metrics."
     },
     {
       number: "3",
       title: "Flexible Scaling",
-      description: "Scale up or down based on demand with our elastic workforce model and flexible pricing."
+      description: "Whether you need hundreds or tens of thousands of daily conversations, our model grows alongside your needs."
     },
     {
       number: "4",
-      title: "Dedicated Support",
-      description: "Direct access to our leadership team and dedicated account management for your success."
+      title: "Outcome-Driven Teams",
+      description: "Every conversation is designed to help people move toward a clear outcome—rebuilding credit, finding contractors, completing applications, or accessing services."
     }
   ];
 
@@ -29,9 +29,9 @@ const PartnershipBenefits = () => {
     <section className="py-20 bg-white">
       <div className="container">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-6">Why Partner With ApoLead?</h2>
+          <h2 className="text-4xl font-bold mb-6">Why Organizations Partner With ApoLead</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Our partnership approach goes beyond traditional vendor relationships to create true strategic alliances.
+            Organizations work with us because we deliver the rare combination of skilled teams, cost-efficient operations, structured processes, and measurable outcomes.
           </p>
         </div>
         
