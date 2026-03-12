@@ -185,7 +185,7 @@ const BillingInformation = () => {
       <div className="flex-1 p-8 md:p-10">
         <div className="flex justify-between items-center mb-10">
           <div className="text-2xl font-semibold text-[#1e293b]">
-            Billing <span className="text-indigo-600 relative after:content-[''] after:absolute after:bottom-[-5px] after:left-0 after:w-full after:h-[3px] after:bg-gradient-to-r after:from-indigo-600 after:to-[#00c2cb] after:rounded-md">Information</span>
+            Billing <span className="text-primary relative after:content-[''] after:absolute after:bottom-[-5px] after:left-0 after:w-full after:h-[3px] after:bg-gradient-to-r after:from-primary after:to-[#00c2cb] after:rounded-md">Information</span>
           </div>
 
           <div className="flex items-center">
