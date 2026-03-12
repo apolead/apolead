@@ -231,8 +231,8 @@ const BillingInformation = () => {
             <p className="text-gray-500 text-sm">Please enter your bank account details below. This information is used to process your payments.</p>
           </div>
 
-          <div className="flex items-center bg-indigo-50 p-4 rounded-xl mb-8">
-            <div className="text-indigo-600 mr-4">
+          <div className="flex items-center bg-blue-50 p-4 rounded-xl mb-8">
+            <div className="text-primary mr-4">
               <ShieldCheck size={20} />
             </div>
             <div className="text-gray-500 text-sm">
