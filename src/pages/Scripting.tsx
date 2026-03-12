@@ -153,7 +153,7 @@ const Scripting = () => {
                 <Search size={18} />
               </div>
               <Input type="text" placeholder="Search scripts by keyword or objective..." className="border-0 focus-visible:ring-0 py-3 w-full" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 transition duration-300">
+              <button className="bg-primary hover:bg-primary-dark text-white px-4 py-3 transition duration-300">
                 Search
               </button>
             </div>
