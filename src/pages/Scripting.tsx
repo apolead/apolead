@@ -140,7 +140,7 @@ const Scripting = () => {
           <div className="flex items-center justify-between mb-8">
             <div className="px-0 py-[6px]">
               <h1 className="text-2xl font-semibold mb-2">
-                Thanks for signing up, <span className="text-indigo-600">{userProfile?.first_name || 'Agent'}</span>!
+                Thanks for signing up, <span className="text-primary">{userProfile?.first_name || 'Agent'}</span>!
               </h1>
               <p className="text-gray-600">Access your professional scripting resources below to maximize conversion.</p>
             </div>
