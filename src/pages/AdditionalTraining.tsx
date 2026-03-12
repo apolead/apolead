@@ -188,7 +188,7 @@ const AdditionalTraining: React.FC = () => {
                         {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
                       </div>
                     </div>
-                    <div className="mt-3 text-sm text-indigo-600 hover:text-indigo-800 truncate">
+                    <div className="mt-3 text-sm text-primary hover:text-primary-dark truncate">
                       <LinkIcon size={12} className="inline mr-1" />
                       <a href={video.url} target="_blank" className="hover:underline" onClick={e => e.stopPropagation()}>
                         {video.url}
