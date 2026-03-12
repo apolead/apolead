@@ -535,7 +535,7 @@ const OnboardingModal = ({
                     <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`} onClick={() => handleChange('checkEmails', true)}>
                       YES
                     </button>
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('checkEmails', false)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('checkEmails', false)}>
                       NO
                     </button>
                   </div>
