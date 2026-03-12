@@ -415,8 +415,8 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
                     Terms and Conditions
                   </label>
                   <p className="text-gray-500">
-                    I agree to the <a href="#" className="text-indigo-600 hover:text-indigo-500">Terms of Service</a> and{' '}
-                    <a href="#" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>. I understand that my personal data will be processed as described.
+                    I agree to the <a href="#" className="text-primary hover:text-primary-dark">Terms of Service</a> and{' '}
+                    <a href="#" className="text-primary hover:text-primary-dark">Privacy Policy</a>. I understand that my personal data will be processed as described.
                   </p>
                 </div>
               </div>
