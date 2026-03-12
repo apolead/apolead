@@ -492,7 +492,7 @@ const Login = () => {
               </form>
               
               <div className="mt-4 text-center">
-                <button onClick={() => setShowForgotPassword(true)} className="text-sm text-indigo-600 hover:underline">
+                <button onClick={() => setShowForgotPassword(true)} className="text-sm text-primary hover:underline">
                   Forgot your password?
                 </button>
               </div>
