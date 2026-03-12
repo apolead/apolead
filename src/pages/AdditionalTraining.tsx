@@ -162,7 +162,7 @@ const AdditionalTraining: React.FC = () => {
                 >
                   <div className="video-thumbnail relative overflow-hidden pt-[56.25%]">
                     <img src={video.thumbnail} alt={video.title} className="absolute top-0 left-0 w-full h-full object-cover" />
-                    <div className="play-button absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-600 bg-opacity-80 hover:bg-opacity-100 w-14 h-14 rounded-full flex items-center justify-center text-white transition">
+                    <div className="play-button absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary bg-opacity-80 hover:bg-opacity-100 w-14 h-14 rounded-full flex items-center justify-center text-white transition">
                       <Play size={24} />
                     </div>
                     {userProfile && userProfile[video.watchStatusColumn as keyof typeof userProfile] === true && (
