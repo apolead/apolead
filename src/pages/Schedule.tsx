@@ -536,7 +536,7 @@ const Schedule = () => {
                         return (
                           <div
                             key={entry.id}
-                            className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 hover:shadow-md transition-shadow"
+                            className="p-4 bg-gradient-to-r from-blue-50 to-blue-50 rounded-xl border border-blue-200 hover:shadow-md transition-shadow"
                           >
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
