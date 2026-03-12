@@ -481,7 +481,7 @@ const OnboardingModal = ({
                         <span className="ml-2 text-sm">Yes</span>
                       </label>
                       <label className="inline-flex items-center">
-                        <input type="radio" name="quietPlace" value="no" checked={userData.hasQuietPlace === false} onChange={() => handleChange('hasQuietPlace', false)} className="w-4 h-4 cursor-pointer text-indigo-600" />
+                        <input type="radio" name="quietPlace" value="no" checked={userData.hasQuietPlace === false} onChange={() => handleChange('hasQuietPlace', false)} className="w-4 h-4 cursor-pointer text-primary" />
                         <span className="ml-2 text-sm">No</span>
                       </label>
                     </div>
