@@ -477,7 +477,7 @@ const OnboardingModal = ({
                     <Label className="block text-sm font-medium text-gray-700 mb-2">I have a quiet place to work</Label>
                     <div className="flex space-x-4">
                       <label className="inline-flex items-center">
-                        <input type="radio" name="quietPlace" value="yes" checked={userData.hasQuietPlace === true} onChange={() => handleChange('hasQuietPlace', true)} className="w-4 h-4 cursor-pointer text-indigo-600" />
+                        <input type="radio" name="quietPlace" value="yes" checked={userData.hasQuietPlace === true} onChange={() => handleChange('hasQuietPlace', true)} className="w-4 h-4 cursor-pointer text-primary" />
                         <span className="ml-2 text-sm">Yes</span>
                       </label>
                       <label className="inline-flex items-center">
