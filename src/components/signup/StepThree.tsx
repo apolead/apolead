@@ -355,7 +355,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
                     </button>
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
                       onClick={() => toggleYesNo('solveProblems', false)}
                     >
                       NO
