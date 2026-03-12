@@ -559,7 +559,7 @@ const OnboardingModal = ({
                     <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`} onClick={() => handleChange('completeTraining', true)}>
                       YES
                     </button>
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('completeTraining', false)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('completeTraining', false)}>
                       NO
                     </button>
                   </div>
