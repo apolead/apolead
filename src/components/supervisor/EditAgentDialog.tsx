@@ -514,7 +514,7 @@ export function EditAgentDialog({ open, onOpenChange, agent, onAgentUpdated }: E
             type="button" 
             onClick={handleSubmit} 
             disabled={isSubmitting}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            className="bg-primary hover:bg-primary-dark text-white"
           >
             <Save className="mr-2 h-4 w-4" />
             {isSubmitting ? "Saving..." : "Save Changes"}

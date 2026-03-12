@@ -18,7 +18,7 @@ const NotFound = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md text-center px-6">
         <div className="mb-8">
-          <h1 className="text-8xl font-bold text-indigo-600 mb-2">404</h1>
+          <h1 className="text-8xl font-bold text-primary mb-2">404</h1>
           <div className="relative w-32 h-1 bg-[#00c2cb] mx-auto my-6 rounded-full"></div>
         </div>
         
@@ -31,7 +31,7 @@ const NotFound = () => {
         <div className="flex justify-center space-x-4">
           <Button 
             asChild
-            className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center"
+            className="bg-primary hover:bg-primary-dark text-white flex items-center"
           >
             <Link to="/">
               <ArrowLeft className="mr-2 h-5 w-5" /> 
@@ -43,7 +43,7 @@ const NotFound = () => {
         <div className="mt-12">
           <div className="text-center">
             <h3 className="text-xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+              <span className="text-[#00c2cb]">Apo</span><span className="text-primary">Lead</span>
             </h3>
           </div>
         </div>

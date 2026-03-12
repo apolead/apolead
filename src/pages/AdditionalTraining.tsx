@@ -31,7 +31,7 @@ const AdditionalTraining: React.FC = () => {
       title: 'Sales Training',
       thumbnail: 'https://img.youtube.com/vi/vVHWer0EYjo/maxresdefault.jpg',
       tags: [
-        { name: 'Sales', bgColor: 'bg-indigo-100', textColor: 'text-indigo-800' },
+        { name: 'Sales', bgColor: 'bg-blue-100', textColor: 'text-primary-dark' },
         { name: 'Training', bgColor: 'bg-blue-100', textColor: 'text-blue-800' },
         { name: 'Techniques', bgColor: 'bg-purple-100', textColor: 'text-purple-800' }
       ],

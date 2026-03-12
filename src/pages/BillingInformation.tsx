@@ -417,7 +417,7 @@ const BillingInformation = () => {
                     className={`${
                       saveSuccess 
                         ? "bg-green-500 hover:bg-green-600" 
-                        : "bg-gradient-to-r from-indigo-600 to-[#00c2cb]"
+                        : "bg-gradient-to-r from-primary to-[#00c2cb]"
                     } hover:translate-y-[-3px] transition-all shadow-md hover:shadow-lg rounded-xl text-zinc-100`}
                     disabled={isSubmitting}
                   >

@@ -645,11 +645,11 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <div className="flex items-start gap-4 p-4 border rounded-lg bg-indigo-50 border-indigo-200 transition-all hover:shadow-md">
-              <ExternalLink className="w-6 h-6 mt-0.5 text-indigo-600" />
+            <div className="flex items-start gap-4 p-4 border rounded-lg bg-blue-50 border-blue-200 transition-all hover:shadow-md">
+              <ExternalLink className="w-6 h-6 mt-0.5 text-primary" />
               <div>
-                <h3 className="font-semibold text-indigo-900 text-lg">Join our Discord server</h3>
-                <p className="mt-2 text-indigo-700 font-medium">
+                <h3 className="font-semibold text-darknavy text-lg">Join our Discord server</h3>
+                <p className="mt-2 text-primary font-medium">
                   Connect with other agents, get updates, and access support resources.
                 </p>
                 <a 

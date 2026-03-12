@@ -208,21 +208,21 @@ const Schedule = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               {/* Weekly Hours Card */}
-              <Card className="bg-gradient-to-br from-purple-500 to-purple-700 border-0 rounded-xl shadow-lg">
+              <Card className="bg-gradient-to-br from-primary to-primary-dark border-0 rounded-xl shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
                     <Clock className="w-5 h-5" />
                     This Week's Hours
                   </CardTitle>
-                  <CardDescription className="text-purple-100">Current week total</CardDescription>
+                  <CardDescription className="text-blue-100">Current week total</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-5xl font-bold text-white">
                     {weeklyHours.hours || 0}
-                    <span className="text-2xl text-purple-100 ml-2">hrs</span>
+                    <span className="text-2xl text-blue-100 ml-2">hrs</span>
                   </div>
                   {weeklyHours.minutes > 0 && (
-                    <div className="text-xl text-purple-100 mt-2">
+                    <div className="text-xl text-blue-100 mt-2">
                       +{weeklyHours.minutes} minutes
                     </div>
                   )}
@@ -230,18 +230,18 @@ const Schedule = () => {
               </Card>
 
               {/* Total Scheduled Days */}
-              <Card className="bg-gradient-to-br from-indigo-500 to-indigo-700 border-0 rounded-xl shadow-lg">
+              <Card className="bg-gradient-to-br from-primary to-darknavy border-0 rounded-xl shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
                     <CalendarIcon className="w-5 h-5" />
                     Scheduled Days
                   </CardTitle>
-                  <CardDescription className="text-indigo-100">Total upcoming days</CardDescription>
+                  <CardDescription className="text-blue-100">Total upcoming days</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-5xl font-bold text-white">
                     {scheduleEntries.length || 0}
-                    <span className="text-2xl text-indigo-100 ml-2">days</span>
+                    <span className="text-2xl text-blue-100 ml-2">days</span>
                   </div>
                 </CardContent>
               </Card>
