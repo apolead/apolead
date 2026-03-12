@@ -25,13 +25,11 @@
 
   /* Lighten text on dark backgrounds */
   .bg-primary p,
-  .bg-indigo-600 p,
-  .bg-indigo-700 p,
-  .bg-purple-600 p,
-  .bg-purple-700 p,
   .bg-blue-600 p,
   .bg-blue-700 p,
-  [class*="bg-indigo"] p,
+  .bg-blue-800 p,
+  [class*="bg-blue"] p,
+  [class*="bg-primary"] p {
   [class*="bg-purple"] p,
   [class*="bg-blue"] p {
     color: rgba(255, 255, 255, 0.9) !important;

@@ -548,7 +548,7 @@ const Schedule = () => {
                                 </div>
                                 {entry.start_time && entry.end_time && (
                                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                                    <Clock className="w-4 h-4 text-indigo-600" />
+                                    <Clock className="w-4 h-4 text-primary" />
                                     <span>
                                       {entry.start_time} - {entry.end_time}
                                     </span>
