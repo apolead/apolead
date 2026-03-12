@@ -212,7 +212,7 @@ const BillingInformation = () => {
               </button>
             </div>
             <div className="flex items-center bg-white px-3 py-2 rounded-full shadow-sm hover:shadow-md transition-all cursor-pointer hover:translate-y-[-3px]">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-r from-indigo-600 to-[#00c2cb] flex items-center justify-center text-white font-medium text-sm mr-2">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-r from-primary to-[#00c2cb] flex items-center justify-center text-white font-medium text-sm mr-2">
                 {getUserInitials()}
               </div>
               <div className="font-medium text-[#1e293b]">
