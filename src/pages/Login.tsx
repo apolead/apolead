@@ -464,7 +464,7 @@ const Login = () => {
                 <button onClick={() => {
               setShowResetConfirmation(false);
               setShowForgotPassword(true);
-            }} className="w-full text-sm text-indigo-600 hover:underline">
+            }} className="w-full text-sm text-primary hover:underline">
                   Try a different email address
                 </button>
               </div>
