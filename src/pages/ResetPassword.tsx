@@ -334,7 +334,7 @@ const ResetPassword = () => {
                 </ul>
               </div>
               <p className="text-gray-600 mb-6">Please try requesting a new password reset link.</p>
-              <Link to="/login" className="text-indigo-600 hover:underline">
+              <Link to="/login" className="text-primary hover:underline">
                 Back to login and request new reset link
               </Link>
             </div>
