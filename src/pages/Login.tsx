@@ -396,11 +396,11 @@ const Login = () => {
         </div>
         
         <div className="mt-auto relative z-10">
-          <div className="bg-indigo-800 bg-opacity-70 rounded-lg p-5 mb-8">
-            <p className="text-sm italic mb-3 text-white">"The platform has transformed my career as a call center agent. The tools and resources provided make handling calls much more efficient."</p>
-            <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-2">
-                S
+            <div className="bg-primary-dark bg-opacity-70 rounded-lg p-5 mb-8">
+              <p className="text-sm italic mb-3 text-white">"The platform has transformed my career as a call center agent. The tools and resources provided make handling calls much more efficient."</p>
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold mr-2">
+                  S
               </div>
               <div>
                 <p className="text-xs font-semibold text-white">Sarah Johnson</p>
