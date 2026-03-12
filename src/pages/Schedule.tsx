@@ -275,7 +275,7 @@ const Schedule = () => {
 
             {/* Large Google Calendar Style View */}
             <Card className="border-0 rounded-xl shadow-lg mb-6">
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-xl">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 rounded-t-xl">
                 <div className="flex justify-between items-center">
                   <div>
                     <CardTitle className="text-gray-900">
