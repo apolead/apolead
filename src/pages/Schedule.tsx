@@ -429,7 +429,7 @@ const Schedule = () => {
                           )}
                           
                           {isSelected && !schedule && (
-                            <div className="text-xs font-medium text-indigo-600">
+                            <div className="text-xs font-medium text-primary">
                               Selected
                             </div>
                           )}
