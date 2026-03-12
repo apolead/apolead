@@ -175,7 +175,7 @@ const Scripting = () => {
                       {renderStars(script.rating)}
                       <span className="text-xs text-gray-500 ml-1">({script.reviews})</span>
                     </div>
-                    <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View Script</button>
+                    <button className="text-primary hover:text-primary-dark text-sm font-medium">View Script</button>
                   </div>
                 </div>
               </div>)}
