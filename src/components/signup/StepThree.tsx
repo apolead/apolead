@@ -212,8 +212,8 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
           </h2>
         </div>
         
-        <div className="w-full bg-indigo-100 h-2 rounded-full mb-8">
-          <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "100%" }}></div>
+        <div className="w-full bg-blue-100 h-2 rounded-full mb-8">
+          <div className="bg-primary h-2 rounded-full" style={{ width: "100%" }}></div>
         </div>
         
         <h2 className="text-2xl font-bold mb-4">Availability & Commitments</h2>
