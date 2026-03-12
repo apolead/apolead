@@ -520,7 +520,7 @@ const OnboardingModal = ({
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-2">Login to Discord everyday that you work?</Label>
                   <div className="flex space-x-3">
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`} onClick={() => handleChange('loginDiscord', true)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`} onClick={() => handleChange('loginDiscord', true)}>
                       YES
                     </button>
                     <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.loginDiscord === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('loginDiscord', false)}>
