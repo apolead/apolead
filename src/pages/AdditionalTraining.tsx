@@ -120,7 +120,7 @@ const AdditionalTraining: React.FC = () => {
         <div className="welcome-container max-w-4xl mx-auto px-4 py-8">
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-800">
-              Thanks for signing up, <span className="text-indigo-600">{userProfile?.first_name || 'Agent'}</span>!
+              Thanks for signing up, <span className="text-primary">{userProfile?.first_name || 'Agent'}</span>!
             </h1>
             <p className="text-gray-600 mt-2 text-sm">
               Access your professional training resources below to maximize conversion.
