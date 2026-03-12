@@ -139,7 +139,7 @@ const AdditionalTraining: React.FC = () => {
                 value={searchQuery} 
                 onChange={e => setSearchQuery(e.target.value)} 
               />
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-r-lg transition">
+              <button className="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-r-lg transition">
                 Search
               </button>
             </div>
