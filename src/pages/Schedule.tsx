@@ -514,7 +514,7 @@ const Schedule = () => {
 
               {/* Schedule Entries List */}
               <Card className="border-0 rounded-xl shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-xl">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 rounded-t-xl">
                   <CardTitle className="text-gray-900">Your Schedule</CardTitle>
                   <CardDescription className="text-gray-600">
                     Manage your upcoming work days
