@@ -328,7 +328,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
                   <div className="flex space-x-3">
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`}
                       onClick={() => toggleYesNo('checkEmails', true)}
                     >
                       YES
