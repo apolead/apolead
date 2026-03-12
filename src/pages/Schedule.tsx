@@ -372,7 +372,7 @@ const Schedule = () => {
                               )}
                               
                               {isSelected && !schedule && (
-                                <div className="absolute inset-0 bg-indigo-100 bg-opacity-30 pointer-events-none"></div>
+                                <div className="absolute inset-0 bg-blue-100 bg-opacity-30 pointer-events-none"></div>
                               )}
                             </div>
                           </div>
