@@ -426,7 +426,7 @@ const ResetPassword = () => {
           </form>
           
           <div className="mt-6 text-center">
-            <Link to="/login" className="text-sm text-indigo-600 hover:underline">
+            <Link to="/login" className="text-sm text-primary hover:underline">
               Back to sign in
             </Link>
           </div>

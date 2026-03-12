@@ -524,7 +524,7 @@ const Login = () => {
                 <button onClick={() => {
               setShowForgotPassword(false);
               setResetEmail('');
-            }} className="text-sm text-indigo-600 hover:underline">
+            }} className="text-sm text-primary hover:underline">
                   Back to sign in
                 </button>
               </div>
