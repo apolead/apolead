@@ -544,7 +544,7 @@ const OnboardingModal = ({
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-2">Proactively solve your own problems and help others solve theirs?</Label>
                   <div className="flex space-x-3">
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`} onClick={() => handleChange('solveProblems', true)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`} onClick={() => handleChange('solveProblems', true)}>
                       YES
                     </button>
                     <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('solveProblems', false)}>
