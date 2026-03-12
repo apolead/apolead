@@ -397,7 +397,7 @@ const BillingInformation = () => {
                         value={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3">
+                          <SelectTrigger className="bg-[#f8fafc] border-[#e2e8f0] focus:border-primary focus:bg-white focus:ring focus:ring-blue-100 rounded-xl p-3">
                             <SelectValue placeholder="Select account type" />
                           </SelectTrigger>
                         </FormControl>
