@@ -576,7 +576,7 @@ const OnboardingModal = ({
             </div>
             
             <div className="flex items-start space-x-2">
-              <input type="checkbox" id="terms" checked={userData.acceptedTerms} onChange={e => handleChange('acceptedTerms', e.target.checked)} className="h-4 w-4 mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+              <input type="checkbox" id="terms" checked={userData.acceptedTerms} onChange={e => handleChange('acceptedTerms', e.target.checked)} className="h-4 w-4 mt-1 rounded border-gray-300 text-primary focus:ring-primary" />
               <div>
                 <Label htmlFor="terms" className="font-medium text-gray-700">
                   Terms and Conditions
