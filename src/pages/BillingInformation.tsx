@@ -350,7 +350,7 @@ const BillingInformation = () => {
                         <Input 
                           placeholder="Enter your account number" 
                           {...field} 
-                          className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
+                          className="bg-[#f8fafc] border-[#e2e8f0] focus:border-primary focus:bg-white focus:ring focus:ring-blue-100 rounded-xl p-3" 
                           onChange={e => {
                             const value = e.target.value.replace(/[^\d]/g, '');
                             field.onChange(value);
