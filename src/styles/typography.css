@@ -36,15 +36,11 @@
   }
 
   .bg-primary .text-gray-600,
-  .bg-indigo-600 .text-gray-600,
-  .bg-indigo-700 .text-gray-600,
-  .bg-purple-600 .text-gray-600,
-  .bg-purple-700 .text-gray-600,
   .bg-blue-600 .text-gray-600,
   .bg-blue-700 .text-gray-600,
-  [class*="bg-indigo"] .text-gray-600,
-  [class*="bg-purple"] .text-gray-600,
-  [class*="bg-blue"] .text-gray-600 {
+  .bg-blue-800 .text-gray-600,
+  [class*="bg-blue"] .text-gray-600,
+  [class*="bg-primary"] .text-gray-600 {
     color: rgba(255, 255, 255, 0.8) !important;
   }
 }

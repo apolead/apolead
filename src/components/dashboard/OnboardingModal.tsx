@@ -583,7 +583,7 @@ const OnboardingModal = ({
                 </Label>
                 <p className="text-gray-500 text-sm">
                   I agree to the <a href="#" className="text-primary hover:text-primary-dark">Terms of Service</a> and{' '}
-                  <a href="#" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>. I understand that my personal data will be processed as described.
+                  <a href="#" className="text-primary hover:text-primary-dark">Privacy Policy</a>. I understand that my personal data will be processed as described.
                 </p>
               </div>
             </div>
