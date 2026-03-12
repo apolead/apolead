@@ -316,7 +316,7 @@ const OnboardingModal = ({
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             Initial Onboarding
@@ -399,7 +399,7 @@ const OnboardingModal = ({
                 <div className="border-b pb-4">
                   <Label className="block text-sm font-medium text-gray-700 mb-2">25 MBPS Internet</Label>
                   <p className="text-xs text-gray-500 mb-2">Upload a selfie of speed test results from:</p>
-                  <a href="https://speed.cloudflare.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 text-sm hover:underline">
+                  <a href="https://speed.cloudflare.com/" target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">
                     https://speed.cloudflare.com/
                   </a>
                   
@@ -463,11 +463,11 @@ const OnboardingModal = ({
                     <Label className="block text-sm font-medium text-gray-700 mb-2">I have a headset</Label>
                     <div className="flex space-x-4">
                       <label className="inline-flex items-center">
-                        <input type="radio" name="headset" value="yes" checked={userData.hasHeadset === true} onChange={() => handleChange('hasHeadset', true)} className="w-4 h-4 cursor-pointer text-indigo-600" />
+                        <input type="radio" name="headset" value="yes" checked={userData.hasHeadset === true} onChange={() => handleChange('hasHeadset', true)} className="w-4 h-4 cursor-pointer text-primary" />
                         <span className="ml-2 text-sm">Yes</span>
                       </label>
                       <label className="inline-flex items-center">
-                        <input type="radio" name="headset" value="no" checked={userData.hasHeadset === false} onChange={() => handleChange('hasHeadset', false)} className="w-4 h-4 cursor-pointer text-indigo-600" />
+                        <input type="radio" name="headset" value="no" checked={userData.hasHeadset === false} onChange={() => handleChange('hasHeadset', false)} className="w-4 h-4 cursor-pointer text-primary" />
                         <span className="ml-2 text-sm">No</span>
                       </label>
                     </div>
@@ -477,11 +477,11 @@ const OnboardingModal = ({
                     <Label className="block text-sm font-medium text-gray-700 mb-2">I have a quiet place to work</Label>
                     <div className="flex space-x-4">
                       <label className="inline-flex items-center">
-                        <input type="radio" name="quietPlace" value="yes" checked={userData.hasQuietPlace === true} onChange={() => handleChange('hasQuietPlace', true)} className="w-4 h-4 cursor-pointer text-indigo-600" />
+                        <input type="radio" name="quietPlace" value="yes" checked={userData.hasQuietPlace === true} onChange={() => handleChange('hasQuietPlace', true)} className="w-4 h-4 cursor-pointer text-primary" />
                         <span className="ml-2 text-sm">Yes</span>
                       </label>
                       <label className="inline-flex items-center">
-                        <input type="radio" name="quietPlace" value="no" checked={userData.hasQuietPlace === false} onChange={() => handleChange('hasQuietPlace', false)} className="w-4 h-4 cursor-pointer text-indigo-600" />
+                        <input type="radio" name="quietPlace" value="no" checked={userData.hasQuietPlace === false} onChange={() => handleChange('hasQuietPlace', false)} className="w-4 h-4 cursor-pointer text-primary" />
                         <span className="ml-2 text-sm">No</span>
                       </label>
                     </div>
@@ -508,10 +508,10 @@ const OnboardingModal = ({
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-2">Can you meet the 15 hours per week obligation three weeks out of every four?</Label>
                   <div className="flex space-x-3">
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`} onClick={() => handleChange('meetObligation', true)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`} onClick={() => handleChange('meetObligation', true)}>
                       YES
                     </button>
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.meetObligation === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('meetObligation', false)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.meetObligation === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('meetObligation', false)}>
                       NO
                     </button>
                   </div>
@@ -520,10 +520,10 @@ const OnboardingModal = ({
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-2">Login to Discord everyday that you work?</Label>
                   <div className="flex space-x-3">
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`} onClick={() => handleChange('loginDiscord', true)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`} onClick={() => handleChange('loginDiscord', true)}>
                       YES
                     </button>
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.loginDiscord === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('loginDiscord', false)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.loginDiscord === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('loginDiscord', false)}>
                       NO
                     </button>
                   </div>
@@ -532,10 +532,10 @@ const OnboardingModal = ({
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-2">Check company emails every day?</Label>
                   <div className="flex space-x-3">
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`} onClick={() => handleChange('checkEmails', true)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`} onClick={() => handleChange('checkEmails', true)}>
                       YES
                     </button>
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('checkEmails', false)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('checkEmails', false)}>
                       NO
                     </button>
                   </div>
@@ -544,10 +544,10 @@ const OnboardingModal = ({
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-2">Proactively solve your own problems and help others solve theirs?</Label>
                   <div className="flex space-x-3">
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`} onClick={() => handleChange('solveProblems', true)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`} onClick={() => handleChange('solveProblems', true)}>
                       YES
                     </button>
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('solveProblems', false)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('solveProblems', false)}>
                       NO
                     </button>
                   </div>
@@ -556,10 +556,10 @@ const OnboardingModal = ({
                 <div>
                   <Label className="block text-sm font-medium text-gray-700 mb-2">Complete required training on your own?</Label>
                   <div className="flex space-x-3">
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`} onClick={() => handleChange('completeTraining', true)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`} onClick={() => handleChange('completeTraining', true)}>
                       YES
                     </button>
-                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('completeTraining', false)}>
+                    <button type="button" className={`px-4 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`} onClick={() => handleChange('completeTraining', false)}>
                       NO
                     </button>
                   </div>
@@ -576,14 +576,14 @@ const OnboardingModal = ({
             </div>
             
             <div className="flex items-start space-x-2">
-              <input type="checkbox" id="terms" checked={userData.acceptedTerms} onChange={e => handleChange('acceptedTerms', e.target.checked)} className="h-4 w-4 mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+              <input type="checkbox" id="terms" checked={userData.acceptedTerms} onChange={e => handleChange('acceptedTerms', e.target.checked)} className="h-4 w-4 mt-1 rounded border-gray-300 text-primary focus:ring-primary" />
               <div>
                 <Label htmlFor="terms" className="font-medium text-gray-700">
                   Terms and Conditions
                 </Label>
                 <p className="text-gray-500 text-sm">
-                  I agree to the <a href="#" className="text-indigo-600 hover:text-indigo-500">Terms of Service</a> and{' '}
-                  <a href="#" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>. I understand that my personal data will be processed as described.
+                  I agree to the <a href="#" className="text-primary hover:text-primary-dark">Terms of Service</a> and{' '}
+                  <a href="#" className="text-primary hover:text-primary-dark">Privacy Policy</a>. I understand that my personal data will be processed as described.
                 </p>
               </div>
             </div>

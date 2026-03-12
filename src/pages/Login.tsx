@@ -378,9 +378,9 @@ const Login = () => {
   }
 
   return <div className="flex flex-col md:flex-row w-full h-screen">
-      <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="hidden md:block w-full md:w-1/2 bg-darknavy text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
         <div className="relative z-10">
@@ -396,11 +396,11 @@ const Login = () => {
         </div>
         
         <div className="mt-auto relative z-10">
-          <div className="bg-indigo-800 bg-opacity-70 rounded-lg p-5 mb-8">
-            <p className="text-sm italic mb-3 text-white">"The platform has transformed my career as a call center agent. The tools and resources provided make handling calls much more efficient."</p>
-            <div className="flex items-center">
-              <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center text-white font-bold mr-2">
-                S
+            <div className="bg-primary-dark bg-opacity-70 rounded-lg p-5 mb-8">
+              <p className="text-sm italic mb-3 text-white">"The platform has transformed my career as a call center agent. The tools and resources provided make handling calls much more efficient."</p>
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold mr-2">
+                  S
               </div>
               <div>
                 <p className="text-xs font-semibold text-white">Sarah Johnson</p>
@@ -412,7 +412,7 @@ const Login = () => {
       
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         <div className="block md:hidden mb-8">
-          <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
+          <Link to="/" className="text-primary hover:text-primary-dark flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
@@ -423,7 +423,7 @@ const Login = () => {
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+              <span className="text-[#00c2cb]">Apo</span><span className="text-primary">Lead</span>
             </h2>
           </div>
 
@@ -464,7 +464,7 @@ const Login = () => {
                 <button onClick={() => {
               setShowResetConfirmation(false);
               setShowForgotPassword(true);
-            }} className="w-full text-sm text-indigo-600 hover:underline">
+            }} className="w-full text-sm text-primary hover:underline">
                   Try a different email address
                 </button>
               </div>
@@ -492,14 +492,14 @@ const Login = () => {
               </form>
               
               <div className="mt-4 text-center">
-                <button onClick={() => setShowForgotPassword(true)} className="text-sm text-indigo-600 hover:underline">
+                <button onClick={() => setShowForgotPassword(true)} className="text-sm text-primary hover:underline">
                   Forgot your password?
                 </button>
               </div>
               
               <div className="mt-6 text-center">
                 <p className="text-sm">
-                  Don't have an account? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link>
+                  Don't have an account? <Link to="/signup" className="text-primary hover:underline">Sign up</Link>
                 </p>
               </div>
             </> : <>
@@ -524,7 +524,7 @@ const Login = () => {
                 <button onClick={() => {
               setShowForgotPassword(false);
               setResetEmail('');
-            }} className="text-sm text-indigo-600 hover:underline">
+            }} className="text-sm text-primary hover:underline">
                   Back to sign in
                 </button>
               </div>

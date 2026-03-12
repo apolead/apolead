@@ -208,21 +208,21 @@ const Schedule = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               {/* Weekly Hours Card */}
-              <Card className="bg-gradient-to-br from-purple-500 to-purple-700 border-0 rounded-xl shadow-lg">
+              <Card className="bg-gradient-to-br from-primary to-primary-dark border-0 rounded-xl shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
                     <Clock className="w-5 h-5" />
                     This Week's Hours
                   </CardTitle>
-                  <CardDescription className="text-purple-100">Current week total</CardDescription>
+                  <CardDescription className="text-blue-100">Current week total</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-5xl font-bold text-white">
                     {weeklyHours.hours || 0}
-                    <span className="text-2xl text-purple-100 ml-2">hrs</span>
+                    <span className="text-2xl text-blue-100 ml-2">hrs</span>
                   </div>
                   {weeklyHours.minutes > 0 && (
-                    <div className="text-xl text-purple-100 mt-2">
+                    <div className="text-xl text-blue-100 mt-2">
                       +{weeklyHours.minutes} minutes
                     </div>
                   )}
@@ -230,18 +230,18 @@ const Schedule = () => {
               </Card>
 
               {/* Total Scheduled Days */}
-              <Card className="bg-gradient-to-br from-indigo-500 to-indigo-700 border-0 rounded-xl shadow-lg">
+              <Card className="bg-gradient-to-br from-primary to-darknavy border-0 rounded-xl shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-white">
                     <CalendarIcon className="w-5 h-5" />
                     Scheduled Days
                   </CardTitle>
-                  <CardDescription className="text-indigo-100">Total upcoming days</CardDescription>
+                  <CardDescription className="text-blue-100">Total upcoming days</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-5xl font-bold text-white">
                     {scheduleEntries.length || 0}
-                    <span className="text-2xl text-indigo-100 ml-2">days</span>
+                    <span className="text-2xl text-blue-100 ml-2">days</span>
                   </div>
                 </CardContent>
               </Card>
@@ -275,7 +275,7 @@ const Schedule = () => {
 
             {/* Large Google Calendar Style View */}
             <Card className="border-0 rounded-xl shadow-lg mb-6">
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-xl">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 rounded-t-xl">
                 <div className="flex justify-between items-center">
                   <div>
                     <CardTitle className="text-gray-900">
@@ -372,7 +372,7 @@ const Schedule = () => {
                               )}
                               
                               {isSelected && !schedule && (
-                                <div className="absolute inset-0 bg-indigo-100 bg-opacity-30 pointer-events-none"></div>
+                                <div className="absolute inset-0 bg-blue-100 bg-opacity-30 pointer-events-none"></div>
                               )}
                             </div>
                           </div>
@@ -402,7 +402,7 @@ const Schedule = () => {
                           onClick={() => handleDateSelect(day)}
                           className={`min-h-[120px] p-3 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg ${
                             isToday ? 'border-purple-500 bg-purple-50' : 
-                            isSelected ? 'border-indigo-400 bg-indigo-50' :
+                            isSelected ? 'border-primary bg-blue-50' :
                             schedule ? 'border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100' : 
                             'border-gray-200 bg-white hover:bg-gray-50'
                           }`}
@@ -429,7 +429,7 @@ const Schedule = () => {
                           )}
                           
                           {isSelected && !schedule && (
-                            <div className="text-xs font-medium text-indigo-600">
+                            <div className="text-xs font-medium text-primary">
                               Selected
                             </div>
                           )}
@@ -444,7 +444,7 @@ const Schedule = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Quick Add Section */}
               <Card className="border-0 rounded-xl shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-xl">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 rounded-t-xl">
                   <CardTitle className="text-gray-900">Quick Add Schedule</CardTitle>
                   <CardDescription className="text-gray-600">
                     Select dates from calendar above and add times here
@@ -453,7 +453,7 @@ const Schedule = () => {
                 <CardContent className="pt-6">
                   <div className="space-y-4">
                     {selectedDates.length > 0 && (
-                      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                         <p className="text-sm font-medium !text-gray-900 [&]:text-gray-900" style={{ color: '#111827 !important' }}>
                           {selectedDates.length} date(s) selected
                         </p>
@@ -514,7 +514,7 @@ const Schedule = () => {
 
               {/* Schedule Entries List */}
               <Card className="border-0 rounded-xl shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-xl">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 rounded-t-xl">
                   <CardTitle className="text-gray-900">Your Schedule</CardTitle>
                   <CardDescription className="text-gray-600">
                     Manage your upcoming work days
@@ -536,7 +536,7 @@ const Schedule = () => {
                         return (
                           <div
                             key={entry.id}
-                            className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 hover:shadow-md transition-shadow"
+                            className="p-4 bg-gradient-to-r from-blue-50 to-blue-50 rounded-xl border border-blue-200 hover:shadow-md transition-shadow"
                           >
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
@@ -548,7 +548,7 @@ const Schedule = () => {
                                 </div>
                                 {entry.start_time && entry.end_time && (
                                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                                    <Clock className="w-4 h-4 text-indigo-600" />
+                                    <Clock className="w-4 h-4 text-primary" />
                                     <span>
                                       {entry.start_time} - {entry.end_time}
                                     </span>

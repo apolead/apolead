@@ -26,7 +26,6 @@ const Contact = () => {
       [name]: value
     }));
 
-    // Redirect to agent signup if agent inquiry is selected
     if (name === 'inquiryType' && value === 'agent') {
       navigate('/agents');
       return;
@@ -38,8 +37,6 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      // Here you would integrate with your email service or backend
-      // For now, we'll simulate a successful submission
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
@@ -47,7 +44,6 @@ const Contact = () => {
         description: "We'll get back to you within 24 hours.",
       });
 
-      // Reset form
       setFormData({
         inquiryType: '',
         firstName: '',
@@ -74,7 +70,7 @@ const Contact = () => {
         <Header />
         
         {/* Hero Section */}
-        <section className="pt-32 pb-20 relative overflow-hidden bg-gradient-to-br from-indigo-50 to-white">
+        <section className="pt-32 pb-20 relative overflow-hidden bg-gradient-to-br from-blue-50 to-white">
           <div className="container relative z-[2]">
             <div className="text-center mb-16">
               <h1 className="text-5xl font-bold mb-6 text-dark">
@@ -104,7 +100,7 @@ const Contact = () => {
                       name="inquiryType"
                       value={formData.inquiryType}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                       required
                     >
                       <option value="">Select inquiry type</option>
@@ -126,7 +122,7 @@ const Contact = () => {
                         name="firstName"
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                         required
                       />
                     </div>
@@ -140,7 +136,7 @@ const Contact = () => {
                         name="lastName"
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                         required
                       />
                     </div>
@@ -156,7 +152,7 @@ const Contact = () => {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                       required
                     />
                   </div>
@@ -171,7 +167,7 @@ const Contact = () => {
                       name="company"
                       value={formData.company}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
 
@@ -185,7 +181,7 @@ const Contact = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
 
@@ -199,7 +195,7 @@ const Contact = () => {
                       value={formData.message}
                       onChange={handleInputChange}
                       rows={6}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                       placeholder="Tell us about your needs, timeline, and any specific requirements..."
                       required
                     ></textarea>
@@ -208,7 +204,7 @@ const Contact = () => {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-6 text-lg font-semibold"
+                    className="w-full bg-primary hover:bg-primary-dark text-white py-3 px-6 text-lg font-semibold"
                   >
                     {isSubmitting ? 'Sending...' : 'Send Message'}
                   </Button>
@@ -260,12 +256,12 @@ const Contact = () => {
                   </div>
 
                   <div className="bg-gray-50 p-6 rounded-lg">
-                    <h3 className="text-xl font-semibold mb-3 text-indigo-800">Quick Start</h3>
+                    <h3 className="text-xl font-semibold mb-3 text-primary-dark">Quick Start</h3>
                     <p className="text-gray-900 mb-4">
                       Ready to get started immediately? Schedule a consultation call and we'll have you up and running in no time.
                     </p>
                     <Button
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      className="bg-primary hover:bg-primary-dark text-white"
                       onClick={() => document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' })}
                     >
                       Schedule Consultation

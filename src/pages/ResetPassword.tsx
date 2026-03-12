@@ -285,9 +285,9 @@ const ResetPassword = () => {
   if (!isValidSession) {
     return (
       <div className="flex flex-col md:flex-row w-full h-screen">
-        <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+        <div className="hidden md:block w-full md:w-1/2 bg-darknavy text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
           <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
           
           <div className="relative z-10">
@@ -305,7 +305,7 @@ const ResetPassword = () => {
         
         <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
           <div className="block md:hidden mb-8">
-            <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
+            <Link to="/" className="text-primary hover:text-primary-dark flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
               </svg>
@@ -316,7 +316,7 @@ const ResetPassword = () => {
           <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
             <div className="text-center mb-12">
               <h2 className="text-4xl font-bold inline">
-                <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+                <span className="text-[#00c2cb]">Apo</span><span className="text-primary">Lead</span>
               </h2>
             </div>
 
@@ -334,7 +334,7 @@ const ResetPassword = () => {
                 </ul>
               </div>
               <p className="text-gray-600 mb-6">Please try requesting a new password reset link.</p>
-              <Link to="/login" className="text-indigo-600 hover:underline">
+              <Link to="/login" className="text-primary hover:underline">
                 Back to login and request new reset link
               </Link>
             </div>
@@ -350,9 +350,9 @@ const ResetPassword = () => {
 
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
-      <div className="hidden md:block w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="hidden md:block w-full md:w-1/2 bg-darknavy text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
         <div className="relative z-10">
@@ -370,7 +370,7 @@ const ResetPassword = () => {
       
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         <div className="block md:hidden mb-8">
-          <Link to="/" className="text-indigo-600 hover:text-indigo-800 flex items-center">
+          <Link to="/" className="text-primary hover:text-primary-dark flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
@@ -381,7 +381,7 @@ const ResetPassword = () => {
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+              <span className="text-[#00c2cb]">Apo</span><span className="text-primary">Lead</span>
             </h2>
           </div>
 
@@ -426,7 +426,7 @@ const ResetPassword = () => {
           </form>
           
           <div className="mt-6 text-center">
-            <Link to="/login" className="text-sm text-indigo-600 hover:underline">
+            <Link to="/login" className="text-sm text-primary hover:underline">
               Back to sign in
             </Link>
           </div>

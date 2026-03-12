@@ -140,7 +140,7 @@ const Scripting = () => {
           <div className="flex items-center justify-between mb-8">
             <div className="px-0 py-[6px]">
               <h1 className="text-2xl font-semibold mb-2">
-                Thanks for signing up, <span className="text-indigo-600">{userProfile?.first_name || 'Agent'}</span>!
+                Thanks for signing up, <span className="text-primary">{userProfile?.first_name || 'Agent'}</span>!
               </h1>
               <p className="text-gray-600">Access your professional scripting resources below to maximize conversion.</p>
             </div>
@@ -153,7 +153,7 @@ const Scripting = () => {
                 <Search size={18} />
               </div>
               <Input type="text" placeholder="Search scripts by keyword or objective..." className="border-0 focus-visible:ring-0 py-3 w-full" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 transition duration-300">
+              <button className="bg-primary hover:bg-primary-dark text-white px-4 py-3 transition duration-300">
                 Search
               </button>
             </div>
@@ -175,7 +175,7 @@ const Scripting = () => {
                       {renderStars(script.rating)}
                       <span className="text-xs text-gray-500 ml-1">({script.reviews})</span>
                     </div>
-                    <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View Script</button>
+                    <button className="text-primary hover:text-primary-dark text-sm font-medium">View Script</button>
                   </div>
                 </div>
               </div>)}
@@ -189,7 +189,7 @@ const Scripting = () => {
 
       {scripts.map(script => <div key={`modal-${script.id}`} className={`fixed inset-0 z-50 bg-black/50 p-4 overflow-y-auto ${modalOpen === script.id ? 'block' : 'hidden'} modal`}>
           <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-auto my-8 overflow-hidden">
-            <div className="bg-indigo-600 text-white px-6 py-4 flex justify-between items-center">
+            <div className="bg-primary text-white px-6 py-4 flex justify-between items-center">
               <h3 className="text-xl font-bold">{script.title} Script</h3>
               <button className="text-white hover:text-gray-200 text-2xl" onClick={closeModal}>
                 <X size={24} />

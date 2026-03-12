@@ -185,25 +185,25 @@ const BillingInformation = () => {
       <div className="flex-1 p-8 md:p-10">
         <div className="flex justify-between items-center mb-10">
           <div className="text-2xl font-semibold text-[#1e293b]">
-            Billing <span className="text-indigo-600 relative after:content-[''] after:absolute after:bottom-[-5px] after:left-0 after:w-full after:h-[3px] after:bg-gradient-to-r after:from-indigo-600 after:to-[#00c2cb] after:rounded-md">Information</span>
+            Billing <span className="text-primary relative after:content-[''] after:absolute after:bottom-[-5px] after:left-0 after:w-full after:h-[3px] after:bg-gradient-to-r after:from-primary after:to-[#00c2cb] after:rounded-md">Information</span>
           </div>
 
           <div className="flex items-center">
             <div className="flex gap-4 mr-5">
-              <button className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-gray-500 hover:text-indigo-600 transition-all hover:translate-y-[-3px]">
+              <button className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-gray-500 hover:text-primary transition-all hover:translate-y-[-3px]">
                 <span className="sr-only">Search</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </button>
-              <button className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-gray-500 hover:text-indigo-600 transition-all hover:translate-y-[-3px] relative">
+              <button className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-gray-500 hover:text-primary transition-all hover:translate-y-[-3px] relative">
                 <span className="sr-only">Notifications</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
               </button>
-              <button className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-gray-500 hover:text-indigo-600 transition-all hover:translate-y-[-3px]">
+              <button className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm text-gray-500 hover:text-primary transition-all hover:translate-y-[-3px]">
                 <span className="sr-only">Settings</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -212,7 +212,7 @@ const BillingInformation = () => {
               </button>
             </div>
             <div className="flex items-center bg-white px-3 py-2 rounded-full shadow-sm hover:shadow-md transition-all cursor-pointer hover:translate-y-[-3px]">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-r from-indigo-600 to-[#00c2cb] flex items-center justify-center text-white font-medium text-sm mr-2">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-r from-primary to-[#00c2cb] flex items-center justify-center text-white font-medium text-sm mr-2">
                 {getUserInitials()}
               </div>
               <div className="font-medium text-[#1e293b]">
@@ -231,8 +231,8 @@ const BillingInformation = () => {
             <p className="text-gray-500 text-sm">Please enter your bank account details below. This information is used to process your payments.</p>
           </div>
 
-          <div className="flex items-center bg-indigo-50 p-4 rounded-xl mb-8">
-            <div className="text-indigo-600 mr-4">
+          <div className="flex items-center bg-blue-50 p-4 rounded-xl mb-8">
+            <div className="text-primary mr-4">
               <ShieldCheck size={20} />
             </div>
             <div className="text-gray-500 text-sm">
@@ -277,7 +277,7 @@ const BillingInformation = () => {
               
               <Button 
                 onClick={handleEditClick}
-                className="mt-6 bg-gradient-to-r from-indigo-600 to-[#00c2cb] hover:translate-y-[-3px] transition-all shadow-md hover:shadow-lg rounded-xl text-zinc-100"
+                className="mt-6 bg-gradient-to-r from-primary to-[#00c2cb] hover:translate-y-[-3px] transition-all shadow-md hover:shadow-lg rounded-xl text-zinc-100"
               >
                 <Edit className="mr-2 h-4 w-4" /> Update Banking Information
               </Button>
@@ -297,7 +297,7 @@ const BillingInformation = () => {
                         value={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3">
+                          <SelectTrigger className="bg-[#f8fafc] border-[#e2e8f0] focus:border-primary focus:bg-white focus:ring focus:ring-blue-100 rounded-xl p-3">
                             <SelectValue placeholder="Select your bank" />
                           </SelectTrigger>
                         </FormControl>
@@ -326,7 +326,7 @@ const BillingInformation = () => {
                         <Input 
                           placeholder="Enter your 9-digit routing number" 
                           {...field} 
-                          className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
+                          className="bg-[#f8fafc] border-[#e2e8f0] focus:border-primary focus:bg-white focus:ring focus:ring-blue-100 rounded-xl p-3" 
                           maxLength={9} 
                           onChange={e => {
                             const value = e.target.value.replace(/[^\d]/g, '').slice(0, 9);
@@ -350,7 +350,7 @@ const BillingInformation = () => {
                         <Input 
                           placeholder="Enter your account number" 
                           {...field} 
-                          className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
+                          className="bg-[#f8fafc] border-[#e2e8f0] focus:border-primary focus:bg-white focus:ring focus:ring-blue-100 rounded-xl p-3" 
                           onChange={e => {
                             const value = e.target.value.replace(/[^\d]/g, '');
                             field.onChange(value);
@@ -373,7 +373,7 @@ const BillingInformation = () => {
                         <Input 
                           placeholder="Re-enter your account number" 
                           {...field} 
-                          className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3" 
+                          className="bg-[#f8fafc] border-[#e2e8f0] focus:border-primary focus:bg-white focus:ring focus:ring-blue-100 rounded-xl p-3" 
                           onChange={e => {
                             const value = e.target.value.replace(/[^\d]/g, '');
                             field.onChange(value);
@@ -397,7 +397,7 @@ const BillingInformation = () => {
                         value={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="bg-[#f8fafc] border-[#e2e8f0] focus:border-indigo-600 focus:bg-white focus:ring focus:ring-indigo-100 rounded-xl p-3">
+                          <SelectTrigger className="bg-[#f8fafc] border-[#e2e8f0] focus:border-primary focus:bg-white focus:ring focus:ring-blue-100 rounded-xl p-3">
                             <SelectValue placeholder="Select account type" />
                           </SelectTrigger>
                         </FormControl>
@@ -417,7 +417,7 @@ const BillingInformation = () => {
                     className={`${
                       saveSuccess 
                         ? "bg-green-500 hover:bg-green-600" 
-                        : "bg-gradient-to-r from-indigo-600 to-[#00c2cb]"
+                        : "bg-gradient-to-r from-primary to-[#00c2cb]"
                     } hover:translate-y-[-3px] transition-all shadow-md hover:shadow-lg rounded-xl text-zinc-100`}
                     disabled={isSubmitting}
                   >

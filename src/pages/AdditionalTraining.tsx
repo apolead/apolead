@@ -31,7 +31,7 @@ const AdditionalTraining: React.FC = () => {
       title: 'Sales Training',
       thumbnail: 'https://img.youtube.com/vi/vVHWer0EYjo/maxresdefault.jpg',
       tags: [
-        { name: 'Sales', bgColor: 'bg-indigo-100', textColor: 'text-indigo-800' },
+        { name: 'Sales', bgColor: 'bg-blue-100', textColor: 'text-primary-dark' },
         { name: 'Training', bgColor: 'bg-blue-100', textColor: 'text-blue-800' },
         { name: 'Techniques', bgColor: 'bg-purple-100', textColor: 'text-purple-800' }
       ],
@@ -120,7 +120,7 @@ const AdditionalTraining: React.FC = () => {
         <div className="welcome-container max-w-4xl mx-auto px-4 py-8">
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-800">
-              Thanks for signing up, <span className="text-indigo-600">{userProfile?.first_name || 'Agent'}</span>!
+              Thanks for signing up, <span className="text-primary">{userProfile?.first_name || 'Agent'}</span>!
             </h1>
             <p className="text-gray-600 mt-2 text-sm">
               Access your professional training resources below to maximize conversion.
@@ -139,7 +139,7 @@ const AdditionalTraining: React.FC = () => {
                 value={searchQuery} 
                 onChange={e => setSearchQuery(e.target.value)} 
               />
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-r-lg transition">
+              <button className="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-r-lg transition">
                 Search
               </button>
             </div>
@@ -162,7 +162,7 @@ const AdditionalTraining: React.FC = () => {
                 >
                   <div className="video-thumbnail relative overflow-hidden pt-[56.25%]">
                     <img src={video.thumbnail} alt={video.title} className="absolute top-0 left-0 w-full h-full object-cover" />
-                    <div className="play-button absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-600 bg-opacity-80 hover:bg-opacity-100 w-14 h-14 rounded-full flex items-center justify-center text-white transition">
+                    <div className="play-button absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary bg-opacity-80 hover:bg-opacity-100 w-14 h-14 rounded-full flex items-center justify-center text-white transition">
                       <Play size={24} />
                     </div>
                     {userProfile && userProfile[video.watchStatusColumn as keyof typeof userProfile] === true && (
@@ -188,7 +188,7 @@ const AdditionalTraining: React.FC = () => {
                         {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
                       </div>
                     </div>
-                    <div className="mt-3 text-sm text-indigo-600 hover:text-indigo-800 truncate">
+                    <div className="mt-3 text-sm text-primary hover:text-primary-dark truncate">
                       <LinkIcon size={12} className="inline mr-1" />
                       <a href={video.url} target="_blank" className="hover:underline" onClick={e => e.stopPropagation()}>
                         {video.url}

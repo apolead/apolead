@@ -174,9 +174,9 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
   
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
-      <div className="w-full md:w-1/2 bg-[#1A1F2C] text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="w-full md:w-1/2 bg-darknavy text-white relative p-8 md:p-16 flex flex-col justify-between overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#00c2cb] opacity-10 rounded-full -translate-y-1/3 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600 opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary opacity-10 rounded-full translate-y-1/3 -translate-x-1/3"></div>
         <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-[#00c2cb] opacity-5 rotate-45"></div>
         
         <div className="relative z-10">
@@ -208,12 +208,12 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
       <div className="w-full md:w-1/2 bg-white p-8 md:p-16 flex flex-col">
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold inline">
-            <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+            <span className="text-[#00c2cb]">Apo</span><span className="text-primary">Lead</span>
           </h2>
         </div>
         
-        <div className="w-full bg-indigo-100 h-2 rounded-full mb-8">
-          <div className="bg-indigo-600 h-2 rounded-full" style={{ width: "100%" }}></div>
+        <div className="w-full bg-blue-100 h-2 rounded-full mb-8">
+          <div className="bg-primary h-2 rounded-full" style={{ width: "100%" }}></div>
         </div>
         
         <h2 className="text-2xl font-bold mb-4">Availability & Commitments</h2>
@@ -238,14 +238,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
                   <div className="flex space-x-3">
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`}
                       onClick={() => toggleYesNo('meetObligation', true)}
                     >
                       YES
                     </button>
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.meetObligation === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
                       onClick={() => toggleYesNo('meetObligation', false)}
                     >
                       NO
@@ -260,7 +260,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
                       <button 
                         key={day.id}
                         type="button" 
-                        className={`w-full py-1.5 border rounded text-sm ${selectedDays.includes(day.id) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
+                        className={`w-full py-1.5 border rounded text-sm ${selectedDays.includes(day.id) ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`}
                         onClick={() => handleDayToggle(day.id)}
                       >
                         {day.label}
@@ -308,14 +308,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
                   <div className="flex space-x-3">
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`}
                       onClick={() => toggleYesNo('loginDiscord', true)}
                     >
                       YES
                     </button>
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.loginDiscord === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
                       onClick={() => toggleYesNo('loginDiscord', false)}
                     >
                       NO
@@ -328,14 +328,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
                   <div className="flex space-x-3">
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`}
                       onClick={() => toggleYesNo('checkEmails', true)}
                     >
                       YES
                     </button>
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.checkEmails === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
                       onClick={() => toggleYesNo('checkEmails', false)}
                     >
                       NO
@@ -348,14 +348,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
                   <div className="flex space-x-3">
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`}
                       onClick={() => toggleYesNo('solveProblems', true)}
                     >
                       YES
                     </button>
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.solveProblems === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
                       onClick={() => toggleYesNo('solveProblems', false)}
                     >
                       NO
@@ -368,14 +368,14 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
                   <div className="flex space-x-3">
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-indigo-600 hover:text-white hover:border-indigo-600`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === true ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-primary hover:text-white hover:border-primary`}
                       onClick={() => toggleYesNo('completeTraining', true)}
                     >
                       YES
                     </button>
                     <button 
                       type="button" 
-                      className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
+                      className={`w-20 py-1.5 border rounded text-sm ${userData.completeTraining === false ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300'} hover:bg-[#00c2cb] hover:text-white hover:border-[#00c2cb]`}
                       onClick={() => toggleYesNo('completeTraining', false)}
                     >
                       NO
@@ -415,8 +415,8 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
                     Terms and Conditions
                   </label>
                   <p className="text-gray-500">
-                    I agree to the <a href="#" className="text-indigo-600 hover:text-indigo-500">Terms of Service</a> and{' '}
-                    <a href="#" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>. I understand that my personal data will be processed as described.
+                    I agree to the <a href="#" className="text-primary hover:text-primary-dark">Terms of Service</a> and{' '}
+                    <a href="#" className="text-primary hover:text-primary-dark">Privacy Policy</a>. I understand that my personal data will be processed as described.
                   </p>
                 </div>
               </div>
@@ -433,7 +433,7 @@ const StepThree = ({ userData, updateUserData, prevStep, handleSubmit, isSubmitt
               
               <Button
                 type="submit"
-                className="bg-indigo-600 hover:bg-[#00c2cb] text-white"
+                className="bg-primary hover:bg-[#00c2cb] text-white"
                 disabled={isSubmitting || loading}
               >
                 {isSubmitting || loading ? "Submitting..." : "Submit Application"}
