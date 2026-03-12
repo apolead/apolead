@@ -444,7 +444,7 @@ const Schedule = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Quick Add Section */}
               <Card className="border-0 rounded-xl shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-xl">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 rounded-t-xl">
                   <CardTitle className="text-gray-900">Quick Add Schedule</CardTitle>
                   <CardDescription className="text-gray-600">
                     Select dates from calendar above and add times here
