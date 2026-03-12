@@ -399,7 +399,7 @@ const OnboardingModal = ({
                 <div className="border-b pb-4">
                   <Label className="block text-sm font-medium text-gray-700 mb-2">25 MBPS Internet</Label>
                   <p className="text-xs text-gray-500 mb-2">Upload a selfie of speed test results from:</p>
-                  <a href="https://speed.cloudflare.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 text-sm hover:underline">
+                  <a href="https://speed.cloudflare.com/" target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">
                     https://speed.cloudflare.com/
                   </a>
                   
