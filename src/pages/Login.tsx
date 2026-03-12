@@ -423,7 +423,7 @@ const Login = () => {
         <div className="max-w-md mx-auto w-full flex-1 flex flex-col justify-center">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold inline">
-              <span className="text-[#00c2cb]">Apo</span><span className="text-indigo-600">Lead</span>
+              <span className="text-[#00c2cb]">Apo</span><span className="text-primary">Lead</span>
             </h2>
           </div>
 
