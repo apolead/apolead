@@ -453,7 +453,7 @@ const Schedule = () => {
                 <CardContent className="pt-6">
                   <div className="space-y-4">
                     {selectedDates.length > 0 && (
-                      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                         <p className="text-sm font-medium !text-gray-900 [&]:text-gray-900" style={{ color: '#111827 !important' }}>
                           {selectedDates.length} date(s) selected
                         </p>
