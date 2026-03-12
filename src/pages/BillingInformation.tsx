@@ -277,7 +277,7 @@ const BillingInformation = () => {
               
               <Button 
                 onClick={handleEditClick}
-                className="mt-6 bg-gradient-to-r from-indigo-600 to-[#00c2cb] hover:translate-y-[-3px] transition-all shadow-md hover:shadow-lg rounded-xl text-zinc-100"
+                className="mt-6 bg-gradient-to-r from-primary to-[#00c2cb] hover:translate-y-[-3px] transition-all shadow-md hover:shadow-lg rounded-xl text-zinc-100"
               >
                 <Edit className="mr-2 h-4 w-4" /> Update Banking Information
               </Button>
