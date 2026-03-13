@@ -33,7 +33,7 @@ const AdditionalTraining: React.FC = () => {
       tags: [
         { name: 'Sales', bgColor: 'bg-blue-100', textColor: 'text-primary-dark' },
         { name: 'Training', bgColor: 'bg-blue-100', textColor: 'text-blue-800' },
-        { name: 'Techniques', bgColor: 'bg-purple-100', textColor: 'text-purple-800' }
+        { name: 'Techniques', bgColor: 'bg-blue-100', textColor: 'text-blue-800' }
       ],
       description: 'Learn essential sales techniques to improve your conversion rates and close more deals effectively.',
       duration: '4 minutes',
