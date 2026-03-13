@@ -335,7 +335,7 @@ const Schedule = () => {
                           <div key={dayIndex} className="bg-white">
                             {/* Day header */}
                             <div className={`h-12 flex flex-col items-center justify-center border-b ${
-                              isToday ? 'bg-purple-100 border-purple-300' : 'bg-gray-50'
+                              isToday ? 'bg-blue-100 border-blue-300' : 'bg-gray-50'
                             }`}>
                               <div className="text-xs font-medium text-gray-600">
                                 {format(day, 'EEE')}
