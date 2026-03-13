@@ -348,14 +348,14 @@ export default function LeadAnalytics() {
 
   // Duration distribution
   const durationDistribution = [
-    { name: "Under 2 min", value: callsUnder120s, color: "#7c3aed" },
-    { name: "Over 2 min", value: callsOver120s, color: "#581c87" },
+    { name: "Under 2 min", value: callsUnder120s, color: "#1e3a8a" },
+    { name: "Over 2 min", value: callsOver120s, color: "#172554" },
   ];
 
-  // Provider distribution for calls over 2 min - use consistent purple palette
-  const purpleShades = [
-    "#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe",
-    "#6d28d9", "#5b21b6", "#4c1d95", "#9333ea", "#a855f7"
+  // Provider distribution for calls over 2 min - use consistent navy palette
+  const navyShades = [
+    "#1e3a8a", "#1e40af", "#1d4ed8", "#2563eb", "#3b82f6",
+    "#172554", "#1e3a8a", "#1e40af", "#60a5fa", "#93c5fd"
   ];
   
   const providerDistributionOver2Min = providers.map((provider, index) => {
@@ -363,7 +363,7 @@ export default function LeadAnalytics() {
     return {
       name: provider || "Unknown",
       value: providerCallsOver2Min,
-      color: purpleShades[index % purpleShades.length],
+      color: navyShades[index % navyShades.length],
     };
   }).filter(p => p.value > 0);
 

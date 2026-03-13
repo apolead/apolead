@@ -257,14 +257,14 @@ const Schedule = () => {
                     <Button
                       variant={viewMode === 'week' ? 'default' : 'outline'}
                       onClick={() => setViewMode('week')}
-                      className={viewMode === 'week' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}
+                      className={viewMode === 'week' ? 'bg-primary hover:bg-primary-dark text-white' : ''}
                     >
                       Week
                     </Button>
                     <Button
                       variant={viewMode === 'month' ? 'default' : 'outline'}
                       onClick={() => setViewMode('month')}
-                      className={viewMode === 'month' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}
+                      className={viewMode === 'month' ? 'bg-primary hover:bg-primary-dark text-white' : ''}
                     >
                       Month
                     </Button>
@@ -335,13 +335,13 @@ const Schedule = () => {
                           <div key={dayIndex} className="bg-white">
                             {/* Day header */}
                             <div className={`h-12 flex flex-col items-center justify-center border-b ${
-                              isToday ? 'bg-purple-100 border-purple-300' : 'bg-gray-50'
+                              isToday ? 'bg-blue-100 border-blue-300' : 'bg-gray-50'
                             }`}>
                               <div className="text-xs font-medium text-gray-600">
                                 {format(day, 'EEE')}
                               </div>
                               <div className={`text-lg font-semibold ${
-                                isToday ? 'text-purple-700' : 'text-gray-900'
+                                isToday ? 'text-primary' : 'text-gray-900'
                               }`}>
                                 {format(day, 'd')}
                               </div>
@@ -360,7 +360,7 @@ const Schedule = () => {
                               {/* Scheduled time block */}
                               {schedule && schedule.start_time && schedule.end_time && (
                                 <div 
-                                  className="absolute left-1 right-1 bg-purple-500 text-white rounded p-1 text-xs font-medium overflow-hidden"
+                                  className="absolute left-1 right-1 bg-primary text-white rounded p-1 text-xs font-medium overflow-hidden"
                                   style={{
                                     top: `${(parseInt(schedule.start_time.split(':')[0]) + parseInt(schedule.start_time.split(':')[1]) / 60) * 64}px`,
                                     height: `${((parseInt(schedule.end_time.split(':')[0]) + parseInt(schedule.end_time.split(':')[1]) / 60) - (parseInt(schedule.start_time.split(':')[0]) + parseInt(schedule.start_time.split(':')[1]) / 60)) * 64}px`
@@ -401,15 +401,15 @@ const Schedule = () => {
                           key={index}
                           onClick={() => handleDateSelect(day)}
                           className={`min-h-[120px] p-3 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg ${
-                            isToday ? 'border-purple-500 bg-purple-50' : 
+                            isToday ? 'border-primary bg-blue-50' : 
                             isSelected ? 'border-primary bg-blue-50' :
-                            schedule ? 'border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100' : 
+                            schedule ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100' : 
                             'border-gray-200 bg-white hover:bg-gray-50'
                           }`}
                         >
                           <div className={`text-sm font-semibold mb-2 ${
-                            isToday ? 'text-purple-700' : 
-                            schedule ? 'text-purple-600' : 
+                            isToday ? 'text-primary' : 
+                            schedule ? 'text-primary' : 
                             'text-gray-700'
                           }`}>
                             {format(day, 'd')}
@@ -417,7 +417,7 @@ const Schedule = () => {
                           
                           {schedule && (
                             <div className="space-y-1">
-                              <div className="text-xs font-medium text-white bg-purple-600 rounded-lg px-2 py-1">
+                              <div className="text-xs font-medium text-white bg-primary rounded-lg px-2 py-1">
                                 {schedule.start_time} - {schedule.end_time}
                               </div>
                               {schedule.notes && (
@@ -503,7 +503,7 @@ const Schedule = () => {
                     <Button
                       onClick={handleSaveSchedule}
                       disabled={loading || selectedDates.length === 0}
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-6 text-lg font-semibold"
+                      className="w-full bg-primary hover:bg-primary-dark text-white rounded-lg py-6 text-lg font-semibold"
                     >
                       <Save className="w-5 h-5 mr-2" />
                       Save Schedule
@@ -541,7 +541,7 @@ const Schedule = () => {
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <CalendarIcon className="w-4 h-4 text-purple-600" />
+                                  <CalendarIcon className="w-4 h-4 text-primary" />
                                   <span className="font-semibold text-gray-900">
                                     {format(localDate, 'EEEE, MMMM d, yyyy')}
                                   </span>

@@ -33,7 +33,7 @@ const AdditionalTraining: React.FC = () => {
       tags: [
         { name: 'Sales', bgColor: 'bg-blue-100', textColor: 'text-primary-dark' },
         { name: 'Training', bgColor: 'bg-blue-100', textColor: 'text-blue-800' },
-        { name: 'Techniques', bgColor: 'bg-purple-100', textColor: 'text-purple-800' }
+        { name: 'Techniques', bgColor: 'bg-blue-100', textColor: 'text-blue-800' }
       ],
       description: 'Learn essential sales techniques to improve your conversion rates and close more deals effectively.',
       duration: '4 minutes',
@@ -238,7 +238,7 @@ const AdditionalTraining: React.FC = () => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors 
                   ${currentVideo.isWatched 
                     ? 'bg-green-500 text-white cursor-default' 
-                    : 'bg-purple-500 hover:bg-purple-600 text-white'}`}
+                    : 'bg-primary hover:bg-primary-dark text-white'}`}
               >
                 {currentVideo.isWatched ? (
                   <>
