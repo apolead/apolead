@@ -417,7 +417,7 @@ const Schedule = () => {
                           
                           {schedule && (
                             <div className="space-y-1">
-                              <div className="text-xs font-medium text-white bg-purple-600 rounded-lg px-2 py-1">
+                              <div className="text-xs font-medium text-white bg-primary rounded-lg px-2 py-1">
                                 {schedule.start_time} - {schedule.end_time}
                               </div>
                               {schedule.notes && (
