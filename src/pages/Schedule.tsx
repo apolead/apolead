@@ -408,8 +408,8 @@ const Schedule = () => {
                           }`}
                         >
                           <div className={`text-sm font-semibold mb-2 ${
-                            isToday ? 'text-purple-700' : 
-                            schedule ? 'text-purple-600' : 
+                            isToday ? 'text-primary' : 
+                            schedule ? 'text-primary' : 
                             'text-gray-700'
                           }`}>
                             {format(day, 'd')}
