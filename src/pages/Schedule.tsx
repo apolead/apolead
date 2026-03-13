@@ -257,7 +257,7 @@ const Schedule = () => {
                     <Button
                       variant={viewMode === 'week' ? 'default' : 'outline'}
                       onClick={() => setViewMode('week')}
-                      className={viewMode === 'week' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}
+                      className={viewMode === 'week' ? 'bg-primary hover:bg-primary-dark text-white' : ''}
                     >
                       Week
                     </Button>
