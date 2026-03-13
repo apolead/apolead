@@ -238,7 +238,7 @@ const AdditionalTraining: React.FC = () => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors 
                   ${currentVideo.isWatched 
                     ? 'bg-green-500 text-white cursor-default' 
-                    : 'bg-purple-500 hover:bg-purple-600 text-white'}`}
+                    : 'bg-primary hover:bg-primary-dark text-white'}`}
               >
                 {currentVideo.isWatched ? (
                   <>

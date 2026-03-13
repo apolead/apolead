@@ -363,7 +363,7 @@ export default function LeadAnalytics() {
     return {
       name: provider || "Unknown",
       value: providerCallsOver2Min,
-      color: purpleShades[index % purpleShades.length],
+      color: navyShades[index % navyShades.length],
     };
   }).filter(p => p.value > 0);
 

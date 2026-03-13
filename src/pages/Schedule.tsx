@@ -541,7 +541,7 @@ const Schedule = () => {
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <CalendarIcon className="w-4 h-4 text-purple-600" />
+                                  <CalendarIcon className="w-4 h-4 text-primary" />
                                   <span className="font-semibold text-gray-900">
                                     {format(localDate, 'EEEE, MMMM d, yyyy')}
                                   </span>
