@@ -341,7 +341,7 @@ const Schedule = () => {
                                 {format(day, 'EEE')}
                               </div>
                               <div className={`text-lg font-semibold ${
-                                isToday ? 'text-purple-700' : 'text-gray-900'
+                                isToday ? 'text-primary' : 'text-gray-900'
                               }`}>
                                 {format(day, 'd')}
                               </div>
