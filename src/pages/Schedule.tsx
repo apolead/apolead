@@ -264,7 +264,7 @@ const Schedule = () => {
                     <Button
                       variant={viewMode === 'month' ? 'default' : 'outline'}
                       onClick={() => setViewMode('month')}
-                      className={viewMode === 'month' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}
+                      className={viewMode === 'month' ? 'bg-primary hover:bg-primary-dark text-white' : ''}
                     >
                       Month
                     </Button>
