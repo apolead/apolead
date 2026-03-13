@@ -401,9 +401,9 @@ const Schedule = () => {
                           key={index}
                           onClick={() => handleDateSelect(day)}
                           className={`min-h-[120px] p-3 border-2 rounded-xl cursor-pointer transition-all hover:shadow-lg ${
-                            isToday ? 'border-purple-500 bg-purple-50' : 
+                            isToday ? 'border-primary bg-blue-50' : 
                             isSelected ? 'border-primary bg-blue-50' :
-                            schedule ? 'border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100' : 
+                            schedule ? 'border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100' : 
                             'border-gray-200 bg-white hover:bg-gray-50'
                           }`}
                         >
