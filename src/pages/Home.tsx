@@ -55,8 +55,8 @@ const Home = () => {
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow text-center">
-                <h3 className="text-lg font-semibold mb-3">Financial Improvement</h3>
-                <p className="text-gray-600">Credit education and financial improvement programs</p>
+                <h3 className="text-lg font-semibold mb-3">Customer Outreach</h3>
+                <p className="text-gray-600">Contact the people who matter most</p>
               </div>
               <div className="p-6 border rounded-lg hover:shadow-lg transition-shadow text-center">
                 <h3 className="text-lg font-semibold mb-3">Home Improvement</h3>
