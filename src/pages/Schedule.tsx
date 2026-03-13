@@ -503,7 +503,7 @@ const Schedule = () => {
                     <Button
                       onClick={handleSaveSchedule}
                       disabled={loading || selectedDates.length === 0}
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-6 text-lg font-semibold"
+                      className="w-full bg-primary hover:bg-primary-dark text-white rounded-lg py-6 text-lg font-semibold"
                     >
                       <Save className="w-5 h-5 mr-2" />
                       Save Schedule
