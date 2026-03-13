@@ -360,7 +360,7 @@ const Schedule = () => {
                               {/* Scheduled time block */}
                               {schedule && schedule.start_time && schedule.end_time && (
                                 <div 
-                                  className="absolute left-1 right-1 bg-purple-500 text-white rounded p-1 text-xs font-medium overflow-hidden"
+                                  className="absolute left-1 right-1 bg-primary text-white rounded p-1 text-xs font-medium overflow-hidden"
                                   style={{
                                     top: `${(parseInt(schedule.start_time.split(':')[0]) + parseInt(schedule.start_time.split(':')[1]) / 60) * 64}px`,
                                     height: `${((parseInt(schedule.end_time.split(':')[0]) + parseInt(schedule.end_time.split(':')[1]) / 60) - (parseInt(schedule.start_time.split(':')[0]) + parseInt(schedule.start_time.split(':')[1]) / 60)) * 64}px`
